@@ -55,13 +55,14 @@ def generate(record: Dict) -> Path:
     c.rect(15 * mm, h - 40 * mm, 60 * mm, 4 * mm, stroke=0, fill=1)
     c.rect(w - 75 * mm, 36 * mm, 60 * mm, 4 * mm, stroke=0, fill=1)
 
-    # Top-left brand mark
+    # Top-left brand mark — ® placed right after "DEPT" using measured width
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 22)
     c.drawString(25 * mm, h - 32 * mm, "DEPT")
+    dept_width = c.stringWidth("DEPT", "Helvetica-Bold", 22)
     c.setFillColor(OCHRE)
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(25 * mm + 38, h - 32 * mm + 7, "®")
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(25 * mm + dept_width + 1, h - 32 * mm + 9, "®")
 
     # Tagline top-right
     c.setFillColor(INK_FAINT)
