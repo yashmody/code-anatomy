@@ -1,0 +1,808 @@
+{
+  "version": 1,
+  "course": "anatomy-of-code",
+  "updated": "2026-06-01",
+  "questions": [
+    {
+      "id": "b01",
+      "topic": "code-coder-framework",
+      "section": "code",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What does CODE stand for in the CODE-CODER framework?",
+      "options": [
+        "Content, Operations & Martech, Design & Data, Engineering",
+        "Content, Optimization, Deployment, Engineering",
+        "Code, Operations, Deployment, Engineering",
+        "Content, Output, Data, Engineering"
+      ],
+      "correct": 0,
+      "explanation": "CODE captures the four domains that every digital build runs through: Content, Operations & Martech, Design & Data, Engineering."
+    },
+    {
+      "id": "b02",
+      "topic": "code-coder-framework",
+      "section": "coder",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What does CODER stand for as the inner engineering letters?",
+      "options": [
+        "Code, Output, Deploy, Edge, Release",
+        "Code, Optimization & Quality, Deployment, External integrations, Release management",
+        "Configure, Optimize, Develop, Execute, Release",
+        "Code, Operations, Database, Engineering, Run"
+      ],
+      "correct": 1,
+      "explanation": "CODER zooms inside the Engineering letter: Code, Optimization & Quality, Deployment, External integrations, Release management."
+    },
+    {
+      "id": "b03",
+      "topic": "project-management",
+      "section": "ops101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the primary purpose of a Daily Stand-up Meeting (DSM)?",
+      "options": [
+        "Status reporting to management",
+        "Sprint planning for the upcoming week",
+        "Surfacing blockers fast and syncing the team",
+        "Code review and technical decisions"
+      ],
+      "correct": 2,
+      "explanation": "DSMs are 15-minute daily rituals where each person answers three questions to surface blockers and sync the team — not status reporting."
+    },
+    {
+      "id": "b04",
+      "topic": "project-management",
+      "section": "ops101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "In RACI, who owns the outcome of an activity?",
+      "options": [
+        "Responsible — the person doing the work",
+        "Accountable — exactly one person",
+        "Consulted — anyone who provides input",
+        "Informed — anyone kept in the loop"
+      ],
+      "correct": 1,
+      "explanation": "Accountable owns the outcome — and there is only ever one Accountable person per activity. Responsible does the work; Consulted provides input; Informed is kept in the loop."
+    },
+    {
+      "id": "b05",
+      "topic": "localization",
+      "section": "content101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the difference between a locale and a language in content localization?",
+      "options": [
+        "There is no difference",
+        "Locales include country and culture; languages do not",
+        "Languages are paid; locales are free",
+        "Locales are technical; languages are creative"
+      ],
+      "correct": 1,
+      "explanation": "en-IN and en-US share a language but differ in spelling, currency, regulation and cultural reference. Locales are planned as markets, not as translations."
+    },
+    {
+      "id": "b06",
+      "topic": "sitemap",
+      "section": "content101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the role of an IA sitemap?",
+      "options": [
+        "It's submitted to search engines for crawling",
+        "It defines the conceptual site structure and drives the content model",
+        "It tracks site traffic over time",
+        "It manages user permissions across the site"
+      ],
+      "correct": 1,
+      "explanation": "The IA sitemap defines page types, hierarchy, and navigation — and drives the content model itself. The XML sitemap is the file submitted to search engines."
+    },
+    {
+      "id": "b07",
+      "topic": "analytics",
+      "section": "data101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is a data layer in web analytics?",
+      "options": [
+        "A backup database for analytics events",
+        "A JavaScript object on the page holding context for tags to read",
+        "The visualization layer in BI dashboards",
+        "A subscription tier in Adobe Analytics"
+      ],
+      "correct": 1,
+      "explanation": "The data layer is a JavaScript object holding page, product, and user context. Analytics tools, tag managers, and personalization engines all read from it instead of scraping the DOM."
+    },
+    {
+      "id": "b08",
+      "topic": "personalization",
+      "section": "data101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the role of Adobe Target?",
+      "options": [
+        "Track analytics events across the site",
+        "Decide what experience to show which user, and measure whether it worked",
+        "Manage user authentication and login",
+        "Generate static landing pages"
+      ],
+      "correct": 1,
+      "explanation": "Analytics tells you what happened; personalization decides what should happen next. Target picks the experience per segment and runs the A/B framework to measure outcomes."
+    },
+    {
+      "id": "b09",
+      "topic": "cdp",
+      "section": "data101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the primary purpose of a Customer Data Platform (CDP)?",
+      "options": [
+        "Run paid advertising campaigns",
+        "Unify customer data into one profile per real person and activate downstream",
+        "Provide email marketing automation",
+        "Manage product catalogs"
+      ],
+      "correct": 1,
+      "explanation": "A CDP ingests data from every system, resolves identities, builds one unified profile per person, and activates segments in real time to downstream systems."
+    },
+    {
+      "id": "b10",
+      "topic": "content-velocity",
+      "section": "content101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is content velocity?",
+      "options": [
+        "The number of authors on a content team",
+        "How quickly content moves from idea to published",
+        "The page load speed of content pages",
+        "The frequency of content audits"
+      ],
+      "correct": 1,
+      "explanation": "Content velocity measures how quickly content moves from idea to published — cycle time per type, throughput per week. Often the difference between weekly and quarterly campaign cadence."
+    },
+    {
+      "id": "b11",
+      "topic": "dam",
+      "section": "content101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Why does asset expiry matter in DAM?",
+      "options": [
+        "Disk space optimization",
+        "Aesthetic relevance only",
+        "Time-bound licences and releases create legal risk if expired assets stay live",
+        "Performance optimization for the CDN"
+      ],
+      "correct": 2,
+      "explanation": "Stock licences, model releases, and brand-mark windows expire. Orphaned expired assets are legal risk — they need auto-alerts, renewal workflows, or retirement."
+    },
+    {
+      "id": "b12",
+      "topic": "approval-workflow",
+      "section": "content101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the most common bottleneck in a content approval workflow?",
+      "options": [
+        "Server performance",
+        "Approval gates without named SLAs",
+        "CMS user interface",
+        "Designer skill levels"
+      ],
+      "correct": 1,
+      "explanation": "Gates without named owners and SLAs become the bottleneck. Anything unbounded — 'send to legal' with no deadline — silently dominates cycle time."
+    },
+    {
+      "id": "b13",
+      "topic": "seo-geo",
+      "section": "ops101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is GEO in the context of search optimization?",
+      "options": [
+        "Geographic targeting for ad campaigns",
+        "Generative Engine Optimization — optimizing for AI answer engines",
+        "Geographic IP-based redirection",
+        "Global Engagement Optimization for international traffic"
+      ],
+      "correct": 1,
+      "explanation": "GEO is Generative Engine Optimization — optimizing content to be cited by AI answer engines like ChatGPT, Perplexity, Claude, and Google AI Overviews."
+    },
+    {
+      "id": "b14",
+      "topic": "project-management",
+      "section": "ops101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What three questions does each person answer in a Daily Stand-up?",
+      "options": [
+        "Status, blockers, customer feedback",
+        "What I did yesterday, what I'll do today, what's blocking me",
+        "Hours worked, hours remaining, priority next",
+        "Team morale, technical debt, deployment plan"
+      ],
+      "correct": 1,
+      "explanation": "Three questions, one purpose: surface blockers fast. The DSM is not status reporting; it's a sync ritual to unblock work."
+    },
+    {
+      "id": "b15",
+      "topic": "campaign-management",
+      "section": "ops101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What are the five phases of campaign management?",
+      "options": [
+        "Plan, Code, Test, Deploy, Monitor",
+        "Plan, Build, Launch, Measure, Iterate",
+        "Brief, Design, Develop, Ship, Support",
+        "Idea, Strategy, Execute, Report, Retire"
+      ],
+      "correct": 1,
+      "explanation": "Plan → Build → Launch → Measure → Iterate. Work products differ by industry but the phases don't."
+    },
+    {
+      "id": "b16",
+      "topic": "stakeholder-management",
+      "section": "ops101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "In stakeholder expectation management, what is the 'triangle' principle?",
+      "options": [
+        "Plan-Build-Launch triangle",
+        "Quality-Speed-Innovation triangle",
+        "Time, cost, quality — pick two; the third gives",
+        "Scope, schedule, stakeholders — balance all three equally"
+      ],
+      "correct": 2,
+      "explanation": "Time, cost, quality — pick two; the third gives. Make stakeholders make the choice explicitly."
+    },
+    {
+      "id": "b17",
+      "topic": "tag-manager",
+      "section": "data101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the role of a tag manager (e.g., Adobe Launch, GTM)?",
+      "options": [
+        "Manage user-generated content tags",
+        "Provide SEO meta-tag editing",
+        "Manage analytics and marketing tags centrally without code deployments",
+        "Tag images for AI-based search"
+      ],
+      "correct": 2,
+      "explanation": "Tag managers like Adobe Launch and Google Tag Manager let non-developers configure analytics and marketing tags from one UI, decoupling tag changes from code deployments."
+    },
+    {
+      "id": "b18",
+      "topic": "analytics",
+      "section": "data101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "In analytics terminology, what is a 'conversion'?",
+      "options": [
+        "A page visit",
+        "A unique user session",
+        "A desired action you're optimizing for (purchase, signup, lead form)",
+        "Any click on a page"
+      ],
+      "correct": 2,
+      "explanation": "A conversion is a desired action the business is optimising for — typically purchase, signup, or lead form submit. The funnel measures progress toward conversions."
+    },
+    {
+      "id": "b19",
+      "topic": "code-coder-framework",
+      "section": "code",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "In the CODE-CODER framework, which letter telescopes inward into five sub-letters?",
+      "options": [
+        "C — Content",
+        "O — Operations & Martech",
+        "D — Design & Data",
+        "E — Engineering"
+      ],
+      "correct": 3,
+      "explanation": "Engineering (E) is the one that telescopes inward into CODER: Code, Optimization & Quality, Deployment, External integrations, Release management."
+    },
+    {
+      "id": "b20",
+      "topic": "content-source",
+      "section": "content101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "When mapping content sources, what are the three questions every content type must answer?",
+      "options": [
+        "Where does it come from, who provides it, in what format",
+        "Who owns it, what's the deadline, what's the budget",
+        "Is it new, is it relevant, is it on-brand",
+        "Is it text, image, or video"
+      ],
+      "correct": 0,
+      "explanation": "Source, channel, and format. Answers belong in the discovery doc, not in someone's head."
+    },
+    {
+      "id": "b21",
+      "topic": "campaign-management",
+      "section": "ops101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "In campaign management, when should learnings be documented?",
+      "options": [
+        "After the project ends",
+        "Before the next plan starts",
+        "During launch only",
+        "Only if requested by stakeholders"
+      ],
+      "correct": 1,
+      "explanation": "Document learnings before the next plan starts — Iterate is a campaign phase, not an after-thought."
+    },
+    {
+      "id": "b22",
+      "topic": "analytics",
+      "section": "data101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is a 'segment' in analytics?",
+      "options": [
+        "A page on the website",
+        "A saved filter that defines a group of users",
+        "A type of metric",
+        "A geographic area"
+      ],
+      "correct": 1,
+      "explanation": "A segment is a saved filter defining a group — e.g., 'Mobile users from IN who viewed a product but didn't purchase.' It can be rule-based or ML-based."
+    },
+    {
+      "id": "b23",
+      "topic": "dam",
+      "section": "content101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What's the role of a controlled taxonomy in a DAM?",
+      "options": [
+        "Faster image rendering",
+        "Smaller file storage",
+        "Reliable findability and consistent classification across teams",
+        "Better SEO rankings"
+      ],
+      "correct": 2,
+      "explanation": "A controlled hierarchical vocabulary (e.g., Vehicle > SUV > Compact) makes findability reliable and classification consistent. Free tags supplement; they never replace structure."
+    },
+    {
+      "id": "b24",
+      "topic": "ai-content",
+      "section": "content101",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Where does AI add value in asset management?",
+      "options": [
+        "Auto-tagging, alt-text generation, semantic search, variant generation",
+        "Replacing the DAM entirely",
+        "Encrypting assets at rest",
+        "Compressing files for faster delivery"
+      ],
+      "correct": 0,
+      "explanation": "AI accelerates the manual taxonomy and findability work — auto-tagging, alt-text, captions, image generation for first drafts, variant resizing, and semantic search."
+    },
+    {
+      "id": "b25",
+      "topic": "code-coder-framework",
+      "section": "review",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Who is the primary audience for the CODE-CODER framework?",
+      "options": [
+        "Junior developers learning to code",
+        "Architects and project managers who watch domains, not functions",
+        "End users of the website",
+        "Finance teams managing project budgets"
+      ],
+      "correct": 1,
+      "explanation": "Architects and PMs watch domains — they need a letter-logic that scales from a line of code to a programme of work. CODE-CODER gives them that lens."
+    },
+
+    {
+      "id": "a01",
+      "topic": "stalwart",
+      "section": "stalwart",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Which five files form the core of the Stalwart framework?",
+      "options": [
+        "main.js, app.js, ui.js, api.js, db.js",
+        "init.js, model.js, biz.js, api.js, render.js",
+        "index.js, state.js, view.js, controller.js, route.js",
+        "config.js, model.js, view.js, controller.js, service.js"
+      ],
+      "correct": 1,
+      "explanation": "Stalwart's five core files: init.js (onLoad + storage), model.js (data structure), biz.js (events + decisions), api.js (calls + mapping), render.js (UI)."
+    },
+    {
+      "id": "a02",
+      "topic": "stalwart",
+      "section": "stalwart",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What are the three optional files in the 8-file Stalwart structure?",
+      "options": [
+        "test.js, build.js, deploy.js",
+        "config.js, state.js, events.js",
+        "auth.js, logger.js, metrics.js",
+        "router.js, store.js, types.js"
+      ],
+      "correct": 1,
+      "explanation": "config.js (settings), state.js (persistent state), events.js (event vocabulary) are the three optional files. Add them when complexity demands; skip them when it doesn't."
+    },
+    {
+      "id": "a03",
+      "topic": "aem-banking",
+      "section": "q5",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Where is Adobe Cloud Manager hosted?",
+      "options": [
+        "On the customer's dedicated AMS tenant",
+        "As multi-tenant SaaS on Adobe's own cloud infrastructure",
+        "On AWS in the customer's account",
+        "On-premise at Adobe's data centres only"
+      ],
+      "correct": 1,
+      "explanation": "Cloud Manager is a multi-tenant SaaS hosted by Adobe globally. Deployment targets (AEM Author, Publishers, Dispatchers) live in your dedicated AMS tenant; the control plane is shared, the data plane is not."
+    },
+    {
+      "id": "a04",
+      "topic": "analytics",
+      "section": "data101",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What's the main architectural difference between Adobe Analytics (AA) and Customer Journey Analytics (CJA)?",
+      "options": [
+        "AA is on-premise; CJA is cloud",
+        "AA is paid; CJA is free",
+        "AA is hit-based and page-centric; CJA is journey-based and person-centric, built on AEP with XDM",
+        "AA covers web only; CJA covers mobile only"
+      ],
+      "correct": 2,
+      "explanation": "AA is hit-based, page-view-centric, built on eVars/props/events. CJA is journey-based, person-centric, built on Adobe Experience Platform with XDM schemas — joins web, app, call centre, in-store into one person."
+    },
+    {
+      "id": "a05",
+      "topic": "aem-performance",
+      "section": "q4",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "At 500 TPS target with a 90% dispatcher cache hit ratio, how much traffic reaches AEM Publishers?",
+      "options": [
+        "500 TPS",
+        "250 TPS",
+        "50 TPS",
+        "5 TPS"
+      ],
+      "correct": 2,
+      "explanation": "Cache hit ratio is the lever. At 90% hit, only 10% (50 TPS) reaches Publishers. At 50% hit, 250 TPS does. Plan capacity against the worst plausible cache miss scenario."
+    },
+    {
+      "id": "a06",
+      "topic": "aem-banking",
+      "section": "q7",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the standard RPO for AMS Standard tier backups?",
+      "options": [
+        "1 hour",
+        "4 hours",
+        "12 hours",
+        "24 hours (daily snapshots)"
+      ],
+      "correct": 3,
+      "explanation": "Daily snapshots = 24h RPO on Standard tier. Higher tiers (Gold, Platinum) configure down to ~1h via transaction log shipping. Banking RTO=1h / RPO=15min usually requires custom DR architecture."
+    },
+    {
+      "id": "a07",
+      "topic": "aem-banking",
+      "section": "q9",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Which Dynatrace integration option gives the deepest visibility into AEM MS?",
+      "options": [
+        "Synthetic monitoring from external probes",
+        "Dynatrace OneAgent installed on AMS VMs (Adobe-approved)",
+        "API pull from Adobe-exposed metrics endpoints",
+        "Browser RUM only"
+      ],
+      "correct": 1,
+      "explanation": "OneAgent installed on AMS VMs is the gold standard — full-stack APM, JVM metrics, GC, transaction tracing. Install requires Adobe approval and is treated as a managed software install."
+    },
+    {
+      "id": "a08",
+      "topic": "aem-banking",
+      "section": "q10",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What authentication should AEM Publisher use when calling Oracle VBCS APIs?",
+      "options": [
+        "Anonymous over HTTPS",
+        "Basic Auth with shared credentials",
+        "OAuth 2.0 with IDCS tokens, optionally mTLS for banking",
+        "API key in query string"
+      ],
+      "correct": 2,
+      "explanation": "OAuth 2.0 with Oracle IDCS tokens is the baseline. Add mTLS for banking. A dedicated service account, token caching, audit logging on both ends, and quarterly secret rotation complete the pattern."
+    },
+    {
+      "id": "a09",
+      "topic": "aem-banking",
+      "section": "q3",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the tenant isolation model in AEM Managed Services?",
+      "options": [
+        "Shared compute with logical separation only",
+        "Dedicated VPC, compute, network, and storage per customer; only Cloud Manager control plane and IMS identity are shared",
+        "All customers share the same VPC with security groups",
+        "Single-tenant only with full physical isolation"
+      ],
+      "correct": 1,
+      "explanation": "AMS is managed dedicated infrastructure, not shared-tenancy SaaS. Each customer gets dedicated VPC, VMs, network, storage. Only orchestration (Cloud Manager) and identity (IMS) are shared services."
+    },
+    {
+      "id": "a10",
+      "topic": "aem-banking",
+      "section": "q6",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the BYOK (Bring Your Own Key) status on Adobe AMS, historically?",
+      "options": [
+        "Fully supported out of the box for all customers",
+        "Limited or no BYOK support historically; contract-specific; some recent configurations support customer-managed keys",
+        "Mandatory for all banking customers",
+        "Available only on AEM as a Cloud Service, never on AMS"
+      ],
+      "correct": 1,
+      "explanation": "AMS has had limited BYOK support historically. Confirm in writing with Adobe. AEM as a Cloud Service has broader BYOK options. If BYOK isn't supported, compensating controls: data classification, tenant isolation, KMS audit logging, time-bounded operator access."
+    },
+    {
+      "id": "a11",
+      "topic": "aem-banking",
+      "section": "q2",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In the AEM Banking defense-in-depth chain, what role does the AEM Dispatcher play?",
+      "options": [
+        "TLS termination at the edge",
+        "Application-layer cache and URL filter — the AEM-native control for path, method, and parameter-based denials",
+        "Database connection pooling",
+        "User authentication and session management"
+      ],
+      "correct": 1,
+      "explanation": "Dispatcher is layer 4 in the chain: an application-layer cache plus a URL filter — the AEM-native 'WAF lite' for path, method, and parameter-based denials. Sits between Adobe WAF and the Publishers."
+    },
+    {
+      "id": "a12",
+      "topic": "data-maturity",
+      "section": "data101",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What sits at maturity rung 5 of the data maturity ladder?",
+      "options": [
+        "Basic Analytics (GA4)",
+        "Cross-channel Analytics (CJA)",
+        "Unified CDP (real-time profile, segments activated to every channel)",
+        "Orchestrated Journeys (AJO + AI)"
+      ],
+      "correct": 2,
+      "explanation": "Rung 5 is Unified CDP — one profile per real person, real-time segments activated to every channel. Rung 6 is Orchestrated Journeys with AJO + AI; rung 3 is Cross-channel Analytics with CJA."
+    },
+    {
+      "id": "a13",
+      "topic": "anatomy",
+      "section": "mental",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the 'mental model' in the anatomy of code?",
+      "options": [
+        "The architecture diagram of the application",
+        "The idea that every line of code answers a question — when, where, what, how, group, decide, when-to-do",
+        "The team's working agreement",
+        "The user's persona model"
+      ],
+      "correct": 1,
+      "explanation": "Every line of code answers a question. When = trigger, where = function, what = logic, how = variables, group = model, decide = function, when-to-do = event-controller. The mental model orients reading and writing code."
+    },
+    {
+      "id": "a14",
+      "topic": "anatomy",
+      "section": "functions",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What are the three types of functions in the anatomy of code?",
+      "options": [
+        "Public, private, protected",
+        "Sync, async, callback",
+        "Logical, render, feature",
+        "Pure, impure, side-effect"
+      ],
+      "correct": 2,
+      "explanation": "Three function types: Logical (does the thinking), Render (does the showing), Feature (composes logical and render to deliver capability). Within each, you often see initialize() and go() patterns."
+    },
+    {
+      "id": "a15",
+      "topic": "anatomy",
+      "section": "events",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In the events architecture, what is the role of a generic dispatcher?",
+      "options": [
+        "Distribute requests across multiple servers",
+        "A single hub that routes typed events from dispatch points to registered handlers, decoupling sender from receiver",
+        "Manage HTTP caching headers",
+        "Schedule cron jobs"
+      ],
+      "correct": 1,
+      "explanation": "Generic dispatcher = central event bus. Code dispatches typed events; handlers register/listen by type. Decouples sender from receiver. Sort/filter operations sit alongside as collection helpers."
+    },
+    {
+      "id": "a16",
+      "topic": "content-velocity",
+      "section": "content101",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What does 'decoupled parallel authoring' enable?",
+      "options": [
+        "Lower CMS licence cost",
+        "Better search rankings",
+        "Multiple authors working simultaneously without blocking each other, increasing content velocity",
+        "Smaller HTML pages"
+      ],
+      "correct": 2,
+      "explanation": "Parallel authoring without locks lets multiple contributors work simultaneously, reducing the longest-pole effect in cycle time. One of the key velocity levers alongside templated authoring and AI-assisted drafting."
+    },
+    {
+      "id": "a17",
+      "topic": "aem-banking",
+      "section": "q11",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What's the recommended network segmentation for AEM AMS tiers?",
+      "options": [
+        "All tiers in one subnet for simplicity",
+        "DMZ for AppGW/LB, Web tier for Dispatchers, App tier for Publishers, Secure tier for Author, Data tier for storage",
+        "Public subnet for Publishers, private for Author only",
+        "VPC peering across all tiers without subnet boundaries"
+      ],
+      "correct": 1,
+      "explanation": "Five subnets: DMZ (AppGW), Web (Dispatchers), App (Publishers), Secure (Author, VPN-only), Data (object stores, backup). NSGs deny-all by default; explicit allow rules per port and source; no skip-tier paths."
+    },
+    {
+      "id": "a18",
+      "topic": "code-coder-framework",
+      "section": "review",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the purpose of the Architect's Review pattern in the framework?",
+      "options": [
+        "A code review by senior architects only",
+        "A structured checklist run before anything ships — questions across all CODE-CODER letters that prove an engagement is honest",
+        "A retrospective after each sprint",
+        "A budget approval gate"
+      ],
+      "correct": 1,
+      "explanation": "Architect's Review is a pre-ship checklist asking pointed questions across the framework — content model, ops cadence, data lineage, engineering hygiene, integrations. It surfaces what would otherwise come up on the deploy weekend."
+    },
+    {
+      "id": "a19",
+      "topic": "dpdp",
+      "section": "q12",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Under DPDP, what's a defensible propagation latency budget for consent opt-out signals?",
+      "options": [
+        "End of day",
+        "Within 7 days",
+        "Within 15 minutes across all consuming systems",
+        "Real-time only (under 1 second)"
+      ],
+      "correct": 2,
+      "explanation": "A reasonable target is 'all systems reflect opt-out within 15 minutes of capture.' Monitor the propagation pipeline; alarm on lag; build a consent kill switch for emergency suspension if the pipeline fails."
+    },
+    {
+      "id": "a20",
+      "topic": "azure-openai",
+      "section": "q13",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What are the three governance layers for Azure OpenAI in production?",
+      "options": [
+        "Free tier, paid tier, enterprise tier",
+        "Frontend, backend, database",
+        "Azure service limits (TPM/RPM), application-level controls (API Gateway, per-user budgets, semantic cache), and cost governance (budgets, alerts, kill switch)",
+        "Development, staging, production"
+      ],
+      "correct": 2,
+      "explanation": "Three layers: (1) Azure-side TPM/RPM quotas plus PTU reservations; (2) app-level rate limiting via API Gateway, per-user budgets, prompt length caps, semantic cache; (3) cost governance: budgets, alerts, kill switch, audit logging."
+    },
+    {
+      "id": "a21",
+      "topic": "cja",
+      "section": "data101",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is XDM in the context of Customer Journey Analytics?",
+      "options": [
+        "Extended Data Manager — Adobe's CMS",
+        "Experience Data Model — Adobe's standardized schema for cross-channel data on AEP",
+        "External Database Mapper",
+        "XML-based Data Marshalling"
+      ],
+      "correct": 1,
+      "explanation": "Experience Data Model is the standardised schema sitting on Adobe Experience Platform. CJA uses XDM to join data from any source — web, app, call centre, in-store — under a unified person view."
+    },
+    {
+      "id": "a22",
+      "topic": "ia-sitemap",
+      "section": "content101",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Why must the IA sitemap live next to the design system rather than in a slide deck?",
+      "options": [
+        "Easier search engine discovery",
+        "Lower hosting cost",
+        "Because authors will invent structure ad-hoc otherwise, and the content model fractures within two quarters",
+        "It must be machine-readable XML"
+      ],
+      "correct": 2,
+      "explanation": "Without a living IA sitemap, authors invent structure ad-hoc. The content model fractures, downstream teams build workarounds, and re-platforming becomes the only fix. The IA sitemap is documentation that authors actually use."
+    },
+    {
+      "id": "a23",
+      "topic": "cdp",
+      "section": "data101",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Why is identity stitching critical in a CDP?",
+      "options": [
+        "Better email deliverability",
+        "To resolve that user@gmail.com on web is the same person as loyalty card #12345 in-store — unifying disparate identifiers into one profile",
+        "To improve page load time",
+        "For tax compliance"
+      ],
+      "correct": 1,
+      "explanation": "Every system has its own identifier — email, cookie, loyalty ID, phone. Identity stitching resolves these into one profile per real person. Without it, the CDP just stores fragmented identities, not unified profiles."
+    },
+    {
+      "id": "a24",
+      "topic": "aem-banking",
+      "section": "q1",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What's the standard pattern for Akamai-to-Adobe-AMS connectivity?",
+      "options": [
+        "Dedicated private peering (ExpressRoute/Direct Connect)",
+        "HTTPS over public internet with Akamai egress IP allow-listing on Adobe MS firewall, plus origin authentication (signed headers or mTLS)",
+        "VPN tunnel only",
+        "Direct fibre between Akamai POPs and Adobe data centres"
+      ],
+      "correct": 1,
+      "explanation": "AMS doesn't offer private peering to third-party CDNs. Standard pattern: HTTPS over internet + IP allow-list (Akamai's published egress IPs) + origin authentication. Track the IP allowlist owner — most common operational gap."
+    },
+    {
+      "id": "a25",
+      "topic": "anatomy",
+      "section": "patterns",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Why does the anatomy of code start from 'every line answers a question'?",
+      "options": [
+        "To make code self-documenting",
+        "To orient reading and writing code around intent — turning code from instructions into answers, which makes both review and authorship more deliberate",
+        "Because every line must have a comment",
+        "To reduce line count"
+      ],
+      "correct": 1,
+      "explanation": "When every line answers a question, reading code becomes asking questions and writing code becomes answering them. That reframing changes both review and authorship — from 'is the syntax right' to 'is this answering the right question well'."
+    }
+  ]
+}

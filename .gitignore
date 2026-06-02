@@ -1,0 +1,36 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# --- Secrets / local config ---
+.env
+.env.local
+.claude/settings.local.json
+
+# --- Runtime data (Q0 quiz) ---
+quiz-certification/q0.db
+quiz-certification/q0.db-journal
+quiz-certification/.run-logs/
+quiz-certification/quiz_results/*.json
+quiz-certification/outbox/*.eml
+quiz-certification/certificates/*.pdf
+
+# --- Node / Expo (sample app) ---
+node_modules/
+.expo/
+dist/
+.expo-shared/
+*.log
+
+# --- OS ---
+.DS_Store
+Thumbs.db
+
+# --- Editors ---
+.idea/
+.vscode/
+*.swp

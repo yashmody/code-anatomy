@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Admin · All attempts{% endblock %}
+
+{% block content %}
+<div class="masthead">
+  <div class="eyebrow">Admin · Dev mode only</div>
+  <h1>All attempts</h1>
+  <p class="lede">Every quiz attempt across all users. Read-only view. In production, this lives behind real RBAC.</p>
+</div>
+
+<div class="card" style="margin-bottom:18px">
+  <p class="muted">For CLI review of saved results:</p>
+  <pre class="code-inline">python -m app.review --stats
+python -m app.review --user yash@deptagency.com --detailed
+python -m app.review quiz_results/2026-06-01_...json</pre>
+</div>
+
+<table class="data-table">
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>User</th>
+      <th>Level</th>
+      <th>Score</th>
+      <th>Result</th>
+      <th>Cert ID</th>
+      <th>Quiz ID</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in attempts %}
+      <tr class="{{ 'pass' if a.passed else 'fail' }}">
+        <td>{{ a.submitted_at[:10] }}</td>
+        <td>{{ a.user.email }}</td>
+        <td>{{ a.difficulty }}</td>
+        <td>{{ a.correct }}/{{ a.total }} ({{ (a.score * 100) | int }}%)</td>
+        <td><b>{{ 'PASS' if a.passed else 'FAIL' }}</b></td>
+        <td><code>{{ a.cert_id or '—' }}</code></td>
+        <td><code>{{ a.quiz_id[:8] }}</code></td>
+      </tr>
+    {% endfor %}
+    {% if not attempts %}
+      <tr><td colspan="7" class="muted" style="text-align:center;padding:24px">No attempts on file.</td></tr>
+    {% endif %}
+  </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{% if is_change %}Change role{% else %}Pick your role{% endif %} · CCA-F{% endblock %}
+
+{% block content %}
+<div class="masthead">
+  <div class="eyebrow">{% if is_change %}Profile · Role{% else %}Step 1 of 1 · Onboarding{% endif %}</div>
+  <h1>{% if is_change %}Change your role{% else %}What's your role?{% endif %}</h1>
+  <p class="lede">
+    {% if is_change %}
+      Pick a different role. We'll update your recommended level on the home page.
+    {% else %}
+      One quick question so we can recommend the right level of the quiz. You can change this later — and you can always take whichever level you want, regardless of recommendation.
+    {% endif %}
+  </p>
+</div>
+
+{% if error %}
+  <div class="alert error"><strong>{{ error }}</strong></div>
+{% endif %}
+
+<form method="post" action="{% if is_change %}/profile/role{% else %}/onboarding/role{% endif %}" id="roleForm">
+  <div class="role-grid">
+    {% for r in roles %}
+      <label class="role-card {% if current_role == r.key %}selected{% endif %}">
+        <input type="radio" name="role" value="{{ r.key }}" {% if current_role == r.key %}checked{% endif %} required />
+        <div class="role-card-head">
+          <span class="role-label">{{ r.label }}</span>
+          <span class="role-level role-level-{{ r.level }}">{{ r.level|capitalize }}</span>
+        </div>
+        <p class="role-blurb">{{ r.blurb }}</p>
+      </label>
+    {% endfor %}
+  </div>
+
+  <div style="margin-top:28px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+    <button type="submit" class="btn btn-primary">
+      {% if is_change %}Save role →{% else %}Continue →{% endif %}
+    </button>
+    {% if is_change %}
+      <a href="/" class="btn">Cancel</a>
+    {% endif %}
+    <span class="muted small">Beginner = framework & vocabulary · Advanced = anatomy, Stalwart, deep-dives</span>
+  </div>
+</form>
+
+<style>
+  .role-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin-top:8px}
+  .role-card{position:relative;background:var(--card);border:1px solid var(--rule);padding:18px 18px 16px;cursor:pointer;transition:.15s;display:flex;flex-direction:column;gap:8px}
+  .role-card:hover{border-color:var(--ochre);transform:translateY(-2px)}
+  .role-card input[type=radio]{position:absolute;opacity:0;pointer-events:none}
+  .role-card.selected,.role-card:has(input:checked){border-color:var(--ochre);box-shadow:inset 0 0 0 1px var(--ochre)}
+  .role-card-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .role-label{font-family:var(--serif,'Syne');font-weight:800;font-size:18px;color:var(--ink)}
+  .role-level{font-family:var(--mono,'JetBrains Mono');font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border:1px solid var(--rule);color:var(--ink-soft)}
+  .role-level-advanced{color:var(--ochre);border-color:var(--ochre)}
+  .role-blurb{font-size:13px;color:var(--ink-soft);line-height:1.5;margin:0}
+</style>
+{% endblock %}

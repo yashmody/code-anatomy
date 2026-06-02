@@ -1,0 +1,93 @@
+{
+  "_comment": "AEM Content Fragment Model · /conf/dept-sample/settings/dam/cfm/models/article",
+  "_comment2": "This is the shape that AEM authors edit. It maps 1:1 to the TypeScript types in rn-app/src/lib/model.ts",
+  "modelTitle": "Article",
+  "modelPath": "/conf/dept-sample/settings/dam/cfm/models/article",
+  "description": "Editorial article — used across web, app, and email",
+
+  "fields": [
+    {
+      "name": "title",
+      "label": "Title",
+      "fieldType": "text-single",
+      "required": true,
+      "maxLength": 120,
+      "_note": "Headline shown in list and detail screens"
+    },
+    {
+      "name": "slug",
+      "label": "URL slug",
+      "fieldType": "text-single",
+      "required": true,
+      "_note": "Used as the routing key in the mobile app — must be unique per locale"
+    },
+    {
+      "name": "summary",
+      "label": "Summary",
+      "fieldType": "text-multi",
+      "required": true,
+      "maxLength": 280,
+      "_note": "One-paragraph teaser — shown in the list view"
+    },
+    {
+      "name": "body",
+      "label": "Body",
+      "fieldType": "text-multi-rich",
+      "required": true,
+      "_note": "Rich-text body. Authors get a full editor; the API exposes HTML."
+    },
+    {
+      "name": "hero",
+      "label": "Hero image",
+      "fieldType": "content-reference",
+      "referenceType": "asset",
+      "_note": "DAM reference. The API resolves to a CDN URL with renditions."
+    },
+    {
+      "name": "category",
+      "label": "Category",
+      "fieldType": "enumeration",
+      "values": ["news", "feature", "review", "interview"],
+      "required": true,
+      "_note": "Tagging for filtering on the list screen"
+    },
+    {
+      "name": "publishDate",
+      "label": "Publish date",
+      "fieldType": "datetime",
+      "required": true,
+      "_note": "Used for sort order and 'new' badge logic"
+    },
+    {
+      "name": "author",
+      "label": "Author",
+      "fieldType": "content-reference",
+      "referenceType": "fragment",
+      "referenceModel": "/conf/dept-sample/settings/dam/cfm/models/author",
+      "_note": "Reference to another CF. The API resolves nested fragments inline."
+    },
+    {
+      "name": "readTimeMin",
+      "label": "Read time (min)",
+      "fieldType": "number",
+      "_note": "Computed at author time — could also be derived from body length client-side"
+    },
+    {
+      "name": "isFeatured",
+      "label": "Featured?",
+      "fieldType": "boolean",
+      "_note": "Surfaces this article in the 'featured' rail on the home screen"
+    }
+  ],
+
+  "_referenced_models": {
+    "author": {
+      "_comment": "Sibling CF model · /conf/dept-sample/settings/dam/cfm/models/author",
+      "fields": [
+        { "name": "name", "label": "Name", "fieldType": "text-single", "required": true },
+        { "name": "avatar", "label": "Avatar", "fieldType": "content-reference", "referenceType": "asset" },
+        { "name": "bio", "label": "Bio", "fieldType": "text-multi", "maxLength": 200 }
+      ]
+    }
+  }
+}

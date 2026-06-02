@@ -1,0 +1,132 @@
+# =================================================================
+# Persisted GraphQL queries · the contract between AEM and the app
+# =================================================================
+#
+# Persisted queries are stored on AEM (under /conf/.../settings/graphql/persistentQueries/)
+# and invoked by the app via a stable URL. This is the recommended pattern for production:
+#
+#   - The query shape is reviewed and signed off once, on the AEM side.
+#   - The app calls a URL, not a query body, so the wire payload is fixed.
+#   - Cache keys at the CDN are predictable (path-based), enabling edge caching.
+#   - Authors can't accidentally expose a field the app didn't expect.
+#
+# In dev, you can also send these queries directly to /content/graphql/global/endpoint.json
+# with the body in the request. The shapes are identical.
+#
+# The endpoints below assume an AEM project namespace of "dept-sample".
+
+# -----------------------------------------------------------------
+# Query 1 · list-articles
+# Used by HomeScreen and CategoryScreen
+# Persisted URL: /graphql/execute.json/dept-sample/list-articles
+# -----------------------------------------------------------------
+query listArticles($category: String, $limit: Int = 20, $offset: Int = 0) {
+  articleList(
+    filter: {
+      _path: { _expressions: [{ value: "/content/dam/dept-sample/articles/", _operator: STARTS_WITH }] }
+      category: { _expressions: [{ value: $category, _operator: EQUALS, _ignoreCase: false }] }
+    }
+    sort: "publishDate DESC"
+    limit: $limit
+    offset: $offset
+  ) {
+    items {
+      _path
+      slug
+      title
+      summary
+      category
+      publishDate
+      isFeatured
+      readTimeMin
+      hero {
+        ... on ImageRef {
+          _path
+          _publishUrl
+          width
+          height
+          mimeType
+        }
+      }
+      author {
+        ... on AuthorModel {
+          name
+          avatar {
+            ... on ImageRef { _publishUrl }
+          }
+        }
+      }
+    }
+  }
+}
+
+# -----------------------------------------------------------------
+# Query 2 · article-by-slug
+# Used by ArticleDetailScreen
+# Persisted URL: /graphql/execute.json/dept-sample/article-by-slug
+# -----------------------------------------------------------------
+query articleBySlug($slug: String!) {
+  articleList(
+    filter: {
+      slug: { _expressions: [{ value: $slug, _operator: EQUALS }] }
+    }
+    limit: 1
+  ) {
+    items {
+      _path
+      slug
+      title
+      summary
+      body          # rich text — HTML
+      bodyHtml      # explicit HTML rendering of body
+      category
+      publishDate
+      readTimeMin
+      isFeatured
+      hero {
+        ... on ImageRef {
+          _publishUrl
+          width
+          height
+          mimeType
+        }
+      }
+      author {
+        ... on AuthorModel {
+          name
+          bio
+          avatar {
+            ... on ImageRef { _publishUrl }
+          }
+        }
+      }
+    }
+  }
+}
+
+# -----------------------------------------------------------------
+# Query 3 · featured-articles
+# Used by HomeScreen — featured rail
+# Persisted URL: /graphql/execute.json/dept-sample/featured-articles
+# -----------------------------------------------------------------
+query featuredArticles($limit: Int = 5) {
+  articleList(
+    filter: {
+      isFeatured: { _expressions: [{ value: true, _operator: EQUALS }] }
+    }
+    sort: "publishDate DESC"
+    limit: $limit
+  ) {
+    items {
+      _path
+      slug
+      title
+      summary
+      category
+      publishDate
+      hero {
+        ... on ImageRef { _publishUrl width height }
+      }
+    }
+  }
+}

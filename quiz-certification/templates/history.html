@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}History · CCA-F{% endblock %}
+
+{% block content %}
+<div class="masthead">
+  <div class="eyebrow">Your attempts · Role · {{ role_label }}</div>
+  <h1>History</h1>
+  <p class="lede">Every CCA-F attempt you've taken. Each attempt has a unique test code you can quote anywhere; passing attempts also get a certificate code you can re-download below.</p>
+</div>
+
+{% if not attempts %}
+  <div class="card">
+    <p class="muted">No attempts yet. <a href="/">Take the quiz →</a></p>
+  </div>
+{% endif %}
+
+<div class="history-list">
+  {% for a in attempts %}
+    <div class="card">
+      <div class="card-tag">{{ a.submitted_at[:10] }} · {{ a.difficulty }}</div>
+      <h4>{{ 'PASSED' if a.passed else 'FAILED' }} · {{ a.correct }}/{{ a.total }} ({{ (a.score * 100) | int }}%)</h4>
+      <p class="muted small" style="margin-top:4px">
+        Test code <code>{{ a.test_code }}</code>
+        {% if a.cert_id %} · Cert <code>{{ a.cert_id }}</code>{% endif %}
+      </p>
+      <p class="muted small">Started {{ a.started_at[:16] }} · Submitted {{ a.submitted_at[:16] }}</p>
+      {% if a.passed and a.cert_id %}
+        <div style="margin-top:12px">
+          <a class="btn btn-primary" href="/certificate/{{ a.cert_id }}">↓ Certificate {{ a.cert_id }}</a>
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+<div style="margin-top:32px;text-align:center">
+  <a href="/" class="btn">← Back to home</a>
+</div>
+{% endblock %}

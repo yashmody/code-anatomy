@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Start your quiz · CCA-F{% endblock %}
+
+{% block content %}
+<div class="masthead">
+  <div class="eyebrow">DEPT® Academy · Q0</div>
+  <h1>The Anatomy of Code · <span class="ochre">CCA-F</span></h1>
+  <p class="lede">Welcome, <strong>{{ user.name or user.email }}</strong>. This is the certification quiz for the course. Pick a level, pass with <strong>{{ pass_threshold }}%</strong> or higher, and your certificate is in your inbox before you've closed the tab.</p>
+
+  <div class="role-chip">
+    <span class="role-chip-label">Set up as</span>
+    <strong>{{ role_label }}</strong>
+    <a href="/profile/role" class="role-chip-link">change</a>
+  </div>
+
+  <div class="meta-row">
+    <span><b>Questions</b> {{ questions_per_quiz }} per attempt</span>
+    <span><b>Duration</b> {{ duration_minutes }} minutes</span>
+    <span><b>Pass mark</b> {{ pass_threshold }}%</span>
+    <span><b>Retake</b> {{ cooldown_days }} day cool-down after a fail</span>
+  </div>
+</div>
+
+{% if cooldown > 0 %}
+  <div class="alert warn">
+    <strong>Cool-down active.</strong> You failed your last attempt. You can try again in <strong>{{ cooldown }} day{{ 's' if cooldown != 1 else '' }}</strong>.
+    Use this time to revisit <a href="/static/course-link" onclick="window.location.href='anatomy-of-code-course.html'; return false;">the course</a>.
+  </div>
+{% endif %}
+
+{% if passed_ever %}
+  <div class="alert ok">
+    You've already passed the CCA-F. You can retake to improve your score; certificates are issued per pass.
+  </div>
+{% endif %}
+
+<div class="masthead" style="margin-top:24px">
+  <h2 style="font-size:32px">Pick your level</h2>
+  <p class="muted">
+    Based on your role, we recommend <strong class="ochre">{{ recommended|capitalize }}</strong>.
+    You can take either — pass either to earn the badge.
+  </p>
+</div>
+
+<div class="level-grid">
+  <button class="level-card {% if cooldown > 0 %}disabled{% endif %} {% if recommended == 'beginner' %}recommended{% endif %}"
+          {% if cooldown > 0 %}disabled{% endif %}
+          data-difficulty="beginner">
+    {% if recommended == 'beginner' %}<div class="level-rec">★ Recommended for you</div>{% endif %}
+    <div class="level-tag">01 · Awareness</div>
+    <h3>Beginner</h3>
+    <p>Framework basics, vocabulary, the disciplines. Good fit for PMs, BAs, sales, design, and anyone joining a DEPT® team.</p>
+    <div class="level-stat">
+      <span>{{ topics.beginner }} questions in pool</span>
+      <span>Start →</span>
+    </div>
+  </button>
+
+  <button class="level-card {% if cooldown > 0 %}disabled{% endif %} {% if recommended == 'advanced' %}recommended{% endif %}"
+          {% if cooldown > 0 %}disabled{% endif %}
+          data-difficulty="advanced">
+    {% if recommended == 'advanced' %}<div class="level-rec">★ Recommended for you</div>{% endif %}
+    <div class="level-tag">02 · Architect's call</div>
+    <h3>Advanced</h3>
+    <p>Anatomy of code, Stalwart, deep-dives (Data, Content, Ops, Banking FAQ). For architects and senior engineers.</p>
+    <div class="level-stat">
+      <span>{{ topics.advanced }} questions in pool</span>
+      <span>Start →</span>
+    </div>
+  </button>
+</div>
+
+<div class="masthead" style="margin-top:48px">
+  <h2 style="font-size:24px">Topics covered</h2>
+  <p class="muted">As the course adds topics, the quiz adds them automatically.</p>
+</div>
+<div class="topic-grid">
+  {% for topic in topics.topics %}
+    <span class="topic-pill">{{ topic.replace('-', ' ') }}</span>
+  {% endfor %}
+</div>
+
+{% if last %}
+  <div class="masthead" style="margin-top:48px">
+    <h2 style="font-size:20px">Your last attempt</h2>
+  </div>
+  <div class="card">
+    <div class="card-tag">{{ last.submitted_at[:10] }} · {{ last.difficulty }}</div>
+    <h4>{{ 'PASSED' if last.passed else 'FAILED' }} · {{ last.correct }}/{{ last.total }} ({{ (last.score * 100) | int }}%)</h4>
+    {% if last.test_code %}
+      <p class="muted small">Test code <code>{{ last.test_code }}</code></p>
+    {% endif %}
+    <div style="margin-top:10px">
+      {% if last.passed and last.cert_id %}
+        <a class="btn" href="/certificate/{{ last.cert_id }}">↓ Download certificate</a>
+      {% endif %}
+      <a class="btn" href="/history" style="margin-left:8px">View history</a>
+    </div>
+  </div>
+{% endif %}
+
+<style>
+  .role-chip{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:8px 14px;border:1px solid var(--rule);background:var(--card);font-family:var(--mono,'JetBrains Mono');font-size:12px}
+  .role-chip-label{color:var(--ink-faint);text-transform:uppercase;letter-spacing:.08em;font-weight:700;font-size:10.5px}
+  .role-chip strong{color:var(--ink);font-weight:700}
+  .role-chip-link{color:var(--ochre);text-decoration:underline;font-size:11px}
+  .level-card{position:relative}
+  .level-card.recommended{border-color:var(--ochre);box-shadow:inset 0 0 0 1px var(--ochre)}
+  .level-rec{position:absolute;top:-1px;right:-1px;background:var(--ochre);color:#fff;font-family:var(--mono,'JetBrains Mono');font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.querySelectorAll('.level-card:not(.disabled)').forEach(card => {
+    card.addEventListener('click', () => {
+      const difficulty = card.dataset.difficulty;
+      sessionStorage.setItem('q0-difficulty', difficulty);
+      window.location.href = '/quiz/take';
+    });
+  });
+</script>
+{% endblock %}

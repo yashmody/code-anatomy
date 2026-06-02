@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+{% block title %}Quiz in progress · CCA-F{% endblock %}
+
+{% block content %}
+<div id="quizContainer">
+  <div id="quizLoading" class="centered">
+    <div class="loader">
+      <div class="loader-eyebrow">Generating your quiz…</div>
+      <div class="loader-bar"><div class="loader-bar-fill"></div></div>
+    </div>
+  </div>
+
+  <div id="quizError" class="alert error" style="display:none"></div>
+
+  <div id="quizActive" style="display:none">
+    <div class="quiz-header">
+      <div>
+        <div class="eyebrow">Q0 · CCA-F · <span id="qDifficulty"></span></div>
+        <h1 id="qTitle">Question 1 of 10</h1>
+      </div>
+      <div class="quiz-timer" id="qTimer">20:00</div>
+    </div>
+
+    <div class="quiz-progress">
+      <div class="quiz-progress-fill" id="qProgress" style="width:0%"></div>
+    </div>
+
+    <div id="qBody" class="quiz-body"></div>
+
+    <div class="quiz-controls">
+      <button class="btn" id="qPrev" disabled>← Previous</button>
+      <div class="quiz-status" id="qStatus">0 of 0 answered</div>
+      <button class="btn btn-primary" id="qNext">Next →</button>
+      <button class="btn btn-primary" id="qSubmit" style="display:none">Submit quiz</button>
+    </div>
+  </div>
+
+  <div id="quizResult" style="display:none"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const DURATION_MIN = {{ duration_minutes }};
+  let quiz = null;
+  let answers = {};
+  let currentIdx = 0;
+  let timerInterval = null;
+  let deadlineMs = 0;
+
+  async function startQuiz() {
+    const difficulty = sessionStorage.getItem('q0-difficulty') || 'beginner';
+    try {
+      const r = await fetch('/quiz/start', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({difficulty})
+      });
+      if (r.status === 429) {
+        const data = await r.json();
+        return showError(`Cool-down active — try again in ${data.remaining_days} day(s).`);
+      }
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        return showError(data.detail || data.error || 'Could not start quiz.');
+      }
+      quiz = await r.json();
+      document.getElementById('qDifficulty').textContent = quiz.difficulty;
+      document.getElementById('quizLoading').style.display = 'none';
+      document.getElementById('quizActive').style.display = 'block';
+      deadlineMs = Date.now() + DURATION_MIN * 60 * 1000;
+      startTimer();
+      renderQuestion();
+    } catch (e) {
+      showError('Network error — ' + e.message);
+    }
+  }
+
+  function showError(msg) {
+    document.getElementById('quizLoading').style.display = 'none';
+    const el = document.getElementById('quizError');
+    el.style.display = 'block';
+    el.innerHTML = msg + ' <a href="/" style="margin-left:12px">← Back to home</a>';
+  }
+
+  function startTimer() {
+    function tick() {
+      const remaining = Math.max(0, deadlineMs - Date.now());
+      const mm = Math.floor(remaining / 60000).toString().padStart(2, '0');
+      const ss = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
+      const el = document.getElementById('qTimer');
+      el.textContent = `${mm}:${ss}`;
+      if (remaining < 60000) el.classList.add('warn');
+      if (remaining === 0) {
+        clearInterval(timerInterval);
+        submitQuiz();
+      }
+    }
+    tick();
+    timerInterval = setInterval(tick, 1000);
+  }
+
+  function renderQuestion() {
+    const q = quiz.questions[currentIdx];
+    const total = quiz.questions.length;
+    document.getElementById('qTitle').textContent = `Question ${currentIdx + 1} of ${total}`;
+    document.getElementById('qProgress').style.width = `${((currentIdx + 1) / total) * 100}%`;
+
+    const html = `
+      <div class="q-card">
+        <div class="q-topic">${q.topic.replace(/-/g, ' ')}</div>
+        <div class="q-text">${escapeHtml(q.question)}</div>
+        <div class="q-options">
+          ${q.options.map((opt, i) => `
+            <label class="q-option ${answers[q.id] === i ? 'selected' : ''}">
+              <input type="radio" name="q_${q.id}" value="${i}" ${answers[q.id] === i ? 'checked' : ''} />
+              <span class="q-option-marker">${String.fromCharCode(65 + i)}</span>
+              <span class="q-option-text">${escapeHtml(opt)}</span>
+            </label>
+          `).join('')}
+        </div>
+      </div>
+    `;
+    document.getElementById('qBody').innerHTML = html;
+
+    document.querySelectorAll('input[type="radio"]').forEach(r => {
+      r.addEventListener('change', () => {
+        answers[q.id] = parseInt(r.value, 10);
+        renderQuestion();
+        updateControls();
+      });
+    });
+    updateControls();
+  }
+
+  function updateControls() {
+    const total = quiz.questions.length;
+    const answered = Object.keys(answers).length;
+    document.getElementById('qStatus').textContent = `${answered} of ${total} answered`;
+    document.getElementById('qPrev').disabled = currentIdx === 0;
+    if (currentIdx === total - 1) {
+      document.getElementById('qNext').style.display = 'none';
+      document.getElementById('qSubmit').style.display = 'inline-flex';
+    } else {
+      document.getElementById('qNext').style.display = 'inline-flex';
+      document.getElementById('qSubmit').style.display = 'none';
+    }
+  }
+
+  document.getElementById('qPrev').addEventListener('click', () => {
+    if (currentIdx > 0) { currentIdx--; renderQuestion(); }
+  });
+  document.getElementById('qNext').addEventListener('click', () => {
+    if (currentIdx < quiz.questions.length - 1) { currentIdx++; renderQuestion(); }
+  });
+  document.getElementById('qSubmit').addEventListener('click', submitQuiz);
+
+  async function submitQuiz() {
+    clearInterval(timerInterval);
+    const unanswered = quiz.questions.filter(q => answers[q.id] === undefined).length;
+    if (unanswered > 0 && !confirm(`${unanswered} question(s) unanswered. Submit anyway?`)) {
+      startTimer();
+      return;
+    }
+
+    document.getElementById('quizActive').style.display = 'none';
+    document.getElementById('quizLoading').style.display = 'flex';
+    document.querySelector('.loader-eyebrow').textContent = 'Grading…';
+
+    try {
+      const r = await fetch('/quiz/submit', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({quiz_id: quiz.quiz_id, answers})
+      });
+      const data = await r.json();
+      document.getElementById('quizLoading').style.display = 'none';
+      renderResult(data);
+    } catch (e) {
+      showError('Submission failed: ' + e.message);
+    }
+  }
+
+  function renderResult(r) {
+    const scorePct = Math.round(r.score * 100);
+    const verdict = r.passed
+      ? `<div class="verdict pass"><div class="verdict-icon">✓</div><h2>Passed</h2><p>${r.correct} / ${r.total} correct (${scorePct}%)</p></div>`
+      : `<div class="verdict fail"><div class="verdict-icon">✗</div><h2>Not quite</h2><p>${r.correct} / ${r.total} correct (${scorePct}%) · Pass mark is 70%</p></div>`;
+
+    const testCodeBlock = r.test_code ? `
+      <div class="cert-card" style="border-color:var(--rule)">
+        <div class="cert-tag">Test code</div>
+        <h3 style="font-family:var(--mono,'JetBrains Mono');letter-spacing:.05em">${r.test_code}</h3>
+        <p class="muted small">Quote this code to reference this attempt — visible in your <a href="/history">history</a> too.</p>
+      </div>` : '';
+
+    const certBlock = r.passed && r.cert_id ? `
+      <div class="cert-card">
+        <div class="cert-tag">Certificate</div>
+        <h3>Your certificate is on its way</h3>
+        <p>Certificate <code>${r.cert_id}</code> has been emailed to you.</p>
+        <a href="/certificate/${r.cert_id}" class="btn btn-primary">↓ Download now</a>
+      </div>` : '';
+
+    const cooldownBlock = !r.passed ? `
+      <div class="alert warn">
+        <strong>Cool-down activated.</strong> Revisit the course and try again in ${r.cooldown_days} day(s).
+      </div>` : '';
+
+    const review = `
+      <div class="masthead" style="margin-top:32px"><h2>Review</h2><p class="muted">Every question, your answer, the right answer, and why.</p></div>
+      <div class="review-list">
+        ${r.review.map((q, i) => `
+          <div class="review-item ${q.is_correct ? 'ok' : 'bad'}">
+            <div class="review-num">${i + 1}</div>
+            <div class="review-body">
+              <div class="review-topic">${q.topic.replace(/-/g, ' ')}</div>
+              <div class="review-q">${escapeHtml(q.question)}</div>
+              <div class="review-options">
+                ${q.options.map((opt, idx) => {
+                  let cls = '';
+                  if (idx === q.correct_index) cls = 'correct';
+                  if (idx === q.user_index && idx !== q.correct_index) cls = 'wrong-user';
+                  return `<div class="review-opt ${cls}"><span class="review-opt-letter">${String.fromCharCode(65 + idx)}</span> ${escapeHtml(opt)}${idx === q.correct_index ? ' <em>· correct</em>' : ''}${idx === q.user_index && idx !== q.correct_index ? ' <em>· your answer</em>' : ''}</div>`;
+                }).join('')}
+              </div>
+              ${q.explanation ? `<div class="review-explain"><b>Why</b> ${escapeHtml(q.explanation)}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    document.getElementById('quizResult').style.display = 'block';
+    document.getElementById('quizResult').innerHTML = `
+      ${verdict}
+      ${testCodeBlock}
+      ${certBlock}
+      ${cooldownBlock}
+      ${review}
+      <div style="margin-top:32px;text-align:center">
+        <a href="/" class="btn">← Back to home</a>
+        <a href="/history" class="btn" style="margin-left:8px">View history</a>
+      </div>
+    `;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+  }
+
+  // Guard against accidental reload
+  window.addEventListener('beforeunload', (e) => {
+    if (quiz && document.getElementById('quizActive').style.display !== 'none') {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  startQuiz();
+</script>
+{% endblock %}
