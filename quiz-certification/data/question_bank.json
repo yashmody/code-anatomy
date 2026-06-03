@@ -803,6 +803,167 @@
       ],
       "correct": 1,
       "explanation": "When every line answers a question, reading code becomes asking questions and writing code becomes answering them. That reframing changes both review and authorship — from 'is the syntax right' to 'is this answering the right question well'."
+    },
+
+    {
+      "id": "m01",
+      "topic": "devops-pipelines",
+      "section": "deployment101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In Cloud Manager, what is the purpose of a Front-End pipeline compared to a Full-Stack pipeline?",
+      "options": [
+        "Front-End pipelines deploy AEM bundles; Full-Stack pipelines deploy JavaScript only",
+        "Front-End pipelines build and deploy UI resources (JS, CSS, clientlibs) independently of AEM code, enabling faster iterations without a full AEM release cycle",
+        "They are identical — Front-End is just a legacy label",
+        "Front-End pipelines run in staging only; Full-Stack pipelines reach production"
+      ],
+      "correct": 1,
+      "explanation": "Decoupling front-end from full-stack lets UX teams iterate at their own cadence — a CSS change no longer needs a full AEM code deployment. This is the key DEPT® delivery pattern for AEM Sites projects."
+    },
+    {
+      "id": "m02",
+      "topic": "devops-pipelines",
+      "section": "deployment101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the primary risk of a blue-green deployment strategy, and how is it mitigated?",
+      "options": [
+        "Database schema drift between blue and green — mitigated by backward-compatible migrations run before the switch",
+        "DNS propagation lag — mitigated by deploying both environments in the same region",
+        "Doubled memory usage — mitigated by auto-scaling both environments simultaneously",
+        "Cache invalidation — mitigated by disabling CDN during the switch"
+      ],
+      "correct": 0,
+      "explanation": "Blue-green requires both environments to be able to run against the same database simultaneously during the switch window. Backward-compatible migrations (expand / contract pattern) prevent schema drift from breaking either environment."
+    },
+    {
+      "id": "m03",
+      "topic": "devops-observability",
+      "section": "deployment101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Which three signal types form the foundation of an observability stack?",
+      "options": [
+        "Metrics, Logs, Traces",
+        "Alerts, Dashboards, Runbooks",
+        "Uptime, Latency, Error Rate",
+        "CPU, Memory, Disk"
+      ],
+      "correct": 0,
+      "explanation": "Metrics tell you something is wrong, logs tell you what happened, traces tell you where. All three are needed — alerts fire on metrics, but you diagnose with logs and traces. Uptime/Latency/Error Rate are the classic SLIs derived from metrics, not the signals themselves."
+    },
+    {
+      "id": "m04",
+      "topic": "devops-infra",
+      "section": "deployment101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What distinguishes Infrastructure as Code (IaC) from a runbook of manual provisioning steps?",
+      "options": [
+        "IaC is faster to run but produces the same outcome",
+        "IaC is version-controlled, idempotent, and diffable — making it reviewable, repeatable, and recoverable in a way a runbook cannot be",
+        "IaC only works on cloud; runbooks work on-prem",
+        "IaC eliminates the need for approval workflows"
+      ],
+      "correct": 1,
+      "explanation": "The real value of IaC is that infrastructure enters the same engineering discipline as code: peer review, version history, diff on change, automated testing. Idempotency means running it twice produces the same result — a runbook cannot guarantee that."
+    },
+    {
+      "id": "m05",
+      "topic": "devops-pipelines",
+      "section": "deployment101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "A deployment pipeline fails at the integration-test stage on every Friday afternoon push. The root cause is most likely:",
+      "options": [
+        "A flaky test that depends on external state (time, shared test data, or a downstream service in an inconsistent state)",
+        "A misconfigured deployment target",
+        "Too many parallel pipeline runs",
+        "A conflict in the Git merge strategy"
+      ],
+      "correct": 0,
+      "explanation": "Day-of-week failure patterns almost always indicate environment-dependent flakiness — a shared test database that another team's Friday batch job dirtied, a downstream staging service that gets rebooted on Fridays, or a time-sensitive assertion. Fix: isolate test data and mock or contract-test external dependencies."
+    },
+    {
+      "id": "m06",
+      "topic": "devops-containers",
+      "section": "deployment101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In a containerised deployment, what is the correct way to handle application secrets?",
+      "options": [
+        "Bake secrets into the Docker image at build time for reliability",
+        "Pass secrets as environment variables injected at runtime from a secret store (Vault, AWS Secrets Manager, Kubernetes Secrets)",
+        "Store secrets in the Git repo in a .secrets file with restricted permissions",
+        "Hard-code secrets in the entrypoint script inside the container"
+      ],
+      "correct": 1,
+      "explanation": "Secrets baked into images are a critical vulnerability — images are often pushed to registries, cached, and shared. Runtime injection from a managed secret store keeps the secret out of version control, out of image layers, and auditable. Kubernetes Secrets or a dedicated vault are the industry standard."
+    },
+    {
+      "id": "m07",
+      "topic": "devops-quality",
+      "section": "quality101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What does a shift-left testing strategy mean in a delivery pipeline context?",
+      "options": [
+        "Running all tests on the left-hand side of the Kanban board",
+        "Moving quality checks earlier in the pipeline — linting, unit tests, and security scans run before integration or deployment stages, catching defects closer to the code change",
+        "Removing manual QA from the process entirely",
+        "Running tests in parallel to reduce pipeline duration"
+      ],
+      "correct": 1,
+      "explanation": "Shift-left reduces the cost of defects by finding them earlier. A bug caught at lint time costs seconds to fix; the same bug found in UAT costs days. The pattern: pre-commit hooks → PR checks → unit → integration → E2E → production smoke test — each stage adds confidence and cost."
+    },
+    {
+      "id": "m08",
+      "topic": "devops-feature-flags",
+      "section": "release101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the main operational advantage of feature flags over branch-based feature releases?",
+      "options": [
+        "Feature flags make code run faster",
+        "Feature flags decouple deployment from release — code ships to production continuously but features activate on demand, enabling rollback without a redeploy",
+        "Feature flags eliminate the need for testing",
+        "Feature flags enforce access control on the codebase"
+      ],
+      "correct": 1,
+      "explanation": "Trunk-based development + feature flags is the modern continuous delivery pattern. Code goes to production every day; a flag controls whether users see the feature. Rolling back means toggling a flag, not reverting a deployment. This is how organisations like DEPT® can ship to AEMaaCS dozens of times per week safely."
+    },
+    {
+      "id": "m09",
+      "topic": "devops-caching",
+      "section": "deployment101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In an AEM + CDN architecture, which cache invalidation strategy has the lowest risk of serving stale content after a content publish?",
+      "options": [
+        "TTL-based expiry with a 24-hour cache lifetime",
+        "Tag-based invalidation — pages and assets tagged at publish time, flushed precisely when the underlying content changes",
+        "Manual cache purge by the operations team",
+        "Setting Cache-Control: no-store on all AEM responses"
+      ],
+      "correct": 1,
+      "explanation": "Tag-based invalidation (Surrogate-Key / Cache-Tag headers, supported by Fastly, Cloudflare, and Akamai) lets you flush exactly the pages that contain a changed content fragment without purging unrelated content. TTL alone always has a staleness window; manual purge is error-prone and slow; no-store defeats the CDN entirely."
+    },
+    {
+      "id": "m10",
+      "topic": "devops-security",
+      "section": "external101",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the purpose of a Software Composition Analysis (SCA) scan in a CI pipeline?",
+      "options": [
+        "To analyse how code is structured and suggest refactoring",
+        "To detect known vulnerabilities (CVEs) in third-party dependencies and licencing conflicts before they reach production",
+        "To measure code coverage across the test suite",
+        "To enforce coding style standards"
+      ],
+      "correct": 1,
+      "explanation": "SCA tools (Snyk, Dependabot, OWASP Dependency-Check) scan your package.json / pom.xml / requirements.txt against CVE databases. Catching a vulnerable transitive dependency at PR time is far cheaper than responding to a security incident in production. This is a mandatory gate in any mature DevOps pipeline."
     }
   ]
 }

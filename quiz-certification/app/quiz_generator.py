@@ -25,10 +25,12 @@ def _load_bank() -> List[Dict]:
 def _topic_stats() -> Dict:
     """Used by the home page to show coverage."""
     bank = _load_bank()
-    out = {"beginner": {}, "advanced": {}}
+    out = {"beginner": {}, "intermediate": {}, "advanced": {}}
     for q in bank:
         topic = q["topic"]
         diff = q["difficulty"]
+        if diff not in out:
+            out[diff] = {}
         out[diff][topic] = out[diff].get(topic, 0) + 1
     return out
 
@@ -39,6 +41,7 @@ def topic_summary() -> Dict:
     return {
         "total": len(bank),
         "beginner": sum(1 for q in bank if q["difficulty"] == "beginner"),
+        "intermediate": sum(1 for q in bank if q["difficulty"] == "intermediate"),
         "advanced": sum(1 for q in bank if q["difficulty"] == "advanced"),
         "topics": sorted(set(q["topic"] for q in bank)),
     }
@@ -52,7 +55,7 @@ def generate(difficulty: str, count: int = None) -> Dict:
       - questions: list of {id, question, options} — no correct answers
       - server_answers: dict {question_id: correct_index} — never sent to client
     """
-    if difficulty not in ("beginner", "advanced"):
+    if difficulty not in ("beginner", "intermediate", "advanced"):
         raise ValueError(f"Invalid difficulty: {difficulty}")
 
     count = count or config.QUESTIONS_PER_QUIZ

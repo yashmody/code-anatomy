@@ -129,7 +129,7 @@ input[type="email"]:focus, input[type="text"]:focus { outline: none; border-colo
 .alert.ok { border-left-color: var(--good); }
 
 /* Level grid */
-.level-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.level-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 .level-card {
   background: var(--card); border: 1px solid var(--rule); padding: 26px 28px;
   text-align: left; cursor: pointer; transition: all .2s;

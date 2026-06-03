@@ -12,6 +12,7 @@ ROLES: List[Dict] = [
     {"key": "qa",        "label": "QA / Test",         "level": "beginner", "blurb": "Test plans, regression, the safety net. Coverage > speed."},
     {"key": "sales",     "label": "Sales / Pre-sales", "level": "beginner", "blurb": "Pitches the work. Needs the vocabulary, not the implementation."},
     {"key": "design",    "label": "Designer",          "level": "beginner", "blurb": "Owns the user experience and the visual system."},
+    {"key": "devops",    "label": "DevOps / Platform", "level": "intermediate", "blurb": "Owns the pipeline, the infra, and the delivery loop. Lives between code and production."},
     {"key": "coder",     "label": "Engineer / Coder",  "level": "advanced", "blurb": "Writes the code. Lives in the CODER inner ring."},
     {"key": "architect", "label": "Architect",         "level": "advanced", "blurb": "Owns the system. Trades off the cross-cutting concerns."},
     {"key": "other",     "label": "Other",             "level": "beginner", "blurb": "Pick this if nothing else fits. You can change it later."},

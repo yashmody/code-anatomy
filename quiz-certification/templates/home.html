@@ -56,11 +56,24 @@
     </div>
   </button>
 
+  <button class="level-card level-card--intermediate {% if cooldown > 0 %}disabled{% endif %} {% if recommended == 'intermediate' %}recommended{% endif %}"
+          {% if cooldown > 0 %}disabled{% endif %}
+          data-difficulty="intermediate">
+    {% if recommended == 'intermediate' %}<div class="level-rec">★ Recommended for you</div>{% endif %}
+    <div class="level-tag level-tag--intermediate">02 · Platform & Delivery</div>
+    <h3>Intermediate</h3>
+    <p>Pipelines, infra, observability, containers, caching, feature flags, DevSecOps. For DevOps engineers and platform teams.</p>
+    <div class="level-stat">
+      <span>{{ topics.intermediate }} questions in pool</span>
+      <span>Start →</span>
+    </div>
+  </button>
+
   <button class="level-card {% if cooldown > 0 %}disabled{% endif %} {% if recommended == 'advanced' %}recommended{% endif %}"
           {% if cooldown > 0 %}disabled{% endif %}
           data-difficulty="advanced">
     {% if recommended == 'advanced' %}<div class="level-rec">★ Recommended for you</div>{% endif %}
-    <div class="level-tag">02 · Architect's call</div>
+    <div class="level-tag">03 · Architect's call</div>
     <h3>Advanced</h3>
     <p>Anatomy of code, Stalwart, deep-dives (Data, Content, Ops, Banking FAQ). For architects and senior engineers.</p>
     <div class="level-stat">
@@ -107,6 +120,10 @@
   .level-card{position:relative}
   .level-card.recommended{border-color:var(--ochre);box-shadow:inset 0 0 0 1px var(--ochre)}
   .level-rec{position:absolute;top:-1px;right:-1px;background:var(--ochre);color:#fff;font-family:var(--mono,'JetBrains Mono');font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:5px 10px}
+  .level-tag--intermediate{color:#0ea5e9}
+  .level-card--intermediate .level-stat span:last-child{color:#0ea5e9}
+  .level-card--intermediate.recommended{border-color:#0ea5e9;box-shadow:inset 0 0 0 1px #0ea5e9}
+  .level-card--intermediate.recommended .level-rec{background:#0ea5e9}
 </style>
 {% endblock %}
 
