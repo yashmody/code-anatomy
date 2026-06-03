@@ -6,7 +6,7 @@
 # Installs and runs the deploy bundle on a CentOS 8 VM:
 #   • content-system/        → served as static files by Apache at /anatomy/
 #   • quiz-certification/     → FastAPI app under systemd (uvicorn), proxied at /
-#   • sample-aem-to-react-native/ → NOT deployed (it's a code/teaching resource)
+#   • prompt-library/         → NOT deployed (consumed as a code/teaching resource)
 #
 # Layout produced on the VM:
 #   http://<vm>/             → quiz app (FastAPI, behind Apache reverse proxy)

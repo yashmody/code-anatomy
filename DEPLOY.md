@@ -15,7 +15,7 @@ The bundle has three parts. The script deploys two of them:
 |------|-----------|-----------------|
 | `quiz-certification/` | A FastAPI web app (the certification quiz) | Runs as a background service; Apache proxies to it |
 | `content-system/` | 4 static HTML files (course, checklist, FAQ, runbook) | Apache serves them directly |
-| `sample-aem-to-react-native/` | Example source code, not a running service | **Not deployed** (ignore it) |
+| `prompt-library/`             | B0 prompt sequences + worked samples | **Not deployed** (consumed as a code resource) |
 
 After deploy, the VM answers on one domain:
 

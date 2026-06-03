@@ -4,9 +4,9 @@ Three things to ship, each independent. Pick the ones you need, deploy in any or
 
 ```
 dept-anatomy-of-code/
-├── content-system/             · 4 static HTML files (the framework, checklist, FAQ, runbook)
-├── sample-aem-to-react-native/ · worked AEM-headless mobile sample + agent-coding prompts
-└── quiz-certification/         · FastAPI quiz module (Claude Certified Architect Foundations)
+├── content-system/    · static HTML field manual (course, checklist, runbook, FAQ collection)
+├── prompt-library/    · B0 agent outputs — prompt sequences + worked samples (starting with AEM → React Native)
+└── quiz-certification/ · FastAPI quiz module (Claude Certified Architect Foundations)
 ```
 
 ---
@@ -86,16 +86,17 @@ aws s3 sync content-system/ s3://your-bucket/ --acl public-read
 
 ---
 
-## 2 · sample-aem-to-react-native/
+## 2 · prompt-library/
 
-A worked example: how to turn AEM Content Fragments into a typed, cached, branded React Native app — built with agentic coding against a layered architectural contract.
+Home for everything B0 produces: prompt sequences and the worked samples that demonstrate them. As B0 ships more sequences, each goes in its own subfolder here.
 
 ```
-sample-aem-to-react-native/
-├── README.md            · architecture diagram + setup steps
-├── aem-side/            · CF model JSON + persisted GraphQL queries
-├── rn-app/              · Expo + TypeScript app, layered per Stalwart discipline
-└── prompts/             · the 5-step agent-coding sequence that built the app
+prompt-library/
+└── sample-aem-to-react-native/
+    ├── README.md            · architecture diagram + setup steps
+    ├── aem-side/            · CF model JSON + persisted GraphQL queries
+    ├── rn-app/              · Expo + TypeScript app, layered per Stalwart discipline
+    └── prompts/             · the 5-step agent-coding sequence that built the app
 ```
 
 ### What this is for
@@ -107,10 +108,10 @@ Two audiences:
 
 ### Deploy as runnable sample
 
-Full setup steps in `sample-aem-to-react-native/README.md`. Short version:
+Full setup steps in `prompt-library/sample-aem-to-react-native/README.md`. Short version:
 
 ```bash
-cd sample-aem-to-react-native/rn-app
+cd prompt-library/sample-aem-to-react-native/rn-app
 npm install
 
 # Point at your AEM publish endpoint
@@ -214,7 +215,7 @@ If shipping the whole bundle to a single host (e.g. the agency intranet):
 
 1. **content-system/** first — static, cheap, visible. Goes live in minutes; gives the team something to read while the rest deploys.
 2. **quiz-certification/** second — needs OAuth credentials and SMTP set up. Plan a quiet 2-hour window for the first deploy.
-3. **sample-aem-to-react-native/** third — usually consumed as a code resource (Git, internal package registry), not "deployed" as a service.
+3. **prompt-library/** third — usually consumed as a code resource (Git, internal package registry), not "deployed" as a service.
 
 A typical deploy layout:
 
