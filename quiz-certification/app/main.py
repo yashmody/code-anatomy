@@ -401,6 +401,33 @@ async def history(request: Request):
     return _template(request, "history.html", attempts=attempts, role_label=roles.label_for(user["role"]))
 
 
+# ---------- public verification ----------
+
+@app.get("/verify", response_class=HTMLResponse)
+async def verify_page(request: Request, cert_id: str = ""):
+    """Public — no authentication required."""
+    result = None
+    cert_id = cert_id.strip().upper()
+    if cert_id:
+        attempt = storage.attempt_by_cert_id_public(cert_id)
+        if attempt and attempt.get("passed") and attempt.get("cert_id"):
+            valid_sig = storage.verify_signature(attempt)
+            result = {
+                "found": True,
+                "valid": valid_sig,
+                "legacy": not attempt.get("signature"),  # pre-signature cert
+                "attempt": attempt,
+            }
+        else:
+            result = {"found": False, "valid": False, "legacy": False, "attempt": None}
+    return _template(request, "verify.html", cert_id=cert_id, result=result)
+
+
+@app.get("/verify/{cert_id}", response_class=HTMLResponse)
+async def verify_direct(request: Request, cert_id: str):
+    return await verify_page(request, cert_id=cert_id)
+
+
 # ---------- admin (dev only) ----------
 
 @app.get("/admin/attempts", response_class=HTMLResponse)

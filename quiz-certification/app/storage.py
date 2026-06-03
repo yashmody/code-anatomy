@@ -16,8 +16,9 @@ User-specific helpers added for the role onboarding flow:
 Records returned from attempt-reading helpers are plain dicts (the same shape
 as before) so templates and review.py keep working without changes.
 """
+import hashlib
+import hmac
 import secrets
-import string
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
@@ -26,6 +27,36 @@ from sqlalchemy import select
 from . import config
 from .db import get_session, init_db  # noqa: F401 — re-export init_db
 from .models import Attempt, User
+
+
+# ── Certificate signature (anti-tamper) ───────────────────────────────────────
+
+def _sign_payload(cert_id: str, email: str, score: float, submitted_at: str) -> str:
+    """HMAC-SHA256 over pipe-delimited fields using SECRET_KEY."""
+    payload = f"{cert_id}|{email.lower()}|{score:.6f}|{submitted_at}"
+    return hmac.new(
+        config.SECRET_KEY.encode("utf-8"),
+        payload.encode("utf-8"),
+        hashlib.sha256,
+    ).hexdigest()
+
+
+def sign_attempt(cert_id: str, email: str, score: float, submitted_at: str) -> str:
+    return _sign_payload(cert_id, email, score, submitted_at)
+
+
+def verify_signature(attempt: Dict) -> bool:
+    """Return True if the stored signature matches a fresh HMAC over the record."""
+    stored = attempt.get("signature")
+    if not stored:
+        return False  # legacy cert — no signature stored
+    expected = _sign_payload(
+        attempt["cert_id"],
+        attempt["user"]["email"],
+        float(attempt["score"]),
+        attempt["submitted_at"],
+    )
+    return hmac.compare_digest(expected, stored)
 
 # Confusable-free alphabet for human-readable test codes (no 0/O/1/I)
 _CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -121,6 +152,12 @@ def save_attempt(record: Dict) -> str:
             att = s.scalar(select(Attempt).where(Attempt.test_code == existing_code))
 
         if att is None:
+            cert_id = record.get("cert_id")
+            submitted_at_str = record["submitted_at"]
+            sig = None
+            if cert_id:
+                sig = sign_attempt(cert_id, email, float(record["score"]), submitted_at_str)
+
             att = Attempt(
                 test_code=existing_code or _generate_unique_code(s),
                 quiz_id=record["quiz_id"],
@@ -131,9 +168,10 @@ def save_attempt(record: Dict) -> str:
                 total=int(record["total"]),
                 passed=bool(record["passed"]),
                 started_at=_parse_iso(record["started_at"]),
-                submitted_at=_parse_iso(record["submitted_at"]),
-                cert_id=record.get("cert_id"),
+                submitted_at=_parse_iso(submitted_at_str),
+                cert_id=cert_id,
                 certificate_path=record.get("certificate_path"),
+                signature=sig,
                 payload={
                     "questions": record.get("questions", []),
                     "user_answers": record.get("user_answers", {}),
@@ -145,6 +183,11 @@ def save_attempt(record: Dict) -> str:
             # Update mutable fields (cert path on second save after PDF generation)
             att.cert_id = record.get("cert_id") or att.cert_id
             att.certificate_path = record.get("certificate_path") or att.certificate_path
+            # Back-fill signature if missing
+            if not att.signature and att.cert_id:
+                att.signature = sign_attempt(
+                    att.cert_id, email, att.score, att.submitted_at.isoformat() + "Z"
+                )
 
         s.commit()
         return att.test_code
@@ -227,10 +270,18 @@ def _attempt_to_dict(a: Attempt) -> Dict:
         "started_at": a.started_at.isoformat() + "Z",
         "submitted_at": a.submitted_at.isoformat() + "Z",
         "certificate_path": a.certificate_path,
+        "signature": a.signature,
         "questions": payload.get("questions", []),
         "user_answers": payload.get("user_answers", {}),
         "grading": payload.get("grading", {}),
     }
+
+
+def attempt_by_cert_id_public(cert_id: str) -> Optional[Dict]:
+    """Public lookup by cert_id — no user session check. Used by /verify."""
+    with get_session() as s:
+        a = s.scalar(select(Attempt).where(Attempt.cert_id == cert_id))
+        return _attempt_to_dict(a) if a else None
 
 
 def _parse_iso(s: str) -> datetime:

@@ -48,6 +48,8 @@ class Attempt(Base):
     submitted_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
 
     certificate_path = Column(Text, nullable=True)
+    # HMAC-SHA256 of cert_id|email|score|submitted_at — anti-tamper seal
+    signature = Column(String(64), nullable=True)
     # Full graded payload — questions, options, server-side correct indices,
     # user answers, per-question grading, explanations. JSON works on both
     # SQLite (stored as TEXT) and Postgres (native JSON / JSONB).

@@ -1,8 +1,39 @@
 {% extends "base.html" %}
 {% block title %}Quiz in progress · CCA-F{% endblock %}
 
+{% block head %}
+<style>
+  /* ── Review panel ─────────────────────────────────────────────────── */
+  #quizReview{display:none}
+  .review-header{margin-bottom:24px}
+  .review-header h2{font-family:var(--serif,'Syne');font-weight:800;font-size:28px;margin-bottom:6px}
+  .review-summary-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .review-count{font-family:var(--mono,'JetBrains Mono');font-size:13px;font-weight:700;color:var(--ink)}
+  .review-count span{color:var(--ochre)}
+  .review-prog{flex:1;min-width:80px;height:6px;background:var(--rule);border-radius:0}
+  .review-prog-fill{height:100%;background:var(--ochre);transition:width .3s}
+  .review-warn{margin-bottom:16px;padding:10px 14px;background:rgba(255,73,0,.08);border-left:3px solid var(--ochre);font-size:13.5px;color:var(--ochre);font-weight:500}
+  html[data-theme="dark"] .review-warn{background:rgba(255,73,0,.15)}
+
+  .review-list{display:flex;flex-direction:column;gap:6px;margin-bottom:24px;max-height:55vh;overflow-y:auto;padding-right:4px}
+  .review-row{display:grid;grid-template-columns:32px 1fr auto;gap:0 12px;align-items:center;padding:12px 14px;border:1px solid var(--rule);background:var(--card);transition:border-color .15s}
+  .review-row.unanswered{border-color:var(--ochre)}
+  .review-row-num{font-family:var(--mono,'JetBrains Mono');font-size:11px;font-weight:700;color:var(--ink-faint);letter-spacing:.08em}
+  .review-row.unanswered .review-row-num{color:var(--ochre)}
+  .review-row-body{min-width:0}
+  .review-row-q{font-size:13.5px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px}
+  .review-row-a{font-size:12.5px;color:var(--ink-soft)}
+  .review-row-a.empty{color:var(--ochre);font-weight:600}
+  .review-row-edit{padding:6px 12px;font-family:var(--mono,'JetBrains Mono');font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid var(--rule);color:var(--ink-soft);cursor:pointer;transition:.15s;white-space:nowrap}
+  .review-row-edit:hover{border-color:var(--ochre);color:var(--ochre)}
+
+  .review-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--rule)}
+</style>
+{% endblock %}
+
 {% block content %}
 <div id="quizContainer">
+  <!-- Loading -->
   <div id="quizLoading" class="centered">
     <div class="loader">
       <div class="loader-eyebrow">Generating your quiz…</div>
@@ -10,15 +41,17 @@
     </div>
   </div>
 
+  <!-- Error -->
   <div id="quizError" class="alert error" style="display:none"></div>
 
+  <!-- Active quiz -->
   <div id="quizActive" style="display:none">
     <div class="quiz-header">
       <div>
         <div class="eyebrow">Q0 · CCA-F · <span id="qDifficulty"></span></div>
-        <h1 id="qTitle">Question 1 of 10</h1>
+        <h1 id="qTitle">Question 1 of 30</h1>
       </div>
-      <div class="quiz-timer" id="qTimer">20:00</div>
+      <div class="quiz-timer" id="qTimer">45:00</div>
     </div>
 
     <div class="quiz-progress">
@@ -31,10 +64,30 @@
       <button class="btn" id="qPrev" disabled>← Previous</button>
       <div class="quiz-status" id="qStatus">0 of 0 answered</div>
       <button class="btn btn-primary" id="qNext">Next →</button>
-      <button class="btn btn-primary" id="qSubmit" style="display:none">Submit quiz</button>
+      <button class="btn btn-primary" id="qReview" style="display:none">Review answers →</button>
     </div>
   </div>
 
+  <!-- Review panel -->
+  <div id="quizReview">
+    <div class="review-header">
+      <div class="eyebrow">Q0 · CCA-F · <span id="rDifficulty"></span></div>
+      <h2>Review your answers</h2>
+      <div class="review-summary-row">
+        <span class="review-count" id="rCount"></span>
+        <div class="review-prog"><div class="review-prog-fill" id="rProgFill" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div id="rWarn" class="review-warn" style="display:none"></div>
+    <div class="review-list" id="rList"></div>
+    <div class="review-controls">
+      <button class="btn" id="rBack">← Back to quiz</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary" id="rSubmit">Confirm &amp; submit →</button>
+    </div>
+  </div>
+
+  <!-- Result -->
   <div id="quizResult" style="display:none"></div>
 </div>
 {% endblock %}
@@ -47,7 +100,10 @@
   let currentIdx = 0;
   let timerInterval = null;
   let deadlineMs = 0;
+  // State: 'loading' | 'active' | 'review' | 'result'
+  let state = 'loading';
 
+  // ── start ──────────────────────────────────────────────────────────────
   async function startQuiz() {
     const difficulty = sessionStorage.getItem('q0-difficulty') || 'beginner';
     try {
@@ -66,8 +122,8 @@
       }
       quiz = await r.json();
       document.getElementById('qDifficulty').textContent = quiz.difficulty;
-      document.getElementById('quizLoading').style.display = 'none';
-      document.getElementById('quizActive').style.display = 'block';
+      document.getElementById('rDifficulty').textContent = quiz.difficulty;
+      setState('active');
       deadlineMs = Date.now() + DURATION_MIN * 60 * 1000;
       startTimer();
       renderQuestion();
@@ -77,36 +133,44 @@
   }
 
   function showError(msg) {
-    document.getElementById('quizLoading').style.display = 'none';
+    setState('error');
     const el = document.getElementById('quizError');
     el.style.display = 'block';
     el.innerHTML = msg + ' <a href="/" style="margin-left:12px">← Back to home</a>';
   }
 
+  // ── state machine ──────────────────────────────────────────────────────
+  function setState(s) {
+    state = s;
+    document.getElementById('quizLoading').style.display  = s === 'loading'  ? 'flex' : 'none';
+    document.getElementById('quizError').style.display    = s === 'error'   ? 'block' : 'none';
+    document.getElementById('quizActive').style.display   = s === 'active'  ? 'block' : 'none';
+    document.getElementById('quizReview').style.display   = s === 'review'  ? 'block' : 'none';
+    document.getElementById('quizResult').style.display   = s === 'result'  ? 'block' : 'none';
+  }
+
+  // ── timer ──────────────────────────────────────────────────────────────
   function startTimer() {
     function tick() {
       const remaining = Math.max(0, deadlineMs - Date.now());
       const mm = Math.floor(remaining / 60000).toString().padStart(2, '0');
       const ss = Math.floor((remaining % 60000) / 1000).toString().padStart(2, '0');
       const el = document.getElementById('qTimer');
-      el.textContent = `${mm}:${ss}`;
-      if (remaining < 60000) el.classList.add('warn');
-      if (remaining === 0) {
-        clearInterval(timerInterval);
-        submitQuiz();
-      }
+      if (el) { el.textContent = `${mm}:${ss}`; if (remaining < 60000) el.classList.add('warn'); }
+      if (remaining === 0) { clearInterval(timerInterval); submitQuiz(); }
     }
     tick();
     timerInterval = setInterval(tick, 1000);
   }
 
+  // ── question rendering ─────────────────────────────────────────────────
   function renderQuestion() {
     const q = quiz.questions[currentIdx];
     const total = quiz.questions.length;
     document.getElementById('qTitle').textContent = `Question ${currentIdx + 1} of ${total}`;
     document.getElementById('qProgress').style.width = `${((currentIdx + 1) / total) * 100}%`;
 
-    const html = `
+    document.getElementById('qBody').innerHTML = `
       <div class="q-card">
         <div class="q-topic">${q.topic.replace(/-/g, ' ')}</div>
         <div class="q-text">${escapeHtml(q.question)}</div>
@@ -121,7 +185,6 @@
         </div>
       </div>
     `;
-    document.getElementById('qBody').innerHTML = html;
 
     document.querySelectorAll('input[type="radio"]').forEach(r => {
       r.addEventListener('change', () => {
@@ -134,17 +197,14 @@
   }
 
   function updateControls() {
+    if (!quiz) return;
     const total = quiz.questions.length;
     const answered = Object.keys(answers).length;
     document.getElementById('qStatus').textContent = `${answered} of ${total} answered`;
     document.getElementById('qPrev').disabled = currentIdx === 0;
-    if (currentIdx === total - 1) {
-      document.getElementById('qNext').style.display = 'none';
-      document.getElementById('qSubmit').style.display = 'inline-flex';
-    } else {
-      document.getElementById('qNext').style.display = 'inline-flex';
-      document.getElementById('qSubmit').style.display = 'none';
-    }
+    const isLast = currentIdx === total - 1;
+    document.getElementById('qNext').style.display   = isLast ? 'none' : 'inline-flex';
+    document.getElementById('qReview').style.display = isLast ? 'inline-flex' : 'none';
   }
 
   document.getElementById('qPrev').addEventListener('click', () => {
@@ -153,19 +213,70 @@
   document.getElementById('qNext').addEventListener('click', () => {
     if (currentIdx < quiz.questions.length - 1) { currentIdx++; renderQuestion(); }
   });
-  document.getElementById('qSubmit').addEventListener('click', submitQuiz);
+  document.getElementById('qReview').addEventListener('click', enterReview);
 
-  async function submitQuiz() {
-    clearInterval(timerInterval);
-    const unanswered = quiz.questions.filter(q => answers[q.id] === undefined).length;
-    if (unanswered > 0 && !confirm(`${unanswered} question(s) unanswered. Submit anyway?`)) {
-      startTimer();
-      return;
+  // ── review step ────────────────────────────────────────────────────────
+  function enterReview() {
+    setState('review');
+    renderReviewPanel();
+    window.scrollTo(0, 0);
+  }
+
+  function exitReview() {
+    setState('active');
+    renderQuestion();
+    window.scrollTo(0, 0);
+  }
+
+  function renderReviewPanel() {
+    const total = quiz.questions.length;
+    const answered = Object.keys(answers).length;
+    const unanswered = total - answered;
+
+    document.getElementById('rCount').innerHTML =
+      `<span>${answered}</span> of ${total} answered`;
+    document.getElementById('rProgFill').style.width = `${(answered / total) * 100}%`;
+
+    const warn = document.getElementById('rWarn');
+    if (unanswered > 0) {
+      warn.style.display = 'block';
+      warn.textContent = `${unanswered} question${unanswered > 1 ? 's' : ''} left unanswered — they will be marked incorrect if you submit now.`;
+    } else {
+      warn.style.display = 'none';
     }
 
-    document.getElementById('quizActive').style.display = 'none';
-    document.getElementById('quizLoading').style.display = 'flex';
-    document.querySelector('.loader-eyebrow').textContent = 'Grading…';
+    document.getElementById('rList').innerHTML = quiz.questions.map((q, i) => {
+      const userIdx = answers[q.id];
+      const isAns = userIdx !== undefined;
+      const ansText = isAns ? escapeHtml(q.options[userIdx]) : '';
+      return `
+        <div class="review-row ${isAns ? 'answered' : 'unanswered'}">
+          <div class="review-row-num">Q${i + 1}</div>
+          <div class="review-row-body">
+            <div class="review-row-q">${escapeHtml(q.question)}</div>
+            <div class="review-row-a ${isAns ? '' : 'empty'}">
+              ${isAns ? '✓ &nbsp;' + String.fromCharCode(65 + userIdx) + '. ' + ansText : '○ &nbsp;Not answered'}
+            </div>
+          </div>
+          <button class="review-row-edit" onclick="jumpTo(${i})">Edit</button>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function jumpTo(idx) {
+    currentIdx = idx;
+    exitReview();
+  }
+
+  document.getElementById('rBack').addEventListener('click', exitReview);
+  document.getElementById('rSubmit').addEventListener('click', submitQuiz);
+
+  // ── submit ─────────────────────────────────────────────────────────────
+  async function submitQuiz() {
+    clearInterval(timerInterval);
+    setState('loading');
+    document.querySelector('.loader-eyebrow') && (document.querySelector('.loader-eyebrow').textContent = 'Grading…');
 
     try {
       const r = await fetch('/quiz/submit', {
@@ -174,13 +285,14 @@
         body: JSON.stringify({quiz_id: quiz.quiz_id, answers})
       });
       const data = await r.json();
-      document.getElementById('quizLoading').style.display = 'none';
+      setState('result');
       renderResult(data);
     } catch (e) {
       showError('Submission failed: ' + e.message);
     }
   }
 
+  // ── result rendering ───────────────────────────────────────────────────
   function renderResult(r) {
     const scorePct = Math.round(r.score * 100);
     const verdict = r.passed
@@ -199,7 +311,10 @@
         <div class="cert-tag">Certificate</div>
         <h3>Your certificate is on its way</h3>
         <p>Certificate <code>${r.cert_id}</code> has been emailed to you.</p>
-        <a href="/certificate/${r.cert_id}" class="btn btn-primary">↓ Download now</a>
+        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
+          <a href="/certificate/${r.cert_id}" class="btn btn-primary">↓ Download now</a>
+          <a href="/verify/${r.cert_id}" class="btn">Verify certificate →</a>
+        </div>
       </div>` : '';
 
     const cooldownBlock = !r.passed ? `
@@ -209,7 +324,7 @@
 
     const review = `
       <div class="masthead" style="margin-top:32px"><h2>Review</h2><p class="muted">Every question, your answer, the right answer, and why.</p></div>
-      <div class="review-list">
+      <div class="review-list" style="max-height:none;overflow:visible">
         ${r.review.map((q, i) => `
           <div class="review-item ${q.is_correct ? 'ok' : 'bad'}">
             <div class="review-num">${i + 1}</div>
@@ -231,7 +346,6 @@
       </div>
     `;
 
-    document.getElementById('quizResult').style.display = 'block';
     document.getElementById('quizResult').innerHTML = `
       ${verdict}
       ${testCodeBlock}
@@ -249,9 +363,8 @@
     return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
   }
 
-  // Guard against accidental reload
   window.addEventListener('beforeunload', (e) => {
-    if (quiz && document.getElementById('quizActive').style.display !== 'none') {
+    if (quiz && (state === 'active' || state === 'review')) {
       e.preventDefault();
       e.returnValue = '';
     }

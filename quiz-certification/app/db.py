@@ -24,6 +24,27 @@ def init_db() -> None:
     """Create tables if missing. Called on app startup."""
     from . import models  # noqa: F401 — register models with Base
     Base.metadata.create_all(bind=engine)
+    _migrate()
+
+
+def _migrate() -> None:
+    """Safe forward migrations — add columns that don't exist yet."""
+    from sqlalchemy import text, inspect
+    insp = inspect(engine)
+    # Add signature column if missing (introduced in v2 for anti-tamper verification)
+    cols = [c["name"] for c in insp.get_columns("attempts")]
+    if "signature" not in cols:
+        with engine.connect() as conn:
+            if str(engine.url).startswith("postgresql"):
+                conn.execute(text(
+                    "ALTER TABLE attempts ADD COLUMN IF NOT EXISTS signature VARCHAR(64)"
+                ))
+            else:
+                conn.execute(text(
+                    "ALTER TABLE attempts ADD COLUMN signature VARCHAR(64)"
+                ))
+            conn.commit()
+        print("[db] migrated: added signature column to attempts")
 
 
 def get_session() -> Session:

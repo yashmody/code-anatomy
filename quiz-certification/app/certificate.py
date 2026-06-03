@@ -137,13 +137,14 @@ def generate(record: Dict) -> Path:
     c.setFont("Helvetica-Bold", 11)
     c.drawCentredString(w / 2, 24 * mm, date_str)
 
-    # Verify URL (right, placeholder)
+    # Verify URL (right)
     c.setFillColor(INK_FAINT)
     c.setFont("Courier-Bold", 9)
     c.drawRightString(w - 30 * mm, 30 * mm, "VERIFY AT")
     c.setFillColor(INK)
-    c.setFont("Helvetica-Bold", 10)
-    c.drawRightString(w - 30 * mm, 24 * mm, "dept.academy/verify")
+    c.setFont("Helvetica-Bold", 9)
+    verify_url = f"dept.academy/verify/{cert_id}"
+    c.drawRightString(w - 30 * mm, 24 * mm, verify_url)
 
     # Verify hint
     c.setFillColor(INK_FAINT)

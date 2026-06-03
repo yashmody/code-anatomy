@@ -1,0 +1,207 @@
+{% extends "base.html" %}
+{% block title %}Verify Certificate · DEPT® Academy{% endblock %}
+
+{% block head %}
+<style>
+  .verify-wrap{max-width:640px;margin:0 auto;padding:48px 24px 80px}
+  .verify-hero{margin-bottom:36px}
+  .verify-hero h1{font-family:var(--serif,'Syne');font-weight:800;font-size:40px;line-height:1.05;letter-spacing:-.02em;margin-bottom:10px}
+  .verify-hero p{color:var(--ink-soft);font-size:15px;line-height:1.55}
+
+  .verify-form{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}
+  .verify-input{flex:1;min-width:220px;padding:14px 16px;border:1px solid var(--rule);background:var(--card);color:var(--ink);font-family:var(--mono,'JetBrains Mono');font-size:14px;letter-spacing:.04em;text-transform:uppercase;transition:border .15s;outline:none}
+  .verify-input:focus{border-color:var(--ochre)}
+  .verify-input::placeholder{text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:14px;color:var(--ink-faint)}
+  .verify-btn{padding:14px 24px;background:var(--ochre);color:#fff;border:none;font-family:var(--mono,'JetBrains Mono');font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:.15s;white-space:nowrap}
+  .verify-btn:hover{background:var(--ochre-deep,#cc3a00)}
+
+  /* Result cards */
+  .verify-result{border:1px solid var(--rule);padding:28px 24px;margin-top:12px}
+  .verify-result.valid{border-color:#22c55e}
+  .verify-result.invalid{border-color:#ef4444}
+  .verify-result.legacy{border-color:#f59e0b}
+
+  .result-badge{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;margin-bottom:20px;font-family:var(--mono,'JetBrains Mono');font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .result-badge.ok{background:#dcfce7;color:#15803d}
+  html[data-theme="dark"] .result-badge.ok{background:#14532d;color:#86efac}
+  .result-badge.warn{background:#fef9c3;color:#a16207}
+  html[data-theme="dark"] .result-badge.warn{background:#422006;color:#fde68a}
+  .result-badge.err{background:#fee2e2;color:#b91c1c}
+  html[data-theme="dark"] .result-badge.err{background:#450a0a;color:#fca5a5}
+  .result-badge svg{width:18px;height:18px;flex-shrink:0}
+
+  .result-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 20px;font-size:14px;line-height:1.6}
+  .result-label{font-family:var(--mono,'JetBrains Mono');font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);padding-top:2px}
+  .result-val{color:var(--ink)}
+  .result-val.score{color:var(--ochre);font-weight:700;font-family:var(--mono,'JetBrains Mono')}
+  .result-val code{font-family:var(--mono,'JetBrains Mono');font-size:12.5px;letter-spacing:.04em}
+  .result-sig{margin-top:16px;padding:10px 14px;background:var(--paper-2,#f6f5f1);border-left:3px solid #22c55e;font-size:12.5px;color:var(--ink-soft)}
+  html[data-theme="dark"] .result-sig{background:var(--paper-2,#131211)}
+  .result-sig.no-sig{border-color:#f59e0b}
+
+  /* QR */
+  .qr-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--rule);display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap}
+  .qr-box{width:100px;height:100px;flex-shrink:0}
+  .qr-info{font-size:13px;color:var(--ink-soft);line-height:1.55}
+  .qr-info b{color:var(--ink);display:block;margin-bottom:4px;font-family:var(--mono,'JetBrains Mono');font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  .qr-url{font-family:var(--mono,'JetBrains Mono');font-size:11px;color:var(--ochre);word-break:break-all}
+
+  .verify-hint{margin-top:28px;font-size:13px;color:var(--ink-faint);line-height:1.55;border-top:1px solid var(--rule);padding-top:16px}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="verify-wrap">
+  <div class="verify-hero">
+    <div class="eyebrow">DEPT® Academy · Certificate Verification</div>
+    <h1>Verify a Certificate</h1>
+    <p>Enter a CCA-F certificate ID to confirm it is genuine. All certificates are cryptographically signed at issue time. Anyone can verify — no login required.</p>
+  </div>
+
+  <form method="get" action="/verify" class="verify-form">
+    <input
+      class="verify-input"
+      type="text"
+      name="cert_id"
+      value="{{ cert_id }}"
+      placeholder="e.g. CCA-F-20260603-A1B2C3D4"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <button type="submit" class="verify-btn">Verify →</button>
+  </form>
+
+  {% if result is not none %}
+    {% if result.found and result.attempt %}
+      {% set a = result.attempt %}
+
+      {% if result.valid %}
+        <div class="verify-result valid">
+          <div class="result-badge ok">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Verified — Authentic Certificate
+          </div>
+          <div class="result-grid">
+            <span class="result-label">Name</span>
+            <span class="result-val">{{ a.user.name or a.user.email.split('@')[0] }}</span>
+
+            <span class="result-label">Email</span>
+            <span class="result-val">
+              {% set em = a.user.email %}
+              {% set parts = em.split('@') %}
+              {{ parts[0][:1] }}***@{{ parts[1] }}
+            </span>
+
+            <span class="result-label">Course</span>
+            <span class="result-val">The Anatomy of Code — CCA-F</span>
+
+            <span class="result-label">Level</span>
+            <span class="result-val">{{ a.difficulty | capitalize }}</span>
+
+            <span class="result-label">Score</span>
+            <span class="result-val score">{{ (a.score * 100) | int }}%</span>
+
+            <span class="result-label">Issued</span>
+            <span class="result-val">{{ a.submitted_at[:10] }}</span>
+
+            <span class="result-label">Certificate ID</span>
+            <span class="result-val"><code>{{ a.cert_id }}</code></span>
+          </div>
+
+          <div class="result-sig">
+            <strong>✓ Cryptographic signature verified.</strong>
+            This certificate record matches its HMAC-SHA256 seal. It has not been altered since issue.
+          </div>
+
+          <div class="qr-section">
+            <div class="qr-box" id="verifyQR"></div>
+            <div class="qr-info">
+              <b>Permanent verification link</b>
+              <span class="qr-url">dept.academy/verify/{{ a.cert_id }}</span>
+              <p style="margin-top:6px">Share this URL or scan the QR code to verify this certificate on any device.</p>
+            </div>
+          </div>
+        </div>
+
+      {% elif result.legacy %}
+        <div class="verify-result legacy">
+          <div class="result-badge warn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Certificate Found — Legacy (No Digital Signature)
+          </div>
+          <div class="result-grid">
+            <span class="result-label">Name</span>
+            <span class="result-val">{{ a.user.name or a.user.email.split('@')[0] }}</span>
+            <span class="result-label">Course</span>
+            <span class="result-val">The Anatomy of Code — CCA-F</span>
+            <span class="result-label">Level</span>
+            <span class="result-val">{{ a.difficulty | capitalize }}</span>
+            <span class="result-label">Score</span>
+            <span class="result-val score">{{ (a.score * 100) | int }}%</span>
+            <span class="result-label">Issued</span>
+            <span class="result-val">{{ a.submitted_at[:10] }}</span>
+            <span class="result-label">Certificate ID</span>
+            <span class="result-val"><code>{{ a.cert_id }}</code></span>
+          </div>
+          <div class="result-sig no-sig">
+            This certificate was issued before digital signatures were introduced. The record exists in our database but cannot be cryptographically verified. Contact <strong>academy@deptagency.com</strong> to request a re-issued certificate.
+          </div>
+        </div>
+
+      {% else %}
+        <div class="verify-result valid">
+          <div class="result-badge ok">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Verified
+          </div>
+          <div class="result-grid">
+            <span class="result-label">Certificate ID</span>
+            <span class="result-val"><code>{{ a.cert_id }}</code></span>
+            <span class="result-label">Course</span>
+            <span class="result-val">The Anatomy of Code — CCA-F</span>
+          </div>
+          <div class="result-sig no-sig">Signature check unavailable for this record. Contact academy@deptagency.com to confirm.</div>
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div class="verify-result invalid">
+        <div class="result-badge err">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Invalid Certificate
+        </div>
+        <p style="font-size:14px;color:var(--ink-soft);margin:0">
+          No passing certificate with ID <code style="font-family:var(--mono,'JetBrains Mono');font-size:13px">{{ cert_id }}</code> was found in our records.
+          Check the ID on the certificate and try again. If you believe this is an error, contact <strong>academy@deptagency.com</strong>.
+        </p>
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <div class="verify-hint">
+    Certificate IDs follow the format <code style="font-family:var(--mono,'JetBrains Mono');font-size:12px">CCA-F-YYYYMMDD-XXXXXXXX</code> and appear on the certificate PDF and on the candidate's history page. Test codes (AOC-...) are separate and not verifiable here.
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if result and result.found and result.valid and result.attempt %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" crossorigin="anonymous"></script>
+<script>
+  (function(){
+    var certId = {{ result.attempt.cert_id | tojson }};
+    var url = 'https://dept.academy/verify/' + certId;
+    try {
+      new QRCode(document.getElementById('verifyQR'), {
+        text: url,
+        width: 100,
+        height: 100,
+        colorDark: getComputedStyle(document.documentElement).getPropertyValue('--ink').trim() || '#0a0a0a',
+        colorLight: getComputedStyle(document.documentElement).getPropertyValue('--paper').trim() || '#ffffff',
+        correctLevel: QRCode.CorrectLevel.M,
+      });
+    } catch(e) {}
+  })();
+</script>
+{% endif %}
+{% endblock %}

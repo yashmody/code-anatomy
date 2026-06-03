@@ -44,8 +44,8 @@ DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'q0.db'}")
 
 COOLDOWN_DAYS = int(os.getenv("COOLDOWN_DAYS", "7"))
 PASS_THRESHOLD = float(os.getenv("PASS_THRESHOLD", "0.7"))  # 70%
-QUIZ_DURATION_MIN = int(os.getenv("QUIZ_DURATION_MIN", "20"))
-QUESTIONS_PER_QUIZ = int(os.getenv("QUESTIONS_PER_QUIZ", "10"))
+QUIZ_DURATION_MIN = int(os.getenv("QUIZ_DURATION_MIN", "45"))   # 45 min for 30-question quiz
+QUESTIONS_PER_QUIZ = int(os.getenv("QUESTIONS_PER_QUIZ", "30"))
 
 # Ensure dirs exist
 for d in (QUIZ_RESULTS_DIR, CERTIFICATES_DIR, OUTBOX_DIR):
