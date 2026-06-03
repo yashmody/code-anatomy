@@ -259,6 +259,8 @@
 
   /* architecture diagrams — block-by-block stack */
   .arch-diagram{background:var(--paper-2);border:1px solid var(--rule);padding:22px 18px 26px;margin:10px 0 14px;display:flex;flex-direction:column;align-items:center}
+  .arch-diagram pre.mermaid{width:100%;text-align:left}
+  .arch-diagram pre.mermaid svg{max-width:100% !important;height:auto !important}
   .arch-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:18px;align-self:stretch;display:flex;align-items:center;gap:10px}
   .arch-title::before{content:"";width:8px;height:8px;background:var(--ochre);flex-shrink:0}
   .arch-title::after{content:"";flex:1;height:1px;background:var(--rule)}
@@ -565,13 +567,20 @@
       <a href="#anatomy" style="padding-left:32px;font-size:11px"><span class="num">↳</span>Anatomy of Code (C)</a>
       <a href="#coder" style="padding-left:32px;font-size:11px"><span class="num">↳</span>Stalwart (C)</a>
       <a href="#deployment101" style="padding-left:32px;font-size:11px"><span class="num">↳</span>Deployment 101 (D)</a>
+      <a href="#cloud-manager" style="padding-left:32px;font-size:11px"><span class="num">↳</span>Cloud Manager Pipelines</a>
       <a href="#coder-o" style="padding-left:32px;font-size:11px"><span class="num">↳</span>Quality 101 (O)</a>
       <a href="#coder-e" style="padding-left:32px;font-size:11px"><span class="num">↳</span>External 101 (E)</a>
       <a href="#coder-r" style="padding-left:32px;font-size:11px"><span class="num">↳</span>Release 101 (R)</a>
+      <a href="#ajo" style="padding-left:32px;font-size:11px"><span class="num">↳</span>AJO — Journey Optimizer</a>
+      <a href="#adobe-analytics" style="padding-left:32px;font-size:11px"><span class="num">↳</span>Adobe Analytics</a>
+      <a href="#campaign" style="padding-left:32px;font-size:11px"><span class="num">↳</span>Adobe Campaign</a>
+      <a href="#cja" style="padding-left:32px;font-size:11px"><span class="num">↳</span>CJA — Customer Journey Analytics</a>
+      <a href="#bmad" style="padding-left:32px;font-size:11px"><span class="num">↳</span>BMAD — Architect-Driven Dev</a>
       <a href="#nest"><span class="num">I</span>How It Nests</a>
       <a href="#review"><span class="num">I</span>Executive Review</a>
       <a href="#watch"><span class="num">I</span>Who Watches What</a>
       <div class="toc-part"></div>
+      <a href="#llmo" style="padding-left:32px;font-size:11px"><span class="num">↳</span>LLMO — LLM Optimisation</a>
       <a href="#part3-prompt"><span class="num">II</span>Prompt Architecture</a>
       <a href="#part3-vocab"><span class="num">II</span>Event Vocabulary</a>
       <a href="#part3-contracts"><span class="num">II</span>Contract-Driven Dev</a>
@@ -656,20 +665,18 @@
   <li>The XML sitemap is a contract between SEO, Content, and Engineering — it defines what exists, what is indexable, and what the CMS must produce on every publish event</li>
   <li>Content velocity is measurable: if an author needs more than 3 clicks to publish a page, the authoring model is wrong and throughput will be the constraint every release</li>
 </ul></div>
-<div class="arch-diagram"><pre>
-Content Approval State Machine
-────────────────────────────────────────────────────────────────────
-
-  ┌───────┐     ┌───────────┐     ┌──────────┐     ┌───────────┐     ┌──────┐     ┌──────────┐
-  │ Draft │ ──▶ │ In Review │ ──▶ │ Approved │ ──▶ │ Scheduled │ ──▶ │ Live │ ──▶ │ Archived │
-  └───────┘     └───────────┘     └──────────┘     └───────────┘     └──────┘     └──────────┘
-      ▲               │                 │                                 │
-      └───────────────┘                 └── Rejected ──────────────────▶ ┘
-                 (rework)                   (returns to Draft)
-
-  Gate owners must be named individuals, not teams. Each arrow carries an SLA.
-────────────────────────────────────────────────────────────────────
-</pre></div>
+<div style="margin:10px 0 14px">
+  <div style="font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px">Content Approval States</div>
+  <div class="flow">
+    <span class="node">Draft</span><span class="sep">→</span>
+    <span class="node ochre">In Review</span><span class="sep">→</span>
+    <span class="node ochre">Approved</span><span class="sep">→</span>
+    <span class="node ochre">Scheduled</span><span class="sep">→</span>
+    <span class="node alt">Live</span><span class="sep">→</span>
+    <span class="node">Archived</span>
+  </div>
+  <p style="font-size:12.5px;color:var(--ink-faint);font-family:var(--mono);margin-top:8px;letter-spacing:.02em">↳ Rejected at any gate returns to Draft · Gate owners must be named individuals, not teams · each arrow carries an SLA</p>
+</div>
 <div class="callout callout-why"><span class="callout-label">Why This Matters</span><p>DAM folder taxonomy is an architecture decision, not a filing preference. The folder structure chosen in Discovery drives rendition paths, IAM permission groups, CDN cache-key patterns, and AEM replication rules. A brand-first hierarchy (<code>/brand/campaign/locale</code>) and a locale-first hierarchy (<code>/locale/brand/campaign</code>) produce entirely different CDN invalidation scopes and different asset-sharing rules across markets. Getting this wrong in week 2 costs weeks to unwind in Sprint 8 — after assets are referenced in hundreds of content fragments and replication agents are already configured.</p></div>
 
 <div class="callout callout-pitfall"><span class="callout-label">Common Pitfall</span><p>Teams that skip approval workflow design before CMS configuration consistently ship pages that have never passed legal review. The approval topology — who approves, in what order, with what SLA, with what escalation path — must be modelled as a swimlane diagram before the first workflow is configured in the CMS. Retrofitting approval gates after a compliance incident means touching live workflow definitions, retraining authors mid-project, and auditing every piece of content published in the gap. Design the topology first; wire it second.</p></div>
@@ -4909,7 +4916,7 @@ flowchart TD
   </div>
 
   <div class="arch-diagram"><pre class="mermaid">
-graph LR
+flowchart LR
     A([Trigger Event\nXDM: commerce.purchase]) --> B[Journey Entry\nEntry condition check]
     B --> C[Wait Node\n24h]
     C --> D{Profile\nattribute check}
@@ -5045,43 +5052,21 @@ graph LR
   <h4>5 · BMAD artefact dependency map</h4>
   <p>The six BMAD artefacts are not independent. The Hypothesis constrains the ADR log; the ADR log governs the contracts; the contracts feed the Stalwart prompts. Remove one and the chain breaks. The Event Registry sits alongside the Contract Set — it is the dynamic contract that lives at runtime.</p>
 
-  <div class="arch-diagram"><pre>
-BMAD ARTEFACT DEPENDENCY MAP
-─────────────────────────────────────────────────────────────
+  <div class="arch-diagram"><pre class="mermaid">
+flowchart TD
+    A["<b>HYPOTHESIS</b><br/>What must this project achieve,<br/>and how is success measured?"]
+    B["<b>ADR LOG</b><br/>Architecture Decision Records<br/>Context · Decision · Consequences · Status"]
+    C["<b>CONTRACT SET</b><br/>Per-component:<br/>file roster · data schemas · 'not for' rules"]
+    D["<b>EVENT REGISTRY</b><br/>domain:entity:action<br/>payload schema · subscriber map"]
+    E["<b>STALWART PROMPT LIBRARY</b><br/>One prompt per feature archetype<br/>Contracts embedded — AI cannot deviate"]
+    F(["AI-generated code"])
 
-  ┌─────────────────────────────────────────────────────┐
-  │  HYPOTHESIS                                         │
-  │  "What must this project achieve, and how is        │
-  │   success measured?"                                │
-  └────────────────────┬────────────────────────────────┘
-                       │ filters scope of
-                       ▼
-  ┌─────────────────────────────────────────────────────┐
-  │  ADR LOG                                            │
-  │  Architecture Decision Records                      │
-  │  Context / Decision / Consequences / Status         │
-  └───────────┬─────────────────────────────────────────┘
-              │ informs shape of
-              ▼
-  ┌─────────────────────────────┐   ┌─────────────────────┐
-  │  CONTRACT SET               │   │  EVENT REGISTRY     │
-  │  Per-component:             │◄──│  domain:action      │
-  │  · file roster              │   │  payload contracts  │
-  │  · data schemas             │   │  subscriber map     │
-  │  · "not for" rules          │   └─────────────────────┘
-  └──────────────┬──────────────┘
-                 │ feeds
-                 ▼
-  ┌─────────────────────────────────────────────────────┐
-  │  STALWART PROMPT LIBRARY                            │
-  │  One prompt per feature archetype                   │
-  │  (search · form · dashboard · integration · flow)   │
-  │  Contracts embedded — AI cannot deviate             │
-  └─────────────────────────────────────────────────────┘
-                 │ governs
-                 ▼
-           AI-generated code
-</pre></div>
+    A -->|filters scope of| B
+    B -->|informs shape of| C
+    D -->|feeds| C
+    C -->|feeds| E
+    E -->|governs| F
+  </pre></div>
 
   <!-- 6 · Worked example -->
   <h4>6 · Worked BMAD example — product filter feature</h4>
