@@ -112,6 +112,7 @@
   .flow .node{background:var(--card);border:1.5px solid var(--ink);padding:9px 15px;font-weight:700;letter-spacing:.03em}
   .flow .node.alt{background:var(--ink);color:var(--paper)}
   .flow .node.ochre{border-color:var(--ochre);color:var(--ochre-deep)}
+  .flow .node small{display:block;margin-top:3px;font-family:var(--body);font-size:10.5px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--ink-faint)}
   .flow .sep{color:var(--ochre);font-weight:700;font-size:16px}
   .flow .br{flex-basis:100%;height:0}
 
@@ -261,17 +262,30 @@
   .arch-diagram{background:var(--paper-2);border:1px solid var(--rule);padding:22px 18px 26px;margin:10px 0 14px;display:flex;flex-direction:column;align-items:center}
   .arch-diagram pre.mermaid{width:100%;text-align:center}
   .arch-diagram pre.mermaid svg{max-width:100%;height:auto}
+  /* sequence diagrams: the base theme renders the message layer white, which vanishes on
+     the light diagram ground. Force it to theme-aware ink so it reads in light and dark. */
+  .arch-diagram pre.mermaid .messageText,.arch-diagram pre.mermaid .messageText tspan{fill:var(--ink) !important}
+  .arch-diagram pre.mermaid .messageLine0,.arch-diagram pre.mermaid .messageLine1{stroke:var(--ink) !important}
+  .arch-diagram pre.mermaid [id$="-arrowhead"] path{fill:var(--ink) !important;stroke:var(--ink) !important}
+  .arch-diagram pre.mermaid .loopText,.arch-diagram pre.mermaid .loopText tspan{fill:var(--ink) !important}
+  /* flowchart edge labels (pass/fail/approved …): base theme renders them white-on-white.
+     Make text ink and the label ground match the diagram so they read in light and dark. */
+  .arch-diagram pre.mermaid .edgeLabel,.arch-diagram pre.mermaid .edgeLabel p,.arch-diagram pre.mermaid .edgeLabel span{color:var(--ink) !important;fill:var(--ink) !important;background-color:var(--paper-2) !important}
+  .arch-diagram pre.mermaid .edgeLabel rect,.arch-diagram pre.mermaid .labelBkg{fill:var(--paper-2) !important;background-color:var(--paper-2) !important}
   .arch-title{font-family:var(--mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:18px;align-self:stretch;display:flex;align-items:center;gap:10px}
   .arch-title::before{content:"";width:8px;height:8px;background:var(--ochre);flex-shrink:0}
   .arch-title::after{content:"";flex:1;height:1px;background:var(--rule)}
   .arch-row{display:flex;gap:12px;align-items:stretch;flex-wrap:wrap;justify-content:center}
   .arch-down{width:2px;height:24px;background:var(--rule);margin:2px 0;position:relative}
   .arch-down::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--rule)}
-  .arch-fanout{width:80%;max-width:340px;height:2px;background:var(--rule);margin:2px 0 0;position:relative}
-  .arch-fanout::before,.arch-fanout::after{content:"";position:absolute;top:0;width:2px;height:14px;background:var(--rule)}
-  .arch-fanout::before{left:0}
-  .arch-fanout::after{right:0}
-  .arch-fanout .mid{position:absolute;top:0;left:50%;transform:translateX(-50%);width:2px;height:14px;background:var(--rule)}
+  /* fan-out connector — bus bar tracks the fanned row; one up-tick per node, so it
+     stays aligned for any node count or width. .arch-fanout is the centre stem. */
+  .arch-fanout{width:2px;height:14px;background:var(--rule);margin:2px 0 0;position:relative}
+  .arch-fanout .mid{display:none}
+  .arch-fanout + .arch-row{position:relative;margin-top:14px}
+  .arch-fanout + .arch-row::before{content:"";position:absolute;top:-14px;left:0;right:0;height:2px;background:var(--rule)}
+  .arch-fanout + .arch-row > .arch-node{position:relative}
+  .arch-fanout + .arch-row > .arch-node::before{content:"";position:absolute;top:-14px;left:50%;transform:translateX(-50%);width:2px;height:14px;background:var(--rule)}
   .arch-node{background:var(--paper);border:1.5px solid var(--ink);padding:10px 14px;font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.02em;min-width:120px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:3px;line-height:1.25;color:var(--ink)}
   .arch-node small{font-family:var(--body);font-size:10.5px;font-weight:400;color:var(--ink-faint);letter-spacing:0;text-transform:none}
   .arch-node.user{border-style:dashed;border-color:var(--ink-faint);color:var(--ink-soft);background:transparent}
@@ -304,11 +318,12 @@
   @media(max-width:680px){.log-table{grid-template-columns:1fr}}
 
   /* maturity ladder — stepped horizontal progression */
-  .maturity{display:flex;gap:6px;align-items:stretch;overflow-x:auto;padding:6px 0 14px;margin:12px 0 8px}
-  .ml-step{flex:1;min-width:128px;padding:14px 14px 14px 14px;background:var(--card);border:1px solid var(--rule);border-top:3px solid var(--rule);display:flex;flex-direction:column;gap:7px;position:relative;transition:.2s}
+  .maturity{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:6px 0 14px;margin:12px 0 8px}
+  .ml-step{min-width:0;padding:14px 14px 14px 14px;background:var(--card);border:1px solid var(--rule);border-top:3px solid var(--rule);display:flex;flex-direction:column;gap:7px;position:relative;transition:.2s}
   .ml-step:hover{border-top-color:var(--ochre)}
   .ml-step::after{content:"→";position:absolute;right:-13px;top:50%;transform:translateY(-50%);color:var(--ochre);font-family:var(--mono);font-weight:700;font-size:14px;z-index:2;background:var(--paper);width:18px;height:18px;display:flex;align-items:center;justify-content:center;line-height:1}
-  .ml-step:last-child::after{display:none}
+  .ml-step:last-child::after,.ml-step:nth-child(4n)::after{display:none}
+  @media(max-width:600px){.maturity{grid-template-columns:repeat(2,1fr)}.ml-step::after{display:none}}
   /* progressively brighter orange */
   .ml-step[data-level="0"]{border-top-color:var(--rule)}
   .ml-step[data-level="1"]{border-top-color:rgba(255,73,0,.25)}
@@ -335,6 +350,8 @@
   .callout-label{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--ochre);border:1px solid var(--ochre);padding:2px 8px;margin-bottom:10px;font-weight:700;line-height:1.6}
   .callout p,.callout li{font-size:14px;color:var(--ink-soft);line-height:1.6;margin:4px 0}
   .callout ul{margin:8px 0 0;padding-left:18px}
+  .callout>:first-child{margin-top:0}
+  .callout>:last-child,.callout li:last-child{margin-bottom:0}
   /* Why This Matters */
   .callout-why{border-left-color:var(--ochre)}
   .callout-why .callout-label{color:var(--ochre);border-color:var(--ochre)}
@@ -3535,7 +3552,19 @@ test(<span class="str">'getUserById returns user even if email is uppercased'</s
 
           <div class="arch-diagram">
             <div class="arch-title">Google OAuth · Authorization Code with PKCE</div>
-            <div class="arch-row"><div class="arch-node user">Browser</div><div class="arch-node">Your app</div><div class="arch-node edge">Google</div></div>
+<pre class="mermaid">sequenceDiagram
+    participant B as Browser
+    participant A as Your server
+    participant G as Google
+    A->>B: 1 · Redirect to /o/oauth2/v2/auth<br/>client_id · redirect_uri · scope · state · code_challenge
+    B->>G: Follow redirect
+    Note over B,G: 2 · User logs in and grants consent
+    G->>B: 3 · Redirect to redirect_uri<br/>one-time code
+    B->>A: Deliver code to redirect_uri
+    A->>G: 4 · POST /token<br/>code · code_verifier · client_secret
+    G->>A: access_token · refresh_token · id_token
+    Note over A: 5 · Validate id_token JWT<br/>signature · iss · aud · exp<br/>use sub as the user key
+</pre>
           </div>
 
           <ul class="notes">
