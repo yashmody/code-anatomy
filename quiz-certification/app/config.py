@@ -43,9 +43,17 @@ QUESTION_BANK = BASE_DIR / "data" / "question_bank.json"
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'q0.db'}")
 
 COOLDOWN_DAYS = int(os.getenv("COOLDOWN_DAYS", "7"))
-PASS_THRESHOLD = float(os.getenv("PASS_THRESHOLD", "0.7"))  # 70%
 QUIZ_DURATION_MIN = int(os.getenv("QUIZ_DURATION_MIN", "45"))   # 45 min for 30-question quiz
 QUESTIONS_PER_QUIZ = int(os.getenv("QUESTIONS_PER_QUIZ", "30"))
+
+# Pass mark — absolute number of correct answers required to pass.
+# Default: 25 of 30. This is the single source of truth for passing.
+PASS_MARK_CORRECT = int(os.getenv("PASS_MARK_CORRECT", "25"))
+
+# Derived percentage, used only for display (e.g. "Pass mark 83%").
+PASS_THRESHOLD = (
+    PASS_MARK_CORRECT / QUESTIONS_PER_QUIZ if QUESTIONS_PER_QUIZ else 0.0
+)
 
 # Ensure dirs exist
 for d in (QUIZ_RESULTS_DIR, CERTIFICATES_DIR, OUTBOX_DIR):

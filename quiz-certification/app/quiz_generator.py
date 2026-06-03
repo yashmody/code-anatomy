@@ -138,6 +138,7 @@ def grade(server_answers: Dict[str, int], user_answers: Dict[str, int]) -> Dict:
         "total": total,
         "correct": correct,
         "score": score,
-        "passed": score >= config.PASS_THRESHOLD,
+        "pass_mark": config.PASS_MARK_CORRECT,
+        "passed": correct >= config.PASS_MARK_CORRECT,
         "per_question": per_question,
     }

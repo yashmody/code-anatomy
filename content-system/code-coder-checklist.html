@@ -150,10 +150,13 @@
       <a href="#design"><span style="color:var(--ochre);margin-right:8px">D</span>Design &amp; Data</a>
       <a href="#engineering"><span style="color:var(--ochre);margin-right:8px">E</span>Engineering</a>
       <div class="toc-part">CODER · Inside Engineering</div>
+      <a href="#platform">Platform Architecture</a>
       <a href="#code"><span style="color:var(--ochre);margin-right:8px">C</span>Code</a>
       <a href="#optimization"><span style="color:var(--ochre);margin-right:8px">O</span>Optimization &amp; Quality</a>
       <a href="#deployment"><span style="color:var(--ochre);margin-right:8px">D</span>Deployment</a>
       <a href="#external"><span style="color:var(--ochre);margin-right:8px">E</span>External Integrations</a>
+      <a href="#networking">Networking &amp; API Gateway</a>
+      <a href="#auth-authz">Auth &amp; Authorisation</a>
       <a href="#release"><span style="color:var(--ochre);margin-right:8px">R</span>Release Management</a>
     </nav>
 
@@ -366,6 +369,63 @@
       </div>
 
       <!-- ============ PART II: CODER ============ -->
+
+      <!-- Platform Architecture -->
+      Good. I have a clear picture of the format. Now I'll produce the Platform node HTML.
+
+<div class="node" id="platform">
+  <div class="node-head">
+    <div class="node-head-left">
+      <div class="node-letter">P</div>
+      <div>
+        <div class="node-name">Platform Architecture</div>
+        <div class="node-tag">AEM EDS · AEMaaCS · Commerce · Stack selection</div>
+      </div>
+    </div>
+    <button class="copy-section">Copy section</button>
+  </div>
+  <div class="columns">
+    <div class="col">
+      <div class="col-label">Ask the customer</div>
+      <ul class="questions">
+        <li>Are you evaluating Edge Delivery Services, AEM as a Cloud Service, or both — and what is driving that evaluation today?</li>
+        <li>Who authors content — marketing power users, developers, or a distributed editorial team — and what is their technical comfort level?</li>
+        <li>Is document-based authoring in SharePoint or Google Drive acceptable, or do authors require a traditional AEM page editor?</li>
+        <li>What is your content publishing velocity — how many pages or components change per day, and does a static-first delivery model hold at that cadence?</li>
+        <li>What CDN do you currently run, and does consolidating to EDS's managed CDN fit your security and procurement constraints?</li>
+        <li>What are your personalisation requirements — segment-level, 1:1, or rule-based — and do they require server-side rendering at edge or can they be deferred to client-side?</li>
+        <li>Are you on AEM 6.x on-premises, AEM Managed Services, or already on AEMaaCS — and what is the migration trigger: end-of-support, cost pressure, or feature gap?</li>
+        <li>Who holds the AEM licence — your organisation or the agency — and what are the renewal and cost-allocation constraints?</li>
+        <li>What is your tolerance for fortnightly platform auto-updates: do you have a regression test suite that can gate a fortnightly Cloud Manager pipeline?</li>
+        <li>Is this commerce deployment B2B, B2C, or a mixed model — and if B2B, how many buyer organisations, cost centres, and contract pricing tiers are in scope?</li>
+        <li>What is your current and projected order volume — average daily orders and peak orders-per-minute during promotions?</li>
+        <li>Which commerce platform is in scope — Adobe Commerce, Salesforce Commerce Cloud, Commercetools, or another — and is the storefront headless today or tightly coupled to the platform?</li>
+        <li>Who owns the checkout experience — a PSP-hosted page, a custom implementation, or a third-party accelerator?</li>
+        <li>What is the combined budget for platform licensing across AEM and Commerce, and is that budget fixed or tied to a business case that needs validating?</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div class="col-label">Ask the OEM provider</div>
+      <ul class="questions">
+        <li>What are the contractual performance SLAs for EDS — specifically TTFB and LCP targets, and what remedies apply if those are missed?</li>
+        <li>What personalisation options are native to EDS, and at what point does the architecture require a third-party decisioning engine or client-side injection?</li>
+        <li>What is the EDS CDN topology — which PoP network does it run on — and can customers bring an existing Akamai, Fastly, or Cloudflare contract in front of it?</li>
+        <li>How quickly does a content change in SharePoint or Google Drive propagate to the edge, and what is the revalidation mechanism — pull, push, or webhook-triggered purge?</li>
+        <li>Which authoring surfaces are officially supported by EDS today — SharePoint, Google Drive, Universal Editor — and what is the roadmap for any that are still in beta?</li>
+        <li>What is the AEMaaCS auto-update policy — can a release window be deferred, and if so for how long and under what support agreement tier?</li>
+        <li>What is the published uptime SLA for AEMaaCS publish tier, author tier, and the Assets API separately, and are those covered by the same or different SLA credits?</li>
+        <li>How is Dispatcher configuration managed in AEMaaCS — is it code-deployed via Cloud Manager, and what rules cannot be overridden by a customer?</li>
+        <li>What is the Cloud Manager environment limit per programme, what does an additional non-production environment cost, and is there a sandbox tier for proof-of-concept work?</li>
+        <li>What is the supported migration path and tooling from AEM 6.5 to AEMaaCS — what does the BPA report cover, and what is a realistic migration timeline for a 50 000-page site?</li>
+        <li>What is the uptime SLA on commerce checkout and storefront APIs, and what is the compensation model when that SLA is breached during a peak promotional window?</li>
+        <li>What are the rate limits on storefront and cart APIs at peak load, and what is the process for requesting a temporary burst allowance ahead of a planned promotion?</li>
+        <li>How is a B2B account hierarchy — buyer organisation, sub-accounts, cost centres, and contract-specific pricing — modelled in the platform's native data model, and what requires customisation?</li>
+        <li>What payment gateways are natively certified on the platform, and what is the integration path for a PSP not on that list — certified extension, custom module, or not supported?</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
       <div class="part-head">
         <div class="pno">Part Two</div>
         <h2>CODER — Inside Engineering</h2>
@@ -571,6 +631,121 @@
           </div>
         </div>
       </div>
+
+      <!-- Networking & API Gateway -->
+      <div class="node" id="networking">
+  <div class="node-head">
+    <div class="node-head-left">
+      <div class="node-letter">N</div>
+      <div>
+        <div class="node-name">Networking & API Gateway</div>
+        <div class="node-tag">CDN · gateway · latency · topology · DNS</div>
+      </div>
+    </div>
+    <button class="copy-section">Copy section</button>
+  </div>
+  <div class="columns">
+    <div class="col">
+      <div class="col-label">Ask the customer</div>
+      <ul class="questions">
+        <li>Do you have an existing CDN contract, and which vendor — Akamai, Cloudflare, Fastly, or AWS CloudFront?</li>
+        <li>Is the CDN choice mandated by procurement or security policy, or can it be changed for this project?</li>
+        <li>What is your current CDN cache hit rate, and is it actively measured and reported on?</li>
+        <li>Are you on shared CDN infrastructure or a dedicated tenant, and does your contract allow you to change that?</li>
+        <li>What is the CDN cost model — flat fee, per-GB egress, or request-based — and what are the overage charges?</li>
+        <li>Is there a corporate API gateway mandate, and which product — Kong, AWS API GW, Azure APIM, or Apigee?</li>
+        <li>What authentication is enforced at the gateway today — mTLS, API key, OAuth, or a combination?</li>
+        <li>Do you operate a service registry or API catalogue, and who is responsible for keeping it current?</li>
+        <li>Which team owns the API gateway — a central platform team, an infra team, or individual squads?</li>
+        <li>What rate limiting policies are in place today, and are they enforced at the gateway or per-service?</li>
+        <li>Do you have private network requirements — VPC peering, private endpoints, ExpressRoute, or Direct Connect?</li>
+        <li>Are there firewall rules or egress restrictions that affect outbound calls from application servers?</li>
+        <li>Do you have IP allowlisting requirements for external integrations, and who manages that list?</li>
+        <li>Who controls DNS, what is the TTL policy, and are there approval workflows that add latency to propagation?</li>
+        <li>Do you operate in regions with data residency requirements that constrain how traffic is routed or where it terminates?</li>
+        <li>What are your latency budgets per API call tier — internal service-to-service, external customer-facing, and third-party integrations?</li>
+      </ul>
+    </div>
+    <div class="col">
+      <div class="col-label">Ask the OEM provider</div>
+      <ul class="questions">
+        <li>What is the cache invalidation mechanism — URL-based, tag-based, or API-triggered — and which tiers of service include it?</li>
+        <li>What is the guaranteed propagation time from an invalidation request to all edge nodes confirming the cache is cleared?</li>
+        <li>Is the CDN WAF included at the contracted tier, or is it a separately licensed add-on with its own pricing?</li>
+        <li>Can customers bring their own TLS certificates and configure custom domains, and is there a limit on the number of domains?</li>
+        <li>Do you publish a stable CDN IP range list, and how are customers notified if that list changes?</li>
+        <li>What API gateway is included or recommended at the contracted price tier, and what does it cost to upgrade?</li>
+        <li>What authentication schemes does the platform's API natively enforce, and which require custom middleware?</li>
+        <li>What are the burst rate limits per endpoint, how are they surfaced to clients — response header, portal alert, or proactive notification?</li>
+        <li>Is a developer portal and API catalogue included in the platform, or must the customer provision and maintain their own?</li>
+        <li>How are breaking API changes communicated, what notice period is guaranteed, and what is the deprecation lifecycle policy?</li>
+        <li>Does the platform support VPC peering or private connectivity — AWS PrivateLink, Azure Private Endpoint — to customer environments?</li>
+        <li>What are the platform's egress IP ranges that customers must allowlist, and how are changes to those ranges announced?</li>
+        <li>Does the platform manage DNS for the customer's domain, or does the customer retain full DNS control with a CNAME delegation only?</li>
+        <li>What is the DDoS protection model — volumetric scrubbing, rate limiting, or a managed service — and who is the escalation contact during an active attack?</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+      <!-- Authentication & Authorisation -->
+      <div class="node" id="auth-authz">
+  <div class="node-head">
+    <div class="node-head-left">
+      <div class="node-letter">A</div>
+      <div>
+        <div class="node-name">Authentication & Authorisation</div>
+        <div class="node-tag">SSO · SAML · OAuth · OIDC · JWT · permissions</div>
+      </div>
+    </div>
+    <button class="copy-section">Copy section</button>
+  </div>
+  <div class="columns">
+    <div class="col">
+      <div class="col-label">Ask the customer</div>
+      <ul class="questions">
+        <li>How many distinct identity systems are in production today — Azure AD, Okta, Ping, custom LDAP, Cognito — and which is the system of record?</li>
+        <li>Is there a corporate IdP mandate, and which team owns the contract and configuration?</li>
+        <li>How many distinct user populations exist — internal employees, external customers, partners, B2B buyers — and do they authenticate against the same IdP?</li>
+        <li>Is enterprise SSO required for CMS author logins, customer-facing logins, or both?</li>
+        <li>What protocol is in use for current internal-tool SSO — SAML 2.0 or OIDC?</li>
+        <li>Are there federated identity requirements — multiple upstream IdPs, cross-domain identity brokering, or guest-identity flows?</li>
+        <li>Is the customer-facing site fully behind a login wall, fully public, or a mixed model with optional authentication?</li>
+        <li>What is the expected peak concurrent authenticated session count, and is that number contractually defined anywhere?</li>
+        <li>Is social login in scope — Google, Apple, LinkedIn — and if so, for which user populations?</li>
+        <li>What is the required account self-service scope — registration, email verification, password reset, MFA enrolment, account deletion?</li>
+        <li>Are there machine-to-machine integrations that require OAuth 2.0 client credentials flow, and which services are the clients?</li>
+        <li>Are JWTs in use today, and if so what is the current signing key rotation policy and who triggers rotation?</li>
+        <li>What OAuth scopes and OIDC claims must be carried in tokens to satisfy downstream service authorisation?</li>
+        <li>Is the permission model RBAC, ABAC, or flat ACL, and how many roles are anticipated at go-live?</li>
+        <li>Are permissions synchronised from IdP group membership, or managed independently inside the application layer?</li>
+        <li>Are there session timeout durations or MFA requirements mandated by the security policy, and do they differ by user population?</li>
+      </ul>
+      <p class="col-note">Reference the AEM × Banking FAQ for networking and compliance-specific auth patterns in regulated industries.</p>
+    </div>
+    <div class="col">
+      <div class="col-label">Ask the OEM provider</div>
+      <ul class="questions">
+        <li>Which identity protocols does the platform support natively — SAML 2.0, OIDC, OAuth 2.0, LDAP — and which require a paid add-on or custom connector?</li>
+        <li>Are there certified, pre-built connectors for Azure AD, Okta, and Ping Identity, and what is the support tier for each?</li>
+        <li>What MFA methods are supported natively — TOTP, FIDO2/WebAuthn, SMS OTP, push notification — and which require third-party integration?</li>
+        <li>Does the platform support both SP-initiated and IdP-initiated SAML flows, and are there known limitations with either?</li>
+        <li>Can the platform act as both a SAML SP and a SAML IdP in the same deployment?</li>
+        <li>What SAML attribute mappings are configurable in the assertion, and is that configuration self-service or requires a support ticket?</li>
+        <li>Does the platform support OAuth 2.0 authorisation code flow with PKCE for single-page application clients?</li>
+        <li>What are the default access token and refresh token lifetimes, and are they configurable per client or per application?</li>
+        <li>Is refresh token rotation supported, and what is the behaviour on concurrent use of a rotated token?</li>
+        <li>Does the platform expose a JWKS endpoint for public key retrieval, and what is the key rollover process?</li>
+        <li>Are platform-issued JWTs signed with RS256 or HS256, is the algorithm configurable, and what custom claims can be injected?</li>
+        <li>What is the session management model — server-side session store, stateless JWT, or cookie — and is that configurable per deployment?</li>
+        <li>Is there built-in credential stuffing defence, bot protection, and account-takeover detection — rate limiting, anomaly scoring, IP blocking — or does that require an external WAF?</li>
+        <li>Is SAML single logout implemented, and does it propagate logout to all federated sessions?</li>
+        <li>Is SCIM 2.0 provisioning supported for automated user lifecycle management from the upstream IdP?</li>
+        <li>What are the documented rate limits on authentication endpoints — logins per second, token issuance per minute — and what is the SLA for auth availability independently of the application tier?</li>
+      </ul>
+    </div>
+  </div>
+</div>
 
       <!-- Release Management -->
       <div class="node" id="release">

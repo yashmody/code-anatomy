@@ -286,6 +286,24 @@ footer a{color:var(--ochre)}
       </div>
     </div>
 
+    <div class="step">
+  <div class="step-q">AEM EDS vs AEMaaCS — the authoring model first</div>
+  <div class="step-body">Settle the authoring paradigm before any technical architecture is drawn. Document-based authoring (EDS with Drive or SharePoint) and traditional AEM component authoring are not interchangeable delivery modes — they carry fundamentally different performance contracts, author personas, and personalisation ceilings. The decision criteria are: content velocity needed, whether the primary author is a marketer or a developer, personalisation depth required, SEO and Core Web Vitals targets (EDS has structural edge-rendering advantages), and long-term flexibility for the client's team to own the platform. Make the call here; do not let it drift into the frontend architecture step.</div>
+  <ul>
+    <li><b>Output</b> · ADR recording the chosen authoring model and explicitly ruling out the three alternatives considered, with one-line rationale for each rejection</li>
+    <li><b>Trap</b> · choosing EDS because it is newer without modelling the personalisation gap. EDS is statically rendered at the edge — server-side personalisation requires a separate pattern (Target edge delivery, client-side hydration, or a KV store). If personalisation depth is high, EDS introduces complexity that AEMaaCS solves natively; picking EDS first and bolting on personalisation second is the single fastest way to blow the delivery budget.</li>
+  </ul>
+</div>
+
+<div class="step">
+  <div class="step-q">Commerce topology — headless or composable, B2B or B2C</div>
+  <div class="step-body">If commerce is in scope, agree the topology before the platform is named. Headless means a single commerce engine behind an API; composable means headless plus independently deployed microservices for cart, checkout, and catalogue. Two questions force the decision: "Does the product catalogue exceed 100,000 SKUs?" — yes means the solution needs a robust search and browse API, not CMS search — and "Are there B2B buyers with account-specific pricing?" — yes means an account hierarchy and contract pricing model must live in the commerce platform, not patched in from the CRM. B2C engagements add a third constraint: PSP-hosted fields must be scoped at this stage to contain PCI surface area, not retrofitted after the checkout is built.</div>
+  <ul>
+    <li><b>Output</b> · Commerce topology ADR covering: headless vs composable choice, B2B/B2C distinction with specific constraints called out, PSP selection rationale and PCI scope boundary, catalogue scale and the search/browse API pattern required</li>
+    <li><b>Trap</b> · selecting the commerce platform before the topology is agreed. Magento is a poor fit for a composable architecture; Commercetools is a poor fit for teams expecting a UI-driven, monolithic operator experience. Topology first, platform second — reversing that order costs a full re-platforming conversation at month three.</li>
+  </ul>
+</div>
+
     <!-- GREEN PHASE 3 -->
     <div class="phase">
       <div class="phase-head">
@@ -740,6 +758,29 @@ footer a{color:var(--ochre)}
       <h4>Architecture review with teeth</h4>
       <p>Weekly. Time-boxed. Decision-oriented. Each item arrives with an ADR draft, leaves with an outcome (approved · revise · rejected). Without an outcome, the meeting is theatre.</p>
     </div>
+    <div class="col green">
+<div class="vt">Always do</div>
+<h4>API gateway before the integration list</h4>
+<p>The API gateway is the enforcement layer for every integration: rate limiting, auth, logging, versioning, and routing all live there. Decide the gateway — AWS API Gateway, Kong, Azure APIM, Apigee — before any integration is built, not after the third integration breaks prod. The rule is simple: if an external system calls your API, or your API calls an external system, it goes through the gateway. Internal service-to-service calls are a separate ADR.</p>
+</div>
+
+<div class="col green">
+<div class="vt">Always do</div>
+<h4>Auth protocol decision in Discovery, not in Sprint 3</h4>
+<p>SAML vs OIDC vs OAuth 2.0 is not a developer decision. The architect decides in Discovery, with the security team and the IdP owner — a wrong choice in Sprint 3 is a rewrite in Sprint 7. The heuristic: SAML for enterprise SSO into legacy systems; OIDC for modern web and mobile; OAuth 2.0 client credentials for machine-to-machine; JWT as the token format for stateless APIs. They compose — OIDC sits on top of OAuth 2.0; SAML and OIDC can be bridged via an identity broker. See the Architect's FAQ for regulated-industry auth patterns.</p>
+</div>
+
+<div class="col amber">
+<div class="vt">Always avoid</div>
+<h4>Bypassing the API gateway for "just one integration"</h4>
+<p>Every bypassed integration becomes a shadow integration: no rate limiting, no auth enforcement, no logging, no circuit breaker. The first bypass is a precedent; the tenth is a security incident. If the gateway adds friction, fix the gateway — don't route around it.</p>
+</div>
+
+<div class="col amber">
+<div class="vt">Always avoid</div>
+<h4>JWT as a session mechanism without rotation</h4>
+<p>JWTs are stateless and cannot be revoked once issued — a stolen token with a 24-hour expiry is valid for 24 hours with no remediation path. The correct pattern: short-lived access token (15 minutes) paired with a long-lived refresh token that rotates on every use, with the previous token immediately invalidated. Session termination invalidates the refresh token server-side; the access token simply expires.</p>
+</div>
     <div class="col amber">
       <div class="vt">Always avoid</div>
       <h4>The hero pattern</h4>

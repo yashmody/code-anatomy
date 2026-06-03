@@ -115,7 +115,8 @@ async def home(request: Request):
         recommended=recommended,
         role_label=roles.label_for(user["role"]),
         questions_per_quiz=config.QUESTIONS_PER_QUIZ,
-        pass_threshold=int(config.PASS_THRESHOLD * 100),
+        pass_threshold=int(round(config.PASS_THRESHOLD * 100)),
+        pass_mark_correct=config.PASS_MARK_CORRECT,
         duration_minutes=config.QUIZ_DURATION_MIN,
         cooldown_days=config.COOLDOWN_DAYS,
     )
@@ -375,7 +376,13 @@ async def quiz_take(request: Request):
         return RedirectResponse("/login")
     if not user.get("role"):
         return RedirectResponse("/onboarding/role")
-    return _template(request, "quiz.html", duration_minutes=config.QUIZ_DURATION_MIN)
+    return _template(
+        request,
+        "quiz.html",
+        duration_minutes=config.QUIZ_DURATION_MIN,
+        pass_mark_correct=config.PASS_MARK_CORRECT,
+        questions_per_quiz=config.QUESTIONS_PER_QUIZ,
+    )
 
 
 # ---------- certificate ----------

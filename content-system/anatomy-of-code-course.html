@@ -585,6 +585,7 @@
       <a href="#part3-vocab"><span class="num">II</span>Event Vocabulary</a>
       <a href="#part3-contracts"><span class="num">II</span>Contract-Driven Dev</a>
       <a href="#part3-governance"><span class="num">II</span>AI Governance</a>
+      <a href="#part3-ai-routing"><span class="num">II</span>When to Use AI</a>
       <a href="#part3-future"><span class="num">II</span>The Horizon</a>
     </nav>
 
@@ -5424,6 +5425,213 @@ the top of biz.js. Confirm ADR-004 compliance in a comment block in init.js.</pr
             <li>Is there a clear path for "AI got it wrong" — escalation and rollback?</li>
             <li>How is AI-generated code attributed, and is that auditable?</li>
           </ul>
+        </div>
+      </section>
+
+      <!-- III.5 AI Routing — when and which model -->
+      <section class="module" id="part3-ai-routing">
+        <div class="mod-tag">AI Routing</div>
+        <h3>When to Use AI — and When Not To</h3>
+        <p class="lead">The most expensive mistake in AI-native development isn't a bad prompt — it's routing the wrong task to an LLM at all. Token cost is the obvious waste; the hidden cost is the latency, context-switching, and cognitive overhead of waiting for an AI to do something a one-line shell command would solve in 200 milliseconds.</p>
+
+        <div class="scan-box"><div class="scan-box-label">30-second scan</div><ul>
+          <li><strong>What you will learn:</strong> Which tasks should never touch an LLM, which model tier fits which task, and when to reach for a web search, a CLI, or a tool directly</li>
+          <li><strong>Why it matters:</strong> Defaulting every task to the most capable model is the fastest way to burn token budget on work a grep would handle — and to train your team to wait 8 seconds for things that should be instant</li>
+          <li>LLMs are reasoning engines, not command runners — anything the shell or a known tool does deterministically should stay in the shell</li>
+          <li>Model selection is a product decision: the wrong tier in production costs real money; the wrong tier in development costs developer flow</li>
+          <li>Web search is not a model capability — it is a different tool with different semantics (current, factual, retrievable vs synthesised, probabilistic, trained-to)</li>
+        </ul></div>
+
+        <h4>The Don't-Route-to-AI List</h4>
+        <p>These tasks have a faster, cheaper, more reliable answer that is not an LLM. If you find yourself prompting an AI for any of these, stop.</p>
+
+        <div style="overflow-x:auto;margin:14px 0 22px">
+          <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+            <thead>
+              <tr style="background:var(--ink);color:#fff;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase">
+                <th style="padding:10px 14px;text-align:left;border:1px solid var(--ink)">Task</th>
+                <th style="padding:10px 14px;text-align:left;border:1px solid var(--ink)">Why not AI</th>
+                <th style="padding:10px 14px;text-align:left;border:1px solid var(--ink);color:var(--ochre)">Use instead</th>
+              </tr>
+            </thead>
+            <tbody style="color:var(--ink-soft)">
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">git commit, push, pull, merge, stash</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">You know these. Deterministic CLI, no reasoning required.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">git directly</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">npm / pip / brew install</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Package manager does it in one command. AI adds no value here.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">shell directly</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Setting up .gitignore for a known stack</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">gitignore.io has the canonical answer. AI may hallucinate entries.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">gitignore.io or template</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Small image edits — resize, crop, format convert</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Preview, ffmpeg, imagemagick, or squoosh.app. Instant, lossless control.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">ffmpeg / Preview / squoosh</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Checking which process is on a port</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">One command you've run a hundred times.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">lsof -i :PORT</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Looking up syntax you mostly know</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Official docs are faster and authoritative. AI may give you a deprecated pattern.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">docs site / Google</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Bulk file rename with a known pattern</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">A shell glob or find+rename is 10× faster and produces no surprises.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">rename / find / mv glob</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Running your linter / formatter</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">ESLint, Prettier, Black — they run in &lt;1s and produce deterministic output.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">npm run lint / pre-commit</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Checking environment variables</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Your shell already has the answer.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">printenv / cat .env</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Looking up the latest library version</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">AI training data is months old. npm / PyPI / pkg.go.dev has the current answer.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">npm show / PyPI / web search</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Creating a new GitHub repo</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">gh repo create. One command. Three seconds.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">gh cli / GitHub web UI</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Viewing git history / blame</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">git log, git blame, or your IDE. Real-time, no round-trip.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">git log / IDE git panel</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Simple find-and-replace in one file</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Your editor's Cmd+H does it in 2 seconds with a live preview.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">editor find/replace</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Generating SSH keys / setting git config</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">GitHub's own docs have the exact two commands. You've done this before.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">ssh-keygen / git config</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Tailing logs from a known service</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">tail -f, journalctl, kubectl logs. Streaming, real-time, no latency.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">tail / kubectl logs</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Simple arithmetic or unit conversion</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Python REPL, Calculator.app, or Spotlight. Instant and exact.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">python3 / calculator</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-weight:500;color:var(--ink)">Running tests you know are passing</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Just run them. npm test, pytest, go test. No AI in the feedback loop.</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule);font-family:var(--mono);font-size:12px;color:var(--ochre)">test runner directly</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-pitfall"><span class="callout-label">Common Pitfall</span><p>Prompting an AI to write a git commit message for a one-line fix. You wrote the code; you know what changed. <code>git commit -m "fix: null check on user email"</code> takes 4 seconds. Waiting for an AI to write that message takes 8 seconds and produces a message you'll edit anyway. Reserve AI for commit messages on complex multi-file changes where the "why" is genuinely hard to articulate.</p></div>
+
+        <h4 style="margin-top:28px">Model Selection — Matching Task Complexity to Capability Tier</h4>
+        <p>Every additional capability tier costs tokens, latency, and money. The right model is the <em>least capable model that can do the task reliably</em>. Defaulting to the top model is not safe — it's expensive and slower.</p>
+
+        <div style="overflow-x:auto;margin:14px 0 22px">
+          <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+            <thead>
+              <tr style="background:var(--ink);color:#fff;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase">
+                <th style="padding:10px 14px;text-align:left;border:1px solid var(--ink)">Tool / Model tier</th>
+                <th style="padding:10px 14px;text-align:left;border:1px solid var(--ink)">Typical tasks</th>
+                <th style="padding:10px 14px;text-align:left;border:1px solid var(--ink);color:var(--ochre)">Do NOT use for</th>
+              </tr>
+            </thead>
+            <tbody style="color:var(--ink-soft)">
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule)">
+                  <span style="font-family:var(--mono);font-weight:700;color:var(--ink);font-size:12px">Claude Haiku · 4.5</span><br>
+                  <span style="font-size:11.5px">Fast · cheap · lightweight</span>
+                </td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Short completions, summarising a file you read, explaining a stack trace you already understand, writing a quick regex, generating boilerplate from a template, inline comment writing, simple config edits, classification tasks</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Multi-file reasoning, anything requiring architectural judgement, novel problem solving, security analysis</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule)">
+                  <span style="font-family:var(--mono);font-weight:700;color:var(--ink);font-size:12px">Claude Sonnet · 4.6</span><br>
+                  <span style="font-size:11.5px">Balanced · daily workhorse</span>
+                </td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Feature implementation (1–3 files), bug diagnosis and fix, writing tests for known code, code review on a single PR, explaining an unfamiliar codebase section, writing documentation, refactoring a single module, drafting ADRs</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Large cross-codebase refactors, security audits, novel algorithm design, deeply ambiguous prompts</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule)">
+                  <span style="font-family:var(--mono);font-weight:700;color:var(--ink);font-size:12px">Claude Sonnet · 4.7</span><br>
+                  <span style="font-size:11.5px">High capability · complex tasks</span>
+                </td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Multi-file refactors spanning 5–20 files, debugging complex race conditions, architecture review across a full system, writing complex SQL / GraphQL / regex, prompt optimisation for production use, greenfield module design, cross-team API contract drafting</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Simple single-file tasks (overkill and slower), high-volume production inference where cost matters</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule)">
+                  <span style="font-family:var(--mono);font-weight:700;color:var(--ink);font-size:12px">Claude Opus · 4.7 / 4.8</span><br>
+                  <span style="font-size:11.5px">Maximum reasoning · reserved</span>
+                </td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Security audit of a complete system, novel algorithm design with no prior art, 50+ file context understanding, the hardest debugging sessions where Sonnet has failed twice, designing the AI governance framework itself, long-context legal / compliance document analysis</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Anything Sonnet 4.7 can do reliably. If you reach for Opus first, you're routing wrong. Opus is not the default — it is the escalation path.</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule)">
+                  <span style="font-family:var(--mono);font-weight:700;color:var(--ink);font-size:12px">Web Search</span><br>
+                  <span style="font-size:11.5px">Current · factual · retrievable</span>
+                </td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Latest library version, current API documentation, recent CVE details, pricing for a SaaS tool, whether a feature is in GA or still in beta, checking if a domain is live, finding a GitHub issue by description, current job postings, recent news</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Reasoning, synthesis, code generation, anything requiring judgment across multiple inputs. Web search retrieves; it does not think.</td>
+              </tr>
+              <tr style="background:var(--paper-2)">
+                <td style="padding:9px 14px;border:1px solid var(--rule)">
+                  <span style="font-family:var(--mono);font-weight:700;color:var(--ink);font-size:12px">Manual tool use</span><br>
+                  <span style="font-size:11.5px">Human-in-the-loop required</span>
+                </td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Force-pushing to main, production database operations, billing configuration changes, IAM permission escalations, infrastructure destroy commands, any operation whose failure requires an incident response, anything you cannot undo in under 5 minutes</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Read-only operations, test environment changes, file edits — where the consequence of failure is low and reversible</td>
+              </tr>
+              <tr style="background:var(--card)">
+                <td style="padding:9px 14px;border:1px solid var(--rule)">
+                  <span style="font-family:var(--mono);font-weight:700;color:var(--ink);font-size:12px">Command line (no AI)</span><br>
+                  <span style="font-size:11.5px">Deterministic · instant · known</span>
+                </td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">All standard git operations, running known scripts, package installs, checking system state, log tailing, port scanning, file operations with known patterns, running the test suite, starting / stopping services, SSH connections to known hosts</td>
+                <td style="padding:9px 14px;border:1px solid var(--rule)">Anything where you don't know the right command (ask AI once, then memorise it), unfamiliar CLIs, flags you've never used</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout callout-tip"><span class="callout-label">Agency Tip</span><p>In Claude Code, switch models with <code>/model</code>. The rule DEPT® uses on active projects: start a session on Sonnet 4.6 (the default workhorse). Escalate to Sonnet 4.7 when the task involves more than 5 files or the problem is genuinely ambiguous. Escalate to Opus only after Sonnet has failed or the task is explicitly high-stakes (security, compliance, architecture). Drop to Haiku for any task where you need speed over depth — quick lookups, boilerplate generation, short summaries. Staying on the wrong tier for an hour is the most common token waste pattern on development teams.</p></div>
+
+        <div class="callout callout-why"><span class="callout-label">Why This Matters</span><p>A team of 5 engineers that defaults everything to Opus 4.7 instead of routing correctly will spend 8–15× the token budget of a team with a routing discipline — for no meaningful quality difference on the 80% of tasks that Sonnet handles at parity. Token budget is finite. Routing is how you make it last.</p></div>
+
+        <h4 style="margin-top:24px">The Decision Rule</h4>
+        <div class="flow" style="flex-direction:column;align-items:flex-start;gap:8px;padding:14px 18px;background:var(--paper-2);border:1px solid var(--rule)">
+          <div style="font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ochre);margin-bottom:4px">Ask in order</div>
+          <div style="font-size:14px;color:var(--ink-soft)"><span style="font-family:var(--mono);font-weight:700;color:var(--ochre)">1.</span> Can the shell or a known tool do this deterministically? → <strong>Use the shell.</strong></div>
+          <div style="font-size:14px;color:var(--ink-soft)"><span style="font-family:var(--mono);font-weight:700;color:var(--ochre)">2.</span> Is this a factual or current-state lookup? → <strong>Use web search.</strong></div>
+          <div style="font-size:14px;color:var(--ink-soft)"><span style="font-family:var(--mono);font-weight:700;color:var(--ochre)">3.</span> Is this irreversible or production-critical? → <strong>Manual tool. Human runs it.</strong></div>
+          <div style="font-size:14px;color:var(--ink-soft)"><span style="font-family:var(--mono);font-weight:700;color:var(--ochre)">4.</span> Is this a simple completion or single-file task? → <strong>Haiku or Sonnet 4.6.</strong></div>
+          <div style="font-size:14px;color:var(--ink-soft)"><span style="font-family:var(--mono);font-weight:700;color:var(--ochre)">5.</span> Is this a complex multi-file or ambiguous task? → <strong>Sonnet 4.7.</strong></div>
+          <div style="font-size:14px;color:var(--ink-soft)"><span style="font-family:var(--mono);font-weight:700;color:var(--ochre)">6.</span> Has Sonnet failed, or is this genuinely high-stakes? → <strong>Opus. Justify the cost.</strong></div>
         </div>
       </section>
 

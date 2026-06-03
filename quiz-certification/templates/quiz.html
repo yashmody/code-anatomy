@@ -95,6 +95,8 @@
 {% block scripts %}
 <script>
   const DURATION_MIN = {{ duration_minutes }};
+  const PASS_MARK = {{ pass_mark_correct }};
+  const QUESTIONS_TOTAL = {{ questions_per_quiz }};
   let quiz = null;
   let answers = {};
   let currentIdx = 0;
@@ -297,7 +299,7 @@
     const scorePct = Math.round(r.score * 100);
     const verdict = r.passed
       ? `<div class="verdict pass"><div class="verdict-icon">✓</div><h2>Passed</h2><p>${r.correct} / ${r.total} correct (${scorePct}%)</p></div>`
-      : `<div class="verdict fail"><div class="verdict-icon">✗</div><h2>Not quite</h2><p>${r.correct} / ${r.total} correct (${scorePct}%) · Pass mark is 70%</p></div>`;
+      : `<div class="verdict fail"><div class="verdict-icon">✗</div><h2>Not quite</h2><p>${r.correct} / ${r.total} correct (${scorePct}%) · Pass mark is ${PASS_MARK} of ${QUESTIONS_TOTAL}</p></div>`;
 
     const testCodeBlock = r.test_code ? `
       <div class="cert-card" style="border-color:var(--rule)">
