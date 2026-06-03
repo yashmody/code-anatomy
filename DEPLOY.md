@@ -17,6 +17,13 @@ The bundle has three parts. The script deploys two of them:
 | `content-system/` | 4 static HTML files (course, checklist, FAQ, runbook) | Apache serves them directly |
 | `prompt-library/`             | B0 prompt sequences + worked samples | **Not deployed** (consumed as a code resource) |
 
+> **Reader data is client-side only.** The course's reader-tools layer (reading progress,
+> bookmarks, notes, and Review-Mode annotations) saves to each visitor's browser
+> `localStorage`, not to the server. There is nothing to provision, persist, or back up for
+> it — and clearing a browser, or switching browsers/devices, loses that user's notes. If
+> durable or shared annotations are ever required, that's an application change, not a
+> deploy-config one.
+
 After deploy, the VM answers on one domain:
 
 ```

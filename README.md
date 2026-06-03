@@ -38,7 +38,7 @@ Self-contained HTML. No build step, no server-side code, no JS framework. Drop o
 
 ```
 content-system/
-├── anatomy-of-code-course.html   · main field manual · ~4,100 lines · CODE–CODER deep-dives + Part II
+├── anatomy-of-code-course.html   · main field manual · ~6,700 lines · CODE–CODER deep-dives + Part II
 ├── code-coder-checklist.html     · discovery checklist · 216 questions across 9 nodes
 ├── architect-runbook.html        · greenfield + brownfield engagement playbooks
 └── faqs/                         · architect FAQ collection (vertical & platform-specific)
@@ -82,7 +82,7 @@ aws s3 sync content-system/ s3://your-bucket/ --acl public-read
 
 - **Logo** — every file references `https://www.deptagency.com/wp-content/uploads/2025/10/logo-dept.svg`. Swap in your own URL if rebranding for a client engagement.
 - **Theme persistence** — each file uses a unique localStorage key (`course-theme`, `runbook-theme`, etc.) so users' dark/light preference persists per page.
-- **Annotation system** — `anatomy-of-code-course.html` has a Review Mode (the floating FAB). Annotations save to localStorage under `anatomy-annotations-v1` per browser.
+- **Reader-tools layer** — `anatomy-of-code-course.html` carries a client-side reader suite: reading-progress tracking, section bookmarks, inline notes, and a Review Mode (the floating FAB) for annotations. All of it persists to localStorage per browser (`anatomy-reader-progress-v1`, `anatomy-reader-bookmarks-v1`, `anatomy-reader-notes-v1`, `anatomy-annotations-v1`). Nothing is sent to a server — see the operational note in [`DEPLOY.md`](DEPLOY.md).
 
 ---
 
@@ -142,7 +142,7 @@ The point isn't to run them as-is — it's to see the structure that lets each p
 
 ## 3 · quiz-certification/
 
-A FastAPI app that delivers the Claude Certified Architect — Foundations (CCA-F) quiz. Google OAuth restricted to `@deptagency.com`, 50-question bank (25 beginner + 25 advanced), 7-day cooldown on fail, PDF certificate via reportlab, admin review tool.
+A FastAPI app that delivers the Claude Certified Architect — Foundations (CCA-F) quiz. Google OAuth restricted to `@deptagency.com`, 300-question bank (100 each across beginner / intermediate / advanced), 7-day cooldown on fail, PDF certificate via reportlab, admin review tool.
 
 ```
 quiz-certification/
@@ -231,14 +231,20 @@ github.com/dept/aem-rn-sample       ← sample (as a repo, not a service)
 
 This bundle is the C0 sub-agent's full output as of the date it was generated:
 
-- Course HTML — every CODER letter has a deepblock (C/Stalwart, D/Deployment+SaaS, O/Quality, E/External, R/Release), plus Caching & Observability as cross-cutting layers in D
+- Course HTML — every CODER letter has a deepblock (C/Stalwart, D/Deployment+SaaS, O/Quality, E/External, R/Release), plus Caching & Observability as cross-cutting layers in D; Part II (Adobe Experience Cloud) and the client-side reader-tools layer (progress, bookmarks, notes, review)
 - Runbook — greenfield + brownfield 90-day playbooks
 - Checklist — 216 questions across CODE-CODER (unchanged from initial Q0 build)
 - FAQ — 13 architect-level Q&As for AEM Banking (unchanged)
 - Sample — full AEM CFM → RN/Expo worked example with agent-coding prompts
-- Quiz — full FastAPI module with 50-question bank, OAuth, cert generation, admin tools
+- Quiz — full FastAPI module with 300-question bank (100 each: beginner / intermediate / advanced), OAuth, cert generation, admin tools
 
 When changes ship, expect a new bundle with the same folder layout.
+
+---
+
+## Contributing
+
+Branching strategy, commit conventions, and the sub-agent workflow (c0 / content-quality / q0 / l0) are documented in **[`CONTRIBUTING.md`](CONTRIBUTING.md)**.
 
 ---
 

@@ -262,7 +262,10 @@ fi
 log "Deploy complete."
 echo
 echo "  Quiz app : https://${DOMAIN}/        (status: $(systemctl is-active ${SERVICE_NAME}))"
-echo "  Content  : https://${DOMAIN}/anatomy/anatomy-of-code-course.html"
+echo "  Course   : https://${DOMAIN}/anatomy/anatomy-of-code-course.html"
+echo "  Checklist: https://${DOMAIN}/anatomy/code-coder-checklist.html"
+echo "  Runbook  : https://${DOMAIN}/anatomy/architect-runbook.html"
+echo "  FAQs     : https://${DOMAIN}/anatomy/faqs/index.html"
 echo "  OAuth cb : https://${DOMAIN}/auth/google/callback   (must match Google console)"
 echo
 echo "  App logs : journalctl -u ${SERVICE_NAME} -f"
