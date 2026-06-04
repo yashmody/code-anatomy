@@ -1,0 +1,189 @@
+{
+  "frameworkAddress": "coder.d",
+  "title": "Deployment",
+  "tag": "Infrastructure 101 for architects",
+  "status": "published",
+  "scan": [
+    "Ten layers carry a request from the browser to the database and back — an architect should be able to draw all ten",
+    "Caching is the single biggest performance lever and the single biggest source of subtle correctness bugs",
+    "The hard part of caching is invalidation: TTL vs purge vs versioned URLs, each with a trade",
+    "Observability is asking a question of your running system you didn't think to instrument in advance"
+  ],
+  "sections": [
+    {
+      "id": "coder.d.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "D",
+          "html": "eployment is where code stops being an idea and becomes a system someone can break at 3am. Ten layers carry a request from the browser to the database and back. An architect should be able to draw all ten on a whiteboard — and name the failure mode of each."
+        }
+      ]
+    },
+    {
+      "id": "coder.d.caching",
+      "title": "The Five Caching Tiers",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "lead",
+          "page": 2,
+          "html": "Caching is the single largest performance lever in a production system — and the single largest source of subtle correctness bugs."
+        },
+        {
+          "type": "prose",
+          "page": 2,
+          "html": "Every production stack caches in <b>five places</b>, each with its own purpose, eviction policy, and failure mode. An architect should be able to point at every tier and say what lives there, how it's invalidated, and what happens when it goes wrong."
+        },
+        {
+          "type": "tierlist",
+          "page": 2,
+          "items": [
+            {
+              "n": "1",
+              "label": "Browser cache",
+              "note": "Cache-Control · ETag"
+            },
+            {
+              "n": "2",
+              "label": "CDN cache",
+              "note": "edge · global"
+            },
+            {
+              "n": "3",
+              "label": "App-layer cache",
+              "note": "Dispatcher · reverse proxy"
+            },
+            {
+              "n": "4",
+              "label": "Origin cache",
+              "note": "Redis · Memcached"
+            },
+            {
+              "n": "5",
+              "label": "Data cache",
+              "note": "DB query · ORM"
+            }
+          ]
+        },
+        {
+          "type": "callout",
+          "variant": "why",
+          "page": 2,
+          "html": "If you can't draw the cache topology of your production system on a whiteboard in 60 seconds, you don't know where your bugs are going to come from."
+        }
+      ]
+    },
+    {
+      "id": "coder.d.invalidation",
+      "title": "Invalidation — the hard part",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 3,
+          "html": "Invalidation — the hard part"
+        },
+        {
+          "type": "prose",
+          "page": 3,
+          "html": "<b>TTL</b> is time-based expiry: simple, predictable, eventually wrong. <b>Purge</b> is event-driven: correct, complex, easy to miss a code path. <b>Versioned URLs</b> cache the immutable: the cleanest pattern there is, but only works for assets you control the URL of."
+        },
+        {
+          "type": "prose",
+          "page": 3,
+          "html": "The failure pattern to watch for is <b>tier-skipping invalidation</b> — you purge the CDN but forget the app-layer cache; you flush Redis but forget the CDN. Stale content lives in whichever tier you forgot. Invalidate top-down (browser → CDN → Dispatcher → Redis) and instrument purge calls so you can prove every tier was hit."
+        },
+        {
+          "type": "callout",
+          "variant": "pitfall",
+          "page": 3,
+          "html": "Teams that purge one tier and forget the next ship stale content that lives exactly one layer down — invisible until a user reports it. The fix is instrumented, top-down invalidation, not more caching."
+        }
+      ]
+    },
+    {
+      "id": "coder.d.observability",
+      "title": "Observability beyond logs",
+      "order": 3,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 4,
+          "html": "Observability beyond logs"
+        },
+        {
+          "type": "cardgrid",
+          "page": 4,
+          "columns": 3,
+          "cards": [
+            {
+              "eyebrow": "LOGS",
+              "title": "What happened, in order",
+              "body": "One line per event. High cardinality, high cost. Best for forensic detail."
+            },
+            {
+              "eyebrow": "METRICS",
+              "title": "How much, over time",
+              "body": "Counters, gauges, histograms. Low cardinality, cheap to store. Best for trends and alerts."
+            },
+            {
+              "eyebrow": "TRACES",
+              "title": "How one request flowed",
+              "body": "End-to-end path of a single request across services. Best for latency hunts."
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "page": 4,
+          "html": "Logs tell you what happened. <b>Observability</b> is the broader discipline: being able to ask a question of your running system that you didn't think to instrument in advance. The three pillars are <b>logs</b> (what happened), <b>metrics</b> (how much, over time), and <b>traces</b> (how one request flowed)."
+        },
+        {
+          "type": "prose",
+          "page": 4,
+          "html": "What turns metrics into operational decisions is the <b>SLO</b> — a target expressed in user-visible terms. Its complement is the <b>error budget</b>: 100% minus the SLO. Spend it freely while you have it; freeze deploys when you run out. Without an explicit budget, every incident becomes a fight about whether to ship the next feature."
+        },
+        {
+          "type": "diagram",
+          "page": 4,
+          "render": "versus",
+          "title": "RED vs USE",
+          "columns": [
+            {
+              "label": "RED · per service",
+              "body": "Rate · Errors · Duration. The three numbers every microservice dashboard must show."
+            },
+            {
+              "label": "USE · per resource",
+              "body": "Utilization · Saturation · Errors. The three numbers that tell you a resource is healthy."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "coder.d.review",
+      "title": "Architect's Review",
+      "order": 4,
+      "blocks": [
+        {
+          "type": "architects-review",
+          "page": 5,
+          "label": "Architect's Review · Deployment Stack",
+          "items": [
+            "Is every layer present, or is something missing (no WAF? no CDN? no LB)?",
+            "Where is TLS terminated, and what does internal traffic look like?",
+            "Can you draw the cache topology — all five tiers — and name the invalidation strategy for each?",
+            "What's the cache hit ratio at the edge, and what would happen at half that?",
+            "Are there SLOs per service, and an error budget the team actually uses?",
+            "Is distributed tracing wired across service boundaries — or do traces stop at the gateway?"
+          ]
+        }
+      ]
+    }
+  ]
+}
