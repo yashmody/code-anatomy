@@ -5,7 +5,7 @@ import { renderRead } from './modes/read.js';
 import { renderFeed } from './modes/feed.js';
 
 const BASE = '../content-architecture';            // app/ reads from its sibling data package
-const SECTION_FILES = ['coder-d.json'];            // only the extracted chapter exists this phase
+const SECTION_FILES = ['coder-d.json', 'coder-r.json'];   // extracted chapters (Scroll orders them by framework)
 const THEME_KEY = 'anatomy-app-theme';             // per-page theme key
 
 const view = document.getElementById('view');
@@ -43,7 +43,7 @@ async function route() {
     if (mode === 'scroll') {
       await renderScroll(view, BASE, SECTION_FILES);
     } else if (mode === 'read') {
-      const addr = hash.split('/')[1] || 'coder.d';      // only coder.d is extracted this phase
+      const addr = hash.split('/')[1] || 'coder.d';      // defaults to the first chapter (e.g. #/read/coder.r)
       await renderRead(view, BASE, addr, addr.replace(/\./g, '-') + '.json');
     } else if (mode === 'feed') {
       await renderFeed(view, BASE);

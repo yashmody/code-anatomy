@@ -1,0 +1,185 @@
+{
+  "frameworkAddress": "coder.r",
+  "title": "Release Management",
+  "tag": "Git · PRs · Branching · Promotion · Versioning",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> How to select the right branching strategy (trunk-based, GitHub Flow, GitFlow), enforce commit hygiene, govern PRs at scale, lock down branches with protection rules, choose a promotion pattern, and version releases correctly",
+    "<strong>Why it matters:</strong> Branching strategy is the single most impactful development-process decision on a multi-team project — a wrong choice creates merge conflicts, deployment coupling, and release bottlenecks that cannot be fixed without a full process migration",
+    "Trunk-based development is the correct default for AEMaaCS projects — long-lived feature branches are incompatible with Cloud Manager's continuous deployment model",
+    "A PR with no description, no linked ticket, and more than 400 lines changed is not reviewable — it is a delivery risk that looks like progress",
+    "Hypercare windows must be defined before go-live, not after the first incident"
+  ],
+  "sections": [
+    {
+      "id": "coder.r.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "R", "html": "elease management starts in Git. Before there's a deploy pipeline, a rollback, or a hypercare plan, there's a branching strategy and a PR discipline. Get those right and most of release management gets easy; get them wrong and no amount of CI/CD tooling will save you." },
+        { "type": "lead", "page": 1, "html": "The <strong>R</strong> of CODER is the discipline that decides <em>when</em> things go live — and equally, what gets rolled back when they shouldn't have. Most digital outages aren't engineering failures; they're <em>release</em> failures. This deep-dive starts with Git (where every release actually originates), then covers the branching strategy, the PR mechanics, promotion gates, and versioning." }
+      ]
+    },
+    {
+      "id": "coder.r.branching",
+      "title": "Branching strategy · pick one, stick to it",
+      "order": 1,
+      "blocks": [
+        { "type": "prose", "page": 2, "html": "There are essentially three patterns the industry uses. The right one depends on team size, deploy cadence, and how regulated the environment is." },
+        { "type": "cardgrid", "page": 2, "columns": 3, "cards": [
+          { "eyebrow": "Trunk-based", "title": "One long-lived branch", "body": "Everyone commits to <code>main</code>, behind feature flags for incomplete work. Short-lived branches (hours, not weeks) for individual PRs. <strong>Fits:</strong> high-velocity teams, mature CI, feature-flag infra. <strong>Default for SaaS.</strong>" },
+          { "eyebrow": "GitHub Flow", "title": "Main + feature branches", "body": "<code>main</code> is always deployable. Branch off <code>main</code> for each feature, PR, merge back. No long-lived release branches. <strong>Fits:</strong> most agency work, mid-sized teams, weekly-to-monthly releases." },
+          { "eyebrow": "GitFlow", "title": "Multiple long-lived branches", "body": "<code>main</code>, <code>develop</code>, <code>release/*</code>, <code>feature/*</code>, <code>hotfix/*</code>. Complex but explicit. <strong>Fits:</strong> regulated environments, infrequent releases, multiple parallel versions in production. <strong>Wrong for most agency work</strong> — it's heavy ceremony for problems most teams don't have." }
+        ] },
+        { "type": "prose", "page": 2, "html": "<strong>How to decide:</strong> deploy daily or more → trunk-based. Deploy weekly or biweekly → GitHub Flow. Deploy quarterly with audit gates → GitFlow. If you can't answer the deploy-cadence question, that's the first conversation to have." },
+        { "type": "diagram", "page": 2, "render": "mermaid", "source": "gitGraph\n   commit id: \"Sprint 17 baseline\"\n   branch feature/cart-redesign\n   checkout feature/cart-redesign\n   commit id: \"add cart state machine\"\n   commit id: \"add cart render\"\n   checkout main\n   merge feature/cart-redesign\n   commit id: \"tag: v2.14.0\"" }
+      ]
+    },
+    {
+      "id": "coder.r.commits",
+      "title": "Branch names & commit hygiene",
+      "order": 2,
+      "blocks": [
+        { "type": "notes", "page": 3, "items": [
+          "<b>Branch naming</b> — <code>type/ticket-id-short-description</code>. Examples: <code>feat/PROJ-1234-add-search</code>, <code>fix/PROJ-5678-cart-total</code>, <code>chore/upgrade-react-19</code>. Predictable, sortable, traceable.",
+          "<b>Conventional Commits</b> — <code>feat:</code>, <code>fix:</code>, <code>chore:</code>, <code>docs:</code>, <code>refactor:</code>, <code>test:</code>, <code>perf:</code>, <code>build:</code>. Powers automated changelog and version bumping. Worth the small discipline.",
+          "<b>Atomic commits</b> — one logical change per commit. A revertable unit. Don't bundle \"refactor + new feature + lint fix\" into one commit; future-you will hate present-you when something goes wrong.",
+          "<b>Commit body</b> for non-trivial changes — <em>why</em>, not <em>what</em>. The diff shows what; the body shows the reasoning."
+        ] },
+        { "type": "code", "page": 3, "lang": "text", "label": "a commit message that earns its keep", "code": "feat(checkout): coalesce payment retries into single attempt\n\nPreviously, payment failures triggered three independent retries from\nthe UI, occasionally hitting the gateway four times for one customer\nintent. Now retries are coalesced server-side with a 5-minute idempotency\nkey, preventing duplicate captures.\n\nRefs: INC-2891\nCo-authored-by: ..." }
+      ]
+    },
+    {
+      "id": "coder.r.prs",
+      "title": "Pull requests · the unit of integration",
+      "order": 3,
+      "blocks": [
+        { "type": "prose", "page": 4, "html": "A PR is the moment your code becomes everyone's code. The mechanics determine whether reviews are useful or theatre." },
+        { "type": "notes", "page": 4, "items": [
+          "<b>Size</b> · <strong>under 400 lines changed</strong> is the empirical sweet spot. Above that, review quality collapses; reviewers skim instead of think. Big features → multiple small PRs behind a feature flag.",
+          "<b>Draft early</b> — open a draft PR as soon as the shape is there. Get directional feedback before investing in polish.",
+          "<b>PR description as documentation</b> — what changed, why, how to test, what was deliberately not done. The first commit message for the squash-merge.",
+          "<b>Self-review before requesting review</b> — open your own PR diff. You'll catch half the issues yourself.",
+          "<b>One approval + green CI</b> — the standard gate. Two approvals for sensitive areas (auth, payments, data migrations).",
+          "<b>Review SLA</b> — agree on it. \"PRs reviewed within 1 business day\" or the team gets stuck. Aging PRs are tech debt accumulating."
+        ] },
+        { "type": "callout", "page": 4, "variant": "tip", "html": "DEPT® field pattern: enforce a PR size limit of 400 lines via a CI check. PRs that exceed this limit are auto-labelled \"needs-split\" and blocked from merge until split or explicitly overridden by the architect with a documented justification. A 400-line PR takes 45 minutes to review well; an 800-line PR takes 2 hours and produces superficial review." }
+      ]
+    },
+    {
+      "id": "coder.r.protection",
+      "title": "Branch protection rules",
+      "order": 4,
+      "blocks": [
+        { "type": "prose", "page": 5, "html": "Configuration on the platform (GitHub, GitLab, Bitbucket) that enforces the policy the team agreed to." },
+        { "type": "notes", "page": 5, "items": [
+          "<b>Require PR before merge</b> — no direct pushes to <code>main</code>. Ever.",
+          "<b>Require status checks</b> — CI green, security scans clean, coverage above floor.",
+          "<b>Require approvals</b> — at least one, typically. CODEOWNERS for sensitive paths automatically requests the right reviewers.",
+          "<b>Dismiss stale reviews</b> — when new commits land after approval, reset the approval. Avoids silent slipping of unrelated changes past review.",
+          "<b>No force-push to main</b> — ever, for any reason. History is the audit trail.",
+          "<b>Signed commits</b> — required in regulated environments. GPG or platform signing.",
+          "<b>Linear history</b> — squash-merge or rebase-merge only. Merge commits make <code>git bisect</code> harder than it needs to be."
+        ] },
+        { "type": "callout", "page": 5, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>No branch protection on main. A developer force-pushes over a release tag during an incident. The tag is gone; the previous release cannot be reproduced.</p></div><div><div class=\"ba-col-label\">After</div><p>Branch protection requires 2 approvals and passing status checks; history rewrites are blocked; tags are protected. The incident never happens.</p></div></div>" }
+      ]
+    },
+    {
+      "id": "coder.r.promotion",
+      "title": "Promotion · how a change moves from feature branch to production",
+      "order": 5,
+      "blocks": [
+        { "type": "prose", "page": 6, "html": "Promotion is what turns a Git event into a customer-visible release. The pattern depends on the branching strategy." },
+        { "type": "diagram", "page": 6, "render": "nodes", "title": "Trunk-based promotion · every merge is a release candidate", "rows": [
+          { "nodes": [ { "label": "feature/* (hours)" } ] },
+          { "nodes": [ { "label": "main" } ] },
+          { "nodes": [ { "label": "build artefact (tagged)" } ] },
+          { "nodes": [ { "label": "dev" }, { "label": "stage" }, { "label": "prod (gated)", "variant": "edge" } ] }
+        ] },
+        { "type": "prose", "page": 6, "html": "Three principles regardless of strategy:" },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Build once, promote many</b> — the same artefact moves through environments. Don't rebuild per environment; configuration differs, code does not.",
+          "<b>Promotion gates are explicit</b> — automated tests at the gate to <code>stage</code>; manual approval at the gate to <code>prod</code> (unless you're confident enough in automation to skip it).",
+          "<b>Rollback is a first-class operation</b> — deploying the previous artefact must be a button press, not a hotfix branch. If rolling back is harder than rolling forward, the system isn't actually safe."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.r.deploy",
+      "title": "Deploy patterns at production",
+      "order": 6,
+      "blocks": [
+        { "type": "cardgrid", "page": 6, "columns": 3, "cards": [
+          { "eyebrow": "Blue-green", "title": "Two production environments, one live", "body": "Deploy to the dark stack; smoke test; flip the router. Rollback = flip back. Doubles infra cost; halves rollback time." },
+          { "eyebrow": "Canary", "title": "Roll out to a small slice first", "body": "1% → 10% → 50% → 100%, with metrics watched at each step. Catches issues before full exposure. Requires good observability." },
+          { "eyebrow": "Feature flag", "title": "Code deployed, feature off", "body": "Decouple deploy from release. Flip the flag on for 1% of users; measure; expand. The pattern that makes trunk-based feasible." }
+        ] }
+      ]
+    },
+    {
+      "id": "coder.r.merge",
+      "title": "Merge vs rebase · the argument resolved",
+      "order": 7,
+      "blocks": [
+        { "type": "diagram", "page": 7, "render": "versus", "columns": [
+          { "label": "Rebase your own branch", "tone": "good", "body": "While the PR is open and only you've touched it. Keeps history linear, removes interleaved noise. The right move <em>before</em> you ask for review." },
+          { "label": "Merge to integrate", "tone": "good", "body": "Squash-merge (collapse to one commit) or merge-commit (preserve the branch history) when bringing the PR into <code>main</code>. Don't rebase a shared branch — anyone else who pulled it gets a corrupted history." }
+        ] },
+        { "type": "prose", "page": 7, "html": "<strong>Squash vs merge-commit at PR time:</strong> squash gives one tidy commit per PR (clean <code>main</code> history); merge-commit preserves intra-PR commits (richer history, more noise). Most teams pick squash and treat the PR description as the canonical message." },
+        { "type": "callout", "page": 7, "variant": "pitfall", "html": "Using <code>git merge</code> instead of <code>git rebase</code> for updating feature branches in a trunk-based workflow. Merge commits create a non-linear history. <code>git bisect</code> becomes unreliable; <code>git blame</code> becomes misleading; the merge commit hides the actual change behind a \"Merge branch X into main\" entry. Rebase to a linear history; squash to a logical commit." }
+      ]
+    },
+    {
+      "id": "coder.r.versioning",
+      "title": "Versioning · what version are we on?",
+      "order": 8,
+      "blocks": [
+        { "type": "prose", "page": 7, "html": "Two conventions matter. Pick the right one for the artefact." },
+        { "type": "diagram", "page": 7, "render": "versus", "columns": [
+          { "label": "SemVer · MAJOR.MINOR.PATCH", "tone": "good", "body": "Libraries, APIs, SDKs. <strong>MAJOR</strong> breaks compatibility. <strong>MINOR</strong> adds capability. <strong>PATCH</strong> fixes bugs. Consumers can pin and predict." },
+          { "label": "CalVer · YYYY.MM.PATCH", "tone": "good", "body": "Applications, SaaS, browser releases. The version tells you <em>when</em> it shipped. Useful when the question \"is this from before or after X?\" matters more than \"is this compatible?\"" }
+        ] },
+        { "type": "notes", "page": 7, "items": [
+          "<b>Release tags</b> — every deploy gets an immutable Git tag (<code>v1.4.2</code> or <code>2026.03.05</code>). Tag is the audit anchor.",
+          "<b>Deployment tags</b> — separate from release tags. \"<code>v1.4.2 → prod 2026-03-05T14:30</code>\" is a deployment event, not a code event.",
+          "<b>Automated bumping</b> — Conventional Commits + <code>semantic-release</code> (or equivalent) reads the commit history and bumps the version automatically. Removes the human \"what version is this?\" conversation.",
+          "<b>Changelog</b> generated from commits. Belongs in the release artefact, not in someone's email."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.r.hypercare",
+      "title": "Hypercare & rollback windows",
+      "order": 9,
+      "blocks": [
+        { "type": "prose", "page": 8, "html": "Release isn't done when the deploy completes. It's done after hypercare expires." },
+        { "type": "notes", "page": 8, "items": [
+          "<b>Hypercare window</b> — defined per release. Typically 24–72 hours of heightened monitoring after a non-trivial change.",
+          "<b>Named on-call</b> — for the hypercare window, a named engineer is on the hook. Not \"the team.\"",
+          "<b>Rollback decision authority</b> — agreed in advance. Who can push the button without a meeting? When is a meeting required?",
+          "<b>Post-release verification</b> — automated checks beyond \"site is up.\" Business KPIs (conversions, signups) should be the strongest signal that the release is good."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.r.review",
+      "title": "Architect's Review",
+      "order": 10,
+      "blocks": [
+        { "type": "quote", "page": 8, "html": "A team that cannot describe its branching strategy on a whiteboard in 30 seconds cannot manage releases at scale. The Git diagram is the release management diagram." },
+        { "type": "architects-review", "page": 8, "label": "Architect's Review · Release Management", "items": [
+          "What branching strategy is in use, and does it match the deploy cadence?",
+          "Are PRs typically under 400 lines, or are they larger and rubber-stamped?",
+          "What is the PR review SLA, and is it being met?",
+          "Are branch protection rules in place: required reviews, status checks, no force-push, signed commits where required?",
+          "Is the same artefact promoted across environments, or rebuilt each time?",
+          "What is the rollback procedure, and when was it last tested?",
+          "Which deploy pattern is in use — blue-green, canary, feature-flag — and does it match the risk profile?",
+          "Is versioning automated from commit conventions, or assigned by hand?",
+          "Is there a defined hypercare window, with named on-call and a rollback authority?",
+          "Are business KPIs (not just availability metrics) used to verify a successful release?"
+        ] }
+      ]
+    }
+  ]
+}

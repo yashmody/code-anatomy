@@ -60,6 +60,8 @@ export function renderDiagram(spec) {
       return `${title}${renderVersus(spec)}`;
     case 'image':
       return `<div class="arch-diagram">${title}<img src="${esc(spec.url || '')}" alt="${esc(spec.alt || '')}" loading="lazy"></div>`;
+    case 'nodes':
+      return renderNodes(spec, title);
     default:
       return `<div class="arch-diagram"><pre>[unsupported diagram: ${esc(spec.render)}]</pre></div>`;
   }
@@ -80,4 +82,18 @@ function renderTable(spec, title) {
     (r) => `<tr>${r.map((c) => `<td>${raw(c)}</td>`).join('')}</tr>`
   ).join('');
   return `<div class="arch-diagram">${title}<table class="arch-table">${head}<tbody>${body}</tbody></table></div>`;
+}
+
+// Static node-flow (.arch-row/.arch-node boxes) — the monolith's static-architecture style.
+// rows: [{ nodes: [{ label, sub?, variant? }] }] ; variant -> .new / .edge / .user / .data.
+function renderNodes(spec, title) {
+  const rows = (spec.rows || []).map((r) => {
+    const nodes = (r.nodes || []).map((n) => {
+      const variant = n.variant ? ' ' + esc(n.variant) : '';
+      const sub = n.sub ? `<small>${esc(n.sub)}</small>` : '';
+      return `<div class="arch-node${variant}">${esc(n.label || '')}${sub}</div>`;
+    }).join('');
+    return `<div class="arch-row">${nodes}</div>`;
+  }).join('<div class="arch-down"></div>');
+  return `<div class="arch-diagram">${title}${rows}</div>`;
 }
