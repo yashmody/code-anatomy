@@ -242,3 +242,12 @@
 @media (min-width: 720px) {
   .mh-title { font-size: 38px; }
 }
+
+/* ---- footer (release version) ---- */
+.app-footer {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+  max-width: 860px; margin: 40px auto 0; padding: 18px 20px 48px;
+  border-top: 1px solid var(--rule);
+  font-family: var(--mono); font-size: 11px; letter-spacing: .04em; color: var(--ink-faint);
+}
+.app-version { color: var(--ochre-deep); font-weight: 700; letter-spacing: .06em; }
