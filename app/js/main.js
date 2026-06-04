@@ -2,6 +2,7 @@
 // Scroll is live this pass; Read (step 3) and Feed (step 4) are placeholders for now.
 import { renderScroll } from './modes/scroll.js';
 import { renderRead } from './modes/read.js';
+import { renderFeed } from './modes/feed.js';
 
 const BASE = '../content-architecture';            // app/ reads from its sibling data package
 const SECTION_FILES = ['coder-d.json'];            // only the extracted chapter exists this phase
@@ -45,7 +46,7 @@ async function route() {
       const addr = hash.split('/')[1] || 'coder.d';      // only coder.d is extracted this phase
       await renderRead(view, BASE, addr, addr.replace(/\./g, '-') + '.json');
     } else if (mode === 'feed') {
-      view.innerHTML = '<div class="placeholder"><h2>Feed mode</h2><p>The social stream — arrives in step 4.</p></div>';
+      await renderFeed(view, BASE);
     } else {
       view.innerHTML = '<div class="placeholder"><h2>Not found</h2></div>';
     }

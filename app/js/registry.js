@@ -14,6 +14,13 @@ import { cardgrid } from './blocks/cardgrid.js';
 import { chips } from './blocks/chips.js';
 import { esc } from './util/dom.js';
 
+import { post } from './feed/post.js';
+import { video } from './feed/video.js';
+import { list } from './feed/list.js';
+import { card } from './feed/card.js';
+import { vocab } from './feed/vocab.js';
+import { scenario } from './feed/scenario.js';
+
 export const blockRenderers = {
   'chapter-open': chapterOpen,
   lead,
@@ -42,5 +49,20 @@ export function renderBlock(block) {
   } catch (e) {
     console.error('renderBlock failed', block, e);
     return fallback(block || {});
+  }
+}
+
+// Feed dispatch — one renderer per feed type; same extensibility contract as blocks.
+// Each renders the type-specific body; the Feed composition wraps the shared envelope + media.
+export const feedRenderers = { post, video, list, card, vocab, scenario };
+
+export function renderFeedBody(item) {
+  const fn = feedRenderers[item && item.type];
+  if (!fn) return `<div class="block-fallback">[no renderer for feed type: <code>${esc(item && item.type)}</code>]</div>`;
+  try {
+    return fn(item);
+  } catch (e) {
+    console.error('renderFeedBody failed', item, e);
+    return '';
   }
 }
