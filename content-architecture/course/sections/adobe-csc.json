@@ -1,0 +1,131 @@
+{
+  "frameworkAddress": "adobe.csc",
+  "title": "Content Supply Chain",
+  "tag": "End-to-end content workflow · Brief to activated asset",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> how the Content Supply Chain stack (Workfront, Workfront Fusion, AEM Assets, GenStudio, Firefly) composes into a single brief-to-activation pipeline — and which stages the architect owns",
+    "<strong>Why it matters:</strong> AI-assisted production lifts content volume by 10–100×; without a governed pipeline, brand consistency, claims compliance, and approval auditability all fragment at the same rate",
+    "Brief-to-asset cycle time is an architecture metric, not a marketing one — handoffs between Workfront, GenStudio and AEM determine it more than any single tool's speed",
+    "GenStudio and Firefly assets must enter the same review-and-approval gates as human-created work — a parallel approval path is a governance defect, not a productivity gain",
+    "AEM Assets remains the source of truth for the activated corpus — GenStudio generates, Workfront governs, AEM stores, AJO and Campaign activate"
+  ],
+  "sections": [
+    {
+      "id": "adobe.csc.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "C", "html": "ontent Supply Chain is not a product — it is Adobe's name for the operating model that joins Workfront, AEM Assets, GenStudio, Firefly, Express and Frame.io into a single brief-to-activation pipeline. The architect's job is to design the seams between those tools so that volume scales without brand integrity collapsing. The pipeline does not exist in any one application; it exists in the handoffs between them." },
+        { "type": "lead", "page": 1, "html": "Marketing teams are being asked to ship 10× more content per quarter than they did two years ago. Generative AI makes the production step cheap; it does not make the governance step cheap. Without an architected supply chain, the brief queue overflows, the approval queue overflows, and AI-generated assets ship without anyone confirming the claims library or the legal review." },
+        { "type": "prose", "page": 1, "html": "The metric the architect owns is <strong>brief-to-activated-asset cycle time</strong> — the median elapsed time from a brief landing in Workfront to the resulting asset serving in a live AJO journey, Campaign send, or AEM Sites page. Every architectural decision in this chapter is graded against that number." }
+      ]
+    },
+    {
+      "id": "adobe.csc.stack",
+      "title": "The Content Supply Chain stack",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "1 · The Content Supply Chain stack" },
+        { "type": "prose", "page": 2, "html": "Five products carry the load. Each owns a distinct stage; none of them owns the pipeline end-to-end. Architects who treat Workfront as a project tracker or GenStudio as a one-off creative tool miss the point — these are stages of a single supply chain." },
+        { "type": "cardgrid", "page": 2, "columns": 3, "cards": [
+          { "eyebrow": "Workfront", "title": "Briefs, approvals, capacity", "body": "Work management. The brief enters here as a request; intake forms capture audience, claims, channel, deadline, and brand parameters. Workfront owns the queue, the review-and-approval routing, and the capacity view across creative teams. The brief ID generated here is the trace key for every downstream asset." },
+          { "eyebrow": "Workfront Fusion", "title": "Workflow automation", "body": "Integration and automation layer. Fusion scenarios connect Workfront to GenStudio, AEM Assets, Frame.io, Jira and the wider stack — moving brief metadata downstream and approval status back upstream. Without Fusion, the handoffs are manual and the cycle time is governed by human latency." },
+          { "eyebrow": "AEM Assets", "title": "The DAM, source of truth", "body": "The system of record for the activated asset corpus. Every approved asset — human-created, GenStudio-generated, Express-composed — lands here with metadata, rights information, and a link back to the originating brief. AJO, Campaign, AEM Sites and downstream activation read from AEM Assets, never from the production tools directly." },
+          { "eyebrow": "GenStudio", "title": "AI-generated marketing content", "body": "Adobe GenStudio for Performance Marketing produces channel-ready creative variants from a brief, a brand kit, and a claims library. Brand controls are configured once and enforced at generation time. Outputs are not finished assets — they are candidate variants that must traverse the same approval workflow as human-authored work." },
+          { "eyebrow": "Firefly", "title": "The generative engine", "body": "The image, video and 3D generative model that powers GenStudio, Express and the Creative Cloud apps. Architects rarely call Firefly directly; they govern which Firefly models are permitted (commercially-safe vs general), whether custom models are trained on brand corpus, and how generated assets are tagged for provenance." }
+        ] },
+        { "type": "heading", "page": 2, "html": "Supporting surfaces" },
+        { "type": "cardgrid", "page": 2, "columns": 2, "cards": [
+          { "eyebrow": "Adobe Express", "title": "Lightweight in-channel creation", "body": "Template-based authoring for marketing and agency teams who do not need Creative Cloud's depth. Express outputs flow into the same AEM Assets corpus and pass through the same Workfront approval routing. Treat it as a creation surface, not a parallel pipeline." },
+          { "eyebrow": "Frame.io", "title": "Review-and-approval for video and rich media", "body": "Frame-accurate commentary for video, timed feedback for motion creative, and version comparison for image work. Frame.io review status is mirrored back into Workfront via Fusion so that the approval audit lives in one place — not in two." }
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.csc.workflow",
+      "title": "Brief to activated asset",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "2 · Brief to activated asset" },
+        { "type": "prose", "page": 3, "html": "The pipeline runs in six stages. Each stage has an owning tool, an entering artefact, and a leaving artefact. Treat the diagram below as the architecture; everything else in this chapter is a refinement of one of these handoffs." },
+        { "type": "diagram", "page": 3, "render": "mermaid", "title": "Brief to activated asset", "source": "flowchart LR\n    A([Brief in Workfront\\nintake form · brand · claims · channel]) --> B[Generate\\nGenStudio + Firefly\\ncandidate variants]\n    B --> C[Review\\nFrame.io + Workfront proof\\ncreative + brand + legal]\n    C --> D{Approve?}\n    D -->|rework| B\n    D -->|approved| E[Store\\nAEM Assets\\nmetadata + brief ID + rights]\n    E --> F([Activate\\nAJO · Campaign · AEM Sites\\nweb · email · in-app])" },
+        { "type": "notes", "page": 3, "items": [
+          "<b>Brief (Workfront)</b> — the intake form is the contract. Required fields: audience, channel mix, claims allowed, brand kit reference, deadline, brief ID. A brief without claims and audience is not ready to enter the pipeline; do not let intake become a free-text wishlist.",
+          "<b>Generate (GenStudio + Firefly)</b> — GenStudio reads the brief metadata and the brand kit, calls Firefly under the hood, and produces channel-shaped candidate variants. Output volume is high by design — narrowing happens in review, not in generation.",
+          "<b>Review (Frame.io + Workfront proof)</b> — creative review, brand review, and legal review run in parallel where possible, sequential where dependencies exist. Frame.io for video and motion; Workfront proof for static. Comments resolve to a single approval decision, not a per-reviewer ambiguity.",
+          "<b>Approve</b> — a named approver signs off in Workfront. Rejected assets return to Generate with the reviewer comments attached; approved assets advance with an approval timestamp and approver identity in the metadata.",
+          "<b>Store (AEM Assets)</b> — the approved asset is published to AEM Assets with: brief ID, GenStudio session ID (if applicable), Firefly model reference, approver, expiry date, rights status. This metadata is what makes the next stage governable.",
+          "<b>Activate (AJO · Campaign · AEM Sites)</b> — downstream channels read from AEM Assets via offer catalogue, content fragment API, or direct asset reference. The activation tools never call GenStudio or Workfront at runtime — they only see the AEM-stored result."
+        ] },
+        { "type": "callout", "page": 3, "variant": "why", "html": "Cycle time is set by handoffs, not by tools. Workfront-to-GenStudio handoffs that require a human to copy the brief into a generation prompt add hours per asset; Fusion-automated handoffs that pass structured brief metadata add seconds. The architect's primary lever on cycle time is the Fusion scenario design — not the speed of any individual tool." }
+      ]
+    },
+    {
+      "id": "adobe.csc.governance",
+      "title": "Governance — brand, claims, approval",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "3 · Governance — brand controls, claims library, approval gates" },
+        { "type": "prose", "page": 4, "html": "Governance is the difference between a content supply chain and a content firehose. The architect installs the gates; the operations team runs them." },
+        { "type": "notes", "page": 4, "items": [
+          "<b>Brand kit as a locked artefact</b> — colours, typefaces, logo treatments, and tone descriptors are configured in GenStudio and Express as the brand kit. The kit is owned by brand governance, not by individual creatives. Edits go through a change-control workflow, not a casual edit in the UI.",
+          "<b>Claims library</b> — the set of legally approved product claims, regulatory disclaimers, and prohibited phrases. GenStudio enforces this at generation time: a candidate that uses an unapproved claim is flagged before it reaches review. The library is sourced from legal — it is not a marketing preference.",
+          "<b>Approval gates as workflow, not convention</b> — Workfront's review-and-approval module makes the gate explicit: named reviewers, defined sequence, mandatory completion before promotion. AI-generated assets traverse the same gates as human-created ones. There is no shortcut path.",
+          "<b>Audit trail end-to-end</b> — for every activated asset, the architect must be able to trace: which brief, which GenStudio session, which Firefly model, which reviewers, which approver, which AEM Asset version, which AJO offer or Campaign delivery. If any link in that chain is missing, the audit is broken — DPDP, GDPR, and brand-safety incident response all require this trace."
+        ] },
+        { "type": "callout", "page": 4, "variant": "tip", "html": "DEPT® field pattern — stamp every GenStudio-generated asset with the originating Workfront brief ID in its AEM Assets metadata, and surface that field in the AJO offer catalogue and Campaign delivery report. The test is simple: pick any activated impression in the last 30 days and confirm you can navigate from that impression back to the brief in under 30 seconds. If you cannot, the trace is broken." },
+        { "type": "callout", "page": 4, "variant": "pitfall", "html": "AI-generated assets bypassing the standard approval workflow because they were produced in a tool outside the governed surface — a creative using a general-purpose image generator, or a campaign team generating variants directly in a Firefly playground without routing through GenStudio. The asset enters AEM Assets through a side door, the claims library never sees it, and the audit trail starts at AEM Assets rather than at the brief. Close the side doors at the architecture stage." }
+      ]
+    },
+    {
+      "id": "adobe.csc.metrics",
+      "title": "Metrics the architect owns",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "4 · Metrics the architect owns" },
+        { "type": "prose", "page": 5, "html": "Four metrics tell the architect whether the supply chain is functioning. None of them is a tool-level metric — each one spans multiple stages, which is precisely why architects own them rather than tool leads." },
+        { "type": "cardgrid", "page": 5, "columns": 4, "cards": [
+          { "eyebrow": "Cycle time", "title": "Brief → activated asset (p50, p90)", "body": "Median and 90th-percentile elapsed time from brief submission in Workfront to the asset serving in a live channel. p50 tells the team how the pipeline behaves on a normal day; p90 tells the team how it behaves under pressure. Track both — averages hide the failures." },
+          { "eyebrow": "First-time approval rate", "title": "Approved without rework", "body": "Percentage of assets that clear the review gates on the first pass. Low rates point to weak briefs, mis-tuned brand controls, or a claims library that is out of step with what marketing actually wants to say. This is a brief-quality signal more than a creative-quality signal." },
+          { "eyebrow": "Asset reuse rate", "title": "Activations per stored asset", "body": "How often an AEM-stored asset is referenced across channels, journeys and campaigns. High reuse means the corpus is being indexed and discoverable; low reuse means teams are re-briefing for variants that already exist. A reuse rate trending down is a search-and-tagging problem in AEM Assets, not a creative problem." },
+          { "eyebrow": "AI-asset performance lift", "title": "GenStudio vs human-created", "body": "Performance comparison — open rate, click rate, conversion rate — between GenStudio-generated variants and human-created controls, in the same placement and audience. The honest answer is rarely a clean win in either direction; the architect's job is to make sure the comparison is being run at all, not to predict the result." }
+        ] },
+        { "type": "prose", "page": 5, "html": "These four sit on the executive dashboard, not in a workflow tool. Cycle time and first-time approval are weekly; reuse rate and AI performance lift are monthly. Treat any sudden movement on cycle time as an incident — it almost always traces to a broken Fusion scenario, an overloaded approver queue, or a brand-kit change that has pushed a batch of variants into rework." }
+      ]
+    },
+    {
+      "id": "adobe.csc.architects-role",
+      "title": "The architect's role",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "5 · The architect's role" },
+        { "type": "prose", "page": 6, "html": "Architects do not produce content. They design the seams between the tools that produce it. In a content supply chain, the architecture work concentrates in four places." },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Intake design</b> — the Workfront request type, its required fields, and the validation logic on those fields. A well-designed intake is the cheapest cycle-time reduction available; a poorly designed intake wastes generative capacity downstream.",
+          "<b>Fusion scenarios</b> — the automation that carries brief metadata to GenStudio, approval status back to Workfront, approved assets into AEM Assets with full metadata, and asset references out to AJO and Campaign. These are pieces of code; they are reviewed, versioned, and monitored like code.",
+          "<b>Metadata model in AEM Assets</b> — the schema that holds brief ID, GenStudio session, Firefly model reference, approver, claims tags, expiry, and rights status. This schema is the spine of the audit trail and the foundation of asset reuse. Design it once, carefully.",
+          "<b>Activation contracts</b> — the agreement with the AJO and Campaign architects on how offers, content fragments, and asset references are exposed downstream. The Content Supply Chain ends at AEM Assets; the activation systems read from there. Define what they read and how."
+        ] },
+        { "type": "callout", "page": 6, "variant": "why", "html": "As content volume scales 10–100× with AI assistance, the workflow architecture decides whether brand integrity holds or fragments. A pipeline that worked at 200 assets a quarter becomes a liability at 2000 assets a quarter if the gates, the metadata, and the handoffs were not architected for volume. The architect's job is to design for the volume the business is about to ask for — not the volume it asked for last year." }
+      ]
+    },
+    {
+      "id": "adobe.csc.review",
+      "title": "Architect's Review",
+      "order": 6,
+      "blocks": [
+        { "type": "architects-review", "page": 7, "label": "Architect's Review · Content Supply Chain", "items": [
+          "Is there a named owner for each of the six pipeline stages — brief, generate, review, approve, store, activate — and do those owners agree on where their stage ends?",
+          "Do AI-generated assets traverse exactly the same approval gates as human-created assets, or is there a parallel path that skips brand or legal review?",
+          "Is brief-to-activated-asset cycle time being measured at p50 and p90, and is it visible to the team that can act on it?",
+          "Can you trace any activated asset from the last 30 days back to its originating Workfront brief in under 30 seconds, using AEM Assets metadata alone?",
+          "Is the claims library sourced from legal and enforced at GenStudio generation time, or is it a wiki page that creatives are expected to remember?",
+          "Are Workfront Fusion scenarios versioned, reviewed, and monitored — or are they treated as configuration that any operator can edit?",
+          "Does the AEM Assets metadata model include brief ID, GenStudio session, Firefly model reference, approver identity, and rights expiry on every approved asset?",
+          "Is first-time approval rate trending up over the last quarter — and if not, is the team investigating brief quality, brand controls, or the claims library as the cause?"
+        ] }
+      ]
+    }
+  ]
+}

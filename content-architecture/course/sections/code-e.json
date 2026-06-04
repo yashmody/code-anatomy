@@ -23,30 +23,6 @@
           "Working Software"
         ] }
       ]
-    },
-    {
-      "id": "code.e.telescope",
-      "title": "Engineering expands into C · O · D · E · R",
-      "order": 1,
-      "blocks": [
-        { "type": "heading", "page": 2, "html": "Engineering expands into C · O · D · E · R" },
-        { "type": "lead", "page": 2, "html": "Zoom into the <strong>E</strong> of CODE and a second framework unfolds — this time with five letters. It's how an engineering lead keeps the build itself honest." },
-        { "type": "diagram", "page": 2, "render": "nodes", "title": "CODER · Inside Engineering", "rows": [
-          { "nodes": [ { "label": "C · Code", "sub": "FE · BE · integration · project management. This is where all of Part I lives." } ] },
-          { "nodes": [ { "label": "O · Optimization & Quality", "sub": "Performance, testing, QA — making it fast and making it correct." } ] },
-          { "nodes": [ { "label": "D · Deployment & Docs", "sub": "Shipping it, plus authoring, documentation & the build/support layer." } ] },
-          { "nodes": [ { "label": "E · External Integrations", "sub": "Third parties, APIs, partner systems — engagement beyond your own walls." } ] },
-          { "nodes": [ { "label": "R · Release Management", "sub": "Versioning, rollout, cadence — the discipline of when things go live." } ] }
-        ] },
-        { "type": "notes", "page": 2, "items": [
-          "<b>Code</b> — Are models, functions and events identified and documented? <em>(Part I is the deep-dive.)</em>",
-          "<b>Optimization &amp; Quality</b> — Are performance targets set and quality gates established? Will it hold at 100 users — and at 100,000?",
-          "<b>Deployment</b> — Is it automated? Can we roll back? Are environments aligned?",
-          "<b>External Integrations</b> — What systems are involved, what happens when they fail, and who owns them?",
-          "<b>Release Management</b> — Is release readiness established, is hypercare planned, is success measurable?"
-        ] },
-        { "type": "quote", "page": 2, "html": "Most digital failures are release failures, not engineering failures. Change reaching production safely is its own discipline — that's why R exists." }
-      ]
     }
   ]
 }

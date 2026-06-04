@@ -1,0 +1,257 @@
+{
+  "$schema": "framework-explainer.v1",
+  "_note": "Static framing copy for Manual + Read. NOT validated against course.schema.json. Body strings are VERBATIM from content-system/anatomy-of-code-course.html. Inline <strong>/<em>/<b> tags are preserved and rendered through raw().",
+
+  "masthead": {
+    "kicker": "Field Manual · Engineering Foundations",
+    "title": "The Anatomy<br>of <em>Code</em>",
+    "subtitle": "From primitives a junior writes, to a framework an architect governs — the same letters, telescoping all the way down.",
+    "meta": [
+      { "html": "<b>Part I</b> · The CODE&ndash;CODER Framework" },
+      { "html": "<b>Part II</b> · The Adobe Stack" },
+      { "html": "<b>Part III</b> · AI-Native Development" },
+      { "html": "<b>For</b> · Architects · PMs · Product &amp; Delivery Leads" }
+    ]
+  },
+
+  "parts": {
+    "one": {
+      "no": "Part One",
+      "title": "The CODE&ndash;CODER Framework",
+      "body": "Four domains hold every digital build at the outer ring (CODE); the engineering letter telescopes into five sub-letters (CODER). The conceptual vocabulary — the anatomy of code itself — now lives inside CODER's <strong>C</strong> as a collapsible deep-dive, so the framework is the lens you start with and the anatomy is what you zoom into when you need it."
+    },
+    "two": {
+      "no": "Part Two",
+      "title": "The Adobe Stack",
+      "body": "The CODE&ndash;CODER framework is platform-agnostic; this Part is not. It is the Adobe Experience Cloud as DEPT® practises it — the products an architect on an AEM engagement is expected to place, integrate, and govern. Cloud Manager delivers the platform; Adobe Analytics and CJA measure it; AJO and Campaign activate against it; and LLMO prepares its content for the answer engines that increasingly sit between a brand and its audience."
+    },
+    "three": {
+      "no": "Part Three",
+      "title": "The Anatomy of AI-Generated Systems",
+      "body": "Part I teaches how software is built and governed, and Part II maps the Adobe stack it runs on. Part III answers a different question — <em>how should software that AI is writing be structured, governed, reviewed, and evolved?</em> This is where the framework is most differentiated, and where the architect's role changes most. The worked example for this Part is Stalwart, which lives inside CODER's <strong>C</strong>; this Part covers the principles that apply across Stalwart and any future agentic framework your team writes."
+    }
+  },
+
+  "code": {
+    "id": "code",
+    "modTag": "The Outer Lens",
+    "heading": "C · O · D · E — the whole engagement",
+    "intro": "Four domains hold every digital build. Lose track of any one and the delivery wobbles. Here is the top-level map, then each domain in depth — with the questions a leader should ask and what \"done\" looks like.",
+    "telescope": {
+      "label": "CODE · The Engagement",
+      "letters": [
+        { "glyph": "C", "name": "Content",              "desc": "Everything the platform manages, displays, stores or publishes — and the governance around it." },
+        { "glyph": "O", "name": "Operations &amp; Martech", "desc": "How work moves &amp; which tools support it. Where strategy becomes operational reality." },
+        { "glyph": "D", "name": "Design &amp; Data",       "desc": "Design is behaviour, not screens. Data is the platform's memory. Hold them together." },
+        { "glyph": "E", "name": "Engineering",           "desc": "Turns business intent into working software. Opens into its own five-part framework →" }
+      ]
+    },
+    "nodes": {
+      "c": {
+        "rail": "C",
+        "name": "Content",
+        "accent": true,
+        "intro": "Without content there is no experience — so governance starts here, not at launch. The job isn't \"write copy\"; it's knowing where every piece comes from, how often it moves, who is accountable for it, and how it's structured. Eight dimensions to pin down for each content type:",
+        "dims": [
+          { "title": "Source",              "desc": "Where it originates — authored, syndicated, a feed, or user-generated." },
+          { "title": "Frequency",           "desc": "How often it changes or needs refreshing — static, periodic, real-time." },
+          { "title": "Asset Management",    "desc": "The DAM: where assets live, formats, usage rights, expiry." },
+          { "title": "Approval",            "desc": "Who signs off, and the gates a piece passes before it publishes." },
+          { "title": "Responsible Parties", "desc": "Distinct owners for create, approve and publish." },
+          { "title": "Translations",        "desc": "Which locales, and how localization is sourced &amp; kept in sync." },
+          { "title": "Hierarchy",           "desc": "Structure &amp; taxonomy — parent/child, navigation, relationships." },
+          { "title": "Attributes",          "desc": "The metadata fields each type carries, and which are reusable." }
+        ],
+        "asksLabel": "Questions every leader should ask",
+        "asks": [
+          "What content types exist, and how are they organised into a hierarchy?",
+          "Where does each type originate, and how frequently does it change?",
+          "Who creates it, who approves it, who publishes it — and which locales?",
+          "What is reusable versus unique, and which attributes define each type?",
+          "What performs, what converts, and what should be retired?"
+        ],
+        "deliverables": [
+          "Content Inventory", "Content Model", "Taxonomy", "Metadata Framework",
+          "Localization Plan", "Authoring Workflows", "Governance Matrix", "SEO Framework"
+        ]
+      },
+      "o": {
+        "rail": "O",
+        "name": "Operations &amp; Martech",
+        "intro": "Operations determine how work moves through the organisation; Martech determines which tools support that work — AEM, Analytics, Target, AEP, CRM, CDP, automation. This is where a strategy on a slide becomes a process people actually run.",
+        "asksLabel": "Questions every leader should ask",
+        "asks": [
+          "How does work begin, how does it move, and how is it approved?",
+          "Who owns each step — and what is automated versus manual?",
+          "What metrics matter, who consumes them, and how often are they reviewed?"
+        ],
+        "deliverables": [
+          "Workflow Maps", "Martech Architecture", "RACI Models",
+          "Governance Framework", "Reporting Model", "Operational SLAs"
+        ]
+      },
+      "d": {
+        "rail": "D",
+        "name": "Design &amp; Data",
+        "intro": "Often split, better viewed together. <strong>Design</strong> is behaviour — journeys, components, accessibility, interaction. <strong>Data</strong> is what the system understands and remembers — the fuel for analytics, personalization, AI and optimization.",
+        "askGroups": [
+          {
+            "label": "Design — ask",
+            "items": [
+              "Who are the users, and what are they trying to achieve?",
+              "What are the key journeys, and where do people struggle?",
+              "How do we measure success?"
+            ]
+          },
+          {
+            "label": "Data — ask",
+            "items": [
+              "What do we collect, and why? Who owns it?",
+              "How is it protected, and how is it used downstream?"
+            ]
+          }
+        ],
+        "deliverables": [
+          "Personas", "Journey Maps", "Wireframes", "Design System",
+          "Accessibility Reviews", "Data Models", "Event Framework", "Measurement Plan"
+        ]
+      },
+      "e": {
+        "rail": "E",
+        "name": "Engineering",
+        "intro": "Engineering transforms business intent into working software. Unlike the other three, this letter doesn't just have questions — it has its own five-layer framework. Zoom in below.",
+        "deliverables": [
+          "Technical Architecture", "The CODER plan ↓", "Working Software"
+        ]
+      }
+    }
+  },
+
+  "coder": {
+    "id": "coder",
+    "modTag": "The Inner Lens",
+    "heading": "Engineering expands into C · O · D · E · R",
+    "intro": "Zoom into the <strong>E</strong> of CODE and a second framework unfolds — this time with five letters. It's how an engineering lead keeps the build itself honest.",
+    "telescope": {
+      "inner": true,
+      "label": "CODER · Inside Engineering",
+      "letters": [
+        { "glyph": "C", "name": "Code",                       "desc": "FE · BE · integration · project management. <em>This is where all of Part I lives.</em>" },
+        { "glyph": "O", "name": "Optimization &amp; Quality",     "desc": "Performance, testing, QA — making it fast and making it correct." },
+        { "glyph": "D", "name": "Deployment &amp; Docs",          "desc": "Shipping it, plus authoring, documentation &amp; the build/support layer." },
+        { "glyph": "E", "name": "External Integrations",      "desc": "Third parties, APIs, partner systems — engagement beyond your own walls." },
+        { "glyph": "R", "name": "Release Management",         "desc": "Versioning, rollout, cadence — the discipline of <em>when</em> things go live." }
+      ]
+    },
+    "asksLabel": "What each layer asks",
+    "asks": [
+      { "html": "<b style=\"font-family:var(--serif);color:var(--ink)\">Code</b> — Are models, functions and events identified and documented? <em>(Part I is the deep-dive.)</em>" },
+      { "html": "<b style=\"font-family:var(--serif);color:var(--ink)\">Optimization &amp; Quality</b> — Are performance targets set and quality gates established? Will it hold at 100 users — and at 100,000?" },
+      { "html": "<b style=\"font-family:var(--serif);color:var(--ink)\">Deployment</b> — Is it automated? Can we roll back? Are environments aligned?" },
+      { "html": "<b style=\"font-family:var(--serif);color:var(--ink)\">External Integrations</b> — What systems are involved, what happens when they fail, and who owns them?" },
+      { "html": "<b style=\"font-family:var(--serif);color:var(--ink)\">Release Management</b> — Is release readiness established, is hypercare planned, is success measurable?" }
+    ],
+    "blockquote": "Most digital failures are release failures, not engineering failures. Change reaching production safely is its own discipline — that's why R exists."
+  },
+
+  "coderWrappers": {
+    "o": {
+      "id": "coder-o",
+      "modTag": "CODER · O",
+      "heading": "Optimization &amp; Quality 101",
+      "body": "Inside CODER, the <strong>O</strong> letter holds three disciplines that decide whether what you built actually deserves to ship: <em>testing</em>, <em>performance</em>, and <em>accessibility</em>. PMs treat them as separate phases at the end of a project; architects treat them as continuous constraints from day one. This deep-dive covers each — what they ask, where they sit in the engineering loop, and which numbers the team must own."
+    },
+    "e": {
+      "id": "coder-e",
+      "modTag": "CODER · E",
+      "heading": "External Integrations 101",
+      "body": "The <strong>E</strong> of CODER is what happens at the perimeter — every system, vendor and API outside your own walls that your build depends on. Most production outages don't originate in your code; they originate in someone else's, propagated through an integration that wasn't hardened against their failure. This deep-dive covers the topology, the auth menu, the worked examples (Google Maps, Google OAuth, WhatsApp, payments, logistics), and the failure modes that decide whether your perimeter holds."
+    },
+    "r": {
+      "id": "coder-r",
+      "modTag": "CODER · R",
+      "heading": "Release Management 101",
+      "body": "The <strong>R</strong> of CODER is the discipline that decides <em>when</em> things go live — and equally, what gets rolled back when they shouldn't have. Most digital outages aren't engineering failures; they're <em>release</em> failures. This deep-dive starts with Git (where every release actually originates), then covers the branching strategy, the PR mechanics, promotion gates, and versioning."
+    }
+  },
+
+  "nest": {
+    "id": "nest",
+    "modTag": "The Punchline",
+    "heading": "How it all nests",
+    "intro": "Here's the elegant part. The framework telescopes — the same letter-logic at every altitude:",
+    "scopes": [
+      {
+        "label": "CODE · Engagement",
+        "letters": [
+          { "glyph": "C", "name": "Content" },
+          { "glyph": "O", "name": "Ops &amp; Martech" },
+          { "glyph": "D", "name": "Design &amp; Data" },
+          { "glyph": "E", "glyphStyle": "color:var(--ochre)", "name": "Engineering ↓", "nameStyle": "color:var(--ochre-deep)" }
+        ]
+      },
+      {
+        "inner": true,
+        "label": "CODER · Engineering",
+        "labelStyle": "color:var(--ochre-deep)",
+        "letters": [
+          { "glyph": "C", "glyphStyle": "color:var(--ochre)", "name": "Code ↓", "nameStyle": "color:var(--ochre-deep)" },
+          { "glyph": "O", "name": "Optimization" },
+          { "glyph": "D", "name": "Deployment" },
+          { "glyph": "E", "name": "External" },
+          { "glyph": "R", "name": "Release" }
+        ]
+      },
+      {
+        "style": "border-style:dotted",
+        "label": "Part I · Anatomy of Code",
+        "lettersMode": "word",
+        "letters": [
+          { "glyph": "Events",    "glyphStyle": "font-size:26px", "desc": "when" },
+          { "glyph": "Functions", "glyphStyle": "font-size:26px", "desc": "do" },
+          { "glyph": "Variables", "glyphStyle": "font-size:26px", "desc": "hold" },
+          { "glyph": "Storage",   "glyphStyle": "font-size:26px", "desc": "group" }
+        ]
+      }
+    ],
+    "arrows": [ "Engineering opens up", "Code opens up" ],
+    "blockquote": "CODE is the programme. Its <em>E</em> is CODER. CODER's <em>C</em> is the Anatomy of Code. The same questions — when, what, how, where — asked at three altitudes."
+  },
+
+  "review": {
+    "id": "review",
+    "modTag": "Operating the Framework",
+    "heading": "The Executive Review Model",
+    "intro": "Every digital initiative should be run through CODE&ndash;CODER before it's called ready. Eight cards, three questions each — a ten-minute gate that surfaces the gaps a status report hides. Tick a box only when you can point to the evidence.",
+    "cards": [
+      { "name": "Content",                  "questions": ["Is the content model defined?", "Is ownership clear?", "Is governance established?"] },
+      { "name": "Operations &amp; Martech", "questions": ["Are workflows defined?", "Are responsibilities clear?", "Are tools aligned?"] },
+      { "name": "Design &amp; Data",        "questions": ["Are journeys understood?", "Is data mapped?", "Is measurement defined?"] },
+      { "name": "Code",                     "questions": ["Are models identified?", "Are functions documented?", "Are events defined?"] },
+      { "name": "Optimization &amp; Quality", "questions": ["Are performance targets defined?", "Is testing adequate?", "Are quality gates established?"] },
+      { "name": "Deployment",               "questions": ["Is deployment automated?", "Is rollback possible?", "Are environments aligned?"] },
+      { "name": "External Integrations",    "questions": ["Are dependencies understood?", "Are contracts defined?", "Are failure scenarios handled?"] },
+      { "name": "Release Management",       "questions": ["Is release readiness established?", "Is hypercare planned?", "Is success measurable?"] }
+    ],
+    "blockquote": "CODE tells leaders <em>what</em> must be delivered. CODER tells them <em>how</em> it will be. The review is where both get checked in the same sitting."
+  },
+
+  "watch": {
+    "id": "watch",
+    "modTag": "Operating the Framework",
+    "heading": "Who watches what",
+    "intro": "A review surfaces gaps; ownership closes them. Here's the practical split at each node — what the <strong>architect</strong> watches for integrity, and what the <strong>PM</strong> keeps a tab on for delivery. Product Owners and Delivery Leads read down both columns.",
+    "headers": ["Node", "Architect watches", "PM keeps a tab on"],
+    "rows": [
+      { "node": "Content",        "architect": "Content model, taxonomy, hierarchy, localization &amp; SEO integrity", "pm": "Sources, owners, approval &amp; translation readiness; refresh cadence; sign-offs" },
+      { "node": "Ops &amp; Martech", "architect": "Analytics wiring, workflow &amp; campaign plumbing",                  "pm": "Tooling access, vendor coordination, launch checklist" },
+      { "node": "Design &amp; Data", "architect": "UX consistency, data sources behind decisions",                        "pm": "Wireframe approvals, research findings → backlog" },
+      { "node": "Code",           "architect": "The Part I anatomy: patterns, events, structure",                         "pm": "Story flow, FE/BE/integration dependencies" },
+      { "node": "Optimization",   "architect": "Performance budgets, test coverage, quality gates",                       "pm": "QA cycles, defect burndown, acceptance criteria" },
+      { "node": "Deployment",     "architect": "Environments, pipeline, documentation health",                            "pm": "Cutover plan, runbooks, handover readiness" },
+      { "node": "External",       "architect": "API contracts, failure modes, third-party risk",                          "pm": "Partner timelines, credentials, integration sign-offs" },
+      { "node": "Release",        "architect": "Versioning &amp; rollback strategy, release safety",                      "pm": "Go-live cadence, comms, stakeholder approval" }
+    ],
+    "blockquote": "Run the table at every checkpoint. If a cell is empty, that's your next risk — not a gap in the plan, a hole in it."
+  }
+}

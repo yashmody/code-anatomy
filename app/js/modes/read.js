@@ -14,6 +14,10 @@ import { renderBlock } from '../registry.js';
 import { renderScanBox } from '../render/chapter.js';
 import { runMermaid } from '../render/diagram.js';
 import { esc } from '../util/dom.js';
+import {
+  renderMasthead, renderPartBanner, renderCodeOuter, renderNodeBlock,
+  renderCoderInner, renderCoderWrapper, renderNest, renderReview, renderWatch
+} from '../render/explainer.js';
 
 const SELF_HEADED = new Set(['chapter-open', 'heading', 'architects-review']);
 let activeKeyHandler = null;
@@ -63,6 +67,7 @@ function breadcrumb(idx, node) {
 // ════════════════════════════════════════════════════════════════════════════
 export async function renderRead(mount, base, address, sectionFile, sectionFiles) {
   if (!address) return renderContents(mount, base, sectionFiles || []);
+  if (address === 'framework') return renderFrameworkExplainer(mount, base);
   return renderChapter(mount, base, address, sectionFile);
 }
 
@@ -113,6 +118,21 @@ async function renderContents(mount, base, sectionFiles) {
     `</section>`;
   }).join('');
 
+  // "The Framework" — a static top entry above the 5 ring categories. Routes to the
+  // paginated framework explainer (#/read/framework). Not part of SECTION_FILES; not
+  // counted against any ring; its own thing.
+  const frameworkEntry =
+    `<section class="read-cat read-cat-framework" data-ring="framework">` +
+      `<a class="read-chrow rc-framework" href="#/read/framework">` +
+        `<span class="rc-mark" aria-hidden="true">◆</span>` +
+        `<span class="rc-body">` +
+          `<span class="rc-title">The Framework</span>` +
+          `<span class="rc-meta">CODE · CODER · the nest, the review, the watch</span>` +
+        `</span>` +
+        `<span class="rc-go" aria-hidden="true">→</span>` +
+      `</a>` +
+    `</section>`;
+
   mount.innerHTML =
     `<div class="read read-contents">` +
       `<header class="read-toc-head">` +
@@ -120,7 +140,7 @@ async function renderContents(mount, base, sectionFiles) {
         `<h1 class="read-toc-title">Contents</h1>` +
         `<p class="read-toc-lede">Choose a category, then a chapter to start reading.</p>` +
       `</header>` +
-      `<div class="read-toc-list">${groups}</div>` +
+      `<div class="read-toc-list">${frameworkEntry}${groups}</div>` +
     `</div>`;
 
   // Collapsible categories — toggle aria-expanded + a class the CSS animates against.
@@ -433,6 +453,214 @@ async function renderChapter(mount, base, address, sectionFile) {
     const t = (e.target.tagName || '').toLowerCase();
     if (t === 'input' || t === 'textarea' || t === 'select') return;
     if (drawerOpen) return;     // don't page the chapter behind an open Sections drawer (ESC is handled there)
+    if (e.key === 'ArrowRight') go(1);
+    else if (e.key === 'ArrowLeft') go(-1);
+  };
+  document.addEventListener('keydown', activeKeyHandler);
+
+  paint();
+}
+
+// ── FRAMEWORK EXPLAINER READER ─────────────────────────────────────────────────
+// Paginates the 10 static framing pieces — masthead, Part One, CODE outer lens,
+// C·O·D·E node-blocks, CODER inner lens, CODER · O/E/R wrappers, #nest, Review,
+// Watch, Part Two, Part Three — across Read pages. Mimics the chapter reader's
+// chrome: top-row (← Contents · title · Sections ▾), slide-in transitions, swipe,
+// arrow keys, page-dot navigation. Same paint-per-page pattern.
+async function renderFrameworkExplainer(mount, base) {
+  // Defensive load — if the explainer JSON isn't there, fall through to the route-level
+  // catch in main.js which shows the "Couldn't load" placeholder rather than crashing.
+  let d;
+  try { d = await loadJSON(`${base}/course/framework-explainer.json`); }
+  catch (e) {
+    mount.innerHTML = `<div class="placeholder"><h2>Couldn't load the framework explainer</h2><p>${esc(e.message)}</p></div>`;
+    return;
+  }
+
+  // Build the page list. Each entry is { title, html }. One piece per page keeps
+  // the reading rhythm aligned with the Manual's interleave.
+  const pages = [];
+
+  // Page 0 — masthead (the canonical course header). Wrap in an opener-style
+  // surface so the Newsreader skin still feels like the rest of Read.
+  if (d.masthead) {
+    pages.push({
+      title: 'Masthead',
+      html: `<div class="read-opener">${renderMasthead(d.masthead)}</div>`
+    });
+  }
+
+  if (d.parts && d.parts.one) pages.push({ title: 'Part One', html: renderPartBanner(d.parts.one) });
+
+  // CODE outer lens — wrapper + telescope.
+  if (d.code) pages.push({ title: 'CODE · The Outer Lens', html: renderCodeOuter(d.code) });
+
+  // The four CODE node-blocks (C / O / D / E).
+  if (d.code && d.code.nodes) {
+    if (d.code.nodes.c) pages.push({ title: 'C · Content',            html: renderNodeBlock('c', d.code.nodes.c) });
+    if (d.code.nodes.o) pages.push({ title: 'O · Operations & Martech', html: renderNodeBlock('o', d.code.nodes.o) });
+    if (d.code.nodes.d) pages.push({ title: 'D · Design & Data',       html: renderNodeBlock('d', d.code.nodes.d) });
+    if (d.code.nodes.e) pages.push({ title: 'E · Engineering',         html: renderNodeBlock('e', d.code.nodes.e) });
+  }
+
+  // CODER inner lens — wrapper + telescope + asks + blockquote.
+  if (d.coder) pages.push({ title: 'CODER · The Inner Lens', html: renderCoderInner(d.coder) });
+
+  // The three CODER letter intros (O / E / R).
+  if (d.coderWrappers) {
+    if (d.coderWrappers.o) pages.push({ title: 'CODER · O · Optimization & Quality', html: renderCoderWrapper('o', d.coderWrappers.o) });
+    if (d.coderWrappers.e) pages.push({ title: 'CODER · E · External Integrations',  html: renderCoderWrapper('e', d.coderWrappers.e) });
+    if (d.coderWrappers.r) pages.push({ title: 'CODER · R · Release Management',     html: renderCoderWrapper('r', d.coderWrappers.r) });
+  }
+
+  // The punchline + the two operating tools.
+  if (d.nest)   pages.push({ title: 'How it all nests',           html: renderNest(d.nest) });
+  if (d.review) pages.push({ title: 'The Executive Review Model', html: renderReview(d.review) });
+  if (d.watch)  pages.push({ title: 'Who watches what',           html: renderWatch(d.watch) });
+
+  // Part Two and Part Three banners (the framework hand-offs).
+  if (d.parts && d.parts.two)   pages.push({ title: 'Part Two',   html: renderPartBanner(d.parts.two) });
+  if (d.parts && d.parts.three) pages.push({ title: 'Part Three', html: renderPartBanner(d.parts.three) });
+
+  // ── Reader state ───────────────────────────────────────────────────────────
+  const total = pages.length;
+  let cur = 0;
+  let dir = 1;
+  const SHORT_MAX = 8;
+  const useDots = total <= SHORT_MAX;
+  const hasSections = total >= 2;
+  let drawerOpen = false;
+
+  function dots() {
+    let h = '';
+    for (let i = 0; i < total; i++) {
+      h += `<button type="button" class="pn-dot${i === cur ? ' on' : ''}" data-page="${i}" ` +
+        `aria-label="Go to page ${i + 1} of ${total}"${i === cur ? ' aria-current="true"' : ''}></button>`;
+    }
+    return h;
+  }
+
+  function drawerHTML() {
+    if (!hasSections) return '';
+    const items = pages.map((p, i) =>
+      `<li role="none"><button type="button" role="menuitem" class="rd-item${i === cur ? ' on' : ''}" ` +
+        `data-page="${i}"${i === cur ? ' aria-current="true"' : ''}>` +
+        `<span class="rd-dot" aria-hidden="true"></span>${esc(p.title)}</button></li>`
+    ).join('');
+    return `<div class="read-drawer" id="readDrawer" hidden>` +
+      `<div class="rd-head">Sections</div>` +
+      `<ul class="rd-list" role="menu" aria-label="Jump to section">${items}</ul>` +
+    `</div>`;
+  }
+
+  function paint() {
+    const isFirst = cur === 0;
+    const isLast = cur === total - 1;
+    const slide = dir >= 0 ? 'slide-next' : 'slide-prev';
+    const pageTitle = pages[cur].title;
+    const pct = total > 1 ? Math.round((cur / (total - 1)) * 100) : 100;
+
+    const topRow =
+      `<div class="read-topbar">` +
+        `<a class="read-back" href="#/read" aria-label="Back to contents">← Contents</a>` +
+        `<span class="read-chtitle">The Framework</span>` +
+        (hasSections
+          ? `<button type="button" class="read-sections-btn" id="readSectionsBtn" ` +
+              `aria-haspopup="true" aria-expanded="${drawerOpen}" aria-controls="readDrawer">Sections ▾</button>`
+          : `<span class="read-sections-spacer" aria-hidden="true"></span>`) +
+      `</div>`;
+
+    const indicator = useDots
+      ? `<div class="pn-dots" role="group" aria-label="Pages">${dots()}</div>`
+      : `<div class="pn-progress">` +
+          `<div class="pn-bar" aria-hidden="true"><span class="pn-bar-fill" style="width:${pct}%"></span></div>` +
+          `<div class="pn-meta">${esc(pageTitle)} · Page ${cur + 1} / ${total}</div>` +
+        `</div>`;
+
+    mount.innerHTML =
+      `<div class="read read-reader read-framework">` +
+        topRow +
+        drawerHTML() +
+        `<div class="read-stage">` +
+          `<div class="read-page ${slide}" tabindex="-1" role="region" aria-label="Reading page">` +
+            `<div class="read-flow">${pages[cur].html}</div>` +
+          `</div>` +
+        `</div>` +
+        `<nav class="page-nav${useDots ? '' : ' has-bar'}" aria-label="Page navigation">` +
+          `<div class="page-nav-inner">` +
+            `<button type="button" class="pn-btn" id="readPrev" ${isFirst ? 'disabled' : ''} aria-label="Previous page">← Prev</button>` +
+            indicator +
+            `<button type="button" class="pn-btn" id="readNext" ${isLast ? 'disabled' : ''} aria-label="Next page">Next →</button>` +
+          `</div>` +
+        `</nav>` +
+        `<div class="read-live" aria-live="polite" role="status"></div>` +
+      `</div>`;
+
+    document.getElementById('readPrev').onclick = () => go(-1);
+    document.getElementById('readNext').onclick = () => go(1);
+    mount.querySelectorAll('.pn-dot').forEach((b) => {
+      b.onclick = () => jump(parseInt(b.dataset.page, 10));
+    });
+
+    const secBtn = document.getElementById('readSectionsBtn');
+    const drawer = document.getElementById('readDrawer');
+    if (secBtn && drawer) {
+      const setOpen = (open) => {
+        drawerOpen = open;
+        drawer.hidden = !open;
+        secBtn.setAttribute('aria-expanded', String(open));
+        if (open) {
+          const first = drawer.querySelector('.rd-item.on') || drawer.querySelector('.rd-item');
+          if (first) first.focus();
+        }
+      };
+      secBtn.onclick = () => setOpen(!drawerOpen);
+      drawer.querySelectorAll('.rd-item').forEach((b) => {
+        b.onclick = () => { drawerOpen = false; jump(parseInt(b.dataset.page, 10)); };
+      });
+      drawer.onkeydown = (e) => {
+        if (e.key === 'Escape') { e.stopPropagation(); setOpen(false); secBtn.focus(); }
+      };
+      if (drawerOpen) setOpen(true);
+    }
+
+    // Swipe — same threshold as the chapter reader.
+    const stage = mount.querySelector('.read-stage');
+    let sx = 0, sy = 0;
+    stage.addEventListener('touchstart', (e) => {
+      sx = e.changedTouches[0].clientX; sy = e.changedTouches[0].clientY;
+    }, { passive: true });
+    stage.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - sx;
+      const dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) go(dx < 0 ? 1 : -1);
+    }, { passive: true });
+
+    runMermaid(mount);
+    window.scrollTo(0, 0);
+
+    const live = mount.querySelector('.read-live');
+    if (live) live.textContent = `${pageTitle} — Page ${cur + 1} of ${total}`;
+    if (!drawerOpen) {
+      const page = mount.querySelector('.read-page');
+      if (page) page.focus({ preventScroll: true });
+    }
+  }
+
+  function go(d) {
+    const n = cur + d;
+    if (n >= 0 && n < total) { dir = d; cur = n; paint(); }
+  }
+  function jump(n) {
+    if (n >= 0 && n < total && n !== cur) { dir = n > cur ? 1 : -1; cur = n; paint(); }
+  }
+
+  if (activeKeyHandler) document.removeEventListener('keydown', activeKeyHandler);
+  activeKeyHandler = (e) => {
+    if (!document.querySelector('.read')) { document.removeEventListener('keydown', activeKeyHandler); activeKeyHandler = null; return; }
+    const t = (e.target.tagName || '').toLowerCase();
+    if (t === 'input' || t === 'textarea' || t === 'select') return;
+    if (drawerOpen) return;
     if (e.key === 'ArrowRight') go(1);
     else if (e.key === 'ArrowLeft') go(-1);
   };

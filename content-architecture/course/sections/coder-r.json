@@ -21,41 +21,73 @@
       ]
     },
     {
-      "id": "coder.r.branching",
-      "title": "Branching strategy · pick one, stick to it",
+      "id": "coder.r.git-basics",
+      "title": "Git basics — the working vocabulary",
       "order": 1,
       "blocks": [
-        { "type": "prose", "page": 2, "html": "There are essentially three patterns the industry uses. The right one depends on team size, deploy cadence, and how regulated the environment is." },
+        { "type": "heading", "page": 2, "html": "Git basics — the working vocabulary" },
+        { "type": "prose", "page": 2, "html": "Before the strategy debates and the promotion gates, there is the vocabulary. An architect should be able to use these nine terms precisely in a design review, an incident bridge, and a PR triage — without reaching for a cheat sheet." },
         { "type": "cardgrid", "page": 2, "columns": 3, "cards": [
+          { "eyebrow": "git clone", "title": "Clone", "body": "A local copy of a remote repository, including its full history. <code>git clone &lt;url&gt;</code> gives you a working directory plus a <code>.git</code> folder that holds every commit ever made on every branch." },
+          { "eyebrow": "git fetch", "title": "Fetch", "body": "Download new commits from the remote into your local repository — without touching your working files. A read-only sync; safe to run at any time. <code>git pull</code> is fetch plus an automatic merge." },
+          { "eyebrow": "git remote", "title": "Origin", "body": "The default name for the remote your repository was cloned from. <code>git push origin main</code> means push to the remote called <code>origin</code>, branch <code>main</code>. You can add more remotes; <code>origin</code> is simply the convention for the first one." },
+          { "eyebrow": "branch", "title": "Main / master", "body": "The default branch — long lived, the canonical version of the codebase. Modern repos call it <code>main</code>; older repos may still say <code>master</code>. This is the branch the production build deploys from and the one branch protection guards most strictly." },
+          { "eyebrow": "branch", "title": "Branch", "body": "A parallel line of development. A short-lived feature branch diverges from <code>main</code>, holds one logical change, and merges back. Cheap to create, cheap to throw away — the unit of work in every modern Git workflow." },
+          { "eyebrow": "tag", "title": "Tag", "body": "An immutable label on a specific commit — for example <code>v2.14.0</code> or <code>2026.06.01</code>. Tags are the audit anchor: when an auditor asks <em>what exactly was deployed to production on that date?</em>, the tag is the answer." },
+          { "eyebrow": "merge", "title": "Merge", "body": "Combine one branch's changes into another, typically a feature branch into <code>main</code>. Produces a merge commit that records the join, preserving both histories. The standard way to integrate finished work." },
+          { "eyebrow": "rebase", "title": "Rebase", "body": "Replay your branch's commits on top of another branch's tip. Rewrites history to keep it linear and tidy. Use it on your <em>own</em> branch before review; never on a branch others have already pulled — you will corrupt their history." },
+          { "eyebrow": "pull request", "title": "PR (Pull request)", "body": "The unit of review. A proposed merge from one branch to another, carrying the diff, a description, comments, status checks, and approvals. Nothing lands on <code>main</code> without one." }
+        ] },
+        { "type": "heading", "page": 3, "html": "A typical release to production" },
+        { "type": "prose", "page": 3, "html": "Stripped of the strategy choices, every release follows the same seven beats. A developer clones the repository, branches for the change, commits the work locally, pushes the branch to <code>origin</code>, opens a PR, gets it merged after review, and the merge triggers a tagged release through the pipeline. Everything else in this chapter is a refinement of this loop." },
+        { "type": "diagram", "page": 3, "render": "flow", "title": "From clone to release — a typical day", "steps": [
+          { "label": "Clone" },
+          { "label": "Branch" },
+          { "label": "Commit" },
+          { "label": "Push" },
+          { "label": "PR", "variant": "ochre" },
+          { "label": "Merge", "variant": "ochre" },
+          { "label": "Release", "variant": "alt" }
+        ] },
+        { "type": "prose", "page": 3, "html": "The rest of this chapter goes deeper on each beat — which branching strategy to pick, how to govern PRs at scale, how artefacts promote across environments, how versions get assigned, what hypercare looks like — but this is the spine every release follows." }
+      ]
+    },
+    {
+      "id": "coder.r.branching",
+      "title": "Branching strategy · pick one, stick to it",
+      "order": 2,
+      "blocks": [
+        { "type": "prose", "page": 4, "html": "There are essentially three patterns the industry uses. The right one depends on team size, deploy cadence, and how regulated the environment is." },
+        { "type": "cardgrid", "page": 4, "columns": 3, "cards": [
           { "eyebrow": "Trunk-based", "title": "One long-lived branch", "body": "Everyone commits to <code>main</code>, behind feature flags for incomplete work. Short-lived branches (hours, not weeks) for individual PRs. <strong>Fits:</strong> high-velocity teams, mature CI, feature-flag infra. <strong>Default for SaaS.</strong>" },
           { "eyebrow": "GitHub Flow", "title": "Main + feature branches", "body": "<code>main</code> is always deployable. Branch off <code>main</code> for each feature, PR, merge back. No long-lived release branches. <strong>Fits:</strong> most agency work, mid-sized teams, weekly-to-monthly releases." },
           { "eyebrow": "GitFlow", "title": "Multiple long-lived branches", "body": "<code>main</code>, <code>develop</code>, <code>release/*</code>, <code>feature/*</code>, <code>hotfix/*</code>. Complex but explicit. <strong>Fits:</strong> regulated environments, infrequent releases, multiple parallel versions in production. <strong>Wrong for most agency work</strong> — it's heavy ceremony for problems most teams don't have." }
         ] },
-        { "type": "prose", "page": 2, "html": "<strong>How to decide:</strong> deploy daily or more → trunk-based. Deploy weekly or biweekly → GitHub Flow. Deploy quarterly with audit gates → GitFlow. If you can't answer the deploy-cadence question, that's the first conversation to have." },
-        { "type": "diagram", "page": 2, "render": "mermaid", "source": "gitGraph\n   commit id: \"Sprint 17 baseline\"\n   branch feature/cart-redesign\n   checkout feature/cart-redesign\n   commit id: \"add cart state machine\"\n   commit id: \"add cart render\"\n   checkout main\n   merge feature/cart-redesign\n   commit id: \"tag: v2.14.0\"" }
+        { "type": "prose", "page": 4, "html": "<strong>How to decide:</strong> deploy daily or more → trunk-based. Deploy weekly or biweekly → GitHub Flow. Deploy quarterly with audit gates → GitFlow. If you can't answer the deploy-cadence question, that's the first conversation to have." },
+        { "type": "diagram", "page": 4, "render": "mermaid", "source": "gitGraph\n   commit id: \"Sprint 17 baseline\"\n   branch feature/cart-redesign\n   checkout feature/cart-redesign\n   commit id: \"add cart state machine\"\n   commit id: \"add cart render\"\n   checkout main\n   merge feature/cart-redesign\n   commit id: \"tag: v2.14.0\"" }
       ]
     },
     {
       "id": "coder.r.commits",
       "title": "Branch names & commit hygiene",
-      "order": 2,
+      "order": 3,
       "blocks": [
-        { "type": "notes", "page": 3, "items": [
+        { "type": "notes", "page": 5, "items": [
           "<b>Branch naming</b> — <code>type/ticket-id-short-description</code>. Examples: <code>feat/PROJ-1234-add-search</code>, <code>fix/PROJ-5678-cart-total</code>, <code>chore/upgrade-react-19</code>. Predictable, sortable, traceable.",
           "<b>Conventional Commits</b> — <code>feat:</code>, <code>fix:</code>, <code>chore:</code>, <code>docs:</code>, <code>refactor:</code>, <code>test:</code>, <code>perf:</code>, <code>build:</code>. Powers automated changelog and version bumping. Worth the small discipline.",
           "<b>Atomic commits</b> — one logical change per commit. A revertable unit. Don't bundle \"refactor + new feature + lint fix\" into one commit; future-you will hate present-you when something goes wrong.",
           "<b>Commit body</b> for non-trivial changes — <em>why</em>, not <em>what</em>. The diff shows what; the body shows the reasoning."
         ] },
-        { "type": "code", "page": 3, "lang": "text", "label": "a commit message that earns its keep", "code": "feat(checkout): coalesce payment retries into single attempt\n\nPreviously, payment failures triggered three independent retries from\nthe UI, occasionally hitting the gateway four times for one customer\nintent. Now retries are coalesced server-side with a 5-minute idempotency\nkey, preventing duplicate captures.\n\nRefs: INC-2891\nCo-authored-by: ..." }
+        { "type": "code", "page": 5, "lang": "text", "label": "a commit message that earns its keep", "code": "feat(checkout): coalesce payment retries into single attempt\n\nPreviously, payment failures triggered three independent retries from\nthe UI, occasionally hitting the gateway four times for one customer\nintent. Now retries are coalesced server-side with a 5-minute idempotency\nkey, preventing duplicate captures.\n\nRefs: INC-2891\nCo-authored-by: ..." }
       ]
     },
     {
       "id": "coder.r.prs",
       "title": "Pull requests · the unit of integration",
-      "order": 3,
+      "order": 4,
       "blocks": [
-        { "type": "prose", "page": 4, "html": "A PR is the moment your code becomes everyone's code. The mechanics determine whether reviews are useful or theatre." },
-        { "type": "notes", "page": 4, "items": [
+        { "type": "prose", "page": 6, "html": "A PR is the moment your code becomes everyone's code. The mechanics determine whether reviews are useful or theatre." },
+        { "type": "notes", "page": 6, "items": [
           "<b>Size</b> · <strong>under 400 lines changed</strong> is the empirical sweet spot. Above that, review quality collapses; reviewers skim instead of think. Big features → multiple small PRs behind a feature flag.",
           "<b>Draft early</b> — open a draft PR as soon as the shape is there. Get directional feedback before investing in polish.",
           "<b>PR description as documentation</b> — what changed, why, how to test, what was deliberately not done. The first commit message for the squash-merge.",
@@ -63,16 +95,16 @@
           "<b>One approval + green CI</b> — the standard gate. Two approvals for sensitive areas (auth, payments, data migrations).",
           "<b>Review SLA</b> — agree on it. \"PRs reviewed within 1 business day\" or the team gets stuck. Aging PRs are tech debt accumulating."
         ] },
-        { "type": "callout", "page": 4, "variant": "tip", "html": "DEPT® field pattern: enforce a PR size limit of 400 lines via a CI check. PRs that exceed this limit are auto-labelled \"needs-split\" and blocked from merge until split or explicitly overridden by the architect with a documented justification. A 400-line PR takes 45 minutes to review well; an 800-line PR takes 2 hours and produces superficial review." }
+        { "type": "callout", "page": 6, "variant": "tip", "html": "DEPT® field pattern: enforce a PR size limit of 400 lines via a CI check. PRs that exceed this limit are auto-labelled \"needs-split\" and blocked from merge until split or explicitly overridden by the architect with a documented justification. A 400-line PR takes 45 minutes to review well; an 800-line PR takes 2 hours and produces superficial review." }
       ]
     },
     {
       "id": "coder.r.protection",
       "title": "Branch protection rules",
-      "order": 4,
+      "order": 5,
       "blocks": [
-        { "type": "prose", "page": 5, "html": "Configuration on the platform (GitHub, GitLab, Bitbucket) that enforces the policy the team agreed to." },
-        { "type": "notes", "page": 5, "items": [
+        { "type": "prose", "page": 7, "html": "Configuration on the platform (GitHub, GitLab, Bitbucket) that enforces the policy the team agreed to." },
+        { "type": "notes", "page": 7, "items": [
           "<b>Require PR before merge</b> — no direct pushes to <code>main</code>. Ever.",
           "<b>Require status checks</b> — CI green, security scans clean, coverage above floor.",
           "<b>Require approvals</b> — at least one, typically. CODEOWNERS for sensitive paths automatically requests the right reviewers.",
@@ -81,23 +113,23 @@
           "<b>Signed commits</b> — required in regulated environments. GPG or platform signing.",
           "<b>Linear history</b> — squash-merge or rebase-merge only. Merge commits make <code>git bisect</code> harder than it needs to be."
         ] },
-        { "type": "callout", "page": 5, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>No branch protection on main. A developer force-pushes over a release tag during an incident. The tag is gone; the previous release cannot be reproduced.</p></div><div><div class=\"ba-col-label\">After</div><p>Branch protection requires 2 approvals and passing status checks; history rewrites are blocked; tags are protected. The incident never happens.</p></div></div>" }
+        { "type": "callout", "page": 7, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>No branch protection on main. A developer force-pushes over a release tag during an incident. The tag is gone; the previous release cannot be reproduced.</p></div><div><div class=\"ba-col-label\">After</div><p>Branch protection requires 2 approvals and passing status checks; history rewrites are blocked; tags are protected. The incident never happens.</p></div></div>" }
       ]
     },
     {
       "id": "coder.r.promotion",
       "title": "Promotion · how a change moves from feature branch to production",
-      "order": 5,
+      "order": 6,
       "blocks": [
-        { "type": "prose", "page": 6, "html": "Promotion is what turns a Git event into a customer-visible release. The pattern depends on the branching strategy." },
-        { "type": "diagram", "page": 6, "render": "nodes", "title": "Trunk-based promotion · every merge is a release candidate", "rows": [
+        { "type": "prose", "page": 8, "html": "Promotion is what turns a Git event into a customer-visible release. The pattern depends on the branching strategy." },
+        { "type": "diagram", "page": 8, "render": "nodes", "title": "Trunk-based promotion · every merge is a release candidate", "rows": [
           { "nodes": [ { "label": "feature/* (hours)" } ] },
           { "nodes": [ { "label": "main" } ] },
           { "nodes": [ { "label": "build artefact (tagged)" } ] },
           { "nodes": [ { "label": "dev" }, { "label": "stage" }, { "label": "prod (gated)", "variant": "edge" } ] }
         ] },
-        { "type": "prose", "page": 6, "html": "Three principles regardless of strategy:" },
-        { "type": "notes", "page": 6, "items": [
+        { "type": "prose", "page": 8, "html": "Three principles regardless of strategy:" },
+        { "type": "notes", "page": 8, "items": [
           "<b>Build once, promote many</b> — the same artefact moves through environments. Don't rebuild per environment; configuration differs, code does not.",
           "<b>Promotion gates are explicit</b> — automated tests at the gate to <code>stage</code>; manual approval at the gate to <code>prod</code> (unless you're confident enough in automation to skip it).",
           "<b>Rollback is a first-class operation</b> — deploying the previous artefact must be a button press, not a hotfix branch. If rolling back is harder than rolling forward, the system isn't actually safe."
@@ -107,9 +139,9 @@
     {
       "id": "coder.r.deploy",
       "title": "Deploy patterns at production",
-      "order": 6,
+      "order": 7,
       "blocks": [
-        { "type": "cardgrid", "page": 6, "columns": 3, "cards": [
+        { "type": "cardgrid", "page": 8, "columns": 3, "cards": [
           { "eyebrow": "Blue-green", "title": "Two production environments, one live", "body": "Deploy to the dark stack; smoke test; flip the router. Rollback = flip back. Doubles infra cost; halves rollback time." },
           { "eyebrow": "Canary", "title": "Roll out to a small slice first", "body": "1% → 10% → 50% → 100%, with metrics watched at each step. Catches issues before full exposure. Requires good observability." },
           { "eyebrow": "Feature flag", "title": "Code deployed, feature off", "body": "Decouple deploy from release. Flip the flag on for 1% of users; measure; expand. The pattern that makes trunk-based feasible." }
@@ -119,27 +151,27 @@
     {
       "id": "coder.r.merge",
       "title": "Merge vs rebase · the argument resolved",
-      "order": 7,
+      "order": 8,
       "blocks": [
-        { "type": "diagram", "page": 7, "render": "versus", "columns": [
+        { "type": "diagram", "page": 9, "render": "versus", "columns": [
           { "label": "Rebase your own branch", "tone": "good", "body": "While the PR is open and only you've touched it. Keeps history linear, removes interleaved noise. The right move <em>before</em> you ask for review." },
           { "label": "Merge to integrate", "tone": "good", "body": "Squash-merge (collapse to one commit) or merge-commit (preserve the branch history) when bringing the PR into <code>main</code>. Don't rebase a shared branch — anyone else who pulled it gets a corrupted history." }
         ] },
-        { "type": "prose", "page": 7, "html": "<strong>Squash vs merge-commit at PR time:</strong> squash gives one tidy commit per PR (clean <code>main</code> history); merge-commit preserves intra-PR commits (richer history, more noise). Most teams pick squash and treat the PR description as the canonical message." },
-        { "type": "callout", "page": 7, "variant": "pitfall", "html": "Using <code>git merge</code> instead of <code>git rebase</code> for updating feature branches in a trunk-based workflow. Merge commits create a non-linear history. <code>git bisect</code> becomes unreliable; <code>git blame</code> becomes misleading; the merge commit hides the actual change behind a \"Merge branch X into main\" entry. Rebase to a linear history; squash to a logical commit." }
+        { "type": "prose", "page": 9, "html": "<strong>Squash vs merge-commit at PR time:</strong> squash gives one tidy commit per PR (clean <code>main</code> history); merge-commit preserves intra-PR commits (richer history, more noise). Most teams pick squash and treat the PR description as the canonical message." },
+        { "type": "callout", "page": 9, "variant": "pitfall", "html": "Using <code>git merge</code> instead of <code>git rebase</code> for updating feature branches in a trunk-based workflow. Merge commits create a non-linear history. <code>git bisect</code> becomes unreliable; <code>git blame</code> becomes misleading; the merge commit hides the actual change behind a \"Merge branch X into main\" entry. Rebase to a linear history; squash to a logical commit." }
       ]
     },
     {
       "id": "coder.r.versioning",
       "title": "Versioning · what version are we on?",
-      "order": 8,
+      "order": 9,
       "blocks": [
-        { "type": "prose", "page": 7, "html": "Two conventions matter. Pick the right one for the artefact." },
-        { "type": "diagram", "page": 7, "render": "versus", "columns": [
+        { "type": "prose", "page": 9, "html": "Two conventions matter. Pick the right one for the artefact." },
+        { "type": "diagram", "page": 9, "render": "versus", "columns": [
           { "label": "SemVer · MAJOR.MINOR.PATCH", "tone": "good", "body": "Libraries, APIs, SDKs. <strong>MAJOR</strong> breaks compatibility. <strong>MINOR</strong> adds capability. <strong>PATCH</strong> fixes bugs. Consumers can pin and predict." },
           { "label": "CalVer · YYYY.MM.PATCH", "tone": "good", "body": "Applications, SaaS, browser releases. The version tells you <em>when</em> it shipped. Useful when the question \"is this from before or after X?\" matters more than \"is this compatible?\"" }
         ] },
-        { "type": "notes", "page": 7, "items": [
+        { "type": "notes", "page": 9, "items": [
           "<b>Release tags</b> — every deploy gets an immutable Git tag (<code>v1.4.2</code> or <code>2026.03.05</code>). Tag is the audit anchor.",
           "<b>Deployment tags</b> — separate from release tags. \"<code>v1.4.2 → prod 2026-03-05T14:30</code>\" is a deployment event, not a code event.",
           "<b>Automated bumping</b> — Conventional Commits + <code>semantic-release</code> (or equivalent) reads the commit history and bumps the version automatically. Removes the human \"what version is this?\" conversation.",
@@ -150,10 +182,10 @@
     {
       "id": "coder.r.hypercare",
       "title": "Hypercare & rollback windows",
-      "order": 9,
+      "order": 10,
       "blocks": [
-        { "type": "prose", "page": 8, "html": "Release isn't done when the deploy completes. It's done after hypercare expires." },
-        { "type": "notes", "page": 8, "items": [
+        { "type": "prose", "page": 10, "html": "Release isn't done when the deploy completes. It's done after hypercare expires." },
+        { "type": "notes", "page": 10, "items": [
           "<b>Hypercare window</b> — defined per release. Typically 24–72 hours of heightened monitoring after a non-trivial change.",
           "<b>Named on-call</b> — for the hypercare window, a named engineer is on the hook. Not \"the team.\"",
           "<b>Rollback decision authority</b> — agreed in advance. Who can push the button without a meeting? When is a meeting required?",
@@ -164,10 +196,10 @@
     {
       "id": "coder.r.review",
       "title": "Architect's Review",
-      "order": 10,
+      "order": 11,
       "blocks": [
-        { "type": "quote", "page": 8, "html": "A team that cannot describe its branching strategy on a whiteboard in 30 seconds cannot manage releases at scale. The Git diagram is the release management diagram." },
-        { "type": "architects-review", "page": 8, "label": "Architect's Review · Release Management", "items": [
+        { "type": "quote", "page": 10, "html": "A team that cannot describe its branching strategy on a whiteboard in 30 seconds cannot manage releases at scale. The Git diagram is the release management diagram." },
+        { "type": "architects-review", "page": 10, "label": "Architect's Review · Release Management", "items": [
           "What branching strategy is in use, and does it match the deploy cadence?",
           "Are PRs typically under 400 lines, or are they larger and rubber-stamped?",
           "What is the PR review SLA, and is it being met?",
