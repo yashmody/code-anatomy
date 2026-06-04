@@ -37,3 +37,6 @@ Thumbs.db
 
 # content-architecture python venv (do not commit)
 content-architecture/venv/
+
+# --- Media (large binaries — keep out of git; serve locally / from a CDN) ---
+media/
