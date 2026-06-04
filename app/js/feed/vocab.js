@@ -1,6 +1,10 @@
-// vocab — a community vocabulary card. term + definition, both UGC → escaped.
+// vocab — a community vocabulary card. card-top → term as the Syne card title →
+// definition as a card-sub. Light treatment (the reference), not the old dark card.
+// term + definition are UGC → escaped.
 import { esc } from '../util/dom.js';
+import { cardTop } from './envelope.js';
 export function vocab(item) {
-  return `<div class="fc-vocab"><div class="fc-term">${esc(item.term || '')}</div>` +
-    `<div class="fc-def">${esc(item.definition || '')}</div></div>`;
+  return cardTop(item) +
+    `<div class="card-body"><h3 class="card-title">${esc(item.term || '')}</h3>` +
+    `<p class="card-sub">${esc(item.definition || '')}</p></div>`;
 }

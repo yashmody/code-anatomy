@@ -1,0 +1,250 @@
+{
+  "frameworkAddress": "coder.e",
+  "title": "External Integrations",
+  "tag": "Integrations · Auth · Payments · Webhooks",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The integration taxonomy — Auth (OAuth2/OIDC/SAML), Payments (PSP governance, PCI scope), Webhooks (delivery guarantees, idempotency), and AD/SSO for enterprise AEM — and how to architect each so it holds under real failure conditions",
+    "<strong>Why it matters:</strong> Every third-party integration is simultaneously a security surface and a reliability dependency; an architect who treats integrations as \"just API calls\" will produce a system that fails in ways the team cannot diagnose",
+    "OAuth2 and SAML serve different purposes — OAuth2 is an authorisation protocol, SAML is an authentication protocol — using SAML where OAuth2 is correct creates architectural debt expensive to reverse",
+    "Webhook idempotency is non-negotiable — a payment webhook that is not idempotent will double-charge customers during normal retry behaviour",
+    "PCI DSS scope reduction is the primary goal of payment integration architecture — fewer systems touching cardholder data means a smaller, cheaper audit"
+  ],
+  "sections": [
+    {
+      "id": "coder.e.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "E", "html": "very integration is a contract with a system you don't control. The discipline is to assume it will fail, fail slowly, change its schema without telling you, throttle you unexpectedly, and occasionally just stop existing. Engineering for that posture is what separates integrations that survive launch from those that take you down with them." },
+        { "type": "diagram", "page": 1, "render": "mermaid", "source": "sequenceDiagram\n    participant User\n    participant App\n    participant AuthServer\n    participant Resource\n\n    User->>App: login request\n    App->>AuthServer: redirect (PKCE)\n    AuthServer->>User: login UI\n    User->>AuthServer: credentials\n    AuthServer->>App: auth code\n    App->>AuthServer: exchange code for tokens\n    AuthServer->>App: access_token + id_token\n    App->>Resource: API call with Bearer token" },
+        { "type": "callout", "page": 1, "variant": "why", "html": "PCI scope reduction is an architecture priority. Every system that touches cardholder data must complete an annual PCI DSS audit. Reducing scope from SAQ D (full audit, ~300 controls) to SAQ A (hosted payment page, ~22 controls) saves hundreds of hours of audit work annually. This is achievable with the right PSP integration pattern in the architecture phase; it is not achievable by retrofitting." },
+        { "type": "callout", "page": 1, "variant": "pitfall", "html": "Storing OAuth2 access tokens in localStorage. Tokens stored in localStorage are accessible to any JavaScript executing on the same origin — including injected analytics tags, chatbot widgets, and A/B test scripts. A compromised third-party script can exfiltrate all tokens silently. Use HttpOnly cookies (server-side) or in-memory storage (SPA, cleared on tab close)." },
+        { "type": "callout", "page": 1, "variant": "tip", "html": "DEPT® field pattern — implement a webhook dispatcher service that handles receipt, deduplication (idempotency key check), and queue insertion before any business logic runs. Business logic is triggered by queue consumption, not by the HTTP request. This separates delivery reliability from processing reliability and makes retry safe." }
+      ]
+    },
+    {
+      "id": "coder.e.topology",
+      "title": "Server-side vs client-side · the first decision",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "Server-side vs client-side · the first decision" },
+        { "type": "prose", "page": 2, "html": "Where the call originates dictates every downstream concern: which credentials are exposed, what CORS rules apply, who pays for retries, and where the failure shows up to the user." },
+        { "type": "diagram", "page": 2, "render": "versus", "columns": [
+          { "label": "Server-side · default", "tone": "good", "body": "Your backend calls the third-party. Credentials stay on the server. You control retries, timeouts, caching, rate limits. The user-visible API is your own.<br><br><strong>Use when</strong> the call needs a secret (API key, OAuth client secret), or when you need to enrich/transform the response, or when the third-party can't be CORS-trusted by browsers." },
+          { "label": "Client-side · with care", "body": "The browser or mobile app calls the third-party directly. Faster (no extra hop), simpler (no backend code), but everything is public — every key in DevTools, every request loggable by any browser extension.<br><br><strong>Use only when</strong> the API key is public by design (Google Maps with referer restriction), the data is non-sensitive, and the third-party explicitly supports browser CORS." }
+        ] },
+        { "type": "prose", "page": 2, "html": "<strong>The common mistake:</strong> calling a \"client-safe\" API from the client without verifying the platform's restriction model. A Google Maps API key is public-safe only because Google enforces HTTP referer restrictions on it; the same approach with a Stripe secret key is a six-figure breach." },
+        { "type": "heading", "page": 2, "html": "API gateway as integration mediator" },
+        { "type": "prose", "page": 2, "html": "Already covered as Layer 10 of the Deployment 101 architecture. In an integration context, the gateway plays a second role: <strong>it's the single point where outbound integrations cross your perimeter</strong>. Centralising this matters more than centralising inbound." },
+        { "type": "notes", "page": 2, "items": [
+          "<b>One outbound proxy</b> — third-party calls go through one waypoint, not scattered across every service. You get audit logs, rate-limit budgets, and a single place to swap a vendor.",
+          "<b>Egress allow-list</b> — production services can only call domains on the allow-list. Compromised dependency tries to exfiltrate? Blocked at the gateway.",
+          "<b>Secrets injection</b> — services don't hold third-party keys; the gateway adds them on the way out. Rotate keys in one place.",
+          "<b>Per-vendor circuit breakers</b> — when Stripe degrades, isolate the blast radius to checkout. The rest of the system keeps running."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.e.auth",
+      "title": "Authentication options · the menu",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "Authentication options · the menu" },
+        { "type": "prose", "page": 3, "html": "Every API on the planet uses one of these. Recognise the pattern; pick the right one; understand why the others are wrong for the case." },
+        { "type": "cardgrid", "page": 3, "columns": 3, "cards": [
+          { "eyebrow": "API key", "title": "The simplest", "body": "One static string per integration. Sent in a header (<code>X-API-Key</code>) or query param. <strong>Server-side only</strong> for any sensitive API. No expiry without manual rotation." },
+          { "eyebrow": "Basic Auth", "title": "Username + password, base64", "body": "<code>Authorization: Basic base64(user:pass)</code>. HTTPS-only — base64 is encoding, not encryption. Common in legacy enterprise integrations and webhook receivers. Still in use; still mostly fine if scoped narrowly." },
+          { "eyebrow": "HMAC signed", "title": "Request signing", "body": "Client signs the request body and timestamp with a shared secret; server verifies. Used by AWS SigV4, Stripe webhook signatures, WhatsApp webhooks. Resistant to replay (timestamp window) and tampering (signature)." },
+          { "eyebrow": "OAuth 2.0", "title": "Token-based, delegated", "body": "User grants permission; you receive an access token (short-lived) and refresh token (long-lived). Four common flows; each fits a different use case (below)." },
+          { "eyebrow": "JWT", "title": "Self-contained tokens", "body": "JSON payload + signature in one string. Server validates without a DB lookup. Used as OAuth access tokens, internal service-to-service auth, single sign-on. <em>Bearer JWTs are bearer tokens</em> — leak = full access until expiry." },
+          { "eyebrow": "mTLS", "title": "Certificate-based", "body": "Both sides prove identity with X.509 certs. No tokens to leak; rotation handled by the cert lifecycle. Standard for high-value B2B integrations (payment networks, banking, healthcare)." }
+        ] },
+        { "type": "heading", "page": 3, "html": "OAuth 2.0 · the four flows that matter" },
+        { "type": "notes", "page": 3, "items": [
+          "<b>Authorization Code + PKCE</b> · the default for any app where a user logs in. User redirected to provider, returns with a one-time code, server (or PKCE-verifying client) exchanges code for tokens. PKCE replaces the old \"client secret\" requirement for public clients (mobile, SPA).",
+          "<b>Client Credentials</b> · service-to-service, no user. Two services authenticate themselves with a <code>client_id</code> + <code>client_secret</code> and get a token. Use for backend integrations where there's no human in the loop.",
+          "<b>Device Code</b> · for input-constrained devices (smart TV, CLI tool). Shows a code; user logs in on their phone; device polls until granted. The flow GitHub uses for <code>gh auth login</code>.",
+          "<b>Implicit</b> · <em>deprecated</em>. The old SPA flow that returned tokens directly in the URL fragment. Use Authorization Code + PKCE instead. If a vendor docs page still recommends Implicit, push back."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.e.jwt",
+      "title": "JWT · what's actually in the token",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "JWT · what's actually in the token" },
+        { "type": "prose", "page": 4, "html": "Three base64-encoded parts joined by dots: <code>header.payload.signature</code>. The payload is JSON claims. Standard claims to know:" },
+        { "type": "code", "page": 4, "lang": "json", "label": "a JWT payload, decoded", "code": "{\n  \"iss\": \"https://auth.example.com\",   // issuer\n  \"sub\": \"user_abc123\",                 // subject (user/service ID)\n  \"aud\": \"api.example.com\",              // audience (who should accept it)\n  \"exp\": 1764680400,                       // expiry (unix ts) — REQUIRED\n  \"iat\": 1764676800,                       // issued at\n  \"scope\": \"read:orders write:orders\",    // granted permissions\n  \"roles\": [\"customer\"]\n}" },
+        { "type": "notes", "page": 4, "items": [
+          "<b>Always verify <code>exp</code>, <code>iss</code>, <code>aud</code></b> — the three claims that turn a JWT from \"decoded JSON\" into \"authenticated token\"",
+          "<b>Algorithm</b> — RS256 (asymmetric, signing key separate from verifying key) for anything cross-service. HS256 (shared secret) only when both sides are inside your trust boundary.",
+          "<b>The <code>alg: none</code> attack</b> — old libraries accepted JWTs with <code>\"alg\": \"none\"</code> as unsigned. Modern libraries reject it; verify yours does.",
+          "<b>Refresh tokens are not JWTs</b> — they should be opaque, server-side-revocable, and rotated on use. JWTs as refresh tokens = no revocation = leaked tokens valid for the full lifetime."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.e.sso",
+      "title": "AD & enterprise SSO integrations",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "AD &amp; enterprise SSO integrations" },
+        { "type": "prose", "page": 5, "html": "\"AD integration\" usually means one of three things depending on era and counterparty: classic on-prem Active Directory, modern Entra ID (formerly Azure AD), or a federation protocol (SAML, OIDC). The architect's first question on any AD ask: <em>which one do they actually mean?</em>" },
+        { "type": "cardgrid", "page": 5, "columns": 3, "cards": [
+          { "eyebrow": "LDAP / AD bind", "title": "Legacy direct", "body": "Your app authenticates a user by binding to AD with their credentials over LDAP. Direct, simple, increasingly rare. Common in internal enterprise apps; almost extinct in customer-facing builds." },
+          { "eyebrow": "SAML 2.0", "title": "Enterprise SSO", "body": "Identity provider (Entra ID, Okta, ADFS) returns an XML <em>SAML assertion</em> via browser POST. Heavy, verbose, but every enterprise IdP speaks it. Pick this when the customer says \"SSO\" and is on a 2015-era stack." },
+          { "eyebrow": "OIDC", "title": "OAuth + identity", "body": "OpenID Connect layers identity on top of OAuth 2.0. The <code>id_token</code> JWT carries user identity claims. Modern default for any new build. All major IdPs (Entra, Okta, Auth0, Cognito, Keycloak) support it." }
+        ] },
+        { "type": "notes", "page": 5, "items": [
+          "<b>SCIM</b> · System for Cross-domain Identity Management. The provisioning protocol — how the IdP <em>creates, updates and deactivates</em> users in your app automatically. Without SCIM, every leaver becomes a manual ticket. With SCIM, a deactivation in Entra propagates in minutes.",
+          "<b>Just-in-time provisioning</b> · the lightweight alternative — create the user on first SAML/OIDC login. Cheaper, but no automatic deactivation. Acceptable for low-stakes apps; not for regulated environments.",
+          "<b>Group → role mapping</b> · the IdP knows AD groups; your app knows roles. The mapping is the integration's actual policy surface. Document it explicitly per environment.",
+          "<b>Multiple IdPs</b> · enterprise customers want to bring their own. Plan for it from day one — an OIDC abstraction is much easier to add up front than to retrofit."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.e.worked-google",
+      "title": "Worked examples · Google Maps & Google OAuth",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "Worked example · Google Maps (client-side)" },
+        { "type": "prose", "page": 6, "html": "The canonical \"safe to call from the browser\" integration. Google enforces the security model on their side; you configure it correctly on yours." },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Key restriction</b> · in Google Cloud Console, restrict the key by HTTP referrer (your domains only) and by API (Maps JS, Places, Geocoding — only the ones you use). Unrestricted Maps keys are routinely scraped from public sites and used for free traffic until you get billed.",
+          "<b>API choice</b> · Maps JavaScript API for the visible map. Places API for autocomplete/search. Geocoding API for address-to-coordinates. Routes API for directions. Each is metered separately.",
+          "<b>Cost discipline</b> · cache geocoding results aggressively (addresses don't move). Debounce autocomplete (300ms typical). Set quotas in the console as guardrails — a misconfigured loop can bill thousands overnight.",
+          "<b>Server-side alternative</b> · for high-volume geocoding (batch imports, ETL), call the API server-side with a separate IP-restricted key. The client and server keys are different keys with different restrictions."
+        ] },
+        { "type": "heading", "page": 6, "html": "Worked example · Google OAuth (server-side login)" },
+        { "type": "prose", "page": 6, "html": "Authorization Code with PKCE flow. The user-visible part is \"Sign in with Google\"; the architecturally interesting part is the redirect dance." },
+        { "type": "diagram", "page": 6, "render": "mermaid", "title": "Google OAuth · Authorization Code with PKCE", "source": "sequenceDiagram\n    participant B as Browser\n    participant A as Your server\n    participant G as Google\n    A->>B: 1 · Redirect to /o/oauth2/v2/auth<br/>client_id · redirect_uri · scope · state · code_challenge\n    B->>G: Follow redirect\n    Note over B,G: 2 · User logs in and grants consent\n    G->>B: 3 · Redirect to redirect_uri<br/>one-time code\n    B->>A: Deliver code to redirect_uri\n    A->>G: 4 · POST /token<br/>code · code_verifier · client_secret\n    G->>A: access_token · refresh_token · id_token\n    Note over A: 5 · Validate id_token JWT<br/>signature · iss · aud · exp<br/>use sub as the user key" },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Step 1</b> · App redirects browser to <code>accounts.google.com/o/oauth2/v2/auth</code> with <code>client_id</code>, <code>redirect_uri</code>, <code>scope</code>, <code>state</code> (anti-CSRF), and a PKCE <code>code_challenge</code>.",
+          "<b>Step 2</b> · User logs in at Google, grants consent.",
+          "<b>Step 3</b> · Google redirects browser back to your <code>redirect_uri</code> with a one-time <code>code</code>.",
+          "<b>Step 4</b> · Your server posts the code + <code>code_verifier</code> (PKCE) + <code>client_secret</code> to <code>oauth2.googleapis.com/token</code>. Receives an access token and (optionally) refresh token + ID token.",
+          "<b>Step 5</b> · Validate the ID token JWT (signature, <code>iss</code>, <code>aud</code>, <code>exp</code>). The <code>sub</code> claim is the user's stable Google ID — use it as the foreign key, not the email."
+        ] },
+        { "type": "callout", "page": 6, "variant": "pitfall", "html": "<b>The email trap</b> — Gmail addresses don't change, but corporate Google Workspace addresses do (employee changes name, marriage, domain migration). Always identify users by the <code>sub</code> claim; treat email as a display attribute, not an identity." }
+      ]
+    },
+    {
+      "id": "coder.e.worked-whatsapp",
+      "title": "Worked example · WhatsApp Business API",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "Worked example · WhatsApp Business API" },
+        { "type": "prose", "page": 7, "html": "Notification and conversational channels at scale. Meta's API is opinionated; the patterns are non-obvious if you've only worked with email or SMS." },
+        { "type": "notes", "page": 7, "items": [
+          "<b>Cloud API vs On-Premises</b> · Cloud API is Meta-hosted (now the default). On-Premises is being deprecated. For new builds, Cloud API only.",
+          "<b>Phone number setup</b> · a dedicated phone number per WhatsApp Business Account. Verified through Meta Business Manager. The number can't be used elsewhere (regular WhatsApp, voice).",
+          "<b>Outbound · templates only outside the 24h window</b> · for the first message or messages sent &gt;24h since the user last contacted you, you must use a pre-approved <em>message template</em>. Templates are reviewed by Meta and take 24–48h. Inside the 24h window, any message format.",
+          "<b>Inbound · webhooks</b> · Meta POSTs to your webhook endpoint for every message, status change, and event. Verify the <code>X-Hub-Signature-256</code> header (HMAC-SHA256 over the body) on every request. Unsigned = forged.",
+          "<b>Rate limits</b> · tiered by account quality rating (Green / Yellow / Red). Too many user-initiated blocks → downgrade → throughput drops. Quality is a business metric, not just a technical one.",
+          "<b>Idempotency</b> · Meta retries webhooks if you don't 200 quickly. Dedupe by message ID server-side, or you'll process duplicates."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.e.payments",
+      "title": "Payment gateways · the integration with the highest stakes",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "Payment gateways · the integration with the highest stakes" },
+        { "type": "prose", "page": 8, "html": "Payment integrations are different. Get any other API wrong and you write a fix; get this one wrong and you lose money or PCI scope. Two patterns dominate (with regional variants)." },
+        { "type": "cardgrid", "page": 8, "columns": 2, "cards": [
+          { "eyebrow": "Stripe-style", "title": "PaymentIntent + SDK", "body": "Server creates a PaymentIntent, returns a <em>client secret</em>. Client SDK (Stripe.js / Elements) collects card details — they never touch your servers. Client confirms the intent; result delivered via webhook to server." },
+          { "eyebrow": "Razorpay-style (India)", "title": "Order create + checkout", "body": "Server creates an Order, returns the order ID. Client opens hosted Checkout (or SDK). On success, client returns a signed payload — server verifies the signature, then trusts the payment." }
+        ] },
+        { "type": "notes", "page": 8, "items": [
+          "<b>PCI scope minimisation</b> · the goal is never to have card data touch your servers. Both patterns achieve this by collecting card details in a vendor-hosted iframe or SDK. If your code <em>ever</em> sees a PAN (card number), you're in PCI DSS Level 1/2 territory — a different operational reality.",
+          "<b>Idempotency keys</b> · always send an idempotency key on payment creates. Retries from network blips are common; without idempotency keys, you charge twice.",
+          "<b>Webhook for truth, response for hint</b> · the API response says \"payment created\"; the webhook says \"payment captured.\" Always treat the webhook as authoritative. Provision orders on the webhook, not on the response.",
+          "<b>Reconciliation</b> · run a daily reconciliation job comparing your DB of payments to the gateway's reports. Catches: webhook drops, duplicate processing, refunds you didn't see. The cheapest insurance you have.",
+          "<b>Refunds, partial captures, disputes</b> · the state machine is bigger than \"paid / not paid.\" Read the gateway's state diagram before designing the order model, not after.",
+          "<b>Vendor choice</b> · Stripe (global), Razorpay (India), Adyen (enterprise/global), PayU (LATAM, India), Worldline (EMEA enterprise). The integration shape is similar; the negotiating posture differs widely."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.e.logistics",
+      "title": "3PL · third-party logistics",
+      "order": 8,
+      "blocks": [
+        { "type": "heading", "page": 9, "html": "3PL · third-party logistics" },
+        { "type": "prose", "page": 9, "html": "For commerce builds, the shipping integration is usually a logistics aggregator that fronts dozens of carriers. The integration shape is consistent across vendors." },
+        { "type": "notes", "page": 9, "items": [
+          "<b>Rate shopping</b> · POST a shipment manifest, receive rates from N carriers. Choose cheapest, fastest, or per-policy. Cache rates by route for short windows (rates change daily).",
+          "<b>Label generation</b> · POST a \"buy this rate\" call, receive a printable label (PDF or PNG) + tracking number. Async in some vendors; poll or webhook.",
+          "<b>Tracking webhooks</b> · the carrier sends status updates (picked up, in transit, out for delivery, delivered, returned). Normalise carrier-specific status codes to your own canonical set before storing.",
+          "<b>Returns / RTO</b> · in markets with high RTO rates (India: 25–35% on COD), the returns flow is as much code as the outbound flow. Plan for it from day one, not as a phase-2 feature.",
+          "<b>Vendors</b> · Shiprocket, Delhivery, EasyPost, Shippo, ShipStation. Aggregators trade convenience for margin — direct carrier integrations are cheaper at scale, expensive in dev time."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.e.webhooks",
+      "title": "Webhooks · the inverse integration",
+      "order": 9,
+      "blocks": [
+        { "type": "heading", "page": 10, "html": "Webhooks · the inverse integration" },
+        { "type": "prose", "page": 10, "html": "Most integrations are <em>you call them</em>. Webhooks are <em>they call you</em>. The hardest integration to get right, because every assumption about your own infrastructure must hold under their retry behaviour." },
+        { "type": "heading", "page": 10, "html": "The five rules of webhook receivers" },
+        { "type": "notes", "page": 10, "items": [
+          "<b>Verify the signature on every request</b> · HMAC-SHA256 over the raw body with a shared secret is the standard. Stripe, Meta, Shopify all use this. Never trust an unsigned webhook.",
+          "<b>Respond fast — 200 within seconds, then process async</b> · most providers time out at 5–10 seconds and retry. Queue the payload, return 200, process from the queue. Synchronous business logic in the handler is how you cause webhook storms.",
+          "<b>Idempotency by event ID</b> · providers retry. You'll receive the same event 2–N times. Dedupe by the provider's event ID — store seen IDs for a week.",
+          "<b>No ordering guarantee</b> · \"order shipped\" can arrive before \"order paid.\" The handler must be commutative or have explicit ordering logic via timestamps/versioning.",
+          "<b>Dead-letter queue</b> · if processing fails after retries, the event goes to a DLQ for human review. Without one, failed events disappear silently."
+        ] },
+        { "type": "heading", "page": 10, "html": "When you send webhooks" },
+        { "type": "prose", "page": 10, "html": "If your system sends webhooks to other systems (you're the platform), the same rules apply in reverse:" },
+        { "type": "notes", "page": 10, "items": [
+          "<b>Sign every payload</b> · publish the signing key per consumer.",
+          "<b>Retry with exponential backoff</b> · 1, 2, 4, 8, 16, 32 minutes is a common schedule. Stop after 24 hours of failures and notify the consumer.",
+          "<b>Include event ID and timestamp</b> · the consumer needs them to dedupe and order.",
+          "<b>Provide a replay endpoint</b> · \"give me all events between T1 and T2\" so consumers can recover from extended outages."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.e.failure",
+      "title": "Failure modes · making the perimeter hold",
+      "order": 10,
+      "blocks": [
+        { "type": "heading", "page": 11, "html": "Failure modes · making the perimeter hold" },
+        { "type": "prose", "page": 11, "html": "Every integration will fail. The question is whether it takes your system down with it." },
+        { "type": "cardgrid", "page": 11, "columns": 4, "cards": [
+          { "eyebrow": "Timeout", "title": "Bounded waiting", "body": "Every outbound call has an aggressive timeout — typically 2–5s for synchronous user flows, 30s for batch. <em>The default in most HTTP libraries is infinity.</em> Fix this on day one." },
+          { "eyebrow": "Retry + backoff", "title": "The right kind of stubborn", "body": "Exponential backoff with jitter. Cap at 3–5 retries for sync; longer for async. Only retry idempotent operations. Retrying a payment create without an idempotency key = double charge." },
+          { "eyebrow": "Circuit breaker", "title": "Stop hammering", "body": "After N consecutive failures, open the circuit — fail fast for the next M seconds. Periodically test with a single request (half-open). Standard pattern; libraries exist (Resilience4j, Polly)." },
+          { "eyebrow": "Bulkhead", "title": "Contain the damage", "body": "Separate connection pools per integration. Stripe slow doesn't starve threads needed for WhatsApp. The cost of integrations sharing a pool is one outage taking down everything." }
+        ] },
+        { "type": "heading", "page": 11, "html": "Contract testing &amp; vendor SLAs" },
+        { "type": "notes", "page": 11, "items": [
+          "<b>Contract tests</b> · tools like Pact let you record the contract between your code and the vendor's API. When the vendor changes the response shape (and they will), your tests fail before production does.",
+          "<b>Sandbox parity</b> · vendor sandbox/test environments are <em>not</em> production. Bugs in the sandbox are not always bugs in production and vice versa. Plan a smoke test in production behind a kill-switch.",
+          "<b>Vendor SLAs</b> · read them. Most are 99.5% or 99.9%, which is 3.65h or 43m of permitted downtime per month. Your own SLO must accept that this can compound.",
+          "<b>Multi-vendor for critical paths</b> · for payments especially, having a secondary gateway you can fail over to is what turns a vendor outage from a P1 into a P3. Costs more in integration; saves you in incidents."
+        ] },
+        { "type": "quote", "page": 11, "html": "An integration isn't done when it works. It's done when it fails gracefully — when the vendor goes down at 3am on a Saturday and the rest of your system keeps running. That posture is engineered, not assumed." },
+        { "type": "architects-review", "page": 11, "label": "Architect's Review · External Integrations", "items": [
+          "For every integration, is the auth mechanism documented (key / Basic / HMAC / OAuth / JWT / mTLS) and the rotation plan defined?",
+          "Are all calls with secrets confirmed server-side, not client-side?",
+          "For every client-side API call, is the key restriction (referrer / API / quota) configured and verified?",
+          "If JWTs are used, are <code>exp</code>, <code>iss</code>, <code>aud</code> verified on every request, and is the algorithm explicitly checked?",
+          "For SSO / AD integrations, which protocol (SAML / OIDC / LDAP) and is SCIM provisioning in place — or is JIT acceptable for the threat model?",
+          "For payments, is the webhook treated as authoritative and is a reconciliation job running daily?",
+          "Is idempotency wired on every retryable POST — both yours and theirs?",
+          "Are timeouts, retries and circuit breakers configured per integration — or do they share infrastructure defaults?",
+          "For webhook receivers, are signatures verified, payloads queued for async processing, and a DLQ in place?",
+          "Is there a kill-switch per integration to disable it without a deploy when a vendor incident hits?",
+          "Has someone read the vendor SLAs and confirmed your customer-facing SLO accommodates them?"
+        ] }
+      ]
+    }
+  ]
+}

@@ -11,6 +11,27 @@ import { esc } from '../util/dom.js';
 // Block types that render their own heading — don't repeat the sub-section title above them.
 const SELF_HEADED = new Set(['chapter-open', 'heading', 'architects-review']);
 
+// CODE-CODER explainer — a hero player at the very top of the Manual. The MP4 ships in
+// the repo's /media folder, served from the repo root, so it is one level up from /app.
+// The space in the filename is percent-encoded so the URL is valid.
+const MANUAL_VIDEO_SRC = '../media/Anatomy%20of%20Code.mp4';
+const MANUAL_HERO =
+  `<section class="manual-hero" aria-label="Explainer video">` +
+    `<div class="manual-hero-inner">` +
+      `<div class="mh-eyebrow">Watch first</div>` +
+      `<h2 class="mh-title">The Anatomy of Code — the explainer</h2>` +
+      `<p class="mh-sub">A short orientation to the CODE-CODER framework before you read the manual.</p>` +
+      `<div class="mh-player">` +
+        `<video class="mh-video" controls preload="metadata" playsinline ` +
+          `controlslist="nodownload" aria-label="The Anatomy of Code explainer video">` +
+          `<source src="${MANUAL_VIDEO_SRC}" type="video/mp4">` +
+          `<p class="mh-fallback">Your browser can’t play embedded video. ` +
+            `<a href="${MANUAL_VIDEO_SRC}">Download the explainer (MP4)</a>.</p>` +
+        `</video>` +
+      `</div>` +
+    `</div>` +
+  `</section>`;
+
 export async function renderScroll(mount, base, sectionFiles) {
   const fw = await loadFramework(base);
   const idx = indexFramework(fw);
@@ -22,7 +43,7 @@ export async function renderScroll(mount, base, sectionFiles) {
   }
   sections.sort((a, b) => orderIndex(idx, a.frameworkAddress) - orderIndex(idx, b.frameworkAddress));
 
-  let html = '';
+  let html = MANUAL_HERO;
   for (const sec of sections) {
     const node = idx.byId[sec.frameworkAddress] || {};
     html += `<article class="chapter" id="${esc(sec.frameworkAddress)}">`;

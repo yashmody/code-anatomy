@@ -1,0 +1,92 @@
+{
+  "frameworkAddress": "anatomy.m09",
+  "title": "Code Structuring",
+  "tag": "Module 09 · The Model / Function / Controller Split",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The Model/Function/Controller split — how to assign every piece of code to exactly one of three responsibilities",
+    "<strong>Why it matters:</strong> Code without structural assignment is impossible to review at scale — the split makes the scope of any change predictable before reading the code",
+    "Model files have no side effects / Function files have no state / Controller files have no business logic — if any file violates one rule, refactor before adding features",
+    "This structure is the prerequisite for Stalwart — Stalwart formalises and extends these three roles into eight file types"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m09.opener",
+      "title": "Code Structuring",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "N",
+          "html": "ow fold it together. Take the mental model from Module 00 and let it dictate where each kind of code lives. You arrive — without forcing it — at a clean three-way split:"
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m09.split",
+      "title": "The Model / Function / Controller split",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "diagram",
+          "page": 1,
+          "render": "ascii",
+          "title": "Model → Function → Controller",
+          "source": "┌─────────────────────┐     ┌──────────────────────┐     ┌───────────────────────┐\n│        MODEL        │────▶│       FUNCTION       │────▶│      CONTROLLER       │\n│                     │     │                      │     │                       │\n│  data shapes        │     │  transforms          │     │  orchestration        │\n│  no side effects    │     │  no state            │     │  no biz logic         │\n└─────────────────────┘     └──────────────────────┘     └──────────┬────────────┘\n                                                                     │  events\n                                                                     ▼\n                                                               (back to Model)"
+        },
+        {
+          "type": "cardgrid",
+          "page": 2,
+          "columns": 3,
+          "cards": [
+            { "eyebrow": "Grouping your data", "title": "Model", "body": "The shape of your information. Collections, their heads, their relationships." },
+            { "eyebrow": "Deciding & drawing", "title": "Function", "body": "Logic decides, render shows, helpers assist — the three types of Module 03." },
+            { "eyebrow": "Knowing when to act", "title": "Controller", "body": "Events route through here. It listens, then tells the right function to run." }
+          ]
+        },
+        {
+          "type": "quote",
+          "page": 2,
+          "html": "Model holds it. Functions do it. The Controller decides when. Three questions, three homes — structure is just discipline about where answers go."
+        },
+        {
+          "type": "prose",
+          "page": 2,
+          "html": "That is the structural core of Part I. One module left — the one that bridges everything you've just learned into the architect's view in Part III."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m09.enforce",
+      "title": "Enforce the split at the folder",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "callout",
+          "page": 3,
+          "variant": "tip",
+          "html": "DEPT® field pattern — use folder structure to enforce the split: <code>model/</code>, <code>fn/</code>, <code>ctrl/</code> directories at the component root. A misplaced file is visible in a PR diff without reading the code. Add a CI grep that alerts on import of a model file from inside a <code>fn/</code> file and vice versa."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m09.review",
+      "title": "Architect's Review",
+      "order": 3,
+      "blocks": [
+        {
+          "type": "architects-review",
+          "page": 3,
+          "label": "Architect's Review · Code Structuring",
+          "items": [
+            "Is the model / function / controller split visible at file level?",
+            "Where has it leaked — and what is the migration plan?",
+            "Do new features arrive in this shape by default?",
+            "What lint, test or PR rule enforces the split?"
+          ]
+        }
+      ]
+    }
+  ]
+}
