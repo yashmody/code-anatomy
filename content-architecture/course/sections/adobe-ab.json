@@ -1,0 +1,153 @@
+{
+  "frameworkAddress": "adobe.ab",
+  "title": "App Builder & API Mesh",
+  "tag": "Serverless extensibility · GraphQL composition",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> what App Builder and API Mesh actually are, where each one fits in the Adobe Experience Cloud stack, and how the two compose into a single extensibility story for storefronts and admin tooling",
+    "<strong>Why it matters:</strong> the alternative is a separate Node.js platform sitting beside Adobe with its own auth, secrets and deployment chain — App Builder removes that platform when the workload is genuinely Adobe-adjacent",
+    "App Builder is serverless Node.js on Adobe I/O Runtime — custom UIs, actions and event handlers deployed via the <code>aio</code> CLI, with IMS auth and a built-in secret store",
+    "API Mesh is a declarative GraphQL gateway — it composes upstream REST, GraphQL, SOAP and OpenAPI sources into a single endpoint, configured via a <code>mesh.json</code> file",
+    "The two compose: an App Builder action can be one of the Mesh's upstream sources, which is the canonical pattern for any logic the Mesh itself should not perform"
+  ],
+  "sections": [
+    {
+      "id": "adobe.ab.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "A", "html": "dobe Experience Cloud is opinionated about content, journeys and data — and deliberately quiet about how a customer extends it. App Builder and API Mesh are the answers to that quiet. App Builder is where custom code lives when the workload belongs inside the Adobe perimeter. API Mesh is where many upstream APIs are stitched into one endpoint a storefront can actually consume. They solve different problems, they ship through the same CLI, and most serious Adobe builds eventually use both." },
+        { "type": "lead", "page": 1, "html": "The architect's job is to know <em>when</em> to reach for these two products — and, just as important, when to refuse and stand up something separate." },
+        { "type": "callout", "page": 1, "variant": "why", "html": "Without App Builder and API Mesh, every \"small\" extension to Adobe ends up as a separate Node.js service on someone else's cloud — with its own IMS integration, its own secret manager, its own deployment pipeline and its own on-call rota. That tax compounds. App Builder removes it for workloads that are genuinely Adobe-adjacent; API Mesh removes the storefront-side stitching code that every multi-system build otherwise writes by hand." }
+      ]
+    },
+    {
+      "id": "adobe.ab.appbuilder",
+      "title": "App Builder",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "1 · App Builder" },
+        { "type": "prose", "page": 2, "html": "App Builder is Adobe's serverless extensibility platform. The runtime is Adobe I/O Runtime — an OpenWhisk-based function-as-a-service environment hosted inside Adobe's perimeter. Code is Node.js. Each unit of work is an <em>action</em>: a function that receives <code>params</code> and returns a response. Actions are composed into apps; apps can also ship a custom React-based UI that loads inside the Experience Cloud Shell." },
+        { "type": "prose", "page": 2, "html": "Three primitives matter to the architect:" },
+        { "type": "notes", "page": 2, "items": [
+          "<b>Actions</b> — Node.js functions on Adobe I/O Runtime. Stateless, short-lived, billed by execution. The atomic unit of App Builder logic.",
+          "<b>Custom UIs</b> — React applications, scaffolded by the <code>aio</code> CLI, that mount inside the Experience Cloud Shell. Same chrome and SSO as native Adobe apps; the user never leaves Experience Cloud.",
+          "<b>Adobe I/O Events</b> — event subscriptions on Experience Cloud products (Commerce order placed, AEM asset created, AJO journey completed). Events trigger actions. This is how App Builder participates in real-time integrations without polling."
+        ] },
+        { "type": "heading", "page": 2, "html": "Common use cases" },
+        { "type": "notes", "page": 2, "items": [
+          "A custom Commerce admin panel that surfaces ERP stock and a third-party PIM next to the native product editor — built as an App Builder UI inside Experience Cloud Shell.",
+          "An AEM workflow extension that calls an external translation vendor when a content fragment changes — implemented as an action subscribed to the AEM asset event.",
+          "Event-driven integration with a 3PL — Commerce order events trigger an action that pushes the manifest to Shiprocket or Delhivery, then writes the tracking number back via the Commerce REST API.",
+          "Lightweight back-office automation — finance reconciliation, KYC-status checks against an external bureau, scheduled cleanup jobs — without standing up a separate Node.js platform.",
+          "A custom storefront API endpoint that needs server-side logic (pricing rules, eligibility, loyalty calculations) but should not live in the storefront codebase."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.ab.mesh",
+      "title": "API Mesh",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "2 · API Mesh" },
+        { "type": "prose", "page": 3, "html": "API Mesh is a declarative GraphQL gateway. The architect describes a set of upstream sources in a configuration file; the Mesh stitches them into a single GraphQL endpoint that clients query. Resolvers, type merging and request routing are derived from the configuration — the Mesh itself is not where business logic lives." },
+        { "type": "prose", "page": 3, "html": "The mental model is simpler than it sounds: <em>one endpoint, many upstreams, one schema</em>. A storefront that today calls Commerce GraphQL, AEM Content Fragments REST and a loyalty API separately makes one query to the Mesh instead. The Mesh fans the query out and returns a composed result." },
+        { "type": "heading", "page": 3, "html": "Upstream source types" },
+        { "type": "notes", "page": 3, "items": [
+          "<b>GraphQL</b> — the canonical case. Adobe Commerce's GraphQL endpoint is almost always one of the sources.",
+          "<b>OpenAPI / REST</b> — REST APIs described by an OpenAPI document are translated into GraphQL types automatically. This is how AEM Content Fragments, loyalty APIs and most third-party REST services get into the Mesh.",
+          "<b>JSON Schema</b> — for REST APIs without an OpenAPI document, you can describe operations directly via JSON Schema handlers.",
+          "<b>SOAP</b> — legacy SOAP services (still common in enterprise ERP and OMS layers) are supported via a SOAP handler.",
+          "<b>OData</b> — for SAP and Microsoft back-ends that expose OData endpoints natively."
+        ] },
+        { "type": "prose", "page": 3, "html": "Configuration lives in a single JSON file — conventionally <code>mesh.json</code> — under a <code>meshConfig.sources</code> array. Each source declares a name and a handler describing the upstream. The Mesh is created and updated via the <code>aio api-mesh</code> command family." }
+      ]
+    },
+    {
+      "id": "adobe.ab.compare",
+      "title": "Which one do you reach for?",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "3 · Which one do you reach for?" },
+        { "type": "prose", "page": 4, "html": "App Builder and API Mesh look superficially similar — both ship through the same CLI, both live inside the Adobe perimeter, both are billed as extensibility. They are not interchangeable." },
+        { "type": "diagram", "page": 4, "render": "versus", "title": "App Builder vs API Mesh · the shape of the choice", "columns": [
+          { "label": "App Builder", "tone": "good", "body": "<strong>Custom code.</strong> Node.js logic, stateful integrations, scheduled jobs, event handlers, custom UIs inside Experience Cloud Shell. You write the function; Adobe runs it. The right tool when the workload is <em>compute</em>: pricing rules, eligibility checks, vendor calls, transformation. Also the right tool when a real human needs an Adobe-native admin screen for the integration." },
+          { "label": "API Mesh", "tone": "good", "body": "<strong>Declarative composition.</strong> No code in the happy path — just a list of upstream sources and how they merge. The right tool when the storefront needs <em>one query</em> instead of three, and the work is fetching and stitching rather than computing. Resolvers can be customised lightly when stitching alone is not enough, but logic-heavy resolvers are a smell." }
+        ] },
+        { "type": "prose", "page": 4, "html": "And they compose. The canonical pattern is: an App Builder action exposes a small piece of computed logic (pricing rules, loyalty multiplier, region-specific eligibility); the Mesh treats that action as one of its upstream sources alongside Commerce and AEM. The storefront sees one endpoint; the architecture has clean separation between composition (Mesh) and computation (App Builder)." }
+      ]
+    },
+    {
+      "id": "adobe.ab.example",
+      "title": "Worked example — a unified storefront API",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "4 · Worked example — a unified storefront API" },
+        { "type": "prose", "page": 5, "html": "A common ask: the storefront should render a product page with Commerce inventory and pricing, an AEM-authored marketing block, the customer's loyalty tier from a third-party loyalty system, and a tier-specific discount computed by business rules that change weekly. Without the Mesh, the storefront writes four clients and orchestrates four calls in the browser or its BFF. With the Mesh, the storefront writes one query." },
+        { "type": "diagram", "page": 5, "render": "nodes", "title": "Unified storefront API · one Mesh endpoint, four upstreams", "rows": [
+          { "nodes": [ { "label": "Browser / storefront", "sub": "single GraphQL query · single endpoint", "variant": "user" } ] },
+          { "nodes": [ { "label": "API Mesh endpoint", "sub": "stitches upstreams · returns one composed response", "variant": "edge" } ] },
+          { "nodes": [
+            { "label": "Commerce GraphQL", "sub": "products · inventory · cart" },
+            { "label": "AEM Content REST", "sub": "marketing fragments · OpenAPI" },
+            { "label": "Loyalty API REST", "sub": "tier · points balance · OpenAPI" },
+            { "label": "App Builder action", "sub": "pricing-rules · computed discount" }
+          ] }
+        ] },
+        { "type": "prose", "page": 5, "html": "The Mesh config declares the four sources. Three are upstream APIs the team does not own; the fourth is an App Builder action the team writes for the rules that change weekly. Keeping the rules in an action — not in a Mesh resolver — means the rules are versioned with the rest of the App Builder code, deployable independently, and observable through Adobe Developer Console." },
+        { "type": "code", "page": 5, "lang": "json", "label": "mesh.json — four upstream sources declared", "code": "{\n  \"meshConfig\": {\n    \"sources\": [\n      {\n        \"name\": \"Commerce\",\n        \"handler\": {\n          \"graphql\": {\n            \"endpoint\": \"https://commerce.example.com/graphql\"\n          }\n        }\n      },\n      {\n        \"name\": \"AEMContent\",\n        \"handler\": {\n          \"openapi\": {\n            \"source\": \"https://aem.example.com/content/dam/api.yaml\"\n          }\n        }\n      },\n      {\n        \"name\": \"Loyalty\",\n        \"handler\": {\n          \"openapi\": {\n            \"source\": \"https://loyalty.example.com/openapi.yaml\"\n          }\n        }\n      },\n      {\n        \"name\": \"PricingRules\",\n        \"handler\": {\n          \"openapi\": {\n            \"source\": \"https://runtime.example.com/api/v1/web/pricing-rules.json\"\n          }\n        }\n      }\n    ]\n  }\n}" },
+        { "type": "prose", "page": 5, "html": "The fourth source — <code>PricingRules</code> — is an App Builder action exposed as a web endpoint on Adobe I/O Runtime, described by an OpenAPI document so the Mesh can stitch it as cleanly as any other REST source. The action itself is small:" },
+        { "type": "code", "page": 5, "lang": "javascript", "label": "actions/pricing-rules/index.js — a minimal Adobe I/O Runtime action", "code": "// actions/pricing-rules/index.js — Adobe I/O Runtime action.\n// Exposed by API Mesh as the PricingRules source. IMS auth on the inbound side.\nasync function main(params) {\n  const { sku, tier } = params;\n  // Toy logic — real rules come from AEM Assets or a config repo.\n  const discount = tier === 'gold' ? 0.10 : 0.05;\n  return {\n    statusCode: 200,\n    body: { sku, discount, currency: 'INR' }\n  };\n}\n\nexports.main = main;" },
+        { "type": "prose", "page": 5, "html": "Deployment is two CLI calls. <code>aio app deploy</code> ships the action (and any UI) to Adobe I/O Runtime. <code>aio api-mesh:update</code> applies the new <code>mesh.json</code> to the Mesh. Both run from the same Cloud Manager pipeline; both authenticate through the same IMS service-token credential." }
+      ]
+    },
+    {
+      "id": "adobe.ab.governance",
+      "title": "Governance — auth, secrets, observability",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "5 · Governance — auth, secrets, observability" },
+        { "type": "prose", "page": 6, "html": "Both products are inside the Adobe perimeter, which buys the architect a lot of governance for free — but only if the build uses it. Three concerns matter on every project." },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Auth</b> — both App Builder and API Mesh authenticate through Adobe IMS. Inbound calls present an IMS access token; the Mesh validates it before any upstream is touched, and App Builder actions can require it on their <code>web</code> endpoints. Service-to-service flows use the IMS OAuth Server-to-Server credential (the modern replacement for the deprecated JWT credential). Do not invent a parallel auth surface for these workloads; use IMS.",
+          "<b>Secrets</b> — App Builder ships with a built-in secret store, surfaced to actions as environment variables and managed via the <code>aio</code> CLI and the Adobe Developer Console. Database credentials, third-party API keys and signing secrets belong there — not in <code>mesh.json</code>, not in committed config files, not in a separate vault unless the project already has one for non-Adobe workloads.",
+          "<b>Observability</b> — actions and Mesh requests log to Adobe Developer Console; the <code>aio</code> CLI streams logs locally during development (<code>aio app logs</code>, <code>aio api-mesh:log-list</code>). For production, forward those logs to the project's existing observability stack — Splunk, Datadog, Elastic — rather than relying on the Console UI alone. The Console is for triage, not for SLO monitoring."
+        ] },
+        { "type": "callout", "page": 6, "variant": "pitfall", "html": "Putting business logic in API Mesh resolvers instead of an App Builder action. The Mesh supports custom resolvers, and it is tempting to drop a few lines of computation inline rather than stand up a separate action. Two problems follow. First, the logic is now bound to the Mesh's deployment cycle — every rule tweak republishes the gateway. Second, it is harder to test, harder to observe, and harder to reuse than an action would be. Mesh resolvers should <em>compose</em> — fan out, merge, transform shape. Computation belongs in an action that the Mesh treats as another source." }
+      ]
+    },
+    {
+      "id": "adobe.ab.architects-take",
+      "title": "The architect's take",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "6 · The architect's take" },
+        { "type": "prose", "page": 7, "html": "App Builder and API Mesh are the right answer when the workload is genuinely Adobe-adjacent — meaning the data, the events or the user is already inside Experience Cloud. They are the wrong answer when the workload is incidentally near Adobe but really belongs in a wider engineering platform. A reconciliation job that touches Commerce orders, ERP, the loyalty database and the finance system is not an App Builder action; it is a service in the engineering platform that happens to call Commerce. A custom admin panel that operators reach from the Experience Cloud Shell every day <em>is</em> an App Builder UI." },
+        { "type": "prose", "page": 7, "html": "The decision criteria for the architect:" },
+        { "type": "notes", "page": 7, "items": [
+          "<b>Reach for App Builder when</b> — the workload is short, stateless, and event- or request-driven; the operator's natural home is Experience Cloud Shell; the data already flows through IMS-authenticated Adobe APIs.",
+          "<b>Reach for API Mesh when</b> — a storefront or downstream client wants one endpoint instead of three or four; the work is fetch-and-stitch, not compute; the upstream APIs already exist and the question is composition, not invention.",
+          "<b>Reach for the engineering platform when</b> — the workload is long-running, stateful, or depends heavily on systems outside Adobe; the team that owns the logic is not the team that operates Adobe; the observability and SLO requirements exceed what the Developer Console gives you out of the box."
+        ] },
+        { "type": "callout", "page": 7, "variant": "tip", "html": "DEPT® field pattern — treat App Builder actions like microservices. One responsibility per action, versioned through <code>package.json</code>, deployed through <code>aio app deploy</code> from a Cloud Manager pipeline (not from an engineer's laptop), with secrets injected from the App Builder secret store and logs forwarded to the project's central observability stack. The Mesh config is versioned the same way — <code>mesh.json</code> in the repo, <code>aio api-mesh:update</code> in the pipeline, no manual edits in the Developer Console." }
+      ]
+    },
+    {
+      "id": "adobe.ab.review",
+      "title": "Architect's Review",
+      "order": 7,
+      "blocks": [
+        { "type": "architects-review", "page": 8, "label": "Architect's Review · App Builder & API Mesh", "items": [
+          "For every App Builder action and every Mesh endpoint, is the inbound auth flow documented — which IMS credential, which scopes, and how a token is acquired by each upstream caller?",
+          "Are all secrets — third-party API keys, signing secrets, database credentials — held in the App Builder secret store, or are they leaking into <code>mesh.json</code>, source-controlled config or environment files?",
+          "Where does the business logic live? Confirm that Mesh resolvers only compose, and that any computation is an App Builder action — not inline resolver code.",
+          "Is <code>mesh.json</code> the source of truth in the repo, and is the Mesh updated via <code>aio api-mesh:update</code> from the Cloud Manager pipeline — never via manual edits in the Adobe Developer Console?",
+          "Are action logs and Mesh logs forwarded to the project's central observability stack, with SLO alerts on error rate and latency — or is the team relying on Developer Console for production monitoring?",
+          "Has the team decided, per workload, whether it belongs in App Builder, in the Mesh, or in the wider engineering platform — and is that decision written down rather than implicit?",
+          "Is there a rollback story for both the action and the Mesh — can the previous <code>mesh.json</code> be re-applied in one CLI call, and can the last green App Builder build be redeployed without a full pipeline run?",
+          "For Adobe I/O Event subscriptions, is delivery treated as at-least-once with idempotent action logic, and is there a dead-letter path when an action fails repeatedly?"
+        ] }
+      ]
+    }
+  ]
+}

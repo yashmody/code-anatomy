@@ -18,6 +18,7 @@ const SECTION_FILES = [   // extracted chapters (Manual orders them by framework
   'anatomy-m04.json', 'anatomy-m05.json', 'anatomy-m06.json',
   'anatomy-m07.json', 'anatomy-m08.json', 'anatomy-m09.json', 'anatomy-m10.json',
   'adobe-cm.json', 'adobe-aa.json', 'adobe-cja.json', 'adobe-ajo.json', 'adobe-camp.json',
+  'adobe-csc.json', 'adobe-ab.json',
   'ai-bmad.json', 'ai-gov.json'
 ];
 const THEME_KEY = 'anatomy-app-theme';             // per-page theme key

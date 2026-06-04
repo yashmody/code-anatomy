@@ -29,12 +29,29 @@
 
 /* ---- reading column ---- */
 #view { padding: 0 20px 120px; }
-.chapter { max-width: 860px; margin: 0 auto; padding-top: 34px; }
+.chapter { max-width: 860px; margin: 0 auto 64px; padding-top: 88px; }
+.chapter:first-of-type { padding-top: 24px; }
 .chapter-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 18px; }
 .chapter-mark {
   font-family: var(--serif); font-weight: 800; font-size: 40px; line-height: 1; color: var(--ochre);
   flex: 0 0 auto;
 }
+/* Anatomy module marks (M00, M01B, M10) read better a touch smaller than single letters. */
+.chapter-mark.compact { font-size: 26px; letter-spacing: -.01em; }
+
+/* Inter-chapter closing ritual — thin ochre rule, mono kicker, "Next: …" pointer.
+   Tokens-only so dark mode flips automatically. Reflows on narrow widths. */
+.chapter-end {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  margin: 64px 0 8px; padding-top: 28px;
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--ink-faint); font-weight: 700;
+}
+.chapter-end::before {
+  content: ""; flex: 0 0 80px; height: 1px; background: var(--ochre);
+}
+.chapter-end b { color: var(--ochre); font-weight: 700; }
+.chapter-end .ce-next { margin-left: auto; color: var(--ink-soft); }
 .chapter-tag {
   font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--ink-faint); margin-bottom: 6px;
@@ -58,7 +75,7 @@
 .tier:last-child { border-bottom: 0; }
 .tier-n { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--ochre); min-width: 16px; }
 .tier-label { font-weight: 600; color: var(--ink); font-size: 15px; }
-.tier-note { margin-left: auto; font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); letter-spacing: .02em; text-align: right; }
+.tier-note { margin-left: auto; font-family: var(--mono); font-size: 12.5px; color: var(--ink-soft); letter-spacing: .02em; text-align: right; }
 
 /* ---- diagram table (render:table) ---- */
 .arch-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
@@ -189,8 +206,18 @@
 /* ════════════════════════════════════════════════════════════════════════════
    MANUAL — CODE-CODER explainer video hero (top of the scroll).
    ════════════════════════════════════════════════════════════════════════════ */
-.manual-hero { max-width: 860px; margin: 0 auto; padding-top: 30px; }
+.manual-hero { position: relative; max-width: 860px; margin: 0 auto; padding-top: 30px; }
 .manual-hero-inner { display: flex; flex-direction: column; }
+.manual-hero-close {
+  position: absolute; top: 30px; right: 0; z-index: 2;
+  width: 30px; height: 30px; padding: 6px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; cursor: pointer;
+  font-family: var(--mono); font-size: 18px; line-height: 1; color: var(--ink-faint);
+  transition: color .12s;
+}
+.manual-hero-close:hover { color: var(--ochre); }
+.manual-hero-close:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
 .mh-eyebrow {
   font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
   color: var(--ochre); font-weight: 700; margin-bottom: 8px;

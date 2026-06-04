@@ -62,12 +62,12 @@
           { "label": "Measure", "variant": "ochre" },
           { "label": "Iterate" }
         ] },
-        { "type": "notes", "page": 3, "items": [
-          "<b>Plan</b> — brief, audience, objectives, KPIs, budget, timeline, success criteria. If you can't write these on one page, you don't have a campaign yet.",
-          "<b>Build</b> — creative production, content, landing pages, tech setup, QA, dry-run. The phase with the most opinions per square metre.",
-          "<b>Launch</b> — go-live checklist, comms to stakeholders, monitoring setup. The point of no return.",
-          "<b>Measure</b> — daily checks in week one, weekly thereafter; attribution and contribution analysis.",
-          "<b>Iterate</b> — optimise the live campaign (A/B tests, audience refinement) and document learnings <em>before</em> the next plan starts."
+        { "type": "cardgrid", "page": 3, "columns": 5, "cards": [
+          { "title": "Plan", "body": "Brief, audience, objectives, KPIs, budget, timeline, success criteria. If you can't write these on one page, you don't have a campaign yet." },
+          { "title": "Build", "body": "Creative production, content, landing pages, tech setup, QA, dry-run. The phase with the most opinions per square metre." },
+          { "title": "Launch", "body": "Go-live checklist, comms to stakeholders, monitoring setup. The point of no return." },
+          { "title": "Measure", "body": "Daily checks in week one, weekly thereafter; attribution and contribution analysis." },
+          { "title": "Iterate", "body": "Optimise the live campaign (A/B tests, audience refinement) and document learnings <em>before</em> the next plan starts." }
         ] }
       ]
     },

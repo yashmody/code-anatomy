@@ -61,7 +61,9 @@
         { "id": "adobe.aa", "letter": "AA", "name": "Adobe Analytics", "desc": "Measurement, processing rules, VISTA", "order": 2 },
         { "id": "adobe.cja", "letter": "CJA", "name": "Customer Journey Analytics", "desc": "Cross-channel, person-based", "order": 3 },
         { "id": "adobe.ajo", "letter": "AJO", "name": "Adobe Journey Optimizer", "desc": "Orchestration, XDM, channels", "order": 4 },
-        { "id": "adobe.camp", "letter": "CAMP", "name": "Adobe Campaign", "desc": "Outbound execution at scale", "order": 5 }
+        { "id": "adobe.camp", "letter": "CAMP", "name": "Adobe Campaign", "desc": "Outbound execution at scale", "order": 5 },
+        { "id": "adobe.csc", "letter": "CSC", "name": "Content Supply Chain", "desc": "End-to-end content workflow across AEM, Workfront and GenStudio", "order": 6 },
+        { "id": "adobe.ab", "letter": "AB", "name": "App Builder & API Mesh", "desc": "Serverless extensibility and the GraphQL composition layer", "order": 7 }
       ]
     },
     {
