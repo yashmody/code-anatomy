@@ -1,0 +1,74 @@
+/* App shell + NEW on-brand components (drop-cap, tierlist) + mode chrome.
+   Loaded AFTER monolith.css; uses the same design tokens so dark mode + brand carry over.
+   Mobile-first: base rules target phones; wider rules are in min-width queries. */
+
+/* ---- app bar (mode switch + theme) ---- */
+.app-bar {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 10px 16px; background: var(--paper); border-bottom: 1px solid var(--rule);
+}
+.app-brand {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
+  color: var(--ochre-deep); font-weight: 700; margin-right: auto;
+}
+.mode-tabs { display: flex; gap: 4px; }
+.mode-tab {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-soft); text-decoration: none; padding: 7px 12px; border: 1px solid transparent;
+}
+.mode-tab:hover { color: var(--ink); }
+.mode-tab.active { color: var(--ochre); border-color: var(--ochre); }
+.theme-btn {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em; text-transform: uppercase;
+  background: transparent; border: 1px solid var(--rule); color: var(--ink-soft);
+  padding: 7px 12px; cursor: pointer;
+}
+.theme-btn:hover { border-color: var(--ochre); color: var(--ochre); }
+
+/* ---- reading column ---- */
+#view { padding: 0 20px 120px; }
+.chapter { max-width: 860px; margin: 0 auto; padding-top: 34px; }
+.chapter-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 18px; }
+.chapter-mark {
+  font-family: var(--serif); font-weight: 800; font-size: 40px; line-height: 1; color: var(--ochre);
+  flex: 0 0 auto;
+}
+.chapter-tag {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-faint); margin-bottom: 6px;
+}
+.chapter-title { font-family: var(--serif); font-weight: 800; font-size: 38px; line-height: 1.05; color: var(--ink); letter-spacing: -.01em; }
+.sub { margin: 6px 0; }
+.sub-title { font-family: var(--serif); font-weight: 700; font-size: 24px; line-height: 1.15; color: var(--ink); letter-spacing: -.01em; margin: 30px 0 10px; }
+
+.loading, .placeholder { max-width: 860px; margin: 60px auto; color: var(--ink-faint); font-family: var(--mono); font-size: 13px; }
+.placeholder h2 { font-family: var(--serif); color: var(--ink); font-size: 30px; margin-bottom: 8px; }
+
+/* ---- NEW: drop-cap (field on chapter-open; the monolith has none) ---- */
+.lead.chapter-open .drop {
+  float: left; font-family: var(--serif); font-weight: 800; font-size: 66px; line-height: .76;
+  color: var(--ochre); margin: 8px 12px -2px 0;
+}
+
+/* ---- NEW: tierlist (first-class component) ---- */
+.tierlist { margin: 14px 0; border: 1px solid var(--rule); background: var(--card); }
+.tier { display: flex; align-items: baseline; gap: 14px; padding: 11px 16px; border-bottom: 1px solid var(--rule); }
+.tier:last-child { border-bottom: 0; }
+.tier-n { font-family: var(--mono); font-weight: 700; font-size: 13px; color: var(--ochre); min-width: 16px; }
+.tier-label { font-weight: 600; color: var(--ink); font-size: 15px; }
+.tier-note { margin-left: auto; font-family: var(--mono); font-size: 11.5px; color: var(--ink-faint); letter-spacing: .02em; text-align: right; }
+
+/* ---- diagram table (render:table) ---- */
+.arch-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.arch-table th, .arch-table td { border: 1px solid var(--rule); padding: 8px 12px; text-align: left; color: var(--ink-soft); }
+.arch-table th { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ochre-deep); }
+
+.block-fallback { border: 1px dashed var(--ochre); color: var(--ochre-deep); font-family: var(--mono); font-size: 12px; padding: 10px 14px; margin: 10px 0; }
+.collapsed-block > summary { cursor: pointer; font-family: var(--mono); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ochre-deep); }
+
+@media (min-width: 720px) {
+  .app-bar { padding: 12px 28px; }
+  #view { padding: 0 28px 140px; }
+  .chapter-title { font-size: 46px; }
+}
