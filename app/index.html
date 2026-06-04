@@ -17,10 +17,26 @@
   <header class="app-bar">
     <span class="app-brand">DEPT® · Anatomy of Code</span>
     <nav class="mode-tabs">
-      <a class="mode-tab" data-mode="scroll" href="#/scroll">Scroll</a>
+      <a class="mode-tab" data-mode="manual" href="#/manual">Manual</a>
       <a class="mode-tab" data-mode="read" href="#/read">Read</a>
       <a class="mode-tab" data-mode="feed" href="#/feed">Feed</a>
+      <div class="res-menu" id="resMenu">
+        <button class="mode-tab res-toggle" type="button" id="resToggle"
+                aria-haspopup="true" aria-expanded="false" aria-controls="resDropdown">Resources ▾</button>
+        <div class="res-dropdown" id="resDropdown" role="menu" aria-label="Resources" hidden>
+          <!-- Quiz is a separate FastAPI server; its href is set from QUIZ_URL in js/main.js -->
+          <a class="res-item" role="menuitem" id="resQuiz" target="_blank" rel="noopener" href="http://localhost:8000">
+            <span class="res-name">Quiz</span><span class="res-meta">Certification · CCA-F</span></a>
+          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="../content-system/faqs/aem-banking-faq.html">
+            <span class="res-name">FAQs</span><span class="res-meta">AEM × Banking</span></a>
+          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="../content-system/code-coder-checklist.html">
+            <span class="res-name">Checklist</span><span class="res-meta">Discovery</span></a>
+          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="../content-system/architect-runbook.html">
+            <span class="res-name">Runbooks</span><span class="res-meta">Architect's</span></a>
+        </div>
+      </div>
     </nav>
+    <div class="app-auth" id="appAuth"></div>
     <button class="theme-btn" type="button" onclick="toggleAppTheme()"><span id="themeLabel">Dark</span></button>
   </header>
   <main id="view" class="view"></main>

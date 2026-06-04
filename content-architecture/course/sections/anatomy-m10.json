@@ -1,0 +1,124 @@
+{
+  "frameworkAddress": "anatomy.m10",
+  "title": "Contracts · Bridge",
+  "tag": "Module 10 · Contracts · Bridge",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The four contract types — API, Event, Data, Component — and how each defines a system boundary that AI agents must not cross",
+    "<strong>Why it matters:</strong> Without contracts every AI-generated PR must be reviewed from first principles — with contracts review scope collapses to \"does this satisfy the contract?\"",
+    "API contracts (OpenAPI/GraphQL schema) are the most mature; Event contracts (type registry + payload schema) are the most frequently skipped and the most damaging when absent",
+    "Contracts are the safety net for AI-generated code — violations are caught at CI schema validation before merge, not in production",
+    "A contract that is not version-controlled does not exist — it is a verbal agreement that degrades over time"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m10.opener",
+      "title": "Contracts — what architects actually talk about",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "I",
+          "html": "mplementation can change tomorrow. A <strong>contract</strong> is the promise that must hold. Once you start thinking in contracts you stop arguing about how code is written and start arguing about what it promises to do — which is a much shorter and more useful conversation."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m10.pipeline",
+      "title": "The contract pipeline",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "diagram",
+          "page": 2,
+          "render": "mermaid",
+          "title": "Contract pipeline",
+          "source": "flowchart TD\n    A[Architect defines contract] --> B[contracts repo\\nversioned]\n    B --> C[AI generates implementation]\n    C --> D[Engineer reviews against contract]\n    D --> E[CI validates schema]\n    E -->|pass| F[merge approved]\n    E -->|fail| C"
+        },
+        {
+          "type": "callout",
+          "page": 2,
+          "variant": "why",
+          "html": "Contracts are the prerequisite for agentic development. An AI agent without a contract boundary optimises for local coherence — the generated code works in isolation — at the expense of system coherence. The agent doesn't know it is breaking a downstream consumer. The contract is the architect's instruction to the agent about where the system boundary is."
+        },
+        {
+          "type": "callout",
+          "page": 2,
+          "variant": "pitfall",
+          "html": "Treating the API response shape as the API contract. The contract includes error codes, rate limits, authentication method, pagination contract, versioning policy, and SLA — not just the happy-path JSON response. A consumer built against only the response shape will break on the first non-200 status it was not designed for."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m10.four",
+      "title": "The four contracts in any system",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 3,
+          "html": "The four contracts in any system"
+        },
+        {
+          "type": "cardgrid",
+          "page": 3,
+          "columns": 4,
+          "cards": [
+            { "eyebrow": "External", "title": "API Contract", "body": "Endpoints, methods, payload shapes, error codes, rate limits, versioning. The promise to the world outside your codebase." },
+            { "eyebrow": "Internal", "title": "Event Contract", "body": "The event name (domain:action), its payload shape, who produces it, who may consume it. The promise between modules." },
+            { "eyebrow": "Shape", "title": "Data Contract", "body": "The schema of an entity — mandatory and optional fields, validation rules, allowed transitions. The promise about the data itself." },
+            { "eyebrow": "Boundary", "title": "Component Contract", "body": "Props in, events out, slots/children. The public surface of a reusable building block." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m10.bridge",
+      "title": "Why contracts are the bridge to AI-generated code",
+      "order": 3,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 4,
+          "html": "Why contracts are the bridge to AI-generated code"
+        },
+        {
+          "type": "prose",
+          "page": 4,
+          "html": "This is the most important paragraph of Part I. <strong>Contracts are what you hand to AI; implementations are what AI hands back.</strong> The architect owns the contracts; the AI fills in the implementations. Get the contracts right and the implementation is mostly mechanical. Get them wrong and no amount of clever prompting will fix it."
+        },
+        {
+          "type": "prose",
+          "page": 4,
+          "html": "This is also why the Stalwart prompt (inside CODER's <strong>C</strong>) begins by stating the file contract, the event contract, and the data flow — before naming a single feature. The architect's leverage is here."
+        },
+        {
+          "type": "quote",
+          "page": 4,
+          "html": "An architect who controls the contracts controls the architecture. An architect who only reviews code reviews symptoms."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m10.review",
+      "title": "Architect's Review",
+      "order": 4,
+      "blocks": [
+        {
+          "type": "architects-review",
+          "page": 5,
+          "label": "Architect's Review · Contracts",
+          "items": [
+            "Is the contract written down, not just in someone's head?",
+            "Is it versioned?",
+            "Who enforces it — types, tests, manual review?",
+            "What is the breaking-change policy?",
+            "Who must be notified when it changes?",
+            "Does the AI prompt template reference it?"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,122 @@
+{
+  "frameworkAddress": "anatomy.m01b",
+  "title": "Patterns 201 · Deep Dive",
+  "tag": "Module 01b · Patterns · Deep Dive",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> eight advanced patterns — Factory, Adapter, Facade, Repository, MVC, Event-Driven, State Machine, and Chain of Responsibility — with specific AEM and Edge Delivery context for each",
+    "<strong>Why it matters:</strong> the difference between a maintainable 18-month-old codebase and an unreadable one is two or three of these patterns applied deliberately at project start, not retrofitted under deadline",
+    "Factory and Repository are the two most frequently skipped on AEM projects and most frequently regretted at the 6-month mark — skipping them doesn't save time; it borrows it",
+    "Chain of Responsibility is the correct pattern for middleware, multi-step validation, and request processing — teams that substitute nested if-else instead incur compounding debt with every new rule added",
+    "Naming patterns consistently in PRs and design docs removes thirty minutes of explanation from every design review"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m01b.opener",
+      "title": "Patterns 201 — the architect's working vocabulary",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "P",
+          "html": "atterns 201 — the architect's working vocabulary."
+        },
+        {
+          "type": "lead",
+          "page": 1,
+          "html": "The four patterns in Module 01 are the working language of this course. These eight more are the rest of the architect's vocabulary — the names that appear in design reviews, RFCs and architectural debates. You don't need to use them all; you need to <em>recognise</em> them all."
+        },
+        {
+          "type": "callout",
+          "page": 1,
+          "variant": "pitfall",
+          "html": "The most common Facade misuse: wrapping a third-party API to hide its complexity, then leaking that API's error model straight through the Facade. If callers have to catch the underlying library's exception types, the abstraction has failed — the Facade must own its own error contract entirely. Translated errors, translated status codes, translated messages. Nothing from below the line crosses it."
+        },
+        {
+          "type": "callout",
+          "page": 1,
+          "variant": "before-after",
+          "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>Ad-hoc service calls scattered across 12 components, each making its own fetch with its own error handling, its own retry logic, and its own in-memory caching that may or may not be consistent with the others.</p></div><div><div class=\"ba-col-label\">After</div><p>Repository pattern centralises all data access behind a single interface. Mock injection becomes a one-line test setup. Caching, retries, and error normalisation are added once — not twelve times — and stay consistent across every caller.</p></div></div>"
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m01b.eight-patterns",
+      "title": "The eight advanced patterns",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "cardgrid",
+          "page": 2,
+          "columns": 4,
+          "cards": [
+            {
+              "eyebrow": "Creation",
+              "title": "Factory",
+              "body": "One function that builds objects of a known type, so callers never use <code>new</code> directly. Centralises construction logic — defaults, validation, identity."
+            },
+            {
+              "eyebrow": "Bridging",
+              "title": "Adapter",
+              "body": "Translates between two incompatible interfaces — your shape on one side, theirs on the other. Where you put the SAP-to-website, legacy-to-new, SDK-to-our-API translation."
+            },
+            {
+              "eyebrow": "Simplifying",
+              "title": "Facade",
+              "body": "One simple entry point hiding a complex subsystem behind it. <code>MarketingService.sendCampaign()</code> instead of ten coordinated API calls."
+            },
+            {
+              "eyebrow": "Access",
+              "title": "Repository",
+              "body": "One place to read and write a kind of entity. <code>CustomerRepository</code>, <code>OrderRepository</code>. Callers ask the repo; they never touch the underlying store."
+            },
+            {
+              "eyebrow": "Separation",
+              "title": "MVC",
+              "body": "Model holds data, View shows it, Controller decides when. The grandparent of Stalwart and of Module 09's three-way split."
+            },
+            {
+              "eyebrow": "System-level",
+              "title": "Event-Driven Architecture",
+              "body": "Build the system around events, not requests. Producers emit, consumers subscribe — Kafka, AEP, agent systems, workflow engines."
+            },
+            {
+              "eyebrow": "Lifecycle",
+              "title": "State Machine",
+              "body": "Explicit allowed transitions between states. Draft → Submitted → Approved → Published. Used in CMS, orders, loans, claims, approvals."
+            },
+            {
+              "eyebrow": "Pipeline",
+              "title": "Chain of Responsibility",
+              "body": "Work flows through a series of stages, each free to handle, transform, or pass on. Validation → enrichment → approval → publish. Especially useful for AI workflows."
+            }
+          ]
+        },
+        {
+          "type": "prose",
+          "page": 2,
+          "html": "Spot the pattern names in design reviews and you save thirty minutes of explanation. Use them in your own writing and you join a conversation that has been going on for forty years."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m01b.review",
+      "title": "Architect's Review",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "architects-review",
+          "page": 3,
+          "label": "Architect's Review · Patterns Vocabulary",
+          "items": [
+            "Are patterns named consistently in PRs, design docs and reviews?",
+            "Where is a State Machine present but not modelled as one?",
+            "Where would a Facade collapse complexity that's leaking into callers?",
+            "Is the team trained on the vocabulary, or guessing at names?"
+          ]
+        }
+      ]
+    }
+  ]
+}

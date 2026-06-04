@@ -1,0 +1,163 @@
+{
+  "frameworkAddress": "adobe.cja",
+  "title": "Customer Journey Analytics",
+  "tag": "D · Customer Journey Analytics — Architect-depth reference",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> CJA's architecture on top of AEP — connection, data view, Analysis Workspace — and why each layer requires explicit architect governance before any analysis is trustworthy",
+    "<strong>Why it matters:</strong> CJA is the full-loop analytics layer of the Adobe Experience Cloud investment — it closes the circle from data ingestion to real-time personalisation, but only if the foundational layers are implemented correctly",
+    "CJA is not a drop-in replacement for Adobe Analytics — it requires a functioning AEP implementation, a governed XDM schema, and an architect-owned data view before any analysis is possible",
+    "Cross-channel stitching — person-based analysis across anonymous and authenticated sessions — is CJA's primary differentiator and its most complex configuration requirement",
+    "A data view is the schema between the data lake and the analyst; it must be governed as carefully as the data layer — unmapped fields, duplicate metrics, and undocumented components are a liability, not a gap to fill later"
+  ],
+  "sections": [
+    {
+      "id": "adobe.cja.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "C", "html": "ustomer Journey Analytics is the analytics successor layer built directly on Adobe Experience Platform. It is not simply Adobe Analytics with a new interface — it is a structurally different system that replaces the eVar/prop/event model with XDM schema, replaces the hit-based visitor with a stitched person record, and replaces the report suite with a governed data view. Every architectural decision upstream — schema design, identity namespace config, dataset ingestion cadence — propagates into CJA analysis quality. Get the foundation wrong and the dashboards are wrong regardless of how well Analysis Workspace is configured." }
+      ]
+    },
+    {
+      "id": "adobe.cja.connection",
+      "title": "AEP → CJA connection model",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "1 · AEP → CJA connection model" },
+        { "type": "prose", "page": 2, "html": "A CJA <strong>connection</strong> is the declared relationship between one or more AEP datasets and a CJA workspace. It is not a query — it is a persistent configuration that governs which datasets are included, how records are joined at the person level, and how frequently the data lake is polled." },
+        { "type": "diagram", "page": 2, "render": "ascii", "source": "Data Sources                AEP                     CJA                    Activation\n─────────────               ───────────────────     ───────────────────    ──────────────────\nWeb (Web SDK)  ──────────▶  XDM Dataset (Web)  ─┐\nMobile SDK     ──────────▶  XDM Dataset (App)  ─┤\nCRM / batch    ──────────▶  XDM Dataset (CRM)  ─┼──▶  CJA Connection  ──▶  CJA Data View  ──▶  Analysis Workspace\nCall Centre    ──────────▶  XDM Dataset (CC)   ─┤         │                      │               Dashboards\nOffline / POS  ──────────▶  XDM Dataset (POS)  ─┘    (refresh cadence:      (governed         Report Builder\n                            AEP Data Lake             batch 60–90 min        field mapping,\n                            (Platform Lake)           streaming ~1 min)      metrics, attrib)" },
+        { "type": "prose", "page": 2, "html": "Connection configuration decisions the architect must make explicitly:" },
+        { "type": "notes", "page": 2, "items": [
+          "<b>Dataset selection</b> — include only datasets with a governed XDM schema and a populated identity field; every unqualified dataset adds noise to person-level joins",
+          "<b>Person ID field</b> — the field CJA uses to stitch events across datasets; must map to the same identity namespace in every included dataset",
+          "<b>Data refresh cadence</b> — batch connections poll the data lake every 60–90 minutes; streaming connections (requires additional licence) reduce this to approximately one minute; the choice must be declared to the business before dashboards are built",
+          "<b>Backfill window</b> — CJA can backfill historical data from AEP at connection creation; the backfill window determines how far back Analysis Workspace can report; agree with the client before activation",
+          "<b>Sandbox scope</b> — a CJA connection is scoped to one AEP sandbox; production and dev/stage connections are separate and must be maintained independently"
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.cja.dataview",
+      "title": "Data view governance",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "2 · Data view governance" },
+        { "type": "prose", "page": 3, "html": "A CJA <strong>data view</strong> is the configuration layer between the raw datasets in a connection and the analyst in Analysis Workspace. It defines which XDM fields are exposed as dimensions or metrics, how those components are named, which attribution model applies to each metric, and what the default date range and session timeout are. Every data view decision is a governance decision — it determines what the analyst can see and what they cannot." },
+        { "type": "prose", "page": 3, "html": "The four governance responsibilities that belong to the architect:" },
+        { "type": "notes", "page": 3, "items": [
+          "<b>Field mapping</b> — every exposed XDM field must have a human-readable name, a description, and a declared data type; unexposed fields must be explicitly excluded, not just ignored",
+          "<b>Metric definition</b> — each metric must declare the XDM event or field it counts, whether it is a count, sum, or distinct-count, and which attribution model applies (first touch, last touch, linear, participation, or custom)",
+          "<b>Attribution model standardisation</b> — the same business metric (e.g., \"Revenue\") must not appear in the data view twice with different attribution models under similar names; downstream analysts will use both and produce contradictory numbers",
+          "<b>Component curation</b> — a data view with every XDM field exposed is not a data view, it is a schema dump; curate to the components analysts actually use and document the rationale for every inclusion and exclusion"
+        ] },
+        { "type": "callout", "page": 3, "variant": "why", "html": "Data view governance is an architect responsibility. A data view with 200 unmapped fields, duplicate metrics with different attribution models, and no component documentation is a liability. Analysts cannot trust data they cannot verify; an unverifiable metric drives wrong business decisions. The architect owns the data view schema. An analyst curator owns the component catalogue. Neither role is optional — without both, the data view degrades into the same unmaintainable state as the eVar spreadsheet it replaced." }
+      ]
+    },
+    {
+      "id": "adobe.cja.stitching",
+      "title": "Cross-channel stitching",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "3 · Cross-channel stitching" },
+        { "type": "prose", "page": 4, "html": "Stitching is CJA's mechanism for producing a person-based view of the customer journey across authenticated and unauthenticated sessions. Without stitching, CJA analyses events by device identifier — the same as Adobe Analytics. With stitching, it reprocesses historical anonymous events and assigns them to the authenticated identity once a login is observed, producing a continuous person record across channels." },
+        { "type": "prose", "page": 4, "html": "Two stitching modes:" },
+        { "type": "diagram", "page": 4, "render": "versus", "columns": [
+          { "label": "Field-based stitching (deterministic)", "body": "Uses a persistent authenticated ID (ECID, CRM ID, email hash) already present in every event. When the ID is absent — anonymous sessions — those events remain unstitched. Simple to configure; produces high-confidence joins; does not backfill anonymous pre-login behaviour.<p style=\"margin-top:8px;font-size:13px;color:var(--ink-faint)\"><strong>Use when</strong> · authenticated rate is high (>50%) and the anonymous pre-login journey is not analytically significant.</p>" },
+          { "label": "Graph-based stitching (probabilistic)", "tone": "good", "body": "Uses the AEP Identity Service identity graph to infer that anonymous device events belong to an authenticated person, based on device co-occurrence patterns and declared identity signals. Backfills anonymous history. More powerful; requires a healthy identity graph; introduces inference error rate that must be measured.<p style=\"margin-top:8px;font-size:13px;color:var(--ink-faint)\"><strong>Use when</strong> · anonymous-to-authenticated journey analysis is required and the identity graph is well-populated.</p>" }
+        ] },
+        { "type": "prose", "page": 4, "html": "Identity namespace configuration requirements:" },
+        { "type": "notes", "page": 4, "items": [
+          "Every dataset included in the CJA connection must declare which XDM field carries the person ID and which identity namespace it belongs to",
+          "The chosen namespace must be consistent across all datasets — mixing ECID-primary on web with CRM-ID-primary on CRM creates join failures that produce inflated person counts",
+          "Privacy implications are non-trivial: graph-based stitching infers linkages that users may not have explicitly consented to; the data view must be scoped to consented data only, and GDPR/CCPA right-to-erasure applies to the stitched graph, not just the source records",
+          "Stitching reprocesses data; a change to the stitching configuration invalidates historical stitched records and triggers a full reprocess — plan for 24–72 hour latency impact on backfill workloads"
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.cja.calcmetrics",
+      "title": "Calculated metrics governance",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "4 · Calculated metrics governance" },
+        { "type": "prose", "page": 5, "html": "CJA calculated metrics are analyst-authored formula metrics built on top of base metrics in the data view. They are powerful — any ratio, conditional count, or cross-dataset formula is expressible. They are also the primary vector through which data view trust degrades: without governance, a workspace accumulates dozens of calculated metrics with overlapping definitions, different attribution models, no owners, and no validation dates." },
+        { "type": "prose", "page": 5, "html": "The DEPT® metric governance standard:" },
+        { "type": "notes", "page": 5, "items": [
+          "<b>Naming convention</b> — prefix identifies scope: <code>[BU]</code> for business-unit-specific, <code>[GLOBAL]</code> for cross-BU; suffix identifies attribution: <code>_LC</code> last-click, <code>_LIN</code> linear; example: <code>[GLOBAL] Revenue_LC</code>",
+          "<b>Ownership</b> — every metric has a declared owner (role, not person name); the owner is responsible for validation and deprecation",
+          "<b>Change management</b> — calculated metrics used in published dashboards are frozen; changes require a new metric with a versioned name, not an edit to the existing metric",
+          "<b>Deprecation policy</b> — metrics unused for 90 days, or with no declared owner, enter a 30-day deprecation notice period before deletion"
+        ] },
+        { "type": "callout", "page": 5, "variant": "tip", "html": "DEPT® field pattern — establish a metric registry in Confluence: each CJA calculated metric has an owner, a definition, an attribution model, a validation date, and a deprecation policy. Metrics without owners are sunset within 90 days. This prevents the calculated metric proliferation that makes data views unmaintainable after 12 months. The registry costs one sprint to establish and saves one re-implementation project every 18 months." }
+      ]
+    },
+    {
+      "id": "adobe.cja.realtime",
+      "title": "Real-time personalisation loop",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "5 · Real-time personalisation loop" },
+        { "type": "prose", "page": 6, "html": "The full-loop personalisation architecture is the primary business justification for the Adobe Experience Cloud stack. CJA provides the analytical intelligence; AEP segments activate that intelligence; AJO delivers the personalised experience; the outcome feeds back into AEP, closing the loop. Each leg of the loop has its own latency and its own configuration dependency." },
+        { "type": "diagram", "page": 6, "render": "mermaid", "source": "flowchart LR\n    A[User action\\non any channel] -->|Web SDK / Mobile SDK\\nevent fired| B[AEP ingests event\\nto XDM dataset]\n    B -->|Batch or streaming\\nconnection sync| C[CJA segment\\nupdated]\n    C -->|Segment membership\\npublished to AEP| D[AJO journey\\nevaluates membership]\n    D -->|Branch selected| E[Personalised experience\\ndelivered to user]\n    E -->|Outcome event fired| F[Analytics records\\noutcome in AEP]\n    F --> B" },
+        { "type": "prose", "page": 6, "html": "Architect-level dependencies per loop leg:" },
+        { "type": "notes", "page": 6, "items": [
+          "<b>AEP event ingestion</b> — Web SDK or Mobile SDK must be firing correctly; XDM field mapping must include the identity field; streaming ingestion is required for near-real-time loop performance",
+          "<b>CJA segment publication</b> — CJA-derived audiences must be published back to AEP Real-Time CDP; this requires the Audience Publishing feature and sufficient AEP segment evaluation capacity",
+          "<b>AJO journey branching</b> — AJO reads AEP segment membership at journey entry; segment evaluation latency (edge segmentation: milliseconds; batch: hours) determines how fresh the branch decision is",
+          "<b>Outcome recording</b> — the personalised experience must fire a measurable outcome event (purchase, click, form submit) back through the same SDK pipeline; without this, the loop is open and the personalisation ROI cannot be measured"
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.cja.parity",
+      "title": "CJA vs AA reporting parity checklist",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "6 · CJA vs AA reporting parity checklist" },
+        { "type": "prose", "page": 7, "html": "CJA does not reproduce every Adobe Analytics report. The architectural differences — XDM schema versus eVar/prop, person-based versus hit-based, data view versus report suite — mean that some AA constructs have no direct CJA equivalent, and some CJA capabilities have no AA equivalent. Clients migrating from AA to CJA must audit their report inventory before decommissioning AA." },
+        { "type": "diagram", "page": 7, "render": "versus", "columns": [
+          { "label": "AA reports CJA cannot reproduce directly", "body": "<ul class=\"notes\" style=\"margin-top:8px\"><li>eVar merchandising reports — CJA uses binding dimensions, which require XDM redesign</li><li>Bot filtering rules — CJA applies Adobe-managed bot filtering; custom bot rules must be implemented upstream in the data pipeline</li><li>Processing rules logic — AA processing rules that manipulate data on ingest must be replaced by AEP data prep or datastream configuration</li><li>Real-time reports (sub-1-minute) — CJA streaming has ~1-minute latency; AA real-time reports can approach 20-second latency with legacy hit processing</li><li>Classification rule builder — AA classifications must be replaced by lookup datasets in AEP joined at the CJA connection layer</li></ul>" },
+          { "label": "CJA capabilities AA cannot match", "tone": "good", "body": "<ul class=\"notes\" style=\"margin-top:8px\"><li>Cross-channel person journey — joining web, app, call centre, and offline events on a single person record</li><li>SQL-accessible data — CJA connections query the AEP data lake; data scientists can access the same data via Query Service</li><li>Unlimited variables — no eVar or prop limits; every XDM field is a potential dimension</li><li>Flexible session definition — session timeout and context-aware session rules are configurable per data view, not fixed at the report suite level</li><li>Multi-value dimensions without LISTVAR limitations — array-type XDM fields expose each element as a dimension value with full segmentation</li><li>Derived fields — formula-based field transformations applied at query time, not at ingest time, without reprocessing the dataset</li></ul>" }
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.cja.latency",
+      "title": "CJA data latency model",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "7 · CJA data latency model" },
+        { "type": "prose", "page": 8, "html": "CJA latency is not a single number — it is the sum of latencies across four stages: SDK event firing, AEP ingestion, CJA connection sync, and Analysis Workspace query execution. Each stage is independently configurable and independently licenced. The overall latency an analyst experiences is the worst of the four." },
+        { "type": "diagram", "page": 8, "render": "versus", "columns": [
+          { "label": "Batch ingestion path", "body": "<strong>AEP ingestion latency:</strong> batch datasets (CRM, offline, call centre) land in the data lake on a configured schedule — typically hourly or daily. <strong>CJA connection sync:</strong> batch connections poll the data lake on a 60–90 minute cycle. <strong>Total observable latency:</strong> 2–3 hours for batch-sourced data. Suitable for daily and weekly trend reporting; not suitable for campaign-day dashboards or live ops monitoring." },
+          { "label": "Streaming ingestion path", "tone": "good", "body": "<strong>AEP ingestion latency:</strong> Web SDK and Mobile SDK events land in AEP via streaming ingestion in under 60 seconds. <strong>CJA connection sync:</strong> streaming connections sync approximately every 1 minute (requires streaming ingestion licence add-on). <strong>Total observable latency:</strong> 1–3 minutes for web and mobile events. Adequate for near-real-time campaign monitoring; not equivalent to Adobe Analytics' 2–20 second latency." }
+        ] },
+        { "type": "callout", "page": 8, "variant": "pitfall", "html": "Assuming CJA latency is equivalent to Adobe Analytics. CJA batch connections have up to 90-minute latency. Streaming connections reduce this to near-real-time but require additional AEP configuration and a streaming ingestion licence. A client dashboard built on CJA and presented as \"real-time\" to the business will produce escalations when the 90-minute lag is discovered during a campaign launch. Agree on the latency model in writing before the first executive dashboard is built." },
+        { "type": "prose", "page": 8, "html": "Near-real-time implications for operations teams:" },
+        { "type": "notes", "page": 8, "items": [
+          "Campaign launch monitoring — streaming ingestion with a CJA streaming connection gives sufficient freshness for hourly campaign performance checks but not for minute-by-minute operations rooms; use AEP Query Service for sub-minute ad-hoc queries",
+          "Anomaly detection — CJA's built-in anomaly detection runs on the data view cadence; streaming data enables same-hour anomaly alerts; batch data produces next-day anomaly alerts",
+          "AA as a complementary real-time source — during the migration period, Adobe Analytics can serve as the real-time dashboard source while CJA handles cross-channel and person-based analysis; decommissioning AA before establishing streaming ingestion creates a monitoring gap"
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.cja.review",
+      "title": "Architect's Review",
+      "order": 8,
+      "blocks": [
+        { "type": "architects-review", "page": 9, "label": "Architect's Review · CJA Implementation", "items": [
+          "Is the AEP connection configured with the correct person ID field and identity namespace across all included datasets?",
+          "Is the data refresh cadence (batch vs streaming) documented and agreed with the client stakeholders who will own dashboards?",
+          "Does the data view have a component catalogue — every dimension and metric named, defined, and attributed?",
+          "Is there a metric registry with owners, definitions, and a deprecation policy?",
+          "Which stitching mode is configured — field-based or graph-based — and has the privacy implication been reviewed with legal?",
+          "Is the full personalisation loop closed — does the outcome event fire back into AEP so ROI is measurable?",
+          "Has the AA report inventory been audited for parity gaps before AA decommissioning is scheduled?",
+          "Is the latency model documented per data source — and do the client's dashboard SLAs account for 60–90 minute batch lag?"
+        ] }
+      ]
+    }
+  ]
+}

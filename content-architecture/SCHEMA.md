@@ -5,10 +5,10 @@ Two content domains, two journeys, one optional bridge.
 ```
 ┌─ COURSE (authored, canonical) ──────────────┐   ┌─ FEED (user-generated) ──────────┐
 │  framework.json — the spine                 │   │  feed.json — the UGC stream      │
-│  sections/*.json — the prose, in blocks     │   │  posts: fieldnote · card · video │
-│                                             │   │         vocab · scenario         │
+│  sections/*.json — the prose, in blocks     │   │  posts: post · video · list ·    │
+│                                             │   │         card · vocab · scenario  │
 │  RENDERED BY:                               │   │  RENDERED BY:                    │
-│   • Scroll mode (current page, unchanged)   │   │   • Feed mode                    │
+│   • Manual mode — the field manual          │   │   • Feed mode                    │
 │   • Read mode (ebook, paginated)            │   │                                  │
 │                                             │   │  Journey: social — recency,      │
 │  Journey: the CODE-CODER framework.         │   │  engagement, topics, following.  │
@@ -28,18 +28,18 @@ The two domains are independent. The course doesn't need the feed to navigate; t
 
 The canonical field manual. Framework-navigated, authored by you, version-controlled. **Two modes render it:**
 
-- **Scroll mode** — the current single-page experience, unchanged. Renders every block in framework order, linearly.
+- **Manual mode** — the single-page field manual, unchanged (formerly called *Scroll*). Renders every block in framework order, linearly. The route `#/scroll` still aliases to `#/manual`.
 - **Read mode** — the ebook. Same content, grouped into turnable pages by the `page` flag, one chapter per framework letter, with the telescope transition generated from `opensInto`.
 
-That's the point of building this domain as data: Scroll and Read are two lenses on one authored content set. Write a chapter once; both modes render it.
+That's the point of building this domain as data: Manual and Read are two lenses on one authored content set. Write a chapter once; both modes render it.
 
 ### `course/framework.json` — the spine
 
-Defines rings, letters, order, nesting (`nestedUnder`), and telescoping (`opensInto`). The navigation source of truth for Scroll and Read — the Scroll TOC, the Read chapter list, and the Compass map all read from it. 34 addresses across CODE, CODER, Anatomy, Adobe Stack, AI-Native.
+Defines rings, letters, order, nesting (`nestedUnder`), and telescoping (`opensInto`). The navigation source of truth for Manual and Read — the Manual TOC, the Read chapter list, and the Compass map all read from it. 34 addresses across CODE, CODER, Anatomy, Adobe Stack, AI-Native.
 
 ### `course/sections/*.json` — the prose, in blocks
 
-One file per chapter (framework letter). A section is an ordered list of typed **blocks**. Scroll renders them all linearly; Read groups them by `page`.
+One file per chapter (framework letter). A section is an ordered list of typed **blocks**. Manual renders them all linearly; Read groups them by `page`.
 
 ```jsonc
 {
@@ -65,7 +65,7 @@ One file per chapter (framework letter). A section is an ordered list of typed *
 
 **Block types:** `chapter-open` (drop-cap opener, page 1) · `lead` · `prose` · `heading` · `tierlist` · `diagram` (`render: ascii|mermaid|table|versus` — the three-way diagram rule) · `callout` (`variant: why|tip|pitfall|before-after`) · `code` · `quote` · `architects-review`.
 
-**Block flags:** `page` (int — which Read-mode page) · `collapsed` (bool — render as `<details>` in Scroll). The old `surfaceable` flag is gone — the feed no longer pulls from course content.
+**Block flags:** `page` (int — which Read-mode page) · `collapsed` (bool — render as `<details>` in Manual). The old `surfaceable` flag is gone — the feed no longer pulls from course content.
 
 **Cardinal migration rule:** re-shell only, never rewrite. The HTML inside a `prose` block is the existing course text, verbatim. Pagination splits *between* blocks, never *within* a paragraph.
 
@@ -84,7 +84,7 @@ In production this is a database collection / API, not a static file. One stream
 ```jsonc
 {
   "id": "post.7fk2a9",
-  "type": "fieldnote",              // fieldnote | card | video | vocab | scenario
+  "type": "post",                   // post | video | list | card | vocab | scenario
   "author": { "userId": "u.sumit", "name": "Sumit M.", "role": "Senior Architect · Mumbai", "initials": "SM", "verified": false },
   "status": "published",            // draft | pending-review | published | flagged | removed
   "topics": ["deployment", "caching"],   // free tags — the feed's own categorisation + filter
@@ -100,9 +100,10 @@ In production this is a database collection / API, not a static file. One stream
 
 | type | fields |
 |---|---|
-| `fieldnote` | `title`, `body` (≤100 words, validated on submit) |
+| `post` | `title?`, `body` (≤100 words, validated on submit) — the "Field Note" |
+| `video` | `title`, `durationSec`, `hook?`, `url?` |
+| `list` | `title`, `intro?`, `items[]` of `{ text, note? }` |
 | `card` | `title`, `teaser`, `linkUrl?` |
-| `video` | `title`, `durationSec`, `url`, `thumbnail?`, `hook` |
 | `vocab` | `term`, `definition` |
 | `scenario` | `prompt`, `options[]`, `correct`, `verdict`, `reveal` |
 
@@ -110,16 +111,23 @@ In production this is a database collection / API, not a static file. One stream
 
 Ordering signals, rough priority: **recency** (new posts surface), **engagement** (upvotes/saves/comments lift a post), **topic match** (topics the reader follows), **author follow**, **editorial pin** (an optional `featured` flag for official posts). The framework plays no role in feed ordering — `topics` and `frameworkRef` are filters a reader can opt into ("show me the Deployment feed"), not the spine.
 
+**What the UI pass implements:** a deterministic **recency DESC → engagement → id** sort (engagement = `upvotes + 1.5·comments + 2·saves`). There is no personalisation this pass — author-follow, topic-follow boosts and the `featured` editorial pin are not yet wired (no user model exists client-side); they arrive with the backend. The decorative progress ribbon at the top of the Feed is a placeholder and does **not** influence ordering.
+
 ### Moderation — built in
 
 The whole feed is UGC, so moderation is first-class:
 
-- New posts enter as `status: "pending-review"`.
-- A moderator flips to `published` (or `removed`).
-- Readers can flag; `moderation.flagCount` accumulates; a threshold auto-moves a post to `flagged` for re-review.
+- The intended lifecycle: new posts enter as `status: "pending-review"`, a moderator flips to `published` (or `removed`).
+- Readers can flag; `moderation.flagCount` accumulates; at the threshold a post moves to `flagged` for re-review.
 - `moderation: { flagCount, reviewedBy, reviewedAt }` tracks the trail.
+- `post` bodies are validated to ≤100 words on submit — the constraint is the feature.
 
-`fieldnote` bodies are validated to ≤100 words on submit — the constraint is the feature.
+**What the UI pass implements** (client-side only, per-browser):
+
+- New posts publish **directly** — the composer sets `status: "published"`. The `pending-review` → `published` moderator queue needs the backend; until then there is no shared review step.
+- Flagging is live: any signed-in `@deptagency.com` user can flag a post. The threshold is `FLAG_THRESHOLD` (default **1**); reaching it sets `status: "flagged"`.
+- A flagged post is **not removed** — it renders with a "marked for deletion · pending review" treatment (dimmed + badged) and stays visible. Actual deletion is a moderator + backend action later.
+- Flags live in this browser's `feedStore.flags` overlay; shared, persistent, cross-user flagging (and real deletion) come with the backend pass.
 
 ---
 
@@ -138,22 +146,24 @@ Either direction can be switched off without breaking the other domain. That's t
 
 | Mode | Domain | Loads | Navigated by |
 |---|---|---|---|
-| **Scroll** (current) | Course | `framework.json` + all `sections/*` | framework order, linear |
+| **Manual** (field manual) | Course | `framework.json` + all `sections/*` | framework order, linear |
 | **Read** (ebook) | Course | `framework.json` + current chapter | framework letters, paginated, telescoping |
-| **Feed** (social) | Feed | `feed.json` stream | recency · engagement · topics · following |
+| **Feed** (social) | Feed | `feed.json` stream | recency · engagement · topics |
 
-Course progress (% through CODER) belongs to Scroll + Read. The Feed has no framework progress bar — its journey is social discovery, so it gets social navigation instead (topics you follow, trending, recent, your contributions).
+Course progress (% through CODER) belongs to Manual + Read. The Feed's **journey** is social discovery — ordered by recency and engagement, filtered by category and topics, never by the framework spine. It does carry a small decorative **progress ribbon** at the top (per the product design), but that ribbon is a placeholder pending a real user-progress model and plays no part in ordering — the Feed is still social, not a syllabus.
 
 ---
 
-## The authoring system (where this is heading)
+## The authoring system
 
 Two authoring surfaces, matching the two domains:
 
-1. **Course authoring** (you / editorial) — writes/edits `sections/*.json` blocks. Framework address mandatory; status gates publish. Structured, deliberate, versioned.
-2. **Feed posting** (anyone) — an Instagram-style composer: pick a type, write the payload, add topics, optionally tag a `frameworkRef`, submit. Enters as `pending-review`. Fast, social, moderated.
+1. **Course authoring** (you / editorial) — writes/edits `sections/*.json` blocks. Framework address mandatory; status gates publish. Structured, deliberate, versioned. *(Still file-based; no editor UI yet.)*
+2. **Feed posting** (anyone) — an Instagram-style composer: pick a type, write the payload, add topics, optionally tag a `frameworkRef`, submit. Fast, social, moderated.
 
 Because the domains are separate, the two tools are separate and simpler. The feed composer never has to understand the block model; the course editor never has to understand engagement metrics.
+
+**Built (the UI pass).** The feed composer now exists, client-side: one modal creates any of the 6 types, sets the envelope from the signed-in session, picks a category (`frameworkRef`) and free topics, and validates its output against `schemas/feed.schema.json` before appending. Sign-in is **Google Identity Services + a `@deptagency.com` domain gate** (with a dev-mock for testing) — a client-side **gate, not security**; server-verified tokens come with the backend. Browsing is open; posting and flagging require a signed-in user. All feed state (posts, flags, session) lives behind one seam — `app/js/feed/store.js` — backed by `localStorage` now and re-implemented as API calls when Postgres lands.
 
 ---
 
@@ -220,7 +230,7 @@ The two domains have opposite storage profiles, so they get different answers.
 
 **Course → files, long-term.** Authored, versioned, low-write, read-mostly. Git is the version control; the UI fetches the JSON directly. This is *correct* as files, not a temporary compromise. Move it to a database only if/when you need non-technical editors (a CMS) or full-text/semantic search across all chapters — neither is true now.
 
-**Feed → Postgres, but not yet.** UGC is the opposite: high-write, concurrent, unbounded growth, atomic engagement counters, a moderation state machine, and sorting by recency × engagement × topic. That is a database workload — you cannot run a real feed off a JSON file. **But it isn't live yet.** Until there's a real composer and real users, there's nothing to store. So the feed stays JSON *for defining shapes during this restructuring*, and moves to Postgres as part of the separate feed-backend build (composer + API + moderation queue) — the next major effort after this one.
+**Feed → Postgres, but not yet.** UGC is the opposite: high-write, concurrent, unbounded growth, atomic engagement counters, a moderation state machine, and sorting by recency × engagement × topic. That is a database workload — you cannot run a real feed off a JSON file. **A client-side composer now exists** (the UI pass), but it writes only to this browser's `localStorage` behind the `feedStore` seam — there is no shared, multi-user store yet. Real persistence (and server-verified auth + a shared moderation queue) moves to Postgres as part of the separate feed-backend build — the next major effort. The envelope-stable JSON, and the `feedStore` seam the UI already speaks to, are what make that migration mechanical.
 
 **Why not do Postgres now:** the current task is HTML componentization + course extraction. Neither needs a database. Adding Postgres now means a backend service, migrations, an ORM, hosting, and connection management — real scope that delivers nothing for the work in front of us. Defer it to when the feed actually goes multi-user.
 

@@ -1,0 +1,85 @@
+{
+  "frameworkAddress": "anatomy.m01",
+  "title": "Design Patterns 101",
+  "tag": "Module 01",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> the four patterns in every DEPT® project — Observer, Dispatcher, Strategy, Producer/Consumer — and the one-line reason to reach for each",
+    "<strong>Why it matters:</strong> pattern vocabulary is the shared language between architect and engineer — without it, code review is description, not analysis",
+    "Patterns 101 is a navigation guide, not a tutorial — each pattern has a dedicated section deeper in the course",
+    "If a PR description cannot name the pattern it implements, the implementation is probably wrong"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m01.opener",
+      "title": "Design Patterns 101",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "P",
+          "html": "attern is a named, reusable solution to a problem that keeps coming back. You don't reinvent structure every time you hit it — you recognise the shape and reach for the known answer. Four show up constantly in the pages that follow:"
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m01.patterns",
+      "title": "The four patterns",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "cardgrid",
+          "page": 2,
+          "columns": 4,
+          "cards": [
+            {
+              "eyebrow": "Observer",
+              "title": "Pub / Sub",
+              "body": "Something happens; whoever cares is notified. Powers events, listeners &amp; the dispatcher."
+            },
+            {
+              "eyebrow": "Dispatcher",
+              "title": "Central Switch",
+              "body": "One place receives every signal and routes it by type. Decouples senders from receivers."
+            },
+            {
+              "eyebrow": "Strategy",
+              "title": "Swap Behaviour",
+              "body": "Sort, filter, format — pluggable rules you pass in rather than hard-code."
+            },
+            {
+              "eyebrow": "Producer / Consumer",
+              "title": "Queue",
+              "body": "One side puts work down, another picks it up later. The basis of jobs &amp; queues."
+            }
+          ]
+        },
+        {
+          "type": "quote",
+          "page": 2,
+          "html": "Patterns aren't rules to obey — they're a shared vocabulary so two engineers mean the same thing by \"dispatcher.\""
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m01.grid",
+      "title": "The sync/async × single/multi-consumer grid",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "diagram",
+          "page": 3,
+          "render": "ascii",
+          "source": "                  Synchronous          Asynchronous\n              ┌──────────────────┬──────────────────┐\nSingle-       │                  │                  │\nconsumer      │    Strategy      │    Observer      │\n              │                  │                  │\n              ├──────────────────┼──────────────────┤\nMulti-        │                  │                  │\nconsumer      │   Dispatcher     │ Producer/Consumer│\n              │                  │                  │\n              └──────────────────┴──────────────────┘"
+        },
+        {
+          "type": "callout",
+          "page": 3,
+          "variant": "tip",
+          "html": "DEPT® field pattern — add a \"Pattern\" field to PR templates. Engineers who cannot fill it in are prompted to think structurally before the reviewer does. Takes 30 seconds to add; saves 20 minutes of review discussion per PR."
+        }
+      ]
+    }
+  ]
+}

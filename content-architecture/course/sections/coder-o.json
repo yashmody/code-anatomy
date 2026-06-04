@@ -1,0 +1,283 @@
+{
+  "frameworkAddress": "coder.o",
+  "title": "Optimization & Quality",
+  "tag": "O · Testing · Page Speed · Accessibility",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The four quality layers every AEM project must enforce — unit, integration, contract, and E2E — plus the Core Web Vitals targets and WCAG AA requirements that are non-negotiable from Sprint 1",
+    "<strong>Why it matters:</strong> Quality is a system property, not a checklist. Without automated enforcement at every layer it degrades to zero within two sprints — because pressure always wins over intention unless the build prevents otherwise",
+    "80% coverage with imprecise tests is worse than 60% with precise ones — bad tests produce false confidence and teach the team to ignore failures",
+    "LCP and INP have the strongest direct correlation to revenue of the three Core Web Vitals — prioritise them as PR merge gates over CLS, which is more fixable but less business-critical",
+    "WCAG 2.2 AA is a contractual obligation on most EU and US public-sector engagements — treating it as optional until week 11 is a project risk, not a design preference"
+  ],
+  "sections": [
+    {
+      "id": "coder.o.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "O", "html": "ptimization &amp; Quality 101. Inside CODER, the <strong>O</strong> letter holds three disciplines that decide whether what you built actually deserves to ship: <em>testing</em>, <em>performance</em>, and <em>accessibility</em>. PMs treat them as separate phases at the end of a project; architects treat them as continuous constraints from day one. This deep-dive covers each — what they ask, where they sit in the engineering loop, and which numbers the team must own." },
+        { "type": "lead", "page": 1, "html": "Three quality gates, three different conversations. <em>Testing</em> asks \"does it behave correctly?\" <em>Page speed</em> asks \"does it behave fast enough?\" <em>Accessibility</em> asks \"does it behave for everyone?\" None of them is optional, and none of them is solved by a tool — each is a discipline of writing code differently from the start." }
+      ]
+    },
+    {
+      "id": "coder.o.testing",
+      "title": "Testing · the pyramid & what each layer asks",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "Testing · the pyramid &amp; what each layer asks" },
+        { "type": "prose", "page": 2, "html": "Testing isn't one thing. It's a stack of confidence-building layers, each cheaper than the one above and each catching different bugs. The classical <strong>test pyramid</strong> says <em>most</em> tests should be unit, <em>some</em> integration, <em>few</em> end-to-end. Teams violate it all the time and pay for it in slow CI and flaky pipelines." },
+        { "type": "diagram", "page": 2, "render": "mermaid", "title": "Quality layers · unit to synthetic monitoring", "source": "flowchart TD\n    A[\"Unit\\n(Jest / JUnit · AEM Mocks)\\nhundreds · milliseconds · stable\"]\n    --> B[\"Integration\\n(real DB, real cache, internal calls mocked)\\ndozens · seconds\"]\n    --> C[\"Contract\\n(Pact · consumer-driven)\\nservice boundaries · cross-team · async\"]\n    --> D[\"E2E\\n(Playwright / Cypress)\\ncritical user journeys only · minutes\"]\n    --> E[\"Synthetic Monitoring\\n(Datadog / Pingdom)\\nproduction 24/7 · real DNS · real CDN\"]\n" },
+        { "type": "callout", "page": 2, "variant": "why", "html": "Contract testing is necessary beyond integration tests. An integration test validates that A and B work together in the test environment today. A contract test validates that B will not change its API in a way that breaks A — even when A and B are tested separately, by different teams, on different schedules. Consumer-driven contracts (Pact) are the correct tool for this. Without contract tests, the integration layer gives you confidence in the present; contract tests give you confidence across time and organisational boundaries." },
+        { "type": "diagram", "page": 2, "render": "nodes", "title": "The test pyramid · base is fastest, apex is slowest", "rows": [
+          { "nodes": [ { "label": "E2E · few · slow · brittle" } ] },
+          { "nodes": [ { "label": "Integration · some · medium speed" } ] },
+          { "nodes": [ { "label": "Unit · many · fast · stable" } ] }
+        ] },
+        { "type": "cardgrid", "page": 2, "columns": 3, "cards": [
+          { "eyebrow": "Unit", "title": "One function, no dependencies", "body": "Pure logic, mocked I/O. Runs in milliseconds. Catches: bad math, wrong branches, off-by-one. <em>Doesn't catch:</em> wiring problems." },
+          { "eyebrow": "Integration", "title": "Multiple units together", "body": "Real database, real cache, real internal calls — external services still mocked. Catches: schema drift, serialisation bugs, transaction issues. <em>Doesn't catch:</em> end-user flows." },
+          { "eyebrow": "End-to-end", "title": "The full system, browser to DB", "body": "Playwright, Cypress, Selenium. Catches: the things only a real user sees. <em>Costs:</em> slow, flaky, expensive to maintain. Keep them few and focused on critical user journeys." }
+        ] }
+      ]
+    },
+    {
+      "id": "coder.o.testcases",
+      "title": "Test cases — how to structure one",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "Test cases — how to structure one" },
+        { "type": "prose", "page": 3, "html": "Two patterns. Pick one and apply it everywhere." },
+        { "type": "diagram", "page": 3, "render": "versus", "columns": [
+          { "label": "AAA · Arrange, Act, Assert", "tone": "good", "body": "Three sections, each one to a few lines. <strong>Arrange</strong> sets up state. <strong>Act</strong> performs the one operation under test. <strong>Assert</strong> checks the outcome. If you have two \"Acts\" in one test, it's two tests. Engineering standard." },
+          { "label": "Given-When-Then", "tone": "good", "body": "BDD flavour. <strong>Given</strong> the system in state X, <strong>when</strong> action Y happens, <strong>then</strong> outcome Z. Reads as specification — better for tests that double as documentation, business-readable acceptance criteria, contract testing." }
+        ] },
+        { "type": "prose", "page": 3, "html": "The single best discipline is to <strong>name tests after the bug they prevent</strong>:" },
+        { "type": "code", "page": 3, "lang": "javascript", "label": "test names that work as documentation", "code": "// Bad — describes the implementation\ntest('getUserById returns user', ...)\n\n// Good — describes the behaviour and edge\ntest('getUserById returns null when user is soft-deleted', ...)\ntest('getUserById throws when called with empty string', ...)\ntest('getUserById returns user even if email is uppercased', ...)" }
+      ]
+    },
+    {
+      "id": "coder.o.coverage",
+      "title": "Coverage — a floor, never a goal",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "Coverage — a floor, never a goal" },
+        { "type": "prose", "page": 4, "html": "\"100% test coverage\" is a meaningless target. Coverage tells you what code <em>ran</em> during the test suite; it doesn't tell you what code is <em>actually verified</em>. You can hit 100% coverage with tests that never assert anything." },
+        { "type": "notes", "page": 4, "items": [
+          "<b>Set a coverage floor</b> — typically 70–80% line coverage on new code, with branch coverage tracked separately. Fail the build if it drops.",
+          "<b>Don't chase 100%</b> — the last 10% is testing trivial getters and framework boilerplate. Diminishing returns, increasing brittleness.",
+          "<b>Mutation testing</b> — if you want to know whether your tests are <em>good</em>, not just present. Stryker (JS), Pitest (Java) inject deliberate bugs and verify a test fails. Game-changing for codebases that already have high coverage and still ship bugs.",
+          "<b>Coverage on the critical path</b> matters more than overall coverage. Payment flow at 95% beats overall at 85%."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.o.automation",
+      "title": "Automation — what to automate, what to leave alone",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "Automation — what to automate, what to leave alone" },
+        { "type": "prose", "page": 5, "html": "Three categories of testing work; only one should be automated by default:" },
+        { "type": "cardgrid", "page": 5, "columns": 3, "cards": [
+          { "eyebrow": "Always automate", "title": "Regression", "body": "Anything that has already broken once. Anything on the critical path. Anything you'd otherwise run by hand every release." },
+          { "eyebrow": "Sometimes automate", "title": "Smoke & sanity", "body": "Post-deploy \"is the site up\" checks. Synthetic monitors do this for you in production; in CI, keep them minimal — under 5 minutes total." },
+          { "eyebrow": "Don't automate", "title": "Exploratory", "body": "\"Click around and see what feels wrong.\" Genuinely valuable, genuinely human. Automating exploratory testing is automating the thing you're trying to do, which is to <em>not</em> follow the script." }
+        ] }
+      ]
+    },
+    {
+      "id": "coder.o.aem-testing",
+      "title": "AEM-specific testing layers",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "AEM-specific testing layers" },
+        { "type": "notes", "page": 6, "items": [
+          "<b>AEM Mocks (io.wcm)</b> — the standard mock framework for Sling, JCR, OSGi. Unit tests for Sling Models, Servlets, OSGi services without spinning up a JVM-AEM instance.",
+          "<b>HTL unit tests</b> — Sightly Test Framework. Verify that templates render correctly with given Sling Model inputs. Often skipped; should not be.",
+          "<b>Integration tests</b> — Cloud Manager pipelines run UI tests against a real AEM instance in CM-Test. Selenium / WebDriver / Playwright as the runner.",
+          "<b>Performance tests</b> — JMeter or Gatling, hitting Dispatcher. Test under realistic concurrency, with realistic cache hit ratios — not just cold cache.",
+          "<b>Content/migration tests</b> — Groovy scripts on package upload to verify migrated content matches schema. The cheapest way to catch a migration bug before launch."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.o.ci-loop",
+      "title": "The CI feedback loop",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "The CI feedback loop" },
+        { "type": "prose", "page": 7, "html": "Tests only catch bugs if developers actually run them. Tests only get run if the loop is fast. <strong>Under 10 minutes from push to green</strong> is the threshold below which developers trust CI and above which they start ignoring it." },
+        { "type": "notes", "page": 7, "items": [
+          "<b>Parallelise aggressively</b> — split test suites across runners. Most CI providers charge per minute, not per runner.",
+          "<b>Order by speed</b> — unit first, integration next, e2e last. Fail fast on the cheap layers.",
+          "<b>Quarantine flakes immediately</b> — a flaky test is worse than no test. It teaches the team to ignore failures.",
+          "<b>Cache the slow bits</b> — dependency installs, container images, build artefacts. Re-downloading <code>node_modules</code> on every run is engineering self-harm."
+        ] },
+        { "type": "quote", "page": 7, "html": "A test suite isn't \"done\" when it's written. It's done when it has been trusted by the team for six months. The decisions that lead there happen on day one." }
+      ]
+    },
+    {
+      "id": "coder.o.pagespeed",
+      "title": "Page Speed · the score that's not the goal",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "Page Speed · the score that's not the goal" },
+        { "type": "prose", "page": 8, "html": "Page speed is the user-visible side of CODER's O letter. Caching (in Deployment 101 above) is the infrastructure-side answer; this is the application-side answer. They reinforce each other — neither alone is enough." },
+        { "type": "heading", "page": 8, "html": "Core Web Vitals — what Google measures, what users feel" },
+        { "type": "prose", "page": 8, "html": "Three numbers, each tied to a phase of the user's experience:" },
+        { "type": "cardgrid", "page": 8, "columns": 3, "cards": [
+          { "eyebrow": "LCP", "title": "Largest Contentful Paint", "body": "How long until the biggest visible element renders. Hero image or H1, usually. <strong>Good: &lt; 2.5s</strong>. The classic \"page feels slow\" metric." },
+          { "eyebrow": "INP", "title": "Interaction to Next Paint", "body": "How long after a click/tap does the page respond visually. Replaced FID in 2024. <strong>Good: &lt; 200ms</strong>. Reveals JS-heavy event handlers." },
+          { "eyebrow": "CLS", "title": "Cumulative Layout Shift", "body": "How much the page jumps around as it loads. Banners, late-loading ads, web fonts. <strong>Good: &lt; 0.1</strong>. The most fixable, most ignored vital." }
+        ] },
+        { "type": "callout", "page": 8, "variant": "tip", "html": "DEPT® field pattern — set a Lighthouse CI performance budget of LCP ≤ 2500ms and INP ≤ 200ms in every project's CI configuration. Make it a PR merge gate from Sprint 1, not a post-launch audit. A regression caught in a PR takes 10 minutes to fix; the same regression caught in production takes a release cycle." }
+      ]
+    },
+    {
+      "id": "coder.o.lab-field",
+      "title": "Lab vs field & the critical rendering path",
+      "order": 8,
+      "blocks": [
+        { "type": "heading", "page": 9, "html": "Lab vs field — Lighthouse lies, CrUX tells" },
+        { "type": "diagram", "page": 9, "render": "versus", "columns": [
+          { "label": "Lab (Lighthouse)", "body": "Single run, controlled conditions, throttled to a slow phone. Useful for catching regressions in CI. <em>Does not reflect what real users experience</em> — your users aren't all on a Moto G4." },
+          { "label": "Field (CrUX / RUM)", "tone": "good", "body": "Real measurements from real browsers in the wild, aggregated by Google's CrUX dataset or your own RUM. <em>This is what Google uses for ranking.</em> Believe this number." }
+        ] },
+        { "type": "heading", "page": 9, "html": "The critical rendering path" },
+        { "type": "prose", "page": 9, "html": "The browser needs HTML, CSS, and (sometimes) JS before it can paint. Every blocking resource extends time-to-first-paint. The optimisation is conceptually simple: <em>defer everything that isn't on the critical path</em>." },
+        { "type": "notes", "page": 9, "items": [
+          "<b>HTML first</b> — server-rendered HTML lets the browser start parsing immediately. SPAs that render entirely in JS lose this.",
+          "<b>Critical CSS inlined</b> — the CSS needed for above-the-fold rendering goes in a <code>&lt;style&gt;</code> tag in <code>&lt;head&gt;</code>. Everything else is async.",
+          "<b>JS deferred</b> — <code>defer</code> or <code>async</code> on every script. Scripts in <code>&lt;head&gt;</code> without one of these are render-blocking.",
+          "<b>Third-party tags last</b> — analytics, chat, A/B, tag managers. Measure their cost in milliseconds; you'll be horrified."
+        ] },
+        { "type": "callout", "page": 9, "variant": "pitfall", "html": "Running load tests only in staging environments with synthetic data. Real production load patterns have long-tail requests, warm-up cache characteristics, and third-party script load behaviour that staging cannot replicate. Run load tests against production on a maintenance window before go-live — with real CDN, real DNS, real traffic routing." }
+      ]
+    },
+    {
+      "id": "coder.o.images-js",
+      "title": "Images & the JavaScript budget",
+      "order": 9,
+      "blocks": [
+        { "type": "heading", "page": 10, "html": "Images — the heaviest payload, the biggest win" },
+        { "type": "prose", "page": 10, "html": "Images are usually 50–70% of page weight. They're also where the biggest wins live, and the wins are mostly mechanical." },
+        { "type": "notes", "page": 10, "items": [
+          "<b>Format</b> · AVIF &gt; WebP &gt; JPEG &gt; PNG. AVIF saves another 30% over WebP. Use <code>&lt;picture&gt;</code> with format fallbacks.",
+          "<b>Responsive</b> · <code>srcset</code> + <code>sizes</code>. Mobile gets a smaller file; desktop gets the right resolution. AEM image renditions automate this; EDS does it natively.",
+          "<b>Lazy-load</b> · <code>loading=\"lazy\"</code> on every below-the-fold image. <em>Don't lazy-load the LCP image</em> — that's a common own goal.",
+          "<b>Width/height attributes</b> · always. The browser reserves the space before the image downloads, eliminating CLS from images."
+        ] },
+        { "type": "heading", "page": 10, "html": "JavaScript — the budget" },
+        { "type": "prose", "page": 10, "html": "The single best tool an engineering lead has is a <em>JS budget per route</em>. Above the budget, the build fails. The number depends on the audience; common starting points: 170 KB compressed for marketing sites, 250 KB for app-heavy interfaces." },
+        { "type": "notes", "page": 10, "items": [
+          "<b>Code splitting</b> — load only what's needed for the current route. Webpack, Vite, esbuild all do this. Default for Next.js and modern frameworks.",
+          "<b>Tree shaking</b> — drop unused exports at build time. Watch out for libraries that ship as side-effectful modules; they kill tree shaking.",
+          "<b>Audit dependencies</b> — every <code>npm install</code> is a perf decision. Bundlephobia exists. Use it.",
+          "<b>The third-party tag problem</b> — that one tag manager adds 800ms to LCP. Move tags server-side where possible (Edge tag managers, server-side GTM)."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.o.fonts-aem",
+      "title": "Fonts & AEM-specific levers",
+      "order": 10,
+      "blocks": [
+        { "type": "heading", "page": 11, "html": "Fonts — the silent CLS culprit" },
+        { "type": "notes", "page": 11, "items": [
+          "<b>Preload critical fonts</b> — <code>&lt;link rel=\"preload\" as=\"font\" crossorigin&gt;</code>.",
+          "<b>font-display: swap</b> — show a fallback while the custom font loads. Users see text immediately.",
+          "<b>Subset</b> — ship only the glyphs you use. A 200 KB font becomes 30 KB. Variable fonts (one file, many weights) often win overall.",
+          "<b>System font stack</b> for body copy is a legitimate choice — zero font payload, zero CLS, native feel."
+        ] },
+        { "type": "heading", "page": 11, "html": "AEM-specific levers" },
+        { "type": "notes", "page": 11, "items": [
+          "<b>Dispatcher cache rules</b> — covered in Deployment 101. The biggest LCP lever on AEM is hitting Dispatcher cache, not Publisher.",
+          "<b>EDS (Edge Delivery Services)</b> — Adobe's decoupled-authoring path. Eliminates the heavy HTL render entirely. CLS and LCP scores typically jump 30+ points moving from classic AEM to EDS for the same content.",
+          "<b>Image renditions</b> — pre-generate srcset variants at upload time. Dispatcher serves them directly.",
+          "<b>Client libs (clientlibs)</b> — concatenate, minify, version. Mind the order: don't load author-only libs on publish.",
+          "<b>Lazy authoring</b> — components below the fold render on demand, not on page request."
+        ] },
+        { "type": "quote", "page": 11, "html": "Page speed isn't a phase. It's a budget. Every commit either spends from it or earns it back. Teams that publish their budgets on a wall hit them; teams that don't, don't." }
+      ]
+    },
+    {
+      "id": "coder.o.a11y",
+      "title": "Accessibility · WCAG as the agency floor",
+      "order": 11,
+      "blocks": [
+        { "type": "heading", "page": 12, "html": "Accessibility · WCAG as the agency floor" },
+        { "type": "prose", "page": 12, "html": "The third quality gate. Often the one teams retrofit at the end, which is the most expensive way to do it. Accessibility designed in costs almost nothing; accessibility retrofitted into a launched system costs a redesign." },
+        { "type": "callout", "page": 12, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>Accessibility audit in week 11 of a 12-week project. 40 critical WCAG issues found; 18 require component redesign; go-live delayed 3 weeks.</p></div><div><div class=\"ba-col-label\">After</div><p>axe-core integrated in Storybook from Sprint 1. Zero critical issues at launch. Accessibility is a zero-sprint-overhead continuous check, not a 3-week remediation sprint.</p></div></div>" },
+        { "type": "heading", "page": 12, "html": "WCAG — what to target" },
+        { "type": "prose", "page": 12, "html": "<strong>WCAG 2.2 Level AA</strong> is the agency floor. AAA is for specialist contexts (government, regulated industries with accessibility mandates). AA covers what 95% of users actually need." },
+        { "type": "prose", "page": 12, "html": "WCAG organises around <strong>four principles</strong> (POUR):" },
+        { "type": "notes", "page": 12, "items": [
+          "<b>Perceivable</b> — text alternatives for images, captions for video, sufficient contrast, content that works when the page is zoomed 200%.",
+          "<b>Operable</b> — every interaction works from the keyboard, no traps, focus visible at all times, skip-links to bypass nav.",
+          "<b>Understandable</b> — language declared, error messages clear, forms labelled, behaviour predictable.",
+          "<b>Robust</b> — semantic HTML, valid markup, ARIA only where native semantics aren't enough."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.o.seven-wins",
+      "title": "The seven 80% wins",
+      "order": 12,
+      "blocks": [
+        { "type": "heading", "page": 13, "html": "The seven 80% wins" },
+        { "type": "prose", "page": 13, "html": "Most accessibility complaints come from a small set of fixable things. Get these right and most users stop being blocked:" },
+        { "type": "notes", "page": 13, "items": [
+          "<b>Semantic HTML</b> — <code>&lt;button&gt;</code> not <code>&lt;div onclick&gt;</code>. <code>&lt;nav&gt;</code>, <code>&lt;main&gt;</code>, <code>&lt;article&gt;</code>. Free behaviour, free accessibility.",
+          "<b>Alt text</b> on every image — descriptive, not decorative (\"CFO Maria Hernandez at quarterly call\", not \"image1.jpg\"). Decorative images get <code>alt=\"\"</code>, not omitted alt.",
+          "<b>Form labels</b> — every input has a <code>&lt;label&gt;</code>, programmatically associated. Placeholder text is not a label.",
+          "<b>Keyboard reachability</b> — tab through the page. Every interactive element reachable, in a logical order, with visible focus state.",
+          "<b>Colour contrast</b> — 4.5:1 for body text, 3:1 for large text. Free tools will catch this in CI.",
+          "<b>Heading hierarchy</b> — one <code>&lt;h1&gt;</code> per page. <code>&lt;h2&gt;</code> children, <code>&lt;h3&gt;</code> grandchildren. Screen reader users navigate by headings.",
+          "<b>Focus management</b> — when a modal opens, focus moves into it; when it closes, focus returns to the trigger. The thing every JS dev forgets."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.o.aria-tooling",
+      "title": "ARIA & tooling",
+      "order": 13,
+      "blocks": [
+        { "type": "heading", "page": 14, "html": "ARIA · where it helps, where it harms" },
+        { "type": "prose", "page": 14, "html": "The first rule of ARIA is: <em>don't use ARIA if a native element works</em>. Bad ARIA is worse than no ARIA — it overrides native behaviour with broken substitutes." },
+        { "type": "diagram", "page": 14, "render": "versus", "columns": [
+          { "label": "Wrong", "body": "<code>&lt;div role=\"button\" tabindex=\"0\" onclick&gt;</code> — reinventing a button. Doesn't handle Enter/Space. Doesn't work in form submission. Pure tax." },
+          { "label": "Right", "tone": "good", "body": "<code>&lt;button&gt;</code>. Built-in keyboard behaviour, form participation, focus handling. Free." }
+        ] },
+        { "type": "prose", "page": 14, "html": "<strong>Where ARIA is essential:</strong> dynamic content (live regions for status updates), complex widgets that don't exist in HTML (tab panels, comboboxes, trees), and labelling visual-only context (icon-only buttons need <code>aria-label</code>)." },
+        { "type": "heading", "page": 14, "html": "Tooling" },
+        { "type": "notes", "page": 14, "items": [
+          "<b>axe-core</b> — automated rule engine. Catches roughly 30–40% of issues. Run in CI; never trust as the only check.",
+          "<b>Lighthouse accessibility</b> — quick spot check. Same engine as axe under the hood.",
+          "<b>Screen reader testing</b> — NVDA (Windows, free), VoiceOver (macOS, built in). 30 minutes per major flow catches things axe can't see.",
+          "<b>Keyboard-only testing</b> — unplug your mouse for a day. The cheapest, most effective audit available.",
+          "<b>User testing with assistive tech users</b> — the only thing that catches real-world failure. Budget for it; don't pretend it's optional."
+        ] },
+        { "type": "quote", "page": 14, "html": "Accessibility is a competence, not a checklist. Tools catch the obvious; the rest is taught, reviewed, and shipped by people who care. If no one on the team is responsible for it, no one will be doing it." }
+      ]
+    },
+    {
+      "id": "coder.o.review",
+      "title": "Architect's Review",
+      "order": 14,
+      "blocks": [
+        { "type": "architects-review", "page": 15, "label": "Architect's Review · Optimization & Quality", "items": [
+          "Is there a test pyramid in shape — many unit, some integration, few e2e?",
+          "What is the coverage floor, and is it enforced on PRs?",
+          "Does CI run in under 10 minutes? If not, what's the parallelisation plan?",
+          "Are flaky tests quarantined the same day they flake, or tolerated?",
+          "For AEM: are AEM Mocks tests written for every Sling Model and Servlet?",
+          "Are LCP / INP / CLS targets defined and visible to the team?",
+          "Is there a JS budget per route, enforced in the build?",
+          "What's the cache hit ratio at the edge — and what does the LCP look like at a miss?",
+          "Is WCAG 2.2 AA the agreed floor, and is it tested in CI plus screen reader plus keyboard?",
+          "Is there a named person accountable for accessibility on this engagement?"
+        ] }
+      ]
+    }
+  ]
+}

@@ -1,13 +1,14 @@
 {
   "frameworkAddress": "coder.d",
   "title": "Deployment",
-  "tag": "Infrastructure 101 for architects",
+  "tag": "D · Infrastructure 101 for Architects & PMs",
   "status": "published",
   "scan": [
-    "Ten layers carry a request from the browser to the database and back — an architect should be able to draw all ten",
-    "Caching is the single biggest performance lever and the single biggest source of subtle correctness bugs",
-    "The hard part of caching is invalidation: TTL vs purge vs versioned URLs, each with a trade",
-    "Observability is asking a question of your running system you didn't think to instrument in advance"
+    "<strong>What you will learn:</strong> The ten-layer deployment stack from web server to API gateway, cloud service models (IaaS/PaaS/FaaS/SaaS), autoscaling patterns, the five caching tiers, and observability beyond logs",
+    "<strong>Why it matters:</strong> Architects who cannot read a deployment diagram cannot participate in incident response, capacity planning, or vendor selection — all are architect responsibilities on DEPT® engagements",
+    "Every cache tier has a different invalidation mechanism — getting invalidation wrong causes stale content, security leaks, or both",
+    "SLOs are architecture inputs not monitoring outputs — they must be defined before infrastructure is provisioned",
+    "The difference between IaaS and PaaS is the difference between owning the OS and not — that choice determines patching obligations, incident surface, and pricing model"
   ],
   "sections": [
     {
@@ -15,174 +16,580 @@
       "title": "Opener",
       "order": 0,
       "blocks": [
-        {
-          "type": "chapter-open",
-          "page": 1,
-          "drop": "D",
-          "html": "eployment is where code stops being an idea and becomes a system someone can break at 3am. Ten layers carry a request from the browser to the database and back. An architect should be able to draw all ten on a whiteboard — and name the failure mode of each."
-        }
+        { "type": "chapter-open", "page": 1, "drop": "T", "html": "<strong>he D of CODER isn't just CI/CD.</strong> It's the entire layer that turns your code into a service people can reach. PMs and architects don't need to operate this layer — but they need to read its diagrams, ask the right questions in design review, and recognise where a project is missing a piece. This deep-dive builds the picture <em>one component at a time</em>, then assembles them into a typical production system." },
+        { "type": "heading", "page": 1, "html": "The mental model" },
+        { "type": "prose", "page": 1, "html": "Every production system is built by <strong>stacking components</strong>. Each new component solves a problem that emerged when the previous one wasn't enough. Walk it from the bottom up and the whole picture becomes legible." }
+      ]
+    },
+    {
+      "id": "coder.d.web-server",
+      "title": "Layer 1 · The web server",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "Layer 1 · The web server" },
+        { "type": "diagram", "page": 2, "render": "nodes", "title": "Step 1 — the simplest deployment", "rows": [
+          { "nodes": [ { "label": "User", "sub": "browser", "variant": "user" } ] },
+          { "nodes": [ { "label": "Web Server", "sub": "nginx · apache", "variant": "new" } ] }
+        ] },
+        { "type": "prose", "page": 2, "html": "The <strong>web server</strong> answers HTTP requests. It listens on a port (80 for HTTP, 443 for HTTPS), reads incoming requests and returns responses — static files directly, dynamic requests by proxying to an app server. The two dominant choices are <strong>Nginx</strong> (event-driven, fast at high concurrency) and <strong>Apache</strong> (older, plugin-rich, fork-per-request)." },
+        { "type": "prose", "page": 2, "html": "A single web server can host <em>multiple sites</em> by routing on the incoming <code>Host</code> header. That's a <strong>virtual host (vhost)</strong> — and it's how one box serves www.brand-a.com and www.brand-b.com without confusion." },
+        { "type": "code", "page": 2, "lang": "nginx", "label": "A minimal nginx vhost", "code": "server {\n  listen 443 ssl;\n  server_name www.example.com;\n\n  ssl_certificate      /etc/ssl/example.crt;\n  ssl_certificate_key  /etc/ssl/example.key;\n\n  root  /var/www/example;\n  index index.html;\n\n  location /api/ {\n    proxy_pass http://127.0.0.1:8080;  # → app server\n  }\n}" }
+      ]
+    },
+    {
+      "id": "coder.d.dns",
+      "title": "Layer 2 · DNS",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "Layer 2 · DNS" },
+        { "type": "diagram", "page": 3, "render": "nodes", "title": "Step 2 — make the server reachable by name", "rows": [
+          { "nodes": [ { "label": "User", "sub": "types www.example.com", "variant": "user" } ] },
+          { "nodes": [ { "label": "DNS", "sub": "name → IP lookup", "variant": "new" } ] },
+          { "nodes": [ { "label": "Web Server" } ] }
+        ] },
+        { "type": "prose", "page": 3, "html": "Computers talk in IP addresses. Humans talk in names. <strong>DNS</strong> is the lookup that translates <code>www.example.com</code> into <code>203.0.113.42</code>. The browser asks DNS first, then connects to whatever IP came back." },
+        { "type": "prose", "page": 3, "html": "The records to know: <code>A</code> (name → IPv4), <code>AAAA</code> (name → IPv6), <code>CNAME</code> (name → another name), <code>MX</code> (mail), <code>TXT</code> (verification, SPF, DKIM). Every record has a <strong>TTL</strong> — how long resolvers may cache the answer. Lower TTL = faster failover, more lookup load." },
+        { "type": "notes", "page": 3, "items": [
+          "Common providers · Route 53 (AWS) · Cloudflare DNS · Google Cloud DNS · Azure DNS"
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.ssl",
+      "title": "Layer 3 · SSL / TLS",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "Layer 3 · SSL / TLS" },
+        { "type": "prose", "page": 4, "html": "HTTPS is HTTP wrapped in <strong>TLS</strong> — the cryptographic handshake that proves the server is who it claims and encrypts the traffic. Three things to know:" },
+        { "type": "notes", "page": 4, "items": [
+          "<b>Certificates</b> prove identity. Free from Let's Encrypt (90-day rotation, automated). Commercial CAs sell extended-validation certs that still show the company name in some contexts.",
+          "<b>Termination</b> — where TLS gets decrypted. Often at the load balancer or CDN, so internal traffic is plain HTTP inside a trusted network.",
+          "<b>Modern hygiene</b> — TLS 1.3, strong cipher suites, <code>HSTS</code> header to force HTTPS, and certificate auto-renewal."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.load-balancer",
+      "title": "Layer 4 · Load balancer",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "Layer 4 · Load balancer" },
+        { "type": "diagram", "page": 5, "render": "nodes", "title": "Step 3 — scale beyond one box", "rows": [
+          { "nodes": [ { "label": "User", "variant": "user" } ] },
+          { "nodes": [ { "label": "DNS" } ] },
+          { "nodes": [ { "label": "Load Balancer", "sub": "routes & health-checks", "variant": "new" } ] },
+          { "nodes": [ { "label": "Web 1" }, { "label": "Web 2" }, { "label": "Web 3" } ] }
+        ] },
+        { "type": "prose", "page": 5, "html": "One server can only do so much. When you need more capacity (or redundancy in case one dies), you put many web servers behind a <strong>load balancer</strong>. The LB receives every request and forwards it to one of the healthy backends." },
+        { "type": "prose", "page": 5, "html": "What an LB gives you:" },
+        { "type": "notes", "page": 5, "items": [
+          "<b>Algorithms</b> — round robin, least-connections, IP hash, weighted.",
+          "<b>Health checks</b> — the LB pings each backend on an interval; if a server stops responding, traffic stops going there.",
+          "<b>Sticky sessions</b> — keep the same user pinned to the same backend (needed when sessions live in server memory, less ideal than stateless apps).",
+          "<b>Layer 4 vs Layer 7</b> — L4 routes by IP/port (fast, dumb); L7 routes by URL path, headers, hostname (flexible, slightly slower)."
+        ] },
+        { "type": "notes", "page": 5, "items": [
+          "Common products · AWS ALB / NLB · Azure Application Gateway · NGINX · HAProxy · GCP Cloud Load Balancing"
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.cdn",
+      "title": "Layer 5 · CDN",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "Layer 5 · CDN" },
+        { "type": "diagram", "page": 6, "render": "nodes", "title": "Step 4 — push assets to the edge", "rows": [
+          { "nodes": [ { "label": "User", "variant": "user" } ] },
+          { "nodes": [ { "label": "DNS" } ] },
+          { "nodes": [ { "label": "CDN", "sub": "global edge cache", "variant": "edge" } ] },
+          { "nodes": [ { "label": "Load Balancer" } ] },
+          { "nodes": [ { "label": "Web 1" }, { "label": "Web 2" }, { "label": "Web 3" } ] }
+        ] },
+        { "type": "prose", "page": 6, "html": "A <strong>Content Delivery Network</strong> is a global cache of your assets. Instead of every request reaching your origin, it hits the nearest CDN <em>edge node</em> — usually within 50ms of the user, anywhere on the planet. Static files served from the edge cost almost nothing and arrive almost instantly." },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Cache hard</b> — images, JS, CSS, fonts. Use long TTL with cache-busting URLs (e.g. <code>main.a3f9b2.js</code>).",
+          "<b>Cache carefully</b> — HTML with short TTL or explicit invalidation when content changes.",
+          "<b>Don't cache</b> — personalised API responses, anything with user-specific data, unless you've thought hard about cache keys."
+        ] },
+        { "type": "notes", "page": 6, "items": [
+          "Common products · Cloudflare · Akamai · AWS CloudFront · Fastly · Azure CDN"
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.waf",
+      "title": "Layer 6 · WAF",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "Layer 6 · WAF" },
+        { "type": "diagram", "page": 7, "render": "nodes", "title": "Step 5 — filter malicious traffic at the edge", "rows": [
+          { "nodes": [ { "label": "User", "variant": "user" } ] },
+          { "nodes": [ { "label": "DNS" } ] },
+          { "nodes": [ { "label": "CDN", "variant": "edge" } ] },
+          { "nodes": [ { "label": "WAF", "sub": "blocks attacks", "variant": "edge" } ] },
+          { "nodes": [ { "label": "Load Balancer" } ] },
+          { "nodes": [ { "label": "Web 1" }, { "label": "Web 2" }, { "label": "Web 3" } ] }
+        ] },
+        { "type": "prose", "page": 7, "html": "A <strong>Web Application Firewall</strong> sits between the public internet and your application. It inspects requests for known attack patterns — SQL injection, XSS, path traversal, command injection — and blocks the bad ones before they ever reach your code." },
+        { "type": "notes", "page": 7, "items": [
+          "<b>OWASP rule sets</b> — managed rules covering the Top 10 vulnerabilities, updated by the vendor.",
+          "<b>Rate limiting</b> — basic anti-DDoS, per-IP throttles.",
+          "<b>Bot detection &amp; geo-blocking</b> — reject traffic from regions you don't operate in, or known bot networks.",
+          "<b>Custom rules</b> — block specific patterns unique to your application."
+        ] },
+        { "type": "notes", "page": 7, "items": [
+          "Common products · AWS WAF · Cloudflare WAF · Imperva · Akamai Kona · F5 BIG-IP"
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.app-server",
+      "title": "Layer 7 · App server",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "Layer 7 · App server" },
+        { "type": "diagram", "page": 8, "render": "nodes", "title": "Step 6 — separate static serving from dynamic work", "rows": [
+          { "nodes": [ { "label": "Load Balancer" } ] },
+          { "nodes": [ { "label": "Web 1", "sub": "nginx" }, { "label": "Web 2", "sub": "nginx" } ] },
+          { "nodes": [ { "label": "App Server", "sub": "runs your code", "variant": "new" } ] }
+        ] },
+        { "type": "prose", "page": 8, "html": "The web server is good at serving static files and proxying requests. The actual work — running business logic, querying the database, generating HTML or JSON — happens in an <strong>app server</strong>. The web server <em>proxies</em> dynamic requests to it (usually over a local socket or TCP)." },
+        { "type": "prose", "page": 8, "html": "Examples by stack:" },
+        { "type": "notes", "page": 8, "items": [
+          "<b>AEM</b> (Adobe Experience Manager) — runs on Java, uses an embedded servlet container. Nginx or Dispatcher in front, AEM behind.",
+          "<b>Adobe Commerce / Magento</b> — PHP-FPM behind nginx, often with Varnish in between for full-page cache.",
+          "<b>Node.js apps</b> — the Node process is the app server itself; nginx proxies to it on a local port.",
+          "<b>Java enterprise</b> — Tomcat, JBoss, Jetty, WebLogic.",
+          "<b>.NET</b> — Kestrel directly, or behind IIS."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.databases",
+      "title": "Layer 8 · Databases",
+      "order": 8,
+      "blocks": [
+        { "type": "heading", "page": 9, "html": "Layer 8 · Databases" },
+        { "type": "diagram", "page": 9, "render": "nodes", "title": "Step 7 — persist data", "rows": [
+          { "nodes": [ { "label": "App Server" } ] },
+          { "nodes": [ { "label": "Relational DB", "sub": "postgres · mysql", "variant": "data" }, { "label": "Key-Value", "sub": "redis · dynamodb", "variant": "data" }, { "label": "Document", "sub": "mongodb", "variant": "data" } ] }
+        ] },
+        { "type": "prose", "page": 9, "html": "The app needs to remember things. Three rough categories cover most cases:" },
+        { "type": "cardgrid", "page": 9, "columns": 4, "cards": [
+          { "eyebrow": "Relational", "title": "Tables & joins", "body": "Postgres, MySQL, SQL Server, Oracle. ACID transactions, joins across tables, strong schema. Use when data has clear relationships and you need consistency." },
+          { "eyebrow": "Key-Value", "title": "One key, one value", "body": "Redis, Memcached, DynamoDB. Blazing fast lookup, no joins. Use for sessions, caches, rate-limit counters, leaderboards." },
+          { "eyebrow": "Document", "title": "Flexible JSON", "body": "MongoDB, Couchbase, Firestore. Each \"row\" is a self-contained JSON document. Use when shapes vary per record." },
+          { "eyebrow": "Specialised", "title": "Search · Time-series · Graph", "body": "Elasticsearch &amp; OpenSearch for search; InfluxDB &amp; Timescale for metrics; Neo4j for relationships. Reach for these when the general-purpose options don't fit." }
+        ] },
+        { "type": "notes", "page": 9, "items": [
+          "Architects often use multiple databases in one system — Postgres for the core, Redis for the cache, Elasticsearch for search. That's called <em>polyglot persistence</em>."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.queues",
+      "title": "Layer 9 · Queues",
+      "order": 9,
+      "blocks": [
+        { "type": "heading", "page": 10, "html": "Layer 9 · Queues" },
+        { "type": "diagram", "page": 10, "render": "nodes", "title": "Step 8 — push slow work to the background", "rows": [
+          { "nodes": [ { "label": "App Server" } ] },
+          { "nodes": [ { "label": "Queue", "sub": "SQS · RabbitMQ · Kafka", "variant": "new" } ] },
+          { "nodes": [ { "label": "Worker" } ] },
+          { "nodes": [ { "label": "Email · Video · Report · 3rd-party sync" } ] }
+        ] },
+        { "type": "prose", "page": 10, "html": "Some work shouldn't make the user wait — sending email, processing video, syncing a third party, generating a PDF. You put those jobs onto a <strong>queue</strong>, return the user a fast response, and a separate <strong>worker</strong> process drains the queue at its own pace. This is the producer/consumer pattern from Module 07." },
+        { "type": "notes", "page": 10, "items": [
+          "Common products · AWS SQS · RabbitMQ · Apache Kafka · Azure Service Bus · Google Pub/Sub"
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.api-gateway",
+      "title": "Layer 10 · API gateway",
+      "order": 10,
+      "blocks": [
+        { "type": "heading", "page": 11, "html": "Layer 10 · API gateway" },
+        { "type": "diagram", "page": 11, "render": "nodes", "title": "Step 9 — one front door for many APIs", "rows": [
+          { "nodes": [ { "label": "3rd party / Mobile app / SPA", "variant": "user" } ] },
+          { "nodes": [ { "label": "API Gateway", "sub": "auth · rate limit · route", "variant": "edge" } ] },
+          { "nodes": [ { "label": "Service A" }, { "label": "Service B" }, { "label": "Service C" } ] }
+        ] },
+        { "type": "prose", "page": 11, "html": "When you have many APIs — especially across microservices — an <strong>API gateway</strong> sits at the front. One public endpoint; the gateway handles routing, authentication, rate limiting, request transformation and observability for all of them." },
+        { "type": "notes", "page": 11, "items": [
+          "<b>One endpoint</b> hides the internal topology from clients.",
+          "<b>Centralised auth</b> — OAuth, JWT validation, API keys handled in one place.",
+          "<b>Rate limits per consumer</b> — different keys get different quotas.",
+          "<b>Transformation</b> — turn one request into multiple downstream calls, reshape responses, version routing."
+        ] },
+        { "type": "notes", "page": 11, "items": [
+          "Common products · AWS API Gateway · Kong · Apigee · Azure API Management · Tyk"
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.full-picture",
+      "title": "The full picture",
+      "order": 11,
+      "blocks": [
+        { "type": "heading", "page": 12, "html": "The full picture" },
+        { "type": "prose", "page": 12, "html": "Put every block together and a typical production stack looks like this:" },
+        { "type": "diagram", "page": 12, "render": "nodes", "title": "A typical production stack · CLOUD PROVIDER · AWS / AZURE / GCP", "rows": [
+          { "nodes": [ { "label": "USER", "variant": "user" } ] },
+          { "nodes": [ { "label": "DNS" } ] },
+          { "nodes": [ { "label": "CDN", "sub": "edge cache", "variant": "edge" } ] },
+          { "nodes": [ { "label": "WAF", "sub": "filter attacks", "variant": "edge" } ] },
+          { "nodes": [ { "label": "LOAD BALANCER", "sub": "health-check & route" } ] },
+          { "nodes": [ { "label": "WEB · nginx" }, { "label": "WEB · nginx" }, { "label": "WEB · nginx" } ] },
+          { "nodes": [ { "label": "APP SERVERS", "sub": "AEM · Commerce · Node · Java", "variant": "new" } ] },
+          { "nodes": [ { "label": "RELATIONAL DB", "sub": "postgres · mysql", "variant": "data" }, { "label": "KEY-VALUE", "sub": "redis · dynamodb", "variant": "data" }, { "label": "QUEUE", "sub": "sqs · kafka → worker", "variant": "edge" }, { "label": "SEARCH", "sub": "elasticsearch", "variant": "edge" } ] }
+        ] },
+        { "type": "notes", "page": 12, "items": [
+          "API GATEWAY · 3rd-party · mobile — a parallel branch into the app servers, alongside the user path.",
+          "The app and web tiers AUTOSCALE on CPU / req rate.",
+          "↳ Same shape on AWS, Azure or GCP — the names of the services change, the topology doesn't."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.cloud-providers",
+      "title": "Cloud providers",
+      "order": 12,
+      "blocks": [
+        { "type": "heading", "page": 13, "html": "Cloud providers" },
+        { "type": "prose", "page": 13, "html": "All major cloud providers offer the same <em>shape</em> of services with different names. The choice is usually made on where your team's expertise lives, where the customer's data must reside, and existing enterprise agreements." },
+        { "type": "cardgrid", "page": 13, "columns": 3, "cards": [
+          { "eyebrow": "Broadest", "title": "AWS", "body": "The biggest catalog, the steepest learning curve. EC2 (VMs), S3 (storage), RDS (managed DB), Lambda (serverless), ECS / EKS (containers), CloudFront (CDN), Route 53 (DNS)." },
+          { "eyebrow": "Enterprise", "title": "Azure", "body": "Strongest in Microsoft-heavy enterprises. Azure VMs, Blob Storage, Azure SQL, Functions, AKS, Front Door (CDN+WAF), Azure DNS, Active Directory integration." },
+          { "eyebrow": "Data & ML", "title": "GCP", "body": "Compute Engine, Cloud Storage, BigQuery, Cloud Functions, GKE, Cloud CDN, Cloud DNS. Often the choice when analytics or ML workloads dominate." }
+        ] },
+        { "type": "prose", "page": 13, "html": "<strong>VMs in brief.</strong> <code>EC2</code> on AWS and <code>Azure VMs</code> on Azure are virtual machines running on someone else's hardware. You pick the size, OS, region; they boot in minutes; you pay by the second. The bigger trend, though, is <em>away</em> from raw VMs toward managed services — databases, queues, containers — where you don't manage the OS at all." }
+      ]
+    },
+    {
+      "id": "coder.d.service-models",
+      "title": "Service models · IaaS · PaaS · SaaS · FaaS",
+      "order": 13,
+      "blocks": [
+        { "type": "heading", "page": 14, "html": "Service models · IaaS · PaaS · SaaS · FaaS" },
+        { "type": "prose", "page": 14, "html": "Cloud isn't one thing. It's a ladder of <strong>responsibility models</strong>, each handing more of the operations stack to the provider in exchange for less control. Architects pick a level per workload — sometimes per service. Getting this wrong costs you either money (paying for managed services you don't need) or velocity (running your own OS for problems someone else solved)." },
+        { "type": "diagram", "page": 14, "render": "nodes", "title": "Who owns what · the responsibility ladder", "rows": [
+          { "nodes": [ { "label": "On-prem", "sub": "you own everything" }, { "label": "IaaS", "sub": "you own OS upward" }, { "label": "PaaS", "sub": "you own code + data" }, { "label": "FaaS", "sub": "you own a function", "variant": "edge" }, { "label": "SaaS", "sub": "you own configuration", "variant": "edge" } ] }
+        ] },
+        { "type": "heading", "page": 14, "html": "IaaS · Infrastructure as a Service" },
+        { "type": "prose", "page": 14, "html": "You get a virtual machine. The provider runs the hardware, hypervisor and network; you run the OS, the runtime, the application. Maximum control, maximum operational burden." },
+        { "type": "notes", "page": 14, "items": [
+          "<b>Examples</b> · AWS EC2 · Azure VMs · GCP Compute Engine · DigitalOcean Droplets",
+          "<b>You own</b> · OS patching, runtime versions, security groups, capacity planning, scaling, monitoring agents",
+          "<b>Right when</b> · you need a specific kernel, specific GPU, custom networking, or you're lifting-and-shifting from on-prem",
+          "<b>Wrong when</b> · the workload is a standard web app — you're paying yourself to do work a PaaS would do for you"
+        ] },
+        { "type": "heading", "page": 15, "html": "PaaS · Platform as a Service" },
+        { "type": "prose", "page": 15, "html": "You hand the provider your code; they run it. The OS, runtime, autoscaling, deployment pipeline, load balancing are all handled. You configure; you don't operate." },
+        { "type": "notes", "page": 15, "items": [
+          "<b>Examples</b> · AWS Elastic Beanstalk · Azure App Service · Google App Engine · Heroku · Vercel · Netlify · Adobe AEM as a Cloud Service (AEMaaCS)",
+          "<b>You own</b> · your code, the data inside the platform's databases, the configuration, the budget",
+          "<b>Right when</b> · standard stack (Node, Python, Java, .NET), standard scaling profile, you want to optimise for velocity over control",
+          "<b>Wrong when</b> · you need OS-level customisation, you're cost-sensitive at very high scale (PaaS economics break above a threshold), or vendor lock-in is a deal-breaker"
+        ] },
+        { "type": "heading", "page": 15, "html": "FaaS · Functions as a Service (serverless)" },
+        { "type": "prose", "page": 15, "html": "The unit of deployment isn't an app — it's a single function. The provider runs it only when triggered, scales it from zero to thousands of concurrent executions, and bills per invocation and per millisecond of compute. The most extreme abstraction in the ladder." },
+        { "type": "notes", "page": 15, "items": [
+          "<b>Examples</b> · AWS Lambda · Azure Functions · GCP Cloud Functions · Cloudflare Workers · Vercel Functions",
+          "<b>You own</b> · the function code, its dependencies, the event source binding",
+          "<b>Right when</b> · event-driven workloads (webhooks, queue consumers, scheduled jobs), spiky traffic that goes to zero, glue code between services",
+          "<b>Wrong when</b> · long-running compute, stateful workloads, predictable steady load (cheaper as a container), latency-sensitive paths (cold-start tax)",
+          "<b>The cold-start trap</b> · first invocation after idle can take 100ms–2s depending on runtime. Manageable with provisioned concurrency — but provisioned concurrency is just paying for an always-on server you said you didn't want"
+        ] },
+        { "type": "heading", "page": 16, "html": "SaaS · Software as a Service" },
+        { "type": "prose", "page": 16, "html": "You don't run anything. You log in, configure, and pay. The product itself is the service." },
+        { "type": "notes", "page": 16, "items": [
+          "<b>Examples</b> · Salesforce · HubSpot · Workday · Stripe · SendGrid · Auth0 · Datadog · the consumer end of Google Workspace, Microsoft 365",
+          "<b>You own</b> · your data inside the product, your account configuration, your integration glue",
+          "<b>Right when</b> · the function is non-differentiating for your business (CRM, email, observability, auth). Build differentiates; buy enables.",
+          "<b>Wrong when</b> · the function <em>is</em> your business (your CRM IS your product → build it). Or compliance prevents data leaving your perimeter."
+        ] },
+        { "type": "heading", "page": 16, "html": "The honourable mentions · BaaS, DBaaS, containers" },
+        { "type": "notes", "page": 16, "items": [
+          "<b>BaaS · Backend as a Service</b> — Firebase, Supabase, AWS Amplify. Auth + database + storage + functions, pre-wired. Excellent for prototypes and mobile-first products; lock-in risk grows with scale.",
+          "<b>DBaaS · Database as a Service</b> — RDS, Cloud SQL, MongoDB Atlas, Redis Cloud, Neon. Managed databases as PaaS-flavoured services. The default for any new project; running your own database in 2026 needs a reason.",
+          "<b>Containers · between IaaS and PaaS</b> — ECS, EKS, GKE, AKS, Cloud Run, Fly.io. You bring an image; they run it. More portable than PaaS (Docker image is the contract), more operational than serverless. The most common modern default."
+        ] },
+        { "type": "heading", "page": 17, "html": "Choosing the right level" },
+        { "type": "prose", "page": 17, "html": "Three questions decide the level:" },
+        { "type": "notes", "page": 17, "items": [
+          "<b>1. Is this workload your differentiator?</b> If yes, you want control — IaaS or containers. If no, you want speed — PaaS or SaaS.",
+          "<b>2. What's the traffic shape?</b> Spiky-to-zero → FaaS. Steady → containers or PaaS. Unpredictable peaks → containers with autoscaling.",
+          "<b>3. What does exit cost?</b> Higher abstraction → more lock-in. SaaS data export plans should be checked <em>before</em> signing, not when you want to leave."
+        ] },
+        { "type": "quote", "page": 17, "html": "The right answer is rarely one level. A real production system mixes them: PaaS-hosted API in containers, FaaS for webhook handlers, DBaaS for primary store, SaaS for email/auth/payments, IaaS for the one workload nobody else does. The architect's job is knowing which goes where and being able to defend each choice." }
+      ]
+    },
+    {
+      "id": "coder.d.autoscaling",
+      "title": "Autoscaling",
+      "order": 14,
+      "blocks": [
+        { "type": "heading", "page": 18, "html": "Autoscaling" },
+        { "type": "prose", "page": 18, "html": "Traffic isn't flat. <strong>Autoscaling</strong> adds and removes capacity in response to demand, so you neither over-provision (wasted money) nor under-provision (failed requests)." },
+        { "type": "diagram", "page": 18, "render": "versus", "title": "Vertical vs horizontal", "columns": [
+          { "label": "Vertical", "body": "Make the same machine bigger — more CPU, more RAM. Hits a ceiling fast and usually requires a reboot. Useful for databases and stateful systems where horizontal scaling is hard." },
+          { "label": "Horizontal · default", "tone": "good", "body": "Add more identical machines behind the load balancer. Scales further, fails more gracefully (one box dies, the rest carry on), works only if the app is stateless or state is externalised." }
+        ] },
+        { "type": "heading", "page": 18, "html": "What triggers a scale event" },
+        { "type": "notes", "page": 18, "items": [
+          "<b>CPU utilization</b> — classic. Scale up when sustained CPU &gt; 70%, scale down when &lt; 30%.",
+          "<b>Request rate</b> — requests per second across the fleet.",
+          "<b>Queue depth</b> — for async workers, scale the worker pool to drain the queue.",
+          "<b>Custom metrics</b> — anything you can publish: latency, error rate, business signals."
+        ] },
+        { "type": "prose", "page": 18, "html": "Three numbers an architect must set: <strong>min</strong> (never fewer than X), <strong>max</strong> (never more than Y — protects the bill), and <strong>cooldown</strong> (wait N minutes between scale actions, to avoid flapping). The set of identical instances being managed is the <strong>scaling group</strong> (or <em>autoscaling group</em> on AWS)." },
+        { "type": "callout", "page": 18, "variant": "pitfall", "html": "Configuring autoscaling to respond to CPU only. On Node.js servers, memory exhaustion and event loop lag are more common failure modes than CPU saturation. On Java AEM instances, connection pool exhaustion and GC pause time are the real signals. Instrument all four before setting autoscale policies." }
+      ]
+    },
+    {
+      "id": "coder.d.logs",
+      "title": "Log files",
+      "order": 15,
+      "blocks": [
+        { "type": "heading", "page": 19, "html": "Log files" },
+        { "type": "prose", "page": 19, "html": "Every component you just stacked emits logs. The architect's job isn't to read them all — it's to know <em>which logs to ask for</em> when something breaks, and where to find them." },
+        { "type": "diagram", "page": 19, "render": "table", "title": "The logs to know", "headers": ["Log type", "What's in it", "Where it lives"], "rows": [
+          ["<b>Access log</b> · Web server", "Every HTTP request that hit the web server — IP, time, method, path, status, size, user-agent, referer.", "<code>/var/log/nginx/access.log</code><br><code>/var/log/apache2/access_log</code>"],
+          ["<b>Error log</b> · Web server", "5xx errors, config problems, upstream failures. First place to look when \"the site is broken\".", "<code>/var/log/nginx/error.log</code><br><code>/var/log/apache2/error_log</code>"],
+          ["<b>Application log</b> · App server", "What your code wrote — business events, caught errors, debug info. Should be structured JSON with a correlation ID per request.", "App-specific. AEM: <code>error.log</code>, <code>request.log</code>. Node: stdout / pm2."],
+          ["<b>Audit log</b> · App / system", "Who did what, when. Auth events, permission changes, data exports. Compliance gold.", "Often a separate stream with restricted access."],
+          ["<b>System log</b> · OS", "Kernel, system services, OOM kills, security events. Where you find out why a machine misbehaved.", "<code>/var/log/syslog</code> · <code>journalctl</code>"],
+          ["<b>Platform log</b> · Cloud", "LB access logs, WAF blocks, CDN cache hits/misses, autoscaling events. Owned by the cloud provider.", "CloudWatch · Azure Monitor · Cloud Logging"]
+        ] },
+        { "type": "heading", "page": 19, "html": "How to read them" },
+        { "type": "notes", "page": 19, "items": [
+          "<b>On a single box</b> — <code>tail -f</code> follows new lines as they arrive; <code>grep</code> filters; <code>awk</code> extracts fields.",
+          "<b>Across many boxes</b> — a <strong>log aggregator</strong> ships every component's logs to one searchable store. CloudWatch, Datadog, Splunk, the ELK stack (Elasticsearch + Logstash + Kibana), Grafana Loki.",
+          "<b>Structured beats free-text</b> — JSON logs let the aggregator parse fields automatically. <code>level</code>, <code>request_id</code>, <code>user_id</code>, <code>duration_ms</code>.",
+          "<b>Correlation IDs</b> — generate one per incoming request and pass it through every log line, every downstream call. That's how you reconstruct what happened when something goes wrong.",
+          "<b>Retention</b> — logs aren't free. Pick a retention window (30 days hot, 1 year cold) and pick what to <em>not</em> log (PII).",
+          "<b>Alert on patterns, not lines</b> — \"5xx rate over 1% for 5 minutes\" beats \"any single error line\". Single-line alerts produce noise that gets ignored."
+        ] }
       ]
     },
     {
       "id": "coder.d.caching",
-      "title": "The Five Caching Tiers",
-      "order": 1,
+      "title": "Caching · the five tiers",
+      "order": 16,
       "blocks": [
-        {
-          "type": "lead",
-          "page": 2,
-          "html": "Caching is the single largest performance lever in a production system — and the single largest source of subtle correctness bugs."
-        },
-        {
-          "type": "prose",
-          "page": 2,
-          "html": "Every production stack caches in <b>five places</b>, each with its own purpose, eviction policy, and failure mode. An architect should be able to point at every tier and say what lives there, how it's invalidated, and what happens when it goes wrong."
-        },
-        {
-          "type": "tierlist",
-          "page": 2,
-          "items": [
-            {
-              "n": "1",
-              "label": "Browser cache",
-              "note": "Cache-Control · ETag"
-            },
-            {
-              "n": "2",
-              "label": "CDN cache",
-              "note": "edge · global"
-            },
-            {
-              "n": "3",
-              "label": "App-layer cache",
-              "note": "Dispatcher · reverse proxy"
-            },
-            {
-              "n": "4",
-              "label": "Origin cache",
-              "note": "Redis · Memcached"
-            },
-            {
-              "n": "5",
-              "label": "Data cache",
-              "note": "DB query · ORM"
-            }
-          ]
-        },
-        {
-          "type": "callout",
-          "variant": "why",
-          "page": 2,
-          "html": "If you can't draw the cache topology of your production system on a whiteboard in 60 seconds, you don't know where your bugs are going to come from."
-        }
+        { "type": "heading", "page": 20, "html": "Caching · the five tiers" },
+        { "type": "prose", "page": 20, "html": "Caching is the single largest performance lever in a production system — and the single largest source of subtle correctness bugs. Every production stack caches in <strong>five places</strong>, each with its own purpose, eviction policy, and failure mode. An architect should be able to point at every tier and say what lives there, how it's invalidated, and what happens when it goes wrong." },
+        { "type": "diagram", "page": 20, "render": "nodes", "title": "The five tiers · from browser back to database", "rows": [
+          { "nodes": [ { "label": "Browser cache", "sub": "Cache-Control · ETag", "variant": "user" } ] },
+          { "nodes": [ { "label": "CDN cache", "sub": "edge · global", "variant": "edge" } ] },
+          { "nodes": [ { "label": "App-layer cache", "sub": "Dispatcher · reverse proxy" } ] },
+          { "nodes": [ { "label": "Origin cache", "sub": "Redis · Memcached" } ] },
+          { "nodes": [ { "label": "Data cache", "sub": "DB query cache · ORM cache" } ] }
+        ] },
+        { "type": "callout", "page": 20, "variant": "why", "html": "The five caching tiers must be designed before launch. A cache misconfiguration discovered in production requires a deploy, a CDN rule change, and a cache purge — often during peak traffic while users are actively on the site. Getting it right in the architecture phase is free; fixing it in production is expensive and visible." }
+      ]
+    },
+    {
+      "id": "coder.d.tier1-browser",
+      "title": "Tier 1 · Browser cache",
+      "order": 17,
+      "blocks": [
+        { "type": "heading", "page": 21, "html": "Tier 1 · Browser cache" },
+        { "type": "prose", "page": 21, "html": "The closest cache to the user — the user's own browser. Controlled by HTTP response headers. Free, fast, and the easiest to misconfigure." },
+        { "type": "notes", "page": 21, "items": [
+          "<b>Cache-Control</b> — the master directive. <code>max-age=N</code> means cache for N seconds. <code>public</code> means any cache may store it; <code>private</code> means only the browser (not the CDN). <code>no-store</code> means never cache. <code>immutable</code> tells the browser \"this URL will never change\" — the only legitimate use is fingerprinted asset URLs.",
+          "<b>ETag</b> — a content-derived identifier the server returns. The browser sends it back as <code>If-None-Match</code> on the next request; the server replies <code>304 Not Modified</code> if unchanged. Saves bandwidth but still costs a round-trip.",
+          "<b>stale-while-revalidate</b> — serve the stale copy immediately, refresh in the background. Hides revalidation latency from the user. The single most underused directive on the modern web.",
+          "<b>Vary</b> — declares which request headers change the response. <code>Vary: Accept-Encoding</code> means cache one copy per encoding. Get this wrong and users see other users' content."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.tier2-cdn",
+      "title": "Tier 2 · CDN (edge cache)",
+      "order": 18,
+      "blocks": [
+        { "type": "heading", "page": 22, "html": "Tier 2 · CDN (edge cache)" },
+        { "type": "prose", "page": 22, "html": "Akamai, Cloudflare, Fastly, CloudFront — POPs around the world holding cached copies of your responses. A CDN cache hit at the edge means your origin never sees the request. Cache hit ratio is the single number an architect should know off the top of their head; <strong>at 90% hit ratio, your origin handles 10% of traffic</strong>." },
+        { "type": "diagram", "page": 22, "render": "versus", "title": "TTL-based vs purge-based", "columns": [
+          { "label": "TTL-based", "body": "\"Cache this for 1 hour.\" Simple, predictable. Wrong content lives at the edge until the TTL expires — acceptable for marketing pages, dangerous for inventory." },
+          { "label": "Purge-based", "tone": "good", "body": "Cache forever; explicitly purge when the source changes. Faster correctness, more operational complexity. Soft purge (mark stale, revalidate on next request) and hard purge (remove immediately) are different things — pick the right one." }
+        ] },
+        { "type": "notes", "page": 22, "items": [
+          "<b>Surrogate keys / cache tags</b> — tag every cached response with logical identifiers (<code>product-1234</code>, <code>category-shoes</code>). Purge by tag when the underlying entity changes. The only sane way to manage invalidation at scale.",
+          "<b>Cache-key design</b> — what makes two requests \"the same\"? Path is the floor; add query parameters, headers, cookies as needed. Get this wrong by including a session cookie in the key and you cache one copy per user — which is no caching at all.",
+          "<b>Origin shield</b> — a single regional POP that absorbs all origin requests, so a CDN-wide purge doesn't stampede the origin. Fastly's term; most CDNs have an equivalent."
+        ] },
+        { "type": "callout", "page": 22, "variant": "tip", "html": "DEPT® field pattern — use surrogate cache keys (Fastly) or cache tags (Varnish/Cloudflare) for content-type-based invalidation instead of URL-based purges. A single CMS publish event invalidates all pages containing the changed content fragment. No manual purge list, no missed URLs." }
+      ]
+    },
+    {
+      "id": "coder.d.tier3-app",
+      "title": "Tier 3 · App-layer cache",
+      "order": 19,
+      "blocks": [
+        { "type": "heading", "page": 23, "html": "Tier 3 · App-layer cache (Dispatcher / reverse proxy)" },
+        { "type": "prose", "page": 23, "html": "Inside your own perimeter, but in front of the app server. In AEM, the <strong>Dispatcher</strong> is exactly this — a hardened Apache module that caches rendered HTML and serves it without ever touching the Publishers. Outside AEM, the equivalent is Nginx with a <code>proxy_cache</code> or Varnish." },
+        { "type": "notes", "page": 23, "items": [
+          "<b>What lives here</b> — fully rendered HTML, JSON API responses, static assets that aren't already on the CDN. The \"warm middle\" of the stack.",
+          "<b>Statfile invalidation (AEM)</b> — Dispatcher invalidates by touching a statfile; any cached file older than the statfile is treated as stale. Simple but coarse — be deliberate about which paths share a statfile.",
+          "<b>Bypass conditions</b> — authenticated requests, query strings, specific cookies. If your Dispatcher caches a personalised page, you have a data leak. If it bypasses for every cookie, you have no cache.",
+          "<b>The cache-miss storm</b> — when the cache flushes and 1,000 concurrent requests all miss and hit the origin together. Mitigate with request coalescing (one origin request, many waiting clients) or staggered TTLs."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.tier4-origin",
+      "title": "Tier 4 · Origin cache",
+      "order": 20,
+      "blocks": [
+        { "type": "heading", "page": 24, "html": "Tier 4 · Origin cache (Redis / Memcached)" },
+        { "type": "prose", "page": 24, "html": "Inside the application, in front of the database. The application asks \"is this in Redis?\" before issuing a database query. Used for sessions, computed results, rate-limit counters, anything expensive to compute but cheap to store." },
+        { "type": "notes", "page": 24, "items": [
+          "<b>Cache-aside</b> — app checks cache; on miss, queries DB and writes the result back. The default pattern.",
+          "<b>Write-through</b> — every write hits cache and DB together. Consistency at the cost of write latency.",
+          "<b>Write-behind</b> — writes go to cache immediately, DB asynchronously. Fast writes, weaker durability. Use carefully.",
+          "<b>Eviction policies</b> — LRU (least recently used) is the safe default. LFU (least frequently used) wins for hot-key workloads. TTL-only loses both ways.",
+          "<b>The hot key problem</b> — one extremely popular key (a celebrity profile, a flash-sale product) saturates a single Redis node. Solutions: replicate the key, shard differently, or add a small in-process cache in the app layer."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.tier5-data",
+      "title": "Tier 5 · Data cache",
+      "order": 21,
+      "blocks": [
+        { "type": "heading", "page": 25, "html": "Tier 5 · Data cache (DB query cache, ORM cache)" },
+        { "type": "prose", "page": 25, "html": "The cache you didn't know was there — and the one most teams accidentally fight against. Modern databases cache query plans and result buffers; ORMs cache loaded entities within a session. None of this survives a process restart." },
+        { "type": "notes", "page": 25, "items": [
+          "<b>The \"phantom slow query\"</b> — fine in dev, fine on the first prod request, then mysteriously fast forever. That's the DB buffer cache warming up. Real perf testing must include cold-cache scenarios.",
+          "<b>ORM session cache</b> — Hibernate's L1, ActiveRecord's identity map. Helpful within a request, dangerous if leaked across requests.",
+          "<b>L2 / second-level cache</b> — application-wide, cross-request. Powerful but introduces a third cache layer to invalidate. Usually a sign you should be using Tier 4 (Redis) instead."
+        ] }
       ]
     },
     {
       "id": "coder.d.invalidation",
-      "title": "Invalidation — the hard part",
-      "order": 2,
+      "title": "Invalidation — the hard problem",
+      "order": 22,
       "blocks": [
-        {
-          "type": "heading",
-          "page": 3,
-          "html": "Invalidation — the hard part"
-        },
-        {
-          "type": "prose",
-          "page": 3,
-          "html": "<b>TTL</b> is time-based expiry: simple, predictable, eventually wrong. <b>Purge</b> is event-driven: correct, complex, easy to miss a code path. <b>Versioned URLs</b> cache the immutable: the cleanest pattern there is, but only works for assets you control the URL of."
-        },
-        {
-          "type": "prose",
-          "page": 3,
-          "html": "The failure pattern to watch for is <b>tier-skipping invalidation</b> — you purge the CDN but forget the app-layer cache; you flush Redis but forget the CDN. Stale content lives in whichever tier you forgot. Invalidate top-down (browser → CDN → Dispatcher → Redis) and instrument purge calls so you can prove every tier was hit."
-        },
-        {
-          "type": "callout",
-          "variant": "pitfall",
-          "page": 3,
-          "html": "Teams that purge one tier and forget the next ship stale content that lives exactly one layer down — invisible until a user reports it. The fix is instrumented, top-down invalidation, not more caching."
-        }
+        { "type": "heading", "page": 26, "html": "Invalidation — the hard problem" },
+        { "type": "prose", "page": 26, "html": "\"There are only two hard things in computer science: cache invalidation and naming things.\" The quote exists because cache invalidation is the most common source of weird production bugs an architect will encounter. Three strategies, each with a trade:" },
+        { "type": "cardgrid", "page": 26, "columns": 3, "cards": [
+          { "eyebrow": "TTL", "title": "Time-based expiry", "body": "Set a duration, walk away. Simple, predictable, eventually wrong. Use when \"wrong for N minutes\" is acceptable — most marketing content qualifies." },
+          { "eyebrow": "Purge", "title": "Event-driven eviction", "body": "Cache forever; explicitly invalidate on source change. Correct, complex, easy to miss a code path. Use when freshness matters — inventory, prices, status." },
+          { "eyebrow": "Versioned URLs", "title": "Cache the immutable", "body": "Change the URL when content changes (<code>/css/app.a1b2c3d.css</code>). Cache for a year. The cleanest pattern there is — but only works for assets you control the URL of." }
+        ] },
+        { "type": "prose", "page": 26, "html": "The failure pattern to watch for: <strong>tier-skipping invalidation</strong>. You purge the CDN but forget the app-layer cache; you flush Redis but forget the CDN. Stale content lives in whichever tier you forgot. The fix is to invalidate top-down (browser → CDN → Dispatcher → Redis) and to instrument purge calls so you can prove every tier was hit." },
+        { "type": "diagram", "page": 26, "render": "mermaid", "title": "Content updated · which tier cached it?", "source": "flowchart TD\n    A([Content updated]) --> B{Which tier cached it?}\n    B --> C[CDN]\n    B --> D{CDN only?}\n    D -->|Yes| E([Done — skip lower tiers])\n    D -->|No| C\n    C -->|Tag-based invalidation| F[Dispatcher flush]\n    F --> G[Application cache\\nRedis key delete]\n    G --> H([Done])" },
+        { "type": "callout", "page": 26, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>Manual cache purge triggered via CMS UI on every content publish. Author must remember to purge; misses cause stale content incidents averaging 45 minutes to resolve.</p></div><div><div class=\"ba-col-label\">After</div><p>Automated surrogate key invalidation triggered by replication agent on publish. Zero manual steps, sub-second invalidation, full audit log.</p></div></div>" },
+        { "type": "quote", "page": 26, "html": "If you can't draw the cache topology of your production system on a whiteboard in 60 seconds, you don't know where your bugs are going to come from." }
       ]
     },
     {
       "id": "coder.d.observability",
-      "title": "Observability beyond logs",
-      "order": 3,
+      "title": "Observability · beyond logs",
+      "order": 23,
       "blocks": [
-        {
-          "type": "heading",
-          "page": 4,
-          "html": "Observability beyond logs"
-        },
-        {
-          "type": "cardgrid",
-          "page": 4,
-          "columns": 3,
-          "cards": [
-            {
-              "eyebrow": "LOGS",
-              "title": "What happened, in order",
-              "body": "One line per event. High cardinality, high cost. Best for forensic detail."
-            },
-            {
-              "eyebrow": "METRICS",
-              "title": "How much, over time",
-              "body": "Counters, gauges, histograms. Low cardinality, cheap to store. Best for trends and alerts."
-            },
-            {
-              "eyebrow": "TRACES",
-              "title": "How one request flowed",
-              "body": "End-to-end path of a single request across services. Best for latency hunts."
-            }
-          ]
-        },
-        {
-          "type": "prose",
-          "page": 4,
-          "html": "Logs tell you what happened. <b>Observability</b> is the broader discipline: being able to ask a question of your running system that you didn't think to instrument in advance. The three pillars are <b>logs</b> (what happened), <b>metrics</b> (how much, over time), and <b>traces</b> (how one request flowed)."
-        },
-        {
-          "type": "prose",
-          "page": 4,
-          "html": "What turns metrics into operational decisions is the <b>SLO</b> — a target expressed in user-visible terms. Its complement is the <b>error budget</b>: 100% minus the SLO. Spend it freely while you have it; freeze deploys when you run out. Without an explicit budget, every incident becomes a fight about whether to ship the next feature."
-        },
-        {
-          "type": "diagram",
-          "page": 4,
-          "render": "versus",
-          "title": "RED vs USE",
-          "columns": [
-            {
-              "label": "RED · per service",
-              "body": "Rate · Errors · Duration. The three numbers every microservice dashboard must show."
-            },
-            {
-              "label": "USE · per resource",
-              "body": "Utilization · Saturation · Errors. The three numbers that tell you a resource is healthy."
-            }
-          ]
-        }
+        { "type": "heading", "page": 27, "html": "Observability · beyond logs" },
+        { "type": "prose", "page": 27, "html": "Logs (covered above) tell you what individual events happened. <strong>Observability</strong> is the broader discipline: being able to ask a question of your running system that you didn't think to instrument in advance. The three pillars are <em>logs</em>, <em>metrics</em>, and <em>traces</em> — each answers a different kind of question." },
+        { "type": "cardgrid", "page": 27, "columns": 3, "cards": [
+          { "eyebrow": "Logs", "title": "What happened, in order", "body": "One line per event. High cardinality, high cost. Best for forensic detail: <em>\"why did this specific request fail?\"</em>" },
+          { "eyebrow": "Metrics", "title": "How much, over time", "body": "Counters, gauges, histograms. Low cardinality, cheap to store, cheap to query. Best for trends and alerts: <em>\"is error rate climbing?\"</em>" },
+          { "eyebrow": "Traces", "title": "How one request flowed", "body": "The end-to-end path of a single request across services, with timing at each hop. Best for latency hunts: <em>\"where did this request lose 800ms?\"</em>" }
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.slo",
+      "title": "SLIs, SLOs, error budgets",
+      "order": 24,
+      "blocks": [
+        { "type": "heading", "page": 28, "html": "SLIs, SLOs, error budgets" },
+        { "type": "prose", "page": 28, "html": "Metrics on their own are noise. What turns them into operational decisions is a <strong>service level objective</strong> — a target you've committed to, expressed in user-visible terms." },
+        { "type": "notes", "page": 28, "items": [
+          "<b>SLI</b> · Service Level Indicator. A measurable quantity. \"Percentage of homepage requests served in &lt; 800ms.\"",
+          "<b>SLO</b> · Service Level Objective. The target for an SLI. \"99.5% of homepage requests in &lt; 800ms, measured over 28 days.\"",
+          "<b>Error budget</b> · 100% minus the SLO. If your SLO is 99.5%, you have 0.5% of requests you're permitted to break per period. Spending the budget is fine; running out of budget is a deploy freeze.",
+          "<b>SLA</b> · Service Level Agreement. The contract with the customer — usually looser than your internal SLO, because you want headroom."
+        ] },
+        { "type": "prose", "page": 28, "html": "The discipline this enforces: <em>perfect is not the target</em>. The team is free to deploy aggressively while there's budget; the team must slow down and harden when there isn't. Without an explicit budget, every incident is a fight about whether to ship the next feature." }
+      ]
+    },
+    {
+      "id": "coder.d.red-use",
+      "title": "RED & USE — the dashboard starter kits",
+      "order": 25,
+      "blocks": [
+        { "type": "heading", "page": 29, "html": "RED &amp; USE — the dashboard starter kits" },
+        { "type": "diagram", "page": 29, "render": "versus", "title": "RED vs USE", "columns": [
+          { "label": "RED · per service", "tone": "good", "body": "<strong>R</strong>ate (requests per second) · <strong>E</strong>rrors (% failing) · <strong>D</strong>uration (latency percentiles, p50/p95/p99). The three numbers every microservice dashboard must show. If you don't know your p99 latency, you don't know your service." },
+          { "label": "USE · per resource", "tone": "good", "body": "<strong>U</strong>tilization · <strong>S</strong>aturation · <strong>E</strong>rrors. For every resource (CPU, RAM, disk, network), the three numbers that tell you it's healthy. Saturation (work queued waiting for the resource) is the most underused signal." }
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.tracing",
+      "title": "Distributed tracing",
+      "order": 26,
+      "blocks": [
+        { "type": "heading", "page": 30, "html": "Distributed tracing" },
+        { "type": "prose", "page": 30, "html": "One request crosses ten services; something is slow; which hop is the offender? <strong>Distributed tracing</strong> is the answer. Every request gets a <em>trace ID</em>; every downstream call gets a <em>span ID</em>; the trace assembles into a flame graph showing exactly where time was spent." },
+        { "type": "prose", "page": 30, "html": "The standard is <strong>OpenTelemetry</strong> (OTel) — vendor-neutral instrumentation, pluggable backends. Most APM vendors ingest OTel directly now (Datadog, New Relic, Honeycomb, Grafana Tempo, AWS X-Ray)." }
+      ]
+    },
+    {
+      "id": "coder.d.synthetic-rum",
+      "title": "Synthetic vs real-user monitoring",
+      "order": 27,
+      "blocks": [
+        { "type": "heading", "page": 31, "html": "Synthetic vs real-user monitoring" },
+        { "type": "prose", "page": 31, "html": "Lab tests vs field tests, applied to production. Both are needed; each lies in a different direction." },
+        { "type": "notes", "page": 31, "items": [
+          "<b>Synthetic</b> · scripted probes from known locations on a schedule. Catches outages, regional degradation, certificate expiry. <em>Lies about real-user experience</em> because the probes don't match user device distributions.",
+          "<b>RUM (Real User Monitoring)</b> · JS in the page reports actual user-experienced metrics. Captures the long tail (old devices, bad networks). <em>Lies about availability</em> because users who can't load the page can't report.",
+          "<b>Use both</b>. Alert on synthetic for availability; track RUM for experience quality. Lighthouse is a lab tool; CrUX is a field tool. Believe the field tool."
+        ] }
+      ]
+    },
+    {
+      "id": "coder.d.alerts",
+      "title": "Alerts that don't get ignored",
+      "order": 28,
+      "blocks": [
+        { "type": "heading", "page": 32, "html": "Alerts that don't get ignored" },
+        { "type": "prose", "page": 32, "html": "The fastest way to destroy on-call is to alert on every error line. Three rules:" },
+        { "type": "notes", "page": 32, "items": [
+          "<b>Symptom over cause</b> — alert on \"users see errors\", not \"CPU is high\". CPU high is a clue, not an outage.",
+          "<b>Burn-rate alerts</b> — alert when you're burning the error budget faster than the SLO allows. Short-window fast-burn (catch outages) plus long-window slow-burn (catch chronic degradation).",
+          "<b>Page only what humans must act on now</b> — everything else is a ticket. If 60% of pages are \"investigated, no action\", you're paging the wrong things."
+        ] },
+        { "type": "quote", "page": 32, "html": "A system you can't observe is a system you can't operate. The cost of observability is not the cost of dashboards — it is the cost of instrumenting code the day before you need it." }
       ]
     },
     {
       "id": "coder.d.review",
       "title": "Architect's Review",
-      "order": 4,
+      "order": 29,
       "blocks": [
-        {
-          "type": "architects-review",
-          "page": 5,
-          "label": "Architect's Review · Deployment Stack",
-          "items": [
-            "Is every layer present, or is something missing (no WAF? no CDN? no LB)?",
-            "Where is TLS terminated, and what does internal traffic look like?",
-            "Can you draw the cache topology — all five tiers — and name the invalidation strategy for each?",
-            "What's the cache hit ratio at the edge, and what would happen at half that?",
-            "Are there SLOs per service, and an error budget the team actually uses?",
-            "Is distributed tracing wired across service boundaries — or do traces stop at the gateway?"
-          ]
-        }
+        { "type": "architects-review", "page": 33, "label": "Architect's Review · Deployment Stack", "items": [
+          "Is every layer in the diagram present, or is something missing (no WAF? no CDN? no LB)?",
+          "Where is TLS terminated, and what does internal traffic look like?",
+          "What is the autoscaling policy — min, max, cooldown, trigger metric?",
+          "What runs where — managed services, VMs, containers, serverless?",
+          "Is logging centralised, or scattered across boxes?",
+          "Is there a correlation ID flowing end-to-end?",
+          "Which databases hold which kinds of data — and why those choices?",
+          "What is the failure mode of each layer, and what is the customer impact?",
+          "Can you draw the cache topology on a whiteboard — all five tiers — and name the invalidation strategy for each?",
+          "What's the cache hit ratio at the edge, and what would happen at half that?",
+          "Are there SLOs per service, and is there an error budget the team actually uses?",
+          "Are RED dashboards (rate / errors / duration) in place per service?",
+          "Is distributed tracing wired across service boundaries — or do traces stop at the gateway?",
+          "Are alerts on symptoms (user-visible) rather than causes (resource-level)?"
+        ] }
       ]
     }
   ]

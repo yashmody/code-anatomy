@@ -1,0 +1,152 @@
+{
+  "frameworkAddress": "code.o",
+  "title": "Operations & Martech",
+  "tag": "PM, Campaigns, Stakeholders, Go-Live, SEO & GEO",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The full operational envelope around a digital project — PM cadences, campaign phases, stakeholder risk patterns, go-live gates, and search readiness",
+    "<strong>Why it matters:</strong> Engineering quality is invisible at go-live if the operational layer fails; a flawless build ships to nobody if DNS, stakeholders, or SEO readiness are mismanaged",
+    "Stakeholder expectation management is a design discipline — the same risk patterns (scope creep, late arrivals, silent disagreements) recur on every large engagement",
+    "SEO readiness is a pre-launch gate, not a post-launch audit — crawl budget, canonicals, and redirect maps must be resolved before DNS cut-over, not after",
+    "GEO (Generative Engine Optimisation) is additive to SEO — structured data and answer-ready content blocks serve both traditional search rankings and AI citation engines simultaneously"
+  ],
+  "sections": [
+    {
+      "id": "code.o.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "O", "html": " of CODE is where strategy becomes operational reality. It's the cadence of work — how a campaign moves from idea to live, who signs off, what tools support each step. PMs and Delivery Leads own this layer; architects need to understand it well enough to know where engineering plugs into it." },
+        { "type": "diagram", "page": 1, "render": "flow", "title": "Go-Live Sign-off Chain", "steps": [
+          { "label": "Eng", "variant": "ochre" },
+          { "label": "QA", "variant": "ochre" },
+          { "label": "SEO", "variant": "ochre" },
+          { "label": "Legal", "variant": "ochre" },
+          { "label": "Stakeholder", "variant": "ochre" },
+          { "label": "Live · DNS cut-over", "variant": "alt" }
+        ] },
+        { "type": "notes", "page": 1, "items": [
+          "↳ Each gate is a named owner with a sign-off SLA · no gate skips · Live is the DNS cut-over, with TTL lowered 48h in advance"
+        ] },
+        { "type": "callout", "page": 1, "variant": "why", "html": "Campaign management requires an architect at the table. Campaign dates drive infrastructure scaling decisions — CDN pre-warming schedules, cache TTL reduction windows, autoscale thresholds, and load test timing are all campaign inputs. A PM who books a campaign launch without the architect knowing means the infrastructure isn't ready for the traffic spike that campaign will generate." },
+        { "type": "callout", "page": 1, "variant": "tip", "html": "DEPT® field pattern — the \"T-minus board\": a shared Confluence page updated daily in the final two weeks, showing every open item by owner and date. Reduces status-meeting time by 60% because status is always current and visible. Every outstanding item has one owner; nothing is \"team\" or \"TBD\" on a T-minus board." },
+        { "type": "callout", "page": 1, "variant": "pitfall", "html": "The most common go-live failure is DNS TTL not reduced 48 hours in advance. A TTL of 3600 on launch day means half your users see the old site for an hour after cut-over. Reduce TTL to 300 two days before the switch; restore it after cut-over is confirmed and stable." }
+      ]
+    },
+    {
+      "id": "code.o.pm",
+      "title": "Project management",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "1 · Project management" },
+        { "type": "prose", "page": 2, "html": "Four disciplines hold a project together. They are mundane, repetitive, and the single biggest predictor of whether the team will finish — separate from anything about engineering quality." },
+        { "type": "cardgrid", "page": 2, "columns": 4, "cards": [
+          { "eyebrow": "Sync", "title": "DSM · Daily Stand-up", "body": "15-minute daily ritual. Each person answers three questions — <em>what I did yesterday, what I'll do today, what's blocking me</em>. Purpose is surfacing blockers fast, not status reporting." },
+          { "eyebrow": "Tooling", "title": "Workflow management", "body": "Where work lives across its lifecycle — backlog, in progress, review, blocked, done. <code>Jira</code> (mature, enterprise) and <code>ProofHub</code> (lighter, agency-friendly) are the common picks. The tool isn't the discipline; the workflow definition is." },
+          { "eyebrow": "Authority", "title": "Governance", "body": "Decision rights (who can approve what), escalation paths (when stuck, who breaks the tie), change control (how scope changes get reviewed), and status reporting cadence." },
+          { "eyebrow": "Ownership", "title": "RACI", "body": "<b>R</b>esponsible does the work · <b>A</b>ccountable owns the outcome (one person only, always) · <b>C</b>onsulted gives input before · <b>I</b>nformed is told after. Fill it in for every key activity; hang the matrix where everyone can see." }
+        ] }
+      ]
+    },
+    {
+      "id": "code.o.campaigns",
+      "title": "Campaign management — planning to measure",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "2 · Campaign management — planning to measure" },
+        { "type": "prose", "page": 3, "html": "Every campaign flows through the same five phases. The work products differ by industry; the phases don't." },
+        { "type": "diagram", "page": 3, "render": "flow", "steps": [
+          { "label": "Plan", "variant": "ochre" },
+          { "label": "Build", "variant": "ochre" },
+          { "label": "Launch", "variant": "alt" },
+          { "label": "Measure", "variant": "ochre" },
+          { "label": "Iterate" }
+        ] },
+        { "type": "notes", "page": 3, "items": [
+          "<b>Plan</b> — brief, audience, objectives, KPIs, budget, timeline, success criteria. If you can't write these on one page, you don't have a campaign yet.",
+          "<b>Build</b> — creative production, content, landing pages, tech setup, QA, dry-run. The phase with the most opinions per square metre.",
+          "<b>Launch</b> — go-live checklist, comms to stakeholders, monitoring setup. The point of no return.",
+          "<b>Measure</b> — daily checks in week one, weekly thereafter; attribution and contribution analysis.",
+          "<b>Iterate</b> — optimise the live campaign (A/B tests, audience refinement) and document learnings <em>before</em> the next plan starts."
+        ] }
+      ]
+    },
+    {
+      "id": "code.o.stakeholders",
+      "title": "Stakeholder expectation management",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "3 · Stakeholder expectation management" },
+        { "type": "prose", "page": 4, "html": "The most undervalued discipline in delivery. A technically perfect project with mismanaged expectations is a failed project. A technically average project with managed expectations is a success." },
+        { "type": "heading", "page": 4, "html": "PRINCIPLES" },
+        { "type": "notes", "page": 4, "items": [
+          "<b>Surface assumptions early</b> — what stakeholders <em>think</em> they're getting vs what they're getting. The gap closes only when named out loud.",
+          "<b>Define scope explicitly</b> — <em>in, out, stretch</em> — and write it down. Verbal scope evaporates by week three.",
+          "<b>Set the cadence</b> — weekly status, escalation criteria, who hears what when. Predictable rhythm beats brilliant ad-hoc updates.",
+          "<b>The triangle</b> — <em>time, cost, quality</em> — pick two; the third gives. Make stakeholders make the choice.",
+          "<b>Write decisions down</b> — hallway conversations evaporate; written decisions hold the team accountable to themselves.",
+          "<b>Show progress, not just problems</b> — bring two options to status meetings, not one complaint."
+        ] },
+        { "type": "heading", "page": 4, "html": "RISK PATTERNS TO WATCH" },
+        { "type": "notes", "page": 4, "items": [
+          "<b>Scope creep</b> — every \"small addition\" compounds. The fourth small addition is the one that breaks the schedule.",
+          "<b>Late stakeholders</b> — people who arrive late always have opinions. Find them early; you don't get to ignore them.",
+          "<b>Politics</b> — power dynamics shape what gets prioritised. Name them privately, navigate them deliberately.",
+          "<b>Silent disagreements</b> — what isn't said in the meeting shows up on the deploy weekend."
+        ] }
+      ]
+    },
+    {
+      "id": "code.o.golive",
+      "title": "Go-live readiness",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "4 · Go-live readiness" },
+        { "type": "prose", "page": 5, "html": "Two distinct readiness disciplines depending on the platform. Each has its own playbook — covered in future deep-dives:" },
+        { "type": "cardgrid", "page": 5, "columns": 2, "cards": [
+          { "eyebrow": "Platform", "title": "AEM EDS readiness", "body": "Edge Delivery Services projects carry their own pre-flight checklist — document-based authoring, edge cache strategy, performance benchmarks, content fragment migration. Detailed deep-dive to follow." },
+          { "eyebrow": "Platform", "title": "Adobe Commerce readiness", "body": "Commerce go-lives have their own discipline — catalog and PIM migration, payment and tax integrations, checkout load testing, fulfilment cutover. Detailed deep-dive to follow." }
+        ] },
+        { "type": "notes", "page": 5, "items": [
+          "↳ The point at this layer: <em>name the readiness discipline that applies, schedule it in the plan, don't conflate it with general QA</em>."
+        ] }
+      ]
+    },
+    {
+      "id": "code.o.seo-geo",
+      "title": "SEO & GEO readiness and expectation setting",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "5 · SEO &amp; GEO readiness and expectation setting" },
+        { "type": "prose", "page": 6, "html": "Two adjacent disciplines, one mature, one brand-new. Both are easy to over-promise on and hard to deliver on." },
+        { "type": "diagram", "page": 6, "render": "versus", "columns": [
+          { "label": "SEO · Search Engine Optimization", "body": "The established discipline — rankings on Google, Bing, etc. Three pillars:<ul class=\"notes\" style=\"margin-top:6px\"><li><b>Technical SEO</b> — sitemaps, structured data, performance, mobile, crawlability.</li><li><b>Content SEO</b> — keyword strategy, topical authority, depth.</li><li><b>Off-page SEO</b> — backlinks, mentions, domain authority.</li></ul>" },
+          { "label": "GEO · Generative Engine Optimization", "tone": "good", "body": "The new discipline — optimising for AI answer engines (ChatGPT, Perplexity, Claude, Google AI Overviews). Focus shifts:<ul class=\"notes\" style=\"margin-top:6px\"><li><b>From \"rank\" to \"be cited\"</b> — appear in the AI's answer, with a source link back.</li><li><b>Levers</b> — structured content with clear claims, source links, freshness signals, schema markup, brand mentions across the web.</li><li><b>Maturity</b> — no playbook is fully proven yet. Frame as experiments, not commitments.</li></ul>" }
+        ] },
+        { "type": "heading", "page": 6, "html": "EXPECTATION SETTING — THE NON-NEGOTIABLE" },
+        { "type": "notes", "page": 6, "items": [
+          "<b>SEO results take 3–6 months minimum</b> to materialise — set this up front, in writing, signed off.",
+          "<b>GEO is too new for confident promises</b> — frame work as experiments, measure citation rate and inclusion in AI answers, share learning as it accrues.",
+          "<b>Define success before work starts</b> — rankings? organic traffic? conversions? citations? Pick the metric, pick the target, pick the timeline.",
+          "<b>Educate on what's controllable</b> — technical hygiene and content are; algorithm changes and competitor moves aren't."
+        ] }
+      ]
+    },
+    {
+      "id": "code.o.review",
+      "title": "Architect's Review",
+      "order": 6,
+      "blocks": [
+        { "type": "architects-review", "page": 7, "label": "Architect's Review · Ops & Martech", "items": [
+          "Is there a documented workflow per work type, or does each team improvise?",
+          "Does RACI exist for the critical activities, with named people?",
+          "Is the campaign lifecycle managed end-to-end in one tool, or scattered across five?",
+          "Is stakeholder communication on a defined cadence, with named owners?",
+          "Is go-live readiness a checklist or a vibe?",
+          "Are SEO and GEO expectations realistic, documented, and signed off?",
+          "Where are the biggest workflow bottlenecks — and who owns fixing them?"
+        ] }
+      ]
+    }
+  ]
+}
