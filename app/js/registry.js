@@ -13,6 +13,7 @@ import { architectsReview } from './blocks/architectsReview.js';
 import { cardgrid } from './blocks/cardgrid.js';
 import { chips } from './blocks/chips.js';
 import { notes } from './blocks/notes.js';
+import { map } from './blocks/map.js';
 import { esc } from './util/dom.js';
 
 import { post } from './feed/post.js';
@@ -35,7 +36,8 @@ export const blockRenderers = {
   'architects-review': architectsReview,
   cardgrid,
   chips,
-  notes
+  notes,
+  map
 };
 
 function fallback(block) {

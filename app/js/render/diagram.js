@@ -62,6 +62,8 @@ export function renderDiagram(spec) {
       return `<div class="arch-diagram">${title}<img src="${esc(spec.url || '')}" alt="${esc(spec.alt || '')}" loading="lazy"></div>`;
     case 'nodes':
       return renderNodes(spec, title);
+    case 'flow':
+      return renderFlow(spec, title);
     default:
       return `<div class="arch-diagram"><pre>[unsupported diagram: ${esc(spec.render)}]</pre></div>`;
   }
@@ -96,4 +98,16 @@ function renderNodes(spec, title) {
     return `<div class="arch-row">${nodes}</div>`;
   }).join('<div class="arch-down"></div>');
   return `<div class="arch-diagram">${title}${rows}</div>`;
+}
+
+// Linear flow (.flow > .node→.sep→.node) — the localization-workflow / approval-states style.
+// steps: [{ label, variant? }] ; variant -> ochre / alt.
+function renderFlow(spec, title) {
+  const steps = spec.steps || [];
+  const inner = steps.map((s, i) => {
+    const variant = s.variant ? ' ' + esc(s.variant) : '';
+    const sep = i < steps.length - 1 ? '<span class="sep">→</span>' : '';
+    return `<span class="node${variant}">${esc(s.label || '')}</span>${sep}`;
+  }).join('');
+  return `${title}<div class="flow">${inner}</div>`;
 }

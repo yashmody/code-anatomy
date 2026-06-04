@@ -5,7 +5,7 @@ import { renderRead } from './modes/read.js';
 import { renderFeed } from './modes/feed.js';
 
 const BASE = '../content-architecture';            // app/ reads from its sibling data package
-const SECTION_FILES = ['coder-c.json', 'coder-d.json', 'coder-r.json'];   // extracted chapters (Scroll orders them by framework)
+const SECTION_FILES = ['coder-c.json', 'coder-d.json', 'coder-r.json', 'anatomy-m00.json'];   // extracted chapters (Scroll orders them by framework)
 const THEME_KEY = 'anatomy-app-theme';             // per-page theme key
 
 const view = document.getElementById('view');

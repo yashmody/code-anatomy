@@ -1,0 +1,34 @@
+{
+  "frameworkAddress": "anatomy.m00",
+  "title": "The Mental Model",
+  "tag": "Module 00 · The Spine",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The single unifying question behind every line of code, and the five component primitives that answer it",
+    "<strong>Why it matters:</strong> Architects who cannot articulate which question a piece of code answers cannot review, estimate, or delegate it to an AI agent",
+    "When / where / what / how / who — each maps to a concrete primitive: Event, Function, Logic, Variable, Model",
+    "Every feature request is answerable with this model — if a requirement cannot be mapped to one question, it is underspecified",
+    "This is the pre-reading for all 13 modules — return to it when a later module feels abstract"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m00.spine",
+      "title": "Every line of code answers a question",
+      "order": 0,
+      "blocks": [
+        { "type": "callout", "page": 1, "variant": "why", "html": "An LLM answering \"write a carousel component\" without knowing which of the five questions it answers will produce plausible but architecturally incoherent output. The mental model is the architect's frame for prompt authoring, code review, and AI delegation decisions." },
+        { "type": "lead", "page": 1, "html": "You never really write \"code.\" You answer one of a handful of questions, and each answer has a natural home. Memorise this map and you'll always know <em>where</em> a thing belongs before you write it." },
+        { "type": "map", "page": 1, "rows": [
+          { "q": "When does it happen?", "c": "a Trigger / Event" },
+          { "q": "Where do I write it?", "c": "a Function" },
+          { "q": "What do I write?", "c": "Logic" },
+          { "q": "How do I store it?", "c": "Variables" },
+          { "q": "How do I group my data?", "c": "a Model" },
+          { "q": "What should it actually do?", "c": "a Function" },
+          { "q": "Who decides when to do it?", "c": "an Event → a Controller" }
+        ] },
+        { "type": "prose", "page": 1, "html": "↑ This single mapping is the seed of everything below — and of the MVC-ish split you'll meet in Module 07." }
+      ]
+    }
+  ]
+}

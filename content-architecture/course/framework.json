@@ -36,18 +36,19 @@
       "blurb": "CODER's C telescopes one more time — into the vocabulary of code itself, from the primitives a junior writes to the framework an architect governs.",
       "modules": [
         { "id": "anatomy.m00", "name": "The Mental Model", "order": 0 },
-        { "id": "anatomy.m01", "name": "Design Patterns", "order": 1 },
-        { "id": "anatomy.m02", "name": "The Primitives", "order": 2 },
-        { "id": "anatomy.m03", "name": "State", "order": 3 },
-        { "id": "anatomy.m04", "name": "Events & Dispatcher", "order": 4 },
-        { "id": "anatomy.m05", "name": "Models", "order": 5 },
-        { "id": "anatomy.m06", "name": "Collections", "order": 6 },
-        { "id": "anatomy.m07", "name": "Jobs & Queues", "order": 7 },
-        { "id": "anatomy.m08", "name": "Components", "order": 8 },
-        { "id": "anatomy.m09", "name": "Functions & Commands", "order": 9 },
-        { "id": "anatomy.m10", "name": "Contracts", "order": 10 },
-        { "id": "anatomy.m11", "name": "Configuration", "order": 11 },
-        { "id": "anatomy.m12", "name": "Stalwart — the reference", "order": 12 }
+        { "id": "anatomy.m01", "name": "Design Patterns 101", "order": 1 },
+        { "id": "anatomy.m01b", "name": "Patterns 201 · Deep Dive", "order": 2 },
+        { "id": "anatomy.m02", "name": "The Primitives", "order": 3 },
+        { "id": "anatomy.m02b", "name": "Components · The Unit of Reuse", "order": 4 },
+        { "id": "anatomy.m03", "name": "Functions · 3 Types", "order": 5 },
+        { "id": "anatomy.m04", "name": "Events & the Generic Dispatcher", "order": 6 },
+        { "id": "anatomy.m05", "name": "State", "order": 7 },
+        { "id": "anatomy.m06", "name": "Collections", "order": 8 },
+        { "id": "anatomy.m07", "name": "Jobs & Queues", "order": 9 },
+        { "id": "anatomy.m08", "name": "Configuration", "order": 10 },
+        { "id": "anatomy.m09", "name": "Code Structuring", "order": 11 },
+        { "id": "anatomy.m10", "name": "Contracts · Bridge", "order": 12 },
+        { "id": "anatomy.m12", "name": "Stalwart — the reference", "order": 13 }
       ]
     },
     {

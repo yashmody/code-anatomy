@@ -62,8 +62,11 @@
           "then": { "required": ["items"], "properties": { "items": { "type": "array", "items": { "type": "string" } } } } },
         { "if": { "properties": { "type": { "const": "notes" } } },
           "then": { "required": ["items"], "properties": { "items": { "type": "array", "items": { "type": "string" } } } } },
+        { "if": { "properties": { "type": { "const": "map" } } },
+          "then": { "required": ["rows"], "properties": { "title": { "type": "string" }, "rows": { "type": "array", "items": {
+            "type": "object", "required": ["q", "c"], "properties": { "q": { "type": "string" }, "c": { "type": "string" } } } } } } },
         { "if": { "properties": { "type": { "const": "diagram" } } },
-          "then": { "required": ["render"], "properties": { "render": { "enum": ["ascii", "mermaid", "table", "versus", "nodes"] }, "title": { "type": "string" } } } },
+          "then": { "required": ["render"], "properties": { "render": { "enum": ["ascii", "mermaid", "table", "versus", "nodes", "flow"] }, "title": { "type": "string" } } } },
         { "if": { "properties": { "type": { "const": "cardgrid" } } },
           "then": { "required": ["cards"], "properties": { "columns": { "type": "integer", "minimum": 2, "maximum": 6 }, "cards": { "type": "array", "items": {
             "type": "object", "required": ["title"], "properties": { "eyebrow": { "type": "string" }, "title": { "type": "string" }, "body": { "type": "string" } } } } } } }
