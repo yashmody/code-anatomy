@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Anatomy of Code — Renderer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<!-- monolith design system, COPIED (monolith stays frozen & live) -->
+<link rel="stylesheet" href="css/monolith.css">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <header class="app-bar">
+    <span class="app-brand">DEPT® · Anatomy of Code</span>
+    <nav class="mode-tabs">
+      <a class="mode-tab" data-mode="scroll" href="#/scroll">Scroll</a>
+      <a class="mode-tab" data-mode="read" href="#/read">Read</a>
+      <a class="mode-tab" data-mode="feed" href="#/feed">Feed</a>
+    </nav>
+    <button class="theme-btn" type="button" onclick="toggleAppTheme()"><span id="themeLabel">Dark</span></button>
+  </header>
+  <main id="view" class="view"></main>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

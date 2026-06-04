@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Equivalence Harness — coder.d</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/monolith.css">
+<link rel="stylesheet" href="../css/app.css">
+<style>
+  body { padding: 0 0 120px; }
+  .eq-head { padding: 20px 28px; border-bottom: 1px solid var(--rule); background: var(--paper); position: sticky; top: 0; z-index: 5; }
+  .eq-head h1 { font-family: var(--serif); font-size: 24px; color: var(--ink); }
+  .eq-summary { font-family: var(--mono); font-size: 13px; margin-top: 6px; }
+  .eq-section-label { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ochre-deep); padding: 24px 28px 4px; }
+  .eq-row { padding: 8px 28px 22px; border-bottom: 1px solid var(--rule-soft); }
+  .eq-name { font-family: var(--mono); font-size: 12px; letter-spacing: .04em; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
+  .eq-status { font-weight: 700; padding: 2px 8px; border: 1px solid; }
+  .eq-status.pass { color: #1a7f37; border-color: #1a7f37; }
+  .eq-status.diff { color: #d1242f; border-color: #d1242f; }
+  .eq-status.brand { color: var(--ochre-deep); border-color: var(--ochre-deep); }
+  .eq-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .eq-cols.single { grid-template-columns: 1fr; }
+  .eq-col-label { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--ink-faint); margin-bottom: 8px; }
+  .eq-render { border: 1px dashed var(--rule); padding: 14px; }
+  .eq-detail { font-family: var(--mono); font-size: 10.5px; color: var(--ink-faint); margin-top: 8px; white-space: pre-wrap; word-break: break-all; }
+  @media (max-width: 760px) { .eq-cols { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+  <div class="eq-head">
+    <h1>Per-component equivalence · coder.d</h1>
+    <div class="eq-summary" id="summary">running…</div>
+  </div>
+  <div class="eq-section-label">Monolith-equivalent components (renderer ↔ live monolith, structurally diffed)</div>
+  <div id="pairs"></div>
+  <div class="eq-section-label">New on-brand components (no monolith equivalent — brand check)</div>
+  <div id="news"></div>
+
+<script type="module">
+import { monolithRefs } from './monolith-refs.js';
+import { renderBlock } from '../js/registry.js';
+import { renderScanBox } from '../js/render/chapter.js';
+import { runMermaid } from '../js/render/diagram.js';
+
+// ---- fixtures: real coder.d blocks paired with the monolith ref + the element to diff ----
+const pairs = [
+  { name: 'scan-box', sel: '.scan-box', ref: 'scan-box',
+    html: renderScanBox([
+      'Ten layers carry a request from the browser to the database and back',
+      'Caching is the single biggest performance lever and the single biggest source of subtle correctness bugs',
+      'The hard part of caching is invalidation: TTL vs purge vs versioned URLs' ]) },
+  { name: 'lead', sel: '.lead', ref: 'lead',
+    html: renderBlock({ type: 'lead', html: 'Caching is the single largest performance lever in a production system — and the single largest source of subtle correctness bugs.' }) },
+  { name: 'heading (h4)', sel: 'h4', ref: 'h4',
+    html: renderBlock({ type: 'heading', html: 'Invalidation — the hard part' }) },
+  { name: 'callout · why', sel: '.callout-why', ref: 'callout-why',
+    html: renderBlock({ type: 'callout', variant: 'why', html: "If you can't draw the cache topology of your production system on a whiteboard in 60 seconds, you don't know where your bugs are going to come from." }) },
+  { name: 'callout · tip', sel: '.callout-tip', ref: 'callout-tip',
+    html: renderBlock({ type: 'callout', variant: 'tip', html: 'DEPT® field pattern — use surrogate cache keys for content-type-based invalidation instead of URL-based purges.' }) },
+  { name: 'callout · pitfall', sel: '.callout-pitfall', ref: 'callout-pitfall',
+    html: renderBlock({ type: 'callout', variant: 'pitfall', html: 'Teams that purge one tier and forget the next ship stale content that lives exactly one layer down — invisible until a user reports it.' }) },
+  { name: 'callout · before-after', sel: '.callout-before-after', ref: 'callout-before-after',
+    html: renderBlock({ type: 'callout', variant: 'before-after', html: '<div class="ba-grid"><div><div class="ba-col-label">Before</div><p>Manual cache purge on every publish; misses cause stale-content incidents.</p></div><div><div class="ba-col-label">After</div><p>Automated surrogate-key invalidation on publish; zero manual steps, full audit log.</p></div></div>' }) },
+  { name: 'cardgrid (.cards)', sel: '.cards', ref: 'cards',
+    html: renderBlock({ type: 'cardgrid', columns: 3, cards: [
+      { eyebrow: 'LOGS', title: 'What happened, in order', body: 'One line per event. High cardinality, high cost. Best for forensic detail.' },
+      { eyebrow: 'METRICS', title: 'How much, over time', body: 'Counters, gauges, histograms. Low cardinality, cheap to store.' },
+      { eyebrow: 'TRACES', title: 'How one request flowed', body: 'End-to-end path of a single request across services.' } ] }) },
+  { name: 'diagram · versus', sel: '.versus', ref: 'versus',
+    html: renderBlock({ type: 'diagram', render: 'versus', title: 'RED vs USE', columns: [
+      { label: 'RED · per service', body: 'Rate · Errors · Duration. The three numbers every microservice dashboard must show.' },
+      { label: 'USE · per resource', body: 'Utilization · Saturation · Errors. The three numbers that tell you a resource is healthy.' } ] }) },
+  { name: 'architects-review', sel: '.arch-review', ref: 'arch-review',
+    html: renderBlock({ type: 'architects-review', label: "Architect's Review · Deployment Stack", items: [
+      'Is every layer present, or is something missing (no WAF? no CDN? no LB)?',
+      'Where is TLS terminated, and what does internal traffic look like?',
+      'Can you draw the cache topology — all five tiers — and name the invalidation strategy for each?' ] }) },
+  { name: 'chips', sel: '.chips', ref: 'chips',
+    html: renderBlock({ type: 'chips', items: ['Content Inventory', 'Taxonomy', 'Metadata Framework', 'Localization Plan'] }) },
+  { name: 'quote (blockquote)', sel: 'blockquote', ref: 'blockquote',
+    html: renderBlock({ type: 'quote', html: 'Architecture is what humans contribute. Everything else is plumbing the framework can produce.' }) },
+  { name: 'code (.code-ex)', sel: '.code-ex', ref: 'code-ex',
+    html: renderBlock({ type: 'code', lang: 'nginx', code: 'server {\n  listen 443 ssl;\n  server_name www.example.com;\n}' }) }
+];
+
+const news = [
+  { name: 'tierlist', html: renderBlock({ type: 'tierlist', items: [
+    { n: '1', label: 'Browser cache', note: 'Cache-Control · ETag' },
+    { n: '2', label: 'CDN cache', note: 'edge · global' },
+    { n: '3', label: 'App-layer cache', note: 'Dispatcher · reverse proxy' },
+    { n: '4', label: 'Origin cache', note: 'Redis · Memcached' },
+    { n: '5', label: 'Data cache', note: 'DB query · ORM' } ] }) },
+  { name: 'chapter-open · drop-cap', html: renderBlock({ type: 'chapter-open', drop: 'D', html: 'eployment is where code stops being an idea and becomes a system someone can break at 3am.' }) },
+  { name: 'diagram · mermaid (lazy-loaded)', html: renderBlock({ type: 'diagram', render: 'mermaid', source: 'graph TD; Browser-->CDN; CDN-->Dispatcher; Dispatcher-->Redis; Redis-->DB' }) },
+  { name: 'diagram · ascii', html: renderBlock({ type: 'diagram', render: 'ascii', source: 'Browser -> CDN -> Dispatcher -> Redis -> DB' }) },
+  { name: 'diagram · table', html: renderBlock({ type: 'diagram', render: 'table', title: 'Cache tiers at a glance', headers: ['Tier', 'Invalidation'], rows: [['Browser', 'Cache-Control'], ['CDN', 'surrogate key']] }) }
+];
+
+// ---- structural diff: same root tag+classes, and renderer's class vocabulary ⊆ monolith's ----
+function parse(html) { const d = document.createElement('div'); d.innerHTML = html; return d; }
+function rootSig(el) {
+  const cls = (el.getAttribute('class') || '').trim().split(/\s+/).filter(Boolean).sort().join('.');
+  return el.tagName.toLowerCase() + (cls ? '.' + cls : '');
+}
+function classSet(el) {
+  const set = new Set();
+  el.querySelectorAll('[class]').forEach((n) => n.getAttribute('class').trim().split(/\s+/).forEach((c) => c && set.add(c)));
+  (el.getAttribute('class') || '').trim().split(/\s+/).forEach((c) => c && set.add(c));
+  return set;
+}
+function subset(a, b) { for (const x of a) if (!b.has(x)) return x; return null; }
+
+let pass = 0, diff = 0;
+const pairsEl = document.getElementById('pairs');
+for (const p of pairs) {
+  const rEl = parse(p.html).querySelector(p.sel);
+  const mEl = parse(monolithRefs[p.ref] || '').querySelector(p.sel) || parse(monolithRefs[p.ref] || '').firstElementChild;
+  let status = 'diff', detail = '';
+  if (rEl && mEl) {
+    const rs = rootSig(rEl), ms = rootSig(mEl);
+    const missing = subset(classSet(rEl), classSet(mEl)); // class in renderer not in monolith
+    if (rs === ms && !missing) { status = 'pass'; pass++; }
+    else { diff++; detail = (rs !== ms ? `root: renderer=${rs}  monolith=${ms}\n` : '') + (missing ? `renderer uses class not in monolith: .${missing}` : ''); }
+  } else { diff++; detail = `could not resolve ${!rEl ? 'renderer' : 'monolith'} element via ${p.sel}`; }
+
+  const row = document.createElement('div');
+  row.className = 'eq-row';
+  row.innerHTML =
+    `<div class="eq-name"><span>${p.name}</span><span class="eq-status ${status}">${status.toUpperCase()}</span></div>` +
+    `<div class="eq-cols">` +
+      `<div><div class="eq-col-label">renderer</div><div class="eq-render">${p.html}</div></div>` +
+      `<div><div class="eq-col-label">monolith</div><div class="eq-render">${monolithRefs[p.ref] || '(missing ref)'}</div></div>` +
+    `</div>` + (detail ? `<div class="eq-detail">${detail}</div>` : '');
+  pairsEl.appendChild(row);
+}
+
+const newsEl = document.getElementById('news');
+for (const n of news) {
+  const row = document.createElement('div');
+  row.className = 'eq-row';
+  row.innerHTML =
+    `<div class="eq-name"><span>${n.name}</span><span class="eq-status brand">BRAND</span></div>` +
+    `<div class="eq-cols single"><div><div class="eq-render">${n.html}</div></div></div>`;
+  newsEl.appendChild(row);
+}
+
+document.getElementById('summary').innerHTML =
+  `<b>${pass} PASS · ${diff} DIFF</b> across ${pairs.length} monolith-equivalent components · ${news.length} new components (brand check)`;
+window.__eq = { pass, diff, total: pairs.length };
+runMermaid(document.body);
+</script>
+</body>
+</html>
