@@ -1,0 +1,77 @@
+{
+  "version": "1.0",
+  "title": "The Anatomy of Code — CODE-CODER Framework",
+  "rings": [
+    {
+      "id": "code",
+      "name": "CODE",
+      "subtitle": "The engagement",
+      "blurb": "Four domains hold every digital build at the outer ring. Lose track of any one and the delivery wobbles.",
+      "letters": [
+        { "id": "code.c", "letter": "C", "name": "Content", "desc": "Where it comes from, who owns it, how it moves", "order": 1 },
+        { "id": "code.o", "letter": "O", "name": "Operations & Martech", "desc": "How work moves, which tools, go-live", "order": 2 },
+        { "id": "code.d", "letter": "D", "name": "Design & Data", "desc": "Behaviour, analytics, the platform memory", "order": 3 },
+        { "id": "code.e", "letter": "E", "name": "Engineering", "desc": "Business intent becomes working software", "order": 4, "opensInto": "coder" }
+      ]
+    },
+    {
+      "id": "coder",
+      "name": "CODER",
+      "subtitle": "Inside engineering",
+      "nestedUnder": "code.e",
+      "blurb": "Zoom into the E of CODE and a second framework unfolds — five letters for keeping the build itself honest.",
+      "letters": [
+        { "id": "coder.c", "letter": "C", "name": "Code", "desc": "The build itself — patterns, state, contracts", "order": 1, "opensInto": "anatomy" },
+        { "id": "coder.o", "letter": "O", "name": "Optimization & Quality", "desc": "Fast enough, correct, and for everyone", "order": 2 },
+        { "id": "coder.d", "letter": "D", "name": "Deployment", "desc": "Where code lives and how it gets there", "order": 3 },
+        { "id": "coder.e", "letter": "E", "name": "External Integrations", "desc": "Auth, payments, webhooks — the perimeter", "order": 4 },
+        { "id": "coder.r", "letter": "R", "name": "Release Management", "desc": "When things go live — and what rolls back", "order": 5 }
+      ]
+    },
+    {
+      "id": "anatomy",
+      "name": "Anatomy of Code",
+      "subtitle": "The primitives, telescoped",
+      "nestedUnder": "coder.c",
+      "blurb": "CODER's C telescopes one more time — into the vocabulary of code itself, from the primitives a junior writes to the framework an architect governs.",
+      "modules": [
+        { "id": "anatomy.m00", "name": "The Mental Model", "order": 0 },
+        { "id": "anatomy.m01", "name": "Design Patterns", "order": 1 },
+        { "id": "anatomy.m02", "name": "The Primitives", "order": 2 },
+        { "id": "anatomy.m03", "name": "State", "order": 3 },
+        { "id": "anatomy.m04", "name": "Events & Dispatcher", "order": 4 },
+        { "id": "anatomy.m05", "name": "Models", "order": 5 },
+        { "id": "anatomy.m06", "name": "Collections", "order": 6 },
+        { "id": "anatomy.m07", "name": "Jobs & Queues", "order": 7 },
+        { "id": "anatomy.m08", "name": "Components", "order": 8 },
+        { "id": "anatomy.m09", "name": "Functions & Commands", "order": 9 },
+        { "id": "anatomy.m10", "name": "Contracts", "order": 10 },
+        { "id": "anatomy.m11", "name": "Configuration", "order": 11 },
+        { "id": "anatomy.m12", "name": "Stalwart — the reference", "order": 12 }
+      ]
+    },
+    {
+      "id": "adobe",
+      "name": "The Adobe Stack",
+      "subtitle": "Part II — platform-specific",
+      "blurb": "The CODE-CODER framework is platform-agnostic; this ring is not. The Adobe Experience Cloud as DEPT® practises it.",
+      "letters": [
+        { "id": "adobe.cm", "letter": "CM", "name": "Cloud Manager", "desc": "AEMaaCS pipeline mechanics", "order": 1 },
+        { "id": "adobe.aa", "letter": "AA", "name": "Adobe Analytics", "desc": "Measurement, processing rules, VISTA", "order": 2 },
+        { "id": "adobe.cja", "letter": "CJA", "name": "Customer Journey Analytics", "desc": "Cross-channel, person-based", "order": 3 },
+        { "id": "adobe.ajo", "letter": "AJO", "name": "Adobe Journey Optimizer", "desc": "Orchestration, XDM, channels", "order": 4 },
+        { "id": "adobe.camp", "letter": "CAMP", "name": "Adobe Campaign", "desc": "Outbound execution at scale", "order": 5 }
+      ]
+    },
+    {
+      "id": "ai",
+      "name": "AI-Native Development",
+      "subtitle": "Part III",
+      "blurb": "Governing AI-generated software through architecture.",
+      "letters": [
+        { "id": "ai.bmad", "letter": "BMAD", "name": "BMAD", "desc": "Brief-method architect-driven development", "order": 1 },
+        { "id": "ai.gov", "letter": "GOV", "name": "AI Governance", "desc": "Contracts, review, deployment ownership", "order": 2 }
+      ]
+    }
+  ]
+}

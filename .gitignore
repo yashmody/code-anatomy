@@ -34,3 +34,6 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# content-architecture python venv (do not commit)
+content-architecture/venv/
