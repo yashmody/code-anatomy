@@ -1,0 +1,110 @@
+{
+  "frameworkAddress": "anatomy.m07",
+  "title": "Jobs & Queues",
+  "tag": "Module 07 · The Producer/Consumer Pattern",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The Producer/Consumer pattern in practice — when to use a queue instead of a direct call, how jobs are structured, and why background processing is essential for resilient UIs",
+    "<strong>Why it matters:</strong> Any operation that takes more than 200ms and does not need to block the UI is a queue candidate — teams that skip queues build brittle synchronous chains that break under load",
+    "Queues decouple rate — the producer fires at user speed, the consumer fires at infrastructure speed — the correct model for bulk imports, email sends, and report generation",
+    "A job without a retry strategy is a fire-and-forget operation dressed up as reliable processing"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m07.opener",
+      "title": "Jobs & Queues",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "S",
+          "html": "ome work shouldn't make the user wait — sending mail, resizing an image, syncing a third party. Instead of doing it inline, you <strong>enqueue a job</strong> and let a worker drain the queue on its own time. Producer / Consumer, in practice."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m07.producer-consumer",
+      "title": "Producer, queue, consumer",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "diagram",
+          "page": 2,
+          "render": "mermaid",
+          "source": "flowchart LR\n    A[User Action] --> B[Producer]\n    B --> C[(Queue)]\n    C --> D[Consumer]\n    D --> E[Result]\n    D --fail--> C\n    linkStyle 4 stroke:#e05252,stroke-width:2px\n    C:::queueStyle\n    classDef queueStyle fill:#f5a623,color:#000"
+        },
+        {
+          "type": "diagram",
+          "page": 2,
+          "render": "flow",
+          "steps": [
+            { "label": "producer" },
+            { "label": "queue", "variant": "ochre" },
+            { "label": "worker", "variant": "alt" },
+            { "label": "done" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m07.why",
+      "title": "Why background processing matters",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "callout",
+          "page": 3,
+          "variant": "why",
+          "html": "Queues matter for campaign sends. A bulk email send to 500,000 recipients cannot run synchronously in a web request. It would time out in 30 seconds and leave no trace of how far it progressed. Queue-based architecture makes cancellation possible, progress visible, retry automatic, and failures auditable."
+        },
+        {
+          "type": "callout",
+          "page": 3,
+          "variant": "pitfall",
+          "html": "Infinite retry without backoff. A failed job that retries immediately at full rate hammers the downstream service, often triggering rate limiting or a cascade failure that takes the whole queue down. Implement exponential backoff with jitter as the default — not as a later optimisation."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m07.why-bother",
+      "title": "Why bother",
+      "order": 3,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 4,
+          "html": "Why bother"
+        },
+        {
+          "type": "notes",
+          "page": 4,
+          "items": [
+            "<b>Async</b> — the request returns now; the work finishes later.",
+            "<b>Retries</b> — a failed job goes back on the queue instead of vanishing.",
+            "<b>Throttling &amp; order</b> — control how fast and in what sequence work runs."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m07.review",
+      "title": "Architect's Review",
+      "order": 4,
+      "blocks": [
+        {
+          "type": "architects-review",
+          "page": 5,
+          "label": "Architect's Review · Jobs & Queues",
+          "items": [
+            "Which work is async vs sync — and on what basis?",
+            "What is the retry policy per job type?",
+            "How are job failures made visible (logs, alerts, dashboards)?",
+            "Are queues bounded, and what happens at the bound?",
+            "Who is paged when the queue grows?"
+          ]
+        }
+      ]
+    }
+  ]
+}

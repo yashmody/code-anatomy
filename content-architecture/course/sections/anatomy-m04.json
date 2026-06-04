@@ -1,0 +1,276 @@
+{
+  "frameworkAddress": "anatomy.m04",
+  "title": "Events & the Generic Dispatcher",
+  "tag": "Module 04 · Events & the Generic Dispatcher",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> how the emit side, receive side, generic dispatcher, bus element, type naming convention, and three-step wiring pattern fit together into a complete, auditable event architecture",
+    "<strong>Why it matters:</strong> uncontrolled event naming is the fastest path to a debugging nightmare in a large application — a naming convention and dispatcher registry make event-driven systems auditable",
+    "The bus element pattern decouples emitters from receivers with zero framework dependency — works in AEM Edge Delivery, vanilla JS, and React alike",
+    "Type naming convention (<code>domain:entity:action</code>) is a governance decision, not a style preference — enforce it in CI with a lint rule",
+    "The dispatcher is the contract enforcement layer — all events pass through it, none bypass it"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m04.opener",
+      "title": "Events & the Generic Dispatcher",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "E",
+          "html": "vents have two halves that never touch each other directly. The <strong>emit</strong> side announces; the <strong>receive</strong> side reacts. A <em>type</em> sits in the middle so the right reaction fires."
+        },
+        {
+          "type": "diagram",
+          "page": 1,
+          "render": "mermaid",
+          "title": "Emit → Bus → Dispatcher → Listener",
+          "source": "sequenceDiagram\n  participant A as Component A\n  participant Bus as Bus Element\n  participant D as Dispatcher\n  participant B as Component B\n\n  A->>Bus: emit(cart:item:added, payload)\n  Bus->>D: received\n  Note over D: validates type against registry\n  D->>B: listener invoked"
+        },
+        {
+          "type": "callout",
+          "page": 1,
+          "variant": "tip",
+          "html": "DEPT® field pattern — maintain an <code>events.registry.js</code> file at project root that exports every event type string as a named constant. Import the constant; never hardcode the string. The file is the registry. A grep for the constant name finds every emitter and every listener."
+        },
+        {
+          "type": "callout",
+          "page": 1,
+          "variant": "pitfall",
+          "html": "Using <code>window</code> as the bus element. Any injected third-party script — analytics tags, chatbots, A/B test frameworks — can listen to or emit on <code>window</code>, leaking internal application state or triggering handlers unexpectedly. Use a dedicated DOM element that third-party scripts cannot reach."
+        },
+        {
+          "type": "heading",
+          "page": 1,
+          "html": "The emit side"
+        },
+        {
+          "type": "diagram",
+          "page": 1,
+          "render": "flow",
+          "steps": [
+            { "label": "dispatch( )" },
+            { "label": "dispatcher", "variant": "ochre" },
+            { "label": "TYPE", "variant": "alt" }
+          ]
+        },
+        {
+          "type": "heading",
+          "page": 1,
+          "html": "The receive side"
+        },
+        {
+          "type": "diagram",
+          "page": 1,
+          "render": "flow",
+          "steps": [
+            { "label": "TYPE", "variant": "alt" },
+            { "label": "handler", "variant": "ochre" },
+            { "label": "listener" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m04.dispatcher",
+      "title": "The Generic Event Dispatcher — in depth",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 2,
+          "html": "The Generic Event Dispatcher — in depth"
+        },
+        {
+          "type": "prose",
+          "page": 2,
+          "html": "The common description is \"build one central dispatcher.\" But <em>how</em> do two genuinely unrelated scripts — in different components, different files, possibly loaded at different times — share that one dispatcher without importing each other?"
+        },
+        {
+          "type": "prose",
+          "page": 2,
+          "html": "The answer is a <strong>stable, semantically appropriate HTML element with a known identity</strong>. Give it a fixed <code>id</code> that is guaranteed to exist on every page. That element becomes the shared wire. Any script that knows the selector can find it and either fire events on it or listen to events on it. The two parties share nothing except that selector — and the element type should make it obvious this wire is not part of the UI."
+        },
+        {
+          "type": "diagram",
+          "page": 2,
+          "render": "versus",
+          "columns": [
+            { "tone": "bad", "label": "Without the bus", "body": "Component A must hold a direct reference to Component B, or walk up the DOM hoping a shared parent catches the bubble. Sender and receiver are coupled — change one, break the other." },
+            { "tone": "good", "label": "With the bus element", "body": "Component A and Component B both know only one thing: <code>#event-bus</code>. Neither knows the other exists. Add or remove listeners with zero changes to the sender." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m04.anchor",
+      "title": "Choosing the right anchor element",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 3,
+          "html": "Choosing the right anchor element"
+        },
+        {
+          "type": "prose",
+          "page": 3,
+          "html": "The first instinct is to reach for a <code>&lt;div&gt;</code>. Don't. A <code>&lt;div&gt;</code> is a block container for <em>visual content</em> — using it as an invisible event wire is semantically misleading to anyone reading the markup, and it offers nothing that makes the intent clear. Two better options exist:"
+        },
+        {
+          "type": "diagram",
+          "page": 3,
+          "render": "versus",
+          "columns": [
+            { "tone": "good", "label": "Option 1 · &lt;template&gt;", "body": "A native HTML5 element that is <strong>explicitly never rendered</strong>. Its entire purpose is to hold inert content. No box, no paint, no layout impact — and the element itself sits in the DOM ready to receive event listeners. The semantics announce the intent: <em>this is structural, not visual.</em>" },
+            { "tone": "good", "label": "Option 2 · Custom element", "body": "An undeclared tag like <code>&lt;event-bus&gt;</code> is treated by browsers as a plain <code>HTMLElement</code> — inline, unstyled, zero visual footprint. It's <strong>self-documenting</strong>: anyone reading the HTML immediately understands what this element is for, without needing a comment." }
+          ]
+        },
+        {
+          "type": "prose",
+          "page": 3,
+          "html": "<code>&lt;template&gt;</code> is the safer default — it's a standard element with a spec-defined \"I am not for display\" contract. The custom element is better when you want the markup itself to read like documentation. Either way, never a <code>&lt;div&gt;</code>."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m04.wiring",
+      "title": "The three-step wiring",
+      "order": 3,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 4,
+          "html": "Step 1 — place the anchor element"
+        },
+        {
+          "type": "prose",
+          "page": 4,
+          "html": "One element, in the shared layout or shell — guaranteed to exist on every page before any component script runs."
+        },
+        {
+          "type": "code",
+          "page": 4,
+          "lang": "html",
+          "label": "Recommended — <template> (layout.html)",
+          "code": "<!-- <template> is never rendered. It has no box, no paint,\n     no layout impact — its only job is to exist in the DOM. -->\n<template id=\"event-bus\"></template>"
+        },
+        {
+          "type": "code",
+          "page": 4,
+          "lang": "html",
+          "label": "Alternative — custom element (layout.html)",
+          "code": "<!-- Unknown tags → plain HTMLElement. No rendering, no styles.\n     The tag name is the comment. -->\n<event-bus id=\"app\"></event-bus>"
+        },
+        {
+          "type": "heading",
+          "page": 4,
+          "html": "Step 2 — Party A dispatches"
+        },
+        {
+          "type": "prose",
+          "page": 4,
+          "html": "The sending component knows nothing about who is listening. It creates a <code>CustomEvent</code> with a namespaced type and a <code>detail</code> payload, then fires it on the bus element. Notice <code>bubbles: false</code> — the event does not travel up the DOM tree at all; it fires exactly on the element you choose and stops there."
+        },
+        {
+          "type": "code",
+          "page": 4,
+          "lang": "javascript",
+          "label": "search-filter.js — unaware of results-panel.js",
+          "code": "// Find the shared bus on the current page.\nconst bus = document.querySelector('#event-bus');\n\n// Build a typed event with a payload.\nconst event = new CustomEvent('filter:changed', {\n  detail:  { query: 'adobe AEM', facets: ['docs'] },\n  bubbles: false,   // ← stays on this element; no propagation\n  composed: false   // ← does not cross shadow-DOM boundaries\n});\n\nbus.dispatchEvent(event);"
+        },
+        {
+          "type": "heading",
+          "page": 4,
+          "html": "Step 3 — Party B listens"
+        },
+        {
+          "type": "prose",
+          "page": 4,
+          "html": "The receiving component knows nothing about who dispatched. It finds the same element and adds a listener for the type it cares about. Even if Party A hasn't loaded yet, the listener just waits — no race condition because the bus element is always in the DOM."
+        },
+        {
+          "type": "code",
+          "page": 4,
+          "lang": "javascript",
+          "label": "results-panel.js — unaware of search-filter.js",
+          "code": "// Same selector — this is the only thing the two parties share.\nconst bus = document.querySelector('#event-bus');\n\nbus.addEventListener('filter:changed', (e) => {\n  // e.detail contains whatever Party A put in.\n  renderResults(e.detail.query, e.detail.facets);\n});"
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m04.propagation",
+      "title": "Why this bypasses the propagation flow",
+      "order": 4,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 5,
+          "html": "Why this bypasses the propagation flow"
+        },
+        {
+          "type": "prose",
+          "page": 5,
+          "html": "Normal DOM events bubble <em>upward</em> — a click on a button travels button → section → main → body → document → window. Both sender and receiver need to be in the same ancestry, and you risk accidentally catching unrelated events that bubble through the same path."
+        },
+        {
+          "type": "prose",
+          "page": 5,
+          "html": "The bus element collapses that entirely. The event is dispatched <em>to</em> a specific element with <code>bubbles: false</code>. It fires, listeners on that element receive it, and it stops. DOM position of either party is irrelevant — a sidebar component and a modal can communicate even though they share no common parent in the DOM tree."
+        },
+        {
+          "type": "diagram",
+          "page": 5,
+          "render": "flow",
+          "steps": [
+            { "label": "Party A · anywhere in DOM" },
+            { "label": "dispatchEvent on <template>", "variant": "alt" },
+            { "label": "Party B · anywhere in DOM" }
+          ]
+        },
+        {
+          "type": "prose",
+          "page": 5,
+          "html": "No bubbling. No shared parent. No direct reference. Just a common selector."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m04.naming",
+      "title": "Type naming convention",
+      "order": 5,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 6,
+          "html": "Type naming convention"
+        },
+        {
+          "type": "prose",
+          "page": 6,
+          "html": "Namespace your event types with a <code>category:action</code> pattern — <code>cart:add</code>, <code>user:login</code>, <code>filter:changed</code>, <code>page:ready</code>. This prevents two unrelated modules from colliding on a generic name like <code>change</code> or <code>update</code>."
+        },
+        {
+          "type": "quote",
+          "page": 6,
+          "html": "The bus element is the contract. Use <code>&lt;template&gt;</code> or a custom element — never a <code>&lt;div&gt;</code>. The tag should declare its own purpose."
+        },
+        {
+          "type": "architects-review",
+          "page": 6,
+          "label": "Architect's Review · Events",
+          "items": [
+            "What events exist in this feature?",
+            "Who emits them; who consumes them?",
+            "What is the payload contract for each?",
+            "What happens on listener failure?",
+            "Are the event names auditable (domain:action)?",
+            "Is the bus element a <code>&lt;template&gt;</code> or custom element?"
+          ]
+        }
+      ]
+    }
+  ]
+}

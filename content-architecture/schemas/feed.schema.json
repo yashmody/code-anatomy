@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "feed.schema.json",
   "title": "CODE-CODER Feed Item",
-  "description": "A user-generated feed post. One composer, six types, shared media. Socially ordered, framework-tagged.",
+  "description": "A user-generated feed post. One composer, six types, shared media. Socially ordered, framework-tagged. Required text fields must be non-empty (minLength 1), matching what the composer enforces. The <=100-word limit on 'post' bodies cannot be expressed in JSON Schema (word count, not character count) and is enforced by validate.py and the composer UI.",
   "type": "object",
   "required": ["id", "type", "author", "status", "topics", "createdAt", "updatedAt", "engagement"],
   "properties": {
@@ -12,8 +12,8 @@
       "type": "object",
       "required": ["userId", "name"],
       "properties": {
-        "userId": { "type": "string" },
-        "name": { "type": "string" },
+        "userId": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
         "role": { "type": "string" },
         "initials": { "type": "string", "maxLength": 3 },
         "verified": { "type": "boolean" }
@@ -45,23 +45,23 @@
   },
   "allOf": [
     { "if": { "properties": { "type": { "const": "post" } } },
-      "then": { "required": ["body"], "properties": { "title": { "type": "string" }, "body": { "type": "string" } } } },
+      "then": { "required": ["body"], "properties": { "title": { "type": "string" }, "body": { "type": "string", "minLength": 1 } } } },
     { "if": { "properties": { "type": { "const": "video" } } },
-      "then": { "required": ["title", "durationSec"], "properties": { "title": { "type": "string" }, "hook": { "type": "string" }, "durationSec": { "type": "integer", "minimum": 1 }, "url": { "type": "string" } } } },
+      "then": { "required": ["title", "durationSec"], "properties": { "title": { "type": "string", "minLength": 1 }, "hook": { "type": "string" }, "durationSec": { "type": "integer", "minimum": 1 }, "url": { "type": "string" } } } },
     { "if": { "properties": { "type": { "const": "list" } } },
-      "then": { "required": ["title", "items"], "properties": { "title": { "type": "string" }, "intro": { "type": "string" }, "items": { "type": "array", "minItems": 1, "items": {
-        "type": "object", "required": ["text"], "properties": { "text": { "type": "string" }, "note": { "type": "string" } } } } } } },
+      "then": { "required": ["title", "items"], "properties": { "title": { "type": "string", "minLength": 1 }, "intro": { "type": "string" }, "items": { "type": "array", "minItems": 1, "items": {
+        "type": "object", "required": ["text"], "properties": { "text": { "type": "string", "minLength": 1 }, "note": { "type": "string" } } } } } } },
     { "if": { "properties": { "type": { "const": "card" } } },
-      "then": { "required": ["title", "teaser"], "properties": { "title": { "type": "string" }, "teaser": { "type": "string" }, "linkUrl": { "type": "string" } } } },
+      "then": { "required": ["title", "teaser"], "properties": { "title": { "type": "string", "minLength": 1 }, "teaser": { "type": "string", "minLength": 1 }, "linkUrl": { "type": "string" } } } },
     { "if": { "properties": { "type": { "const": "vocab" } } },
-      "then": { "required": ["term", "definition"], "properties": { "term": { "type": "string" }, "definition": { "type": "string" } } } },
+      "then": { "required": ["term", "definition"], "properties": { "term": { "type": "string", "minLength": 1 }, "definition": { "type": "string", "minLength": 1 } } } },
     { "if": { "properties": { "type": { "const": "scenario" } } },
       "then": { "required": ["prompt", "options", "correct", "verdict", "reveal"], "properties": {
-        "prompt": { "type": "string" },
-        "options": { "type": "array", "minItems": 2, "items": { "type": "string" } },
+        "prompt": { "type": "string", "minLength": 1 },
+        "options": { "type": "array", "minItems": 2, "items": { "type": "string", "minLength": 1 } },
         "correct": { "type": "integer", "minimum": 0 },
-        "verdict": { "type": "string" },
-        "reveal": { "type": "string" } } } }
+        "verdict": { "type": "string", "minLength": 1 },
+        "reveal": { "type": "string", "minLength": 1 } } } }
   ],
   "$defs": {
     "media": {

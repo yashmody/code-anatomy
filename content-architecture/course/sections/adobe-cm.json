@@ -1,0 +1,158 @@
+{
+  "frameworkAddress": "adobe.cm",
+  "title": "Cloud Manager",
+  "tag": "AEMaaCS Pipeline Mechanics for Architects & PMs",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> how Cloud Manager pipelines are structured, what each stage enforces, and how to triage failures fast",
+    "<strong>Why it matters:</strong> Cloud Manager is the only supported deployment mechanism for AEMaaCS — understanding its constraints is a prerequisite for any AEMaaCS architect or PM",
+    "Quality gates are not optional — a failed code quality gate cannot be promoted even with manager override — design to pass from day one",
+    "Dispatcher configuration is deployed through Cloud Manager — a cache rule change requires a pipeline run, not a manual server edit",
+    "The web-tier config pipeline deploys only dispatcher rules in ~5 minutes — use it to decouple cache rule changes from Java deployments"
+  ],
+  "sections": [
+    {
+      "id": "adobe.cm.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "C", "html": "loud Manager is not a CI/CD tool you configure — it is a managed control plane you operate within. Adobe owns the pipeline runtime; you own what goes in. Every AEMaaCS deployment flows through it, every quality decision is enforced by it, and every cache rule change requires it. Architects who treat CM as a black box run projects that fail quality gates in staging and ship manually-patched dispatcher configs that evaporate on the next deploy." }
+      ]
+    },
+    {
+      "id": "adobe.cm.pipeline",
+      "title": "Pipeline stage anatomy",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "1 · Pipeline stage anatomy" },
+        { "type": "prose", "page": 2, "html": "A Cloud Manager full-stack pipeline runs nine stages in a fixed sequence. Failure at any stage stops the run — downstream stages never execute." },
+        { "type": "diagram", "page": 2, "render": "mermaid", "source": "flowchart TD\n  A([Start]) --> B[Build]\n  B --> C[Unit Test]\n  C --> D[Code Quality Gate]\n  D -->|fail| A\n  D -->|pass| E[Deploy Dev]\n  E --> F[UI Test]\n  F --> G[Perf Test]\n  G --> H[Deploy Stage]\n  H --> I{Approval Gate}\n  I -->|approved| J[Deploy Prod]\n  I -->|rejected| A" },
+        { "type": "notes", "page": 2, "items": [
+          "<b>Build</b> — Maven build of the full AEM project. Produces the combined dispatcher and AEM content package artifacts. Failure here is a compilation or packaging error.",
+          "<b>Unit Test</b> — JUnit tests run against the compiled code, not against a running AEM instance. Fast. No AEM required. Every business-logic class should have coverage here.",
+          "<b>Code Quality Gate</b> — SonarQube scan of the compiled code. Evaluates blocker/critical rule violations, code coverage floor, and security hotspots. This is the gate that kills the most pipelines. It cannot be overridden by a manager — only by fixing the code or updating the quality profile with documented justification.",
+          "<b>Deploy Dev</b> — the approved artifact is deployed to the Dev AEM environment. OSGi bundles activate, Sling mappings resolve, dispatcher rules propagate. Manual state on Dev is wiped.",
+          "<b>UI Test</b> — Selenium or Cypress tests run against the live Dev environment. Tests must be committed in <code>ui.tests/</code>. An empty test suite passes; no suite at all triggers a warning.",
+          "<b>Perf Test</b> — synthetic load test against Dev. Adobe measures page-load response times and error rates. Configurable thresholds; default is ≤3s p95 response time, ≤2% error rate.",
+          "<b>Deploy Stage</b> — same artifact deployed to Stage. Stage must be a production-representative environment — same dispatcher config, same CDN headers, same replication topology.",
+          "<b>Approval Gate</b> — a named human must click Approve in the CM UI. This is where DEPT® recommends a mandatory sign-off from the client lead, not just the tech lead.",
+          "<b>Deploy Prod</b> — artifact promotes to production. Adobe's blue-green switch happens here (see §4)."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.cm.quality-gates",
+      "title": "Quality gate definitions",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "2 · Quality gate definitions" },
+        { "type": "prose", "page": 3, "html": "The CM code quality gate runs three independent checks. All three must pass for the gate to clear." },
+        { "type": "notes", "page": 3, "items": [
+          "<b>SonarQube blocker / critical rules</b> — zero blockers permitted. Critical violations are rated; the default quality profile blocks on any critical security rule and on critical reliability rules (null-pointer paths, unclosed resources). DEPT® recommendation: run the same SonarQube profile in the local IDE on every PR — do not learn about blockers for the first time in a CM run.",
+          "<b>Code coverage floor</b> — new code must meet a minimum line-coverage percentage. Adobe's default is 50% for new lines. Projects should set this to ≥70% in the custom quality profile; the cost of enforcing it is far lower than the cost of a regression in untested code on a live site.",
+          "<b>Performance score threshold</b> — the perf test stage enforces a maximum error rate (default 2%) and a p95 response time ceiling (default 3 000 ms). Both are configurable per pipeline in the CM UI. Set them to the values your SLA actually demands — not Adobe's defaults."
+        ] },
+        { "type": "callout", "page": 3, "variant": "why", "html": "CM pipeline constraints are architecture inputs. A monorepo where multiple teams share one CM pipeline creates deployment coupling — each team's release cadence is gated by every other team's quality gate. Separate pipelines per team, or a monorepo split, must be decided in the architecture phase." }
+      ]
+    },
+    {
+      "id": "adobe.cm.web-tier",
+      "title": "Web-tier config pipeline",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "3 · Web-tier config pipeline" },
+        { "type": "prose", "page": 4, "html": "Adobe exposes a second pipeline type that deploys <em>only</em> dispatcher configuration — no Java build, no Maven, no AEM content packages. Runtime: approximately five minutes." },
+        { "type": "notes", "page": 4, "items": [
+          "Source: the <code>dispatcher/</code> module of your AEM project, specifically the <code>conf.d/</code> and <code>conf.dispatcher.d/</code> directories.",
+          "Validates dispatcher config syntax before deploy — a malformed <code>.farm</code> file is caught before it reaches the CDN layer.",
+          "Targets a single environment (Dev, Stage, or Prod) per run — unlike the full-stack pipeline, which always promotes through all three.",
+          "Deployable by any team member with CM Developer role — no Java expertise required."
+        ] },
+        { "type": "callout", "page": 4, "variant": "tip", "html": "DEPT® field pattern — maintain a separate web tier config pipeline for dispatcher rule changes. No Java build, ~5 minute run, deployable by a front-end engineer. Cache rules change 10× more frequently than Java code on live AEM projects; the web tier pipeline absorbs that change rate without blocking the full-stack pipeline." },
+        { "type": "diagram", "page": 4, "render": "ascii", "source": "Pipeline deploys web-tier config\n         │\n         ▼\n┌─────────────────────┐\n│   Dispatcher        │  ← caches pages and assets; serves most requests\n│  (CDN-adjacent)     │\n└─────────┬───────────┘\n          │ cache miss only\n          ▼\n┌─────────────────────┐\n│   Origin AEM        │  ← receives only what the dispatcher cannot serve\n│   (Publish tier)    │\n└─────────────────────┘" }
+      ]
+    },
+    {
+      "id": "adobe.cm.canary-bluegreen",
+      "title": "Canary and blue-green mechanics in AEMaaCS",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "4 · Canary and blue-green mechanics in AEMaaCS" },
+        { "type": "prose", "page": 5, "html": "AEMaaCS uses a managed blue-green deployment for the Author and Publish tiers. Architects do not configure this — Adobe operates it — but the behaviour has direct implications for deployment strategy." },
+        { "type": "notes", "page": 5, "items": [
+          "<b>Two parallel environments</b> — Adobe maintains a \"blue\" and a \"green\" version of each tier. The CM deploy step activates the new version on the inactive slot, then flips the traffic switch.",
+          "<b>Zero-downtime deploy</b> — during the switch, in-flight requests complete on the old slot. New requests hit the new slot. The window is seconds, not minutes.",
+          "<b>OSGi bundle activation matters</b> — if a bundle fails to activate on the new slot, the switch does not occur. The pipeline reports a deployment failure, and the old slot remains live. This is the most common cause of \"deploy completed but site looks wrong.\"",
+          "<b>Canary is not yet available as a self-service feature in AEMaaCS</b> — traffic splitting to a percentage of users requires Fastly or Akamai rules at the CDN layer, outside CM. Architect this explicitly if percentage rollout is a requirement.",
+          "<b>Content compatibility window</b> — blue-green means the new code and the old code will briefly serve the same content repository. Any migration that breaks backward compatibility (removing a JCR property the old code reads) must be executed in two pipeline runs: first remove the old code's dependency, then remove the property."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.cm.failure-triage",
+      "title": "Pipeline failure triage guide",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "5 · Pipeline failure triage guide" },
+        { "type": "prose", "page": 6, "html": "A CM pipeline failure produces output in three different places. Looking at the wrong one wastes 30 minutes." },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Build failure</b> — open the CM build log directly in the pipeline run detail page. It is a Maven log. Search for <code>[ERROR]</code>. The first occurrence is the root cause; everything after is cascade. Common causes: missing dependency in <code>pom.xml</code>, compilation error in recently merged branch, packaging rule violation in the FileVault filter.",
+          "<b>Unit test failure</b> — the CM UI surfaces a JUnit XML report. Read the test class name and the assertion message — not the stack trace first. If the assertion is unclear, open the test source. Do not re-run the pipeline to see if it passes; a flaky unit test is a bug.",
+          "<b>Code quality gate failure</b> — navigate to SonarQube directly (the CM UI links to the project). Filter by \"New Code\" and sort by severity. Blockers first. Read the rule explanation — SonarQube's rule pages are detailed. If a rule fires incorrectly on a known pattern, suppress it with <code>@SuppressWarnings(\"squid:SXXXX\")</code> and a comment explaining why, not silently.",
+          "<b>Deploy failure</b> — the error is in the AEM error log, not the CM log. SSH access is not available in AEMaaCS; use the AEM Developer Console (available at <code>/system/console</code> on Author) or the Cloud Manager Logs Download to pull the <code>error.log</code> from the failing tier. Search for <code>BundleException</code> or <code>ERROR</code> with the bundle symbolic name.",
+          "<b>UI test failure</b> — the CM UI attaches screenshots and a video recording of the Selenium run. Watch the video before reading the stack trace; the visual failure is usually self-explanatory. Common cause: selector changed because a component template was updated without updating the test.",
+          "<b>Perf test failure</b> — the CM perf report shows per-URL response times. Identify the slowest URL, then check the AEM request log for that URL. Common causes: uncached dispatcher rule, query without an Oak index, synchronous external API call in the render path."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.cm.security",
+      "title": "Security scanning",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "6 · Security scanning" },
+        { "type": "prose", "page": 7, "html": "CM integrates two security scanning mechanisms. Both run automatically; neither requires separate configuration." },
+        { "type": "notes", "page": 7, "items": [
+          "<b>SAST via SonarQube</b> — the code quality gate includes SonarQube's security ruleset. It identifies injection risks, insecure cryptography, hardcoded credentials, and OWASP Top 10 patterns in Java source. Security hotspots require human review — CM does not block on hotspots by default, but DEPT® sets the quality profile to block on unreviewed hotspots rated Critical or Higher.",
+          "<b>Dependency CVE scan via CM Security Reports</b> — Cloud Manager generates a content package security report on every full-stack pipeline run. It lists OSGi bundles with known CVEs in their embedded dependencies. The report is available under the pipeline execution detail. Unresolved Critical CVEs must be tracked in the project's risk register and resolved within the SLA agreed with the client's security team — typically 30 days for Critical, 90 days for High.",
+          "<b>What CM does not cover</b> — runtime application security (WAF, DDoS, bot management) sits at the CDN layer, outside CM. Infrastructure penetration testing is a separate engagement. Do not conflate CM security reports with a full security audit."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.cm.rollback",
+      "title": "Rollback mechanics",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "7 · Rollback mechanics" },
+        { "type": "prose", "page": 8, "html": "AEMaaCS rollback is <strong>re-promotion of the last successful pipeline execution</strong> — not a code revert, not a package restore." },
+        { "type": "notes", "page": 8, "items": [
+          "Navigate to the pipeline in CM, select the last successful execution, and click <b>Re-deploy</b>. CM re-runs the deploy stage of that execution's artifact against the current production environment. Build, test, and quality stages do not re-run — the artifact was already validated.",
+          "Re-deploy takes the same time as a production deploy, typically 10–20 minutes for a full AEM tier swap.",
+          "Code revert in Git does not roll back production — it creates a new commit that will be deployed on the next pipeline run. Do not confuse a Git revert with a rollback.",
+          "Content is not rolled back. If the deployment included a content migration (JCR node changes, Oak index rebuild), those changes remain. Architect rollback-safe migrations: additive first, destructive only after the new code is confirmed stable.",
+          "The CM re-deploy button is only available if a successful execution exists for that pipeline. If the first production deploy of a project fails, there is no previous execution to re-promote — fix-forward is the only option."
+        ] },
+        { "type": "callout", "page": 8, "variant": "pitfall", "html": "Treating CM-Dev as a persistent development environment. CM-Dev is reset on every pipeline run — any manually applied OSGi configuration, any manually modified dispatcher rule, any manually uploaded package is gone on the next deploy. All configuration must be in code, committed, and deployed through the pipeline." },
+        { "type": "callout", "page": 8, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>Manual deployment to AEM publisher via CRX Package Manager, no quality gate, rollback by restoring a CRX package from a file share.</p></div><div><div class=\"ba-col-label\">After</div><p>CM full-stack pipeline with SonarQube gate and automated Selenium UI tests, rollback by re-promoting the last successful pipeline execution in two clicks.</p></div></div>" }
+      ]
+    },
+    {
+      "id": "adobe.cm.review",
+      "title": "Architect's Review",
+      "order": 8,
+      "blocks": [
+        { "type": "architects-review", "page": 9, "label": "Architect's Review · Cloud Manager Pipelines", "items": [
+          "Is there one CM pipeline per team, or are multiple teams sharing a single pipeline and blocking each other's releases?",
+          "Is a separate web-tier config pipeline configured for dispatcher-only changes?",
+          "What is the code coverage floor in the SonarQube quality profile — and is it the same profile used locally by engineers?",
+          "Are perf test thresholds set to the project SLA, or still at Adobe's defaults?",
+          "Has the team performed a CM rollback in a non-prod environment before go-live?",
+          "Are content migrations designed to be backward-compatible across the blue-green switch window?",
+          "Is the CM security report reviewed after every pipeline run, or only before go-live?",
+          "Does the UI test suite cover the critical paths — or is it an empty suite that passes by default?"
+        ] }
+      ]
+    }
+  ]
+}

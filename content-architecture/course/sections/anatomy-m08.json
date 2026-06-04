@@ -1,0 +1,108 @@
+{
+  "frameworkAddress": "anatomy.m08",
+  "title": "Configuration",
+  "tag": "Module 08 · New",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The decision framework for placing any value in code or config — and why the boundary is an architectural choice, not a convenience",
+    "<strong>Why it matters:</strong> Over-configured systems are as unmaintainable as over-hardcoded ones — the decision boundary determines how much an author can change without an engineer",
+    "Config is the correct location for thresholds, labels, feature flags, API endpoints, timing values — code is correct for algorithms, data transformations, security logic",
+    "A config value with no validation schema is a runtime bug waiting to happen — validate all config on load"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m08.opener",
+      "title": "Configuration — code or config?",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "M",
+          "html": "odern enterprise software is <em>code plus configuration</em>. A surprising amount of what looks like business logic should actually live in config. Knowing the line is what separates engineers from architects."
+        },
+        {
+          "type": "callout",
+          "page": 1,
+          "variant": "before-after",
+          "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>Animation duration hardcoded as the integer 300 in five separate components. Changing the design system's timing requires a code change, a PR, a deploy.</p></div><div><div class=\"ba-col-label\">After</div><p>Single <code>--animation-duration</code> CSS variable in a shared config file. One line changes, all five components update. No code change, no PR, no deploy.</p></div></div>"
+        },
+        {
+          "type": "callout",
+          "page": 1,
+          "variant": "pitfall",
+          "html": "Putting business logic in config. A config value that controls branching behaviour — <code>if config.mode === \"enterprise\", do X</code> — is code disguised as data. It cannot be tested in isolation and creates hidden dependencies between config values. Extract to a Strategy function; the config value selects the strategy, not the behaviour."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m08.belongs",
+      "title": "What belongs in config",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 2,
+          "html": "What belongs in config"
+        },
+        {
+          "type": "cardgrid",
+          "page": 2,
+          "columns": 4,
+          "cards": [
+            { "eyebrow": "Toggle", "title": "Feature flags", "body": "Turn capabilities on or off without a deploy." },
+            { "eyebrow": "Numeric", "title": "Thresholds &amp; limits", "body": "Batch sizes, retry counts, timeouts, rate caps." },
+            { "eyebrow": "Reference", "title": "Endpoints", "body": "API URLs and environment-specific addresses." },
+            { "eyebrow": "Policy", "title": "Permissions &amp; rules", "body": "Business rules that change with regulation, market or persona." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m08.tradeoff",
+      "title": "The trade-off",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 3,
+          "html": "The trade-off"
+        },
+        {
+          "type": "diagram",
+          "page": 3,
+          "render": "versus",
+          "title": "Code or config?",
+          "columns": [
+            { "tone": "bad", "label": "As code", "body": "Type-safe, reviewable, version-controlled. Requires a deploy to change. Good for invariants that should never change without engineering sign-off." },
+            { "tone": "good", "label": "As config", "body": "Changeable at runtime, faster for ops, supports A/B and gradual rollouts. Needs auditing, validation and fallbacks because it can break silently." }
+          ]
+        },
+        {
+          "type": "prose",
+          "page": 3,
+          "html": "The architect's question on every value: <strong>does this change with the business, the environment or the user — or is it a property of the code itself?</strong> The first three go into config; only the last stays as code."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m08.review",
+      "title": "Architect's Review",
+      "order": 3,
+      "blocks": [
+        {
+          "type": "architects-review",
+          "page": 4,
+          "label": "Architect's Review · Configuration",
+          "items": [
+            "What's hardcoded that shouldn't be?",
+            "Where does config live — file, env var, flag service, CMS?",
+            "Who can change a value, and is each change audited?",
+            "What happens if a value is missing or invalid?",
+            "Is there a safe default for every config key?"
+          ]
+        }
+      ]
+    }
+  ]
+}

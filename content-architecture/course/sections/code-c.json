@@ -1,0 +1,168 @@
+{
+  "frameworkAddress": "code.c",
+  "title": "Content",
+  "tag": "Localization, Sitemaps, Approvals, DAM & Velocity",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> How content moves from source to live page — through DAM ingestion, approval gates, localization pipelines, and sitemap registration — and where that journey breaks",
+    "<strong>Why it matters:</strong> Broken content workflows are the single most common cause of go-live delays on enterprise builds; fixing them post-Sprint 5 costs three to five times what early modelling costs",
+    "Localization strategy is an architecture decision first — machine-translate-first and human-first require fundamentally different DAM folder structures, rendition naming conventions, and replication rules",
+    "The XML sitemap is a contract between SEO, Content, and Engineering — it defines what exists, what is indexable, and what the CMS must produce on every publish event",
+    "Content velocity is measurable: if an author needs more than 3 clicks to publish a page, the authoring model is wrong and throughput will be the constraint every release"
+  ],
+  "sections": [
+    {
+      "id": "code.c.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "C", "html": "ontent is everything the platform manages, displays, stores or publishes. The architect's leverage here isn't in writing copy — it's in the <strong>model</strong> and the <strong>workflow</strong>. Get the structure right and every release flows; get it wrong and every release becomes a fire-fight. Six discipline areas decide whether a content programme scales." }
+      ]
+    },
+    {
+      "id": "code.c.approval-states",
+      "title": "Content approval states",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "Content Approval States" },
+        { "type": "diagram", "page": 2, "render": "flow", "steps": [
+          { "label": "Draft" },
+          { "label": "In Review", "variant": "ochre" },
+          { "label": "Approved", "variant": "ochre" },
+          { "label": "Scheduled", "variant": "ochre" },
+          { "label": "Live", "variant": "alt" },
+          { "label": "Archived" }
+        ] },
+        { "type": "notes", "page": 2, "items": [
+          "↳ Rejected at any gate returns to Draft · Gate owners must be named individuals, not teams · each arrow carries an SLA"
+        ] },
+        { "type": "callout", "page": 2, "variant": "why", "html": "DAM folder taxonomy is an architecture decision, not a filing preference. The folder structure chosen in Discovery drives rendition paths, IAM permission groups, CDN cache-key patterns, and AEM replication rules. A brand-first hierarchy (<code>/brand/campaign/locale</code>) and a locale-first hierarchy (<code>/locale/brand/campaign</code>) produce entirely different CDN invalidation scopes and different asset-sharing rules across markets. Getting this wrong in week 2 costs weeks to unwind in Sprint 8 — after assets are referenced in hundreds of content fragments and replication agents are already configured." },
+        { "type": "callout", "page": 2, "variant": "pitfall", "html": "Teams that skip approval workflow design before CMS configuration consistently ship pages that have never passed legal review. The approval topology — who approves, in what order, with what SLA, with what escalation path — must be modelled as a swimlane diagram before the first workflow is configured in the CMS. Retrofitting approval gates after a compliance incident means touching live workflow definitions, retraining authors mid-project, and auditing every piece of content published in the gap. Design the topology first; wire it second." },
+        { "type": "callout", "page": 2, "variant": "tip", "html": "DEPT® field pattern: use a single <strong>Content Ready</strong> flag in Workfront or Jira that gates both legal sign-off and DAM final-rendition approval simultaneously. Two-track sign-off — legal marks approved while the DAM team is still processing final renditions, or vice versa — is the most common cause of last-minute go-live holds. One flag, two conditions, one gate. Make the flag unset-able only by a named release coordinator, not by either track independently. This eliminates the \"legal said yes but the image isn't in the DAM yet\" class of incident entirely." }
+      ]
+    },
+    {
+      "id": "code.c.localization",
+      "title": "Localization workflows",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "1 · Localization workflows" },
+        { "type": "prose", "page": 3, "html": "Locale isn't language. <code>en-IN</code> and <code>en-US</code> share a language but differ in spelling, currency, regulation and cultural reference. Plan locales as <em>markets</em>, not as translations." },
+        { "type": "diagram", "page": 3, "render": "flow", "steps": [
+          { "label": "Author · source locale" },
+          { "label": "MT first pass · DeepL · GPT", "variant": "ochre" },
+          { "label": "Human translator", "variant": "ochre" },
+          { "label": "In-country review" },
+          { "label": "Publish", "variant": "alt" }
+        ] },
+        { "type": "notes", "page": 3, "items": [
+          "<b>Translation memory</b> — reuse of previously translated strings cuts cost and keeps tone consistent across releases.",
+          "<b>In-country review</b> — a local team checks the translation <em>in real context</em>, not as a spreadsheet of strings.",
+          "<b>Tools</b> — AEM multi-site manager, Smartling, Lokalise, Phrase. AI-MT is now strong enough for first pass; humans still needed for tone, idiom and regulated content."
+        ] }
+      ]
+    },
+    {
+      "id": "code.c.sitemap",
+      "title": "Sitemap",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "2 · Sitemap" },
+        { "type": "prose", "page": 4, "html": "\"Sitemap\" means two different things — and the architect cares about both:" },
+        { "type": "cardgrid", "page": 4, "columns": 2, "cards": [
+          { "eyebrow": "For humans", "title": "IA sitemap", "body": "The conceptual site structure — page types, hierarchy, navigation. Drives the content model: what types exist, what attributes each carries." },
+          { "eyebrow": "For search", "title": "XML sitemap", "body": "The file submitted to search engines for crawling. Auto-generated from the live site; updated as pages are added or retired." }
+        ] },
+        { "type": "prose", "page": 4, "html": "The IA sitemap should live next to the design system, not in a stale slide deck. Without it, authors invent structure ad-hoc and the model fractures within two quarters." }
+      ]
+    },
+    {
+      "id": "code.c.source",
+      "title": "Content source & collection from customer",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "3 · Content source &amp; collection from customer" },
+        { "type": "prose", "page": 5, "html": "For every content type, three questions: <strong>where does it come from, who provides it, in what format</strong>. Answers belong in the discovery doc, not in someone's head." },
+        { "type": "cardgrid", "page": 5, "columns": 3, "cards": [
+          { "eyebrow": "Origin", "title": "Source", "body": "Customer-authored · agency-created · syndicated feed · user-generated · external partner." },
+          { "eyebrow": "Channel", "title": "Collection mechanism", "body": "Portal upload · shared drive · intake form · API feed · in-CMS authoring." },
+          { "eyebrow": "Scale", "title": "Volume planning", "body": "How much per page type · growth rate · seasonal spikes · what fails at 10x." }
+        ] },
+        { "type": "notes", "page": 5, "items": [
+          "↳ A real example: product images from a PIM feed, legal copy from in-house counsel via SharePoint, campaign creative from an external agency via Frame.io, UGC from on-site form — same site, four pipelines."
+        ] }
+      ]
+    },
+    {
+      "id": "code.c.approval-workflow",
+      "title": "Content approval workflow",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "4 · Content approval workflow" },
+        { "type": "prose", "page": 6, "html": "Three roles for every piece of content — and they are rarely the same person: <strong>creator → approver → publisher</strong>. Real-world workflows add stages (editorial, legal, brand, final) and gates." },
+        { "type": "diagram", "page": 6, "render": "flow", "steps": [
+          { "label": "Draft" },
+          { "label": "Editorial", "variant": "ochre" },
+          { "label": "Legal", "variant": "ochre" },
+          { "label": "Brand", "variant": "ochre" },
+          { "label": "Publish", "variant": "alt" }
+        ] },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Named owners</b> at every stage — not \"the legal team.\" A person.",
+          "<b>SLA on each gate</b> — 24h, 48h, 5 days. Anything unbounded becomes the bottleneck.",
+          "<b>Audit trail</b> — who approved what, when, why. Compliance gold; also useful when production blames editorial.",
+          "<b>Escalation</b> — when stuck for more than the SLA, the named escalator decides.",
+          "<b>Tooling</b> — AEM workflows · Workfront · Jira approval transitions · custom gates."
+        ] }
+      ]
+    },
+    {
+      "id": "code.c.dam",
+      "title": "Asset management — the DAM disciplines",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "5 · Asset management — the DAM disciplines" },
+        { "type": "prose", "page": 7, "html": "Assets without governance become legal risk, brand drift, and search-by-vibe. Five disciplines keep a DAM honest:" },
+        { "type": "cardgrid", "page": 7, "columns": 5, "cards": [
+          { "eyebrow": "5a · Structure", "title": "DAM structure", "body": "Folder hierarchy that mirrors business reality — by brand, by campaign, by media type, by locale. One source of truth; no parallel <code>assets-final-v3</code> shadow folders." },
+          { "eyebrow": "5b · Vocabulary", "title": "Tags &amp; taxonomy", "body": "A controlled, hierarchical vocabulary (Vehicle &gt; SUV &gt; Compact). Free tags supplement findability, never replace structure. Periodic audits to dedupe synonyms and retire dead tags." },
+          { "eyebrow": "5c · Required", "title": "Metadata management", "body": "Required fields enforced at upload — no upload without alt-text, usage rights, expiry, photographer, model release. Standard schemas: IPTC, XMP, Dublin Core." },
+          { "eyebrow": "5d · Lifecycle", "title": "Asset expiry", "body": "Time-bound licences, model and property release dates, brand-mark windows. Auto-alert N days before expiry; workflow to renew or retire. Orphaned expired assets are legal risk." },
+          { "eyebrow": "5e · Acceleration", "title": "AI for assets", "body": "Auto-tagging by image recognition · auto alt-text and captions · text-to-image first drafts · variant generation (crops, sizes, formats) · semantic search (\"confident young professionals in an office\")." }
+        ] }
+      ]
+    },
+    {
+      "id": "code.c.velocity",
+      "title": "Content velocity",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "6 · Content velocity" },
+        { "type": "prose", "page": 8, "html": "How quickly content moves from idea to published. The single most underrated metric in content programmes — and the one that decides whether the business ships campaigns weekly or quarterly." },
+        { "type": "notes", "page": 8, "items": [
+          "<b>Measure</b> — cycle time per content type, throughput per week, time-in-stage per approval gate.",
+          "<b>Common bottlenecks</b> — approval gates without SLAs · translation queues · design rework loops · waiting on assets that don't exist yet.",
+          "<b>Levers</b> — templated component-based authoring · smaller faster approval loops · decoupled parallel authoring · automated translation first pass · AI-assisted drafting."
+        ] },
+        { "type": "quote", "page": 8, "html": "High content velocity is a competitive advantage. The brand that can ship a relevant campaign on a Friday afternoon will out-execute the brand that needs three weeks of approvals — regardless of which has the prettier creative." }
+      ]
+    },
+    {
+      "id": "code.c.review",
+      "title": "Architect's Review",
+      "order": 8,
+      "blocks": [
+        { "type": "architects-review", "page": 9, "label": "Architect's Review · Content", "items": [
+          "Is there a defined content model, and does every type fit it?",
+          "Is the IA sitemap maintained alongside the design system?",
+          "Is the source documented for every content type — including who provides and how?",
+          "Is the approval workflow named (people, SLAs, escalation) — not just understood?",
+          "Are tags and metadata enforced at upload, or applied retroactively?",
+          "Are asset expiries tracked, and what happens at expiry?",
+          "What is the current content velocity per type, and where's the bottleneck?",
+          "Where is AI assisting today, and where will it next?"
+        ] }
+      ]
+    }
+  ]
+}

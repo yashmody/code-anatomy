@@ -1,0 +1,139 @@
+{
+  "frameworkAddress": "ai.bmad",
+  "title": "BMAD",
+  "tag": "Brief-Method Architect-Driven Development · Upstream governance before code begins",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> BMAD turns a client brief into architecture-governed contracts, ADRs, and Stalwart prompts before any code is written",
+    "<strong>Why it matters:</strong> the quality of an AI-generated codebase is determined in the brief phase, not the coding phase",
+    "BMAD is not waterfall — it produces living documents (ADRs, schemas, event registries) that evolve with the project",
+    "an Architecture Decision Record is the unit of BMAD work — every significant decision is an ADR, every ADR has an owner, every deviation is a new ADR",
+    "BMAD produces six artefacts: Hypothesis, Component Inventory, Contract Set, Event Registry, ADR log, Stalwart prompt library — any missing artefact is a project risk"
+  ],
+  "sections": [
+    {
+      "id": "ai.bmad.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "B", "html": "MAD is the upstream process that converts a client brief into architecture-governed contracts, ADRs, and Stalwart prompts before any code is written. It answers the question every AI-assisted project must answer first: <em>who owns the architecture, and how is that ownership made legible to a machine?</em> Without BMAD, the AI fills the vacuum with its own assumptions. With BMAD, the architect's decisions travel with the prompt." }
+      ]
+    },
+    {
+      "id": "ai.bmad.phases",
+      "title": "1 · BMAD phase map",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "1 · BMAD phase map" },
+        { "type": "prose", "page": 2, "html": "BMAD is a five-phase loop, not a waterfall. Every phase produces a written artefact. Phases are revisited when a new ADR is needed — the loop closes back to Architecture, not to Discovery." },
+        { "type": "diagram", "page": 2, "render": "mermaid", "source": "flowchart TD\n  A[\"Brief received\\n(client or product brief)\"] --> B[\"Discovery\\nHypothesis statement\\nsuccess metrics defined\"]\n  B --> C[\"Architecture\\nComponent Inventory\\nContracts + ADRs authored\"]\n  C --> D[\"Prompt Engineering\\nStalwart prompt library\\nbuilt per feature archetype\"]\n  D --> E[\"Delivery\\nGoverned AI generation\\nprompts enforce contracts\"]\n  E --> F[\"Review\\nContract validation\\nPR linked to ADR\\ncompliance checked\"]\n  F -->|\"New decision needed\"| G[\"New ADR drafted\\nStatus: Proposed\"]\n  G --> C\n\n  style A fill:#1a1a1a,stroke:#FF4900,color:#e0d7c0\n  style B fill:#1a1a1a,stroke:#FF4900,color:#e0d7c0\n  style C fill:#1a1a1a,stroke:#FF4900,color:#e0d7c0\n  style D fill:#1a1a1a,stroke:#FF4900,color:#e0d7c0\n  style E fill:#1a1a1a,stroke:#FF4900,color:#e0d7c0\n  style F fill:#1a1a1a,stroke:#FF4900,color:#e0d7c0\n  style G fill:#2a1200,stroke:#FF4900,color:#FFA279" },
+        { "type": "callout", "page": 2, "variant": "why", "html": "BMAD exists because without a brief-method, the architect's knowledge lives in their head and degrades to undocumented tribal knowledge within one project rotation. BMAD makes architectural intent portable — a new architect can read the ADR log and the Hypothesis and understand every significant decision and its rationale." }
+      ]
+    },
+    {
+      "id": "ai.bmad.hypothesis",
+      "title": "2 · The Hypothesis",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "2 · The Hypothesis" },
+        { "type": "prose", "page": 3, "html": "The Hypothesis is a single paragraph. It states what the project must achieve, the technical approach chosen, and the specific, measurable signals that will confirm success. It is written by the architect, signed off by the engineering lead and PM, and checked into the repo on day one. Every subsequent ADR is tested against it: decisions that cannot be justified by the Hypothesis are out of scope." },
+        { "type": "code", "page": 3, "lang": "text", "label": "Hypothesis template", "code": "This project must [outcome in one clause], by [primary technical approach], such that [measurable signal A] and [measurable signal B] are true at launch. Success is confirmed when [acceptance condition stated without ambiguity]." },
+        { "type": "callout", "page": 3, "variant": "tip", "html": "DEPT® field pattern — run a 90-minute \"BMAD sprint zero\" workshop with the architect and engineering lead at project start. Outputs: one Hypothesis, one Component Inventory, five ADRs covering the highest-risk decisions. This single workshop prevents the five most common mid-project architectural pivots." }
+      ]
+    },
+    {
+      "id": "ai.bmad.inventory",
+      "title": "3 · Component Inventory",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "3 · Component Inventory" },
+        { "type": "prose", "page": 4, "html": "The Component Inventory is an architect-authored table listing every component the feature set requires. It is not a Jira board — it is an architectural register. Each row carries enough information to generate a Stalwart prompt and to link the component to its governing ADR and contract file." },
+        { "type": "diagram", "page": 4, "render": "table",
+          "headers": ["Component", "Type", "Contract ref", "Stalwart file set"],
+          "rows": [
+            ["ProductFilter", "Container · feature", "contract-filter.json / ADR-004", "<span style=\"font-family:var(--mono);font-size:12px\">init, model, biz, api, render, state</span>"],
+            ["FilterChip", "Presentational", "contract-ui-tokens.json / ADR-002", "<span style=\"font-family:var(--mono);font-size:12px\">init, model, render</span>"],
+            ["ProductGrid", "Container · display", "contract-product.json / ADR-004", "<span style=\"font-family:var(--mono);font-size:12px\">init, model, api, render, state</span>"],
+            ["SearchBar", "Presentational", "contract-search.json / ADR-003", "<span style=\"font-family:var(--mono);font-size:12px\">init, model, biz, render</span>"],
+            ["SortControl", "Presentational", "contract-filter.json / ADR-004", "<span style=\"font-family:var(--mono);font-size:12px\">init, model, render</span>"]
+          ] },
+        { "type": "notes", "page": 4, "items": [
+          "↳ The Type column encodes the container / presentational split from Module 09. The Stalwart file set is the architect's decision — not the AI's. The AI receives it as a constraint in the prompt."
+        ] }
+      ]
+    },
+    {
+      "id": "ai.bmad.adr",
+      "title": "4 · The ADR format",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "4 · The ADR format" },
+        { "type": "prose", "page": 5, "html": "An Architecture Decision Record captures one significant decision in four mandatory fields. The status field is the decision's lifecycle. An ADR is never deleted — when a decision is reversed, the old ADR is marked Superseded and a new ADR records the reversal and its rationale." },
+        { "type": "diagram", "page": 5, "render": "table",
+          "headers": ["Field", "Content"],
+          "rows": [
+            ["<span style=\"font-family:var(--mono);font-weight:700;color:var(--ochre);font-size:12px\">Context</span>", "The forces at play. What constraint, requirement, or risk made this decision necessary. Written so a reader with no prior context understands why the problem exists."],
+            ["<span style=\"font-family:var(--mono);font-weight:700;color:var(--ochre);font-size:12px\">Decision</span>", "The single chosen option, stated without hedging. Alternatives considered may be listed, but the chosen option is unambiguous. This is the sentence the PR reviewer checks implementation against."],
+            ["<span style=\"font-family:var(--mono);font-weight:700;color:var(--ochre);font-size:12px\">Consequences</span>", "Trade-offs accepted. What becomes easier, what becomes harder, what new constraints are introduced. Negative consequences are mandatory — an ADR with no stated costs was not thought through."],
+            ["<span style=\"font-family:var(--mono);font-weight:700;color:var(--ochre);font-size:12px\">Status</span>", "<strong>Proposed</strong> → decision drafted, under review  ·  <strong>Accepted</strong> → implementing PRs may proceed  ·  <strong>Superseded</strong> → replaced by ADR-NNN, reason stated"]
+          ] },
+        { "type": "callout", "page": 5, "variant": "pitfall", "html": "Writing ADRs after the decision has been implemented. An ADR written in retrospect cannot influence the decision — it is archaeology, not governance. The ADR must be written before the implementing PR is merged. The PR links to the ADR; the reviewer checks that the implementation matches the decision." },
+        { "type": "callout", "page": 5, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>Architect communicates design decisions verbally in stand-up. Not recorded. A new engineer joins in week 6 and re-litigates a decision made in week 1. Two sprint-planning sessions consumed by a debate that was already settled.</p></div><div><div class=\"ba-col-label\">After</div><p>ADR log in repo. New engineer reads it during onboarding. Decision is closed, not re-opened. Context survives team rotation.</p></div></div>" }
+      ]
+    },
+    {
+      "id": "ai.bmad.dependency-map",
+      "title": "5 · BMAD artefact dependency map",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "5 · BMAD artefact dependency map" },
+        { "type": "prose", "page": 6, "html": "The six BMAD artefacts are not independent. The Hypothesis constrains the ADR log; the ADR log governs the contracts; the contracts feed the Stalwart prompts. Remove one and the chain breaks. The Event Registry sits alongside the Contract Set — it is the dynamic contract that lives at runtime." },
+        { "type": "diagram", "page": 6, "render": "mermaid", "source": "flowchart TD\n    A[\"<b>HYPOTHESIS</b><br/>What must this project achieve,<br/>and how is success measured?\"]\n    B[\"<b>ADR LOG</b><br/>Architecture Decision Records<br/>Context · Decision · Consequences · Status\"]\n    C[\"<b>CONTRACT SET</b><br/>Per-component:<br/>file roster · data schemas · 'not for' rules\"]\n    D[\"<b>EVENT REGISTRY</b><br/>domain:entity:action<br/>payload schema · subscriber map\"]\n    E[\"<b>STALWART PROMPT LIBRARY</b><br/>One prompt per feature archetype<br/>Contracts embedded — AI cannot deviate\"]\n    F([\"AI-generated code\"])\n\n    A -->|filters scope of| B\n    B -->|informs shape of| C\n    D -->|feeds| C\n    C -->|feeds| E\n    E -->|governs| F" }
+      ]
+    },
+    {
+      "id": "ai.bmad.worked-example",
+      "title": "6 · Worked BMAD example — product filter feature",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "6 · Worked BMAD example — product filter feature" },
+        { "type": "prose", "page": 7, "html": "A client brief arrives: <em>\"Users need to filter and sort a product catalogue by category, price, and availability.\"</em> BMAD converts this into six artefacts before a line of code is written. The sequence below shows each artefact in order of production." },
+        { "type": "code", "page": 7, "lang": "text", "label": "Artefact 1 · Hypothesis", "code": "This project must deliver a client-side product filter that operates without a full-page reload,\nby maintaining a URL-serialised filter state and dispatching domain events to a shared product grid,\nsuch that filter application latency is under 120 ms at p95 and the filter state is bookmark-able\nand shareable. Success is confirmed when a QA engineer can bookmark a filtered URL, share it\nwith a colleague, and the colleague lands on the identical filtered view." },
+        { "type": "diagram", "page": 7, "render": "table", "title": "Artefact 2 · Component Inventory (excerpt)",
+          "headers": ["Component", "Contract ref", "Stalwart file set"],
+          "rows": [
+            ["ProductFilter (container)", "contract-filter.json / ADR-004", "<span style=\"font-family:var(--mono);font-size:12px\">init, model, biz, api, render, state, config</span>"],
+            ["FilterChip (presentational)", "contract-ui-tokens.json / ADR-002", "<span style=\"font-family:var(--mono);font-size:12px\">init, model, render</span>"],
+            ["ProductGrid (container)", "contract-product.json / ADR-004", "<span style=\"font-family:var(--mono);font-size:12px\">init, model, api, render, state</span>"]
+          ] },
+        { "type": "code", "page": 7, "lang": "json", "label": "Artefact 3 · Contract Set (contract-filter.json, excerpt)", "code": "{\n  \"feature\": \"ProductFilter\",\n  \"adr\": \"ADR-004\",\n  \"fileRoster\": [\"init\",\"model\",\"biz\",\"api\",\"render\",\"state\",\"config\"],\n  \"stateShape\": {\n    \"activeFilters\": \"FilterMap\",\n    \"sortOrder\": \"asc | desc\",\n    \"loading\": \"boolean\"\n  },\n  \"notFor\": {\n    \"biz.js\": \"direct DOM writes, API calls\",\n    \"render.js\": \"business rules, fetch calls\",\n    \"api.js\": \"UI updates, validation\"\n  }\n}" },
+        { "type": "diagram", "page": 8, "render": "table", "title": "Artefact 4 · Event Registry (excerpt)",
+          "headers": ["Event name", "Producer", "Consumer(s)"],
+          "rows": [
+            ["<span style=\"font-family:var(--mono);font-size:12px\">filter:applied</span>", "FilterChip · biz.js", "ProductGrid · biz.js"],
+            ["<span style=\"font-family:var(--mono);font-size:12px\">filter:cleared</span>", "ProductFilter · biz.js", "ProductGrid · biz.js, URL serialiser"],
+            ["<span style=\"font-family:var(--mono);font-size:12px\">sort:changed</span>", "SortControl · biz.js", "ProductGrid · biz.js"],
+            ["<span style=\"font-family:var(--mono);font-size:12px\">product:listUpdated</span>", "ProductGrid · api.js", "ProductGrid · render.js"]
+          ] },
+        { "type": "code", "page": 8, "lang": "text", "label": "Artefact 5 · ADR-004 (the governing decision)", "code": "ADR-004 · ProductFilter state strategy\nStatus: Accepted\nOwner: Architect · [name]\n\nContext\nFilter state must survive page refresh and be shareable via URL. The brief specifies\nbookmark-ability as a success criterion. Client-side state-only approaches (closures,\nmodule-level variables) fail this criterion.\n\nDecision\nFilter state is serialised to the URL query string on every mutation (state.js writes,\nURL-sync utility reads). state.js is the single source of truth at runtime; the URL\nis the persistence layer. No other persistence mechanism (localStorage, sessionStorage)\nis used for filter state in this feature.\n\nConsequences\n(+) Filter state is bookmark-able and shareable by construction.\n(+) Browser back/forward navigation restores filter state without custom history management.\n(-) URL length grows with active filter count; long filter combinations may approach\n    browser URL limits on older proxies (mitigated: config.js sets a MAX_FILTER_PARAMS guard).\n(-) URL-serialisation adds a synchronous write on every filter mutation; profiled at <4 ms." },
+        { "type": "code", "page": 8, "lang": "text", "label": "Artefact 6 · Stalwart prompt (ProductFilter, generated from contract)", "code": "Build a feature called ProductFilter using the Stalwart architecture.\n\nGoverning ADR: ADR-004 · ProductFilter state strategy (see /docs/adr/004.md)\n\nFile set (from contract-filter.json):\n  init.js     # bootstrap, hydrate state from URL query string, register listeners\n  config.js   # MAX_FILTER_PARAMS=20, API endpoint, debounce threshold\n  state.js    # reactive store: activeFilters (FilterMap), sortOrder, loading\n  model.js    # FilterMap schema, URL serialise/deserialise helpers\n  biz.js      # decisions: apply filter, clear all, validate MAX_FILTER_PARAMS\n  api.js      # fetch filtered product list, map response to ProductSchema\n  render.js   # render filter chips, loading state, empty state\n\nEvent vocabulary (from event registry):\n  filter:applied      # payload: { filterId, value, label }\n  filter:cleared      # payload: { reason: 'user' | 'navigation' }\n  sort:changed        # payload: { field, direction: 'asc' | 'desc' }\n  product:listUpdated # payload: { products: ProductSchema[], total: number }\n\nConstraints (from ADR-004):\n  1. state.js is the single source of truth. URL query string is the persistence layer.\n  2. Serialise state to URL on every mutation. Never use localStorage for filter state.\n  3. MAX_FILTER_PARAMS enforced in biz.js before any state mutation.\n  4. Behaviour flow is fixed: event → biz → state → render (no shortcuts).\n  5. render.js must not contain business logic or fetch calls.\n  6. api.js must not mutate state directly — dispatch product:listUpdated and return.\n\nOutput: complete implementation, file by file. List payload contracts at\nthe top of biz.js. Confirm ADR-004 compliance in a comment block in init.js." }
+      ]
+    },
+    {
+      "id": "ai.bmad.review",
+      "title": "Architect's Review",
+      "order": 7,
+      "blocks": [
+        { "type": "architects-review", "page": 9, "label": "Architect's Review · BMAD Completeness", "items": [
+          "Is the Hypothesis written, checked in, and signed off before any ADR is authored?",
+          "Does every ADR have a named owner and a status that is not \"Draft\"?",
+          "Is the Component Inventory the source of truth for the Stalwart prompt library?",
+          "Does every significant decision have an ADR, or does any decision live only in Slack or stand-up?",
+          "Are Consequences fields non-empty — does every ADR state at least one trade-off accepted?",
+          "Is the Event Registry versioned alongside the Contract Set, not maintained separately?",
+          "Are PRs rejected at review when they implement a decision not yet Accepted in the ADR log?"
+        ] }
+      ]
+    }
+  ]
+}

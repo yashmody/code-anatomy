@@ -1,0 +1,145 @@
+{
+  "frameworkAddress": "adobe.camp",
+  "title": "Adobe Campaign",
+  "tag": "Email & SMS Architecture — Delivery, Deliverability, and Integration",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The architectural differences between Adobe Campaign Classic, Campaign Standard, and Campaign v8 — and why the wrong choice at project start cannot be easily reversed",
+    "<strong>Why it matters:</strong> Campaign is the highest-volume outbound channel in most enterprise Adobe stacks — un-governed Campaign produces deliverability failures and compliance violations that take weeks to recover from",
+    "Campaign Classic and Standard have different data models, workflow engines, and integration patterns — they are not versions of the same product",
+    "Deliverability is an architecture concern — IP warming schedules, suppression list management, and bounce handling must be designed before the first send",
+    "AEM-to-Campaign content workflows depend on personalisation depth and send volume — the correct pattern is not obvious from the feature documentation"
+  ],
+  "sections": [
+    {
+      "id": "adobe.camp.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "A", "html": "dobe Campaign is the outbound execution engine in the Adobe Experience Cloud stack. It sends email, SMS, push, and direct mail at enterprise scale — and it fails silently when it is misconfigured. The architect's job is not to configure Campaign; it is to ensure the platform is provisioned, warmed, governed, and integrated before marketing operations ever touches a send button." }
+      ]
+    },
+    {
+      "id": "adobe.camp.editions",
+      "title": "Campaign Classic vs Campaign Standard vs v8 — architectural comparison",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "1 · Campaign Classic vs Campaign Standard vs v8 — architectural comparison" },
+        { "type": "prose", "page": 2, "html": "These are not release versions of the same product. Each has a distinct data model, workflow engine, integration surface, and support trajectory. Choosing the wrong one is not correctable without a full re-implementation." },
+        { "type": "diagram", "page": 2, "render": "ascii", "title": "Campaign Classic vs Campaign v8 — Architectural Comparison", "source": "Campaign Classic vs Campaign v8 — Architectural Comparison\n\n┌─────────────────────────┬───────────────────────────────┬───────────────────────────────┐\n│                         │  Campaign Classic (v7)        │  Campaign v8                  │\n├─────────────────────────┼───────────────────────────────┼───────────────────────────────┤\n│ Data Model              │ Proprietary relational schema │ Snowflake/FFDA for bulk data  │\n│                         │ on PostgreSQL/SQL Server.     │ + local PostgreSQL for        │\n│                         │ Full schema customisation     │ transactional. Federated data │\n│                         │ via dedicated Java process    │ access — not all data local   │\n├─────────────────────────┼───────────────────────────────┼───────────────────────────────┤\n│ Workflow Engine         │ Server-side workflow engine   │ Same engine, but FFDA-aware   │\n│                         │ with XML-based definitions.   │ activities. Cloud-optimised   │\n│                         │ All execution on Campaign     │ for high-volume batch ops     │\n│                         │ application server            │ offloaded to Snowflake        │\n├─────────────────────────┼───────────────────────────────┼───────────────────────────────┤\n│ Delivery Throughput     │ ~20M messages/hour (MTA).     │ ~100M+ messages/hour via      │\n│                         │ Horizontal scale via          │ enhanced MTA + cloud infra.   │\n│                         │ mid-sourcing instances        │ Native cloud burst capacity   │\n├─────────────────────────┼───────────────────────────────┼───────────────────────────────┤\n│ AEP Integration         │ Campaign + AEP connector.     │ Native AEP integration.       │\n│                         │ Batch audience activation.    │ Real-time audience activation │\n│                         │ Manual segment export         │ via Destination SDK           │\n├─────────────────────────┼───────────────────────────────┼───────────────────────────────┤\n│ Authoring UI            │ Client Console (Windows fat   │ Campaign Web UI (browser).    │\n│                         │ client) — required for        │ Client Console still needed   │\n│                         │ administration                │ for advanced config only      │\n├─────────────────────────┼───────────────────────────────┼───────────────────────────────┤\n│ Support Status          │ Extended support to 2027.     │ Current — all new features.   │\n│                         │ No new features. Migration    │ Target for all new            │\n│                         │ to v8 is the upgrade path     │ implementations               │\n└─────────────────────────┴───────────────────────────────┴───────────────────────────────┘\n\nNOTE: Campaign Standard → v8 migration is mandatory. Do not start new implementations on Standard." },
+        { "type": "prose", "page": 2, "html": "Campaign v8's Federated Full Database Access (FFDA) architecture means the recipient table lives in Snowflake, not locally. Workflow activities that query recipients hit Snowflake directly. This changes query performance characteristics, cost modelling, and the development pattern for custom targeting SQL — all of which must be understood by the implementation team before Sprint 1." },
+        { "type": "callout", "page": 2, "variant": "pitfall", "html": "Using Campaign Standard for a new implementation. Adobe has announced Campaign Standard's migration path to Campaign v8 (web UI). New implementations should target Campaign v8 directly to avoid a mandatory migration within 24 months of launch — a migration that will require re-implementing all workflows, all typology rules, and all integrations." }
+      ]
+    },
+    {
+      "id": "adobe.camp.delivery",
+      "title": "Delivery architecture — IP pool governance, sending domain, SPF/DKIM/DMARC",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "2 · Delivery architecture — IP pool governance, sending domain, SPF/DKIM/DMARC" },
+        { "type": "prose", "page": 3, "html": "The sending infrastructure is a decision made once and changed with significant operational cost. Get it right before the first production send." },
+        { "type": "notes", "page": 3, "items": [
+          "<b>IP pool segmentation</b> — never share a single IP across transactional and marketing traffic. Transactional (order confirmations, password resets) must be isolated from batch marketing. A suppressed marketing IP must never cause a transactional failure. Minimum architecture: one transactional pool, one marketing pool. Larger programmes add per-brand and per-region pools.",
+          "<b>Sending domain</b> — use a subdomain dedicated to Campaign, never the root corporate domain. <code>send.brand.com</code> or <code>email.brand.com</code> — never <code>brand.com</code>. If a Campaign subdomain gets blacklisted, it does not contaminate the root domain's web reputation.",
+          "<b>SPF</b> — publish a TXT record authorising Campaign's MTA IP ranges. Include Adobe's sending infrastructure in the SPF record. SPF alone is insufficient — ISPs now weight DKIM and DMARC more heavily.",
+          "<b>DKIM</b> — Campaign signs every outbound message with a 2048-bit DKIM key on the sending subdomain. Key rotation on a 12-month schedule. DKIM alignment with the From header domain is required for DMARC pass.",
+          "<b>DMARC</b> — start with <code>p=none</code> and aggregate reporting enabled. Move to <code>p=quarantine</code> after 60 days of clean reports, then <code>p=reject</code> once all legitimate sending sources are confirmed. DMARC reporting endpoints should feed a monitoring dashboard — not a mailbox nobody reads."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.camp.ip-warming",
+      "title": "IP warming strategy — schedule, volume ramp, monitoring metrics",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "3 · IP warming strategy — schedule, volume ramp, monitoring metrics" },
+        { "type": "prose", "page": 4, "html": "A new IP address has no sending reputation. ISPs apply aggressive throttling and filtering to unknown IPs. The warming schedule builds reputation by demonstrating consistent, engaged sending behaviour over 4–8 weeks before full volume is attempted." },
+        { "type": "callout", "page": 4, "variant": "why", "html": "Deliverability is an architecture concern, not a marketing operations concern. A Campaign instance with no IP warming that sends 2 million emails on day one will be blacklisted by major ISPs within 48 hours. Recovery takes 4–8 weeks of restricted sending — a business stoppage event. The IP warming schedule must be in the project plan before any sending infrastructure is provisioned." },
+        { "type": "diagram", "page": 4, "render": "mermaid", "title": "IP warming decision flow", "source": "flowchart TD\n    A[New IP address?] -->|Yes| B[Begin 30-day warming schedule]\n    A -->|No — existing IP with history| Z[Proceed to standard sending]\n    B --> C[Week 1–2: 500–5,000/day per IP\\nEngagement list only]\n    C --> D{Daily monitoring\\nBounce rate > 2%\\nor spam rate > 0.08%?}\n    D -->|Threshold exceeded| E[Pause sending\\nInvestigate bounce classification]\n    E --> F[Remediate list quality\\nReduce daily volume 50%]\n    F --> D\n    D -->|Within threshold| G[Week 3–4: 10,000–50,000/day\\nExpand to full opted-in list]\n    G --> H{Thresholds still clear?}\n    H -->|No| E\n    H -->|Yes| I[Week 5–6: Full volume ramp\\nAll segments active]\n    I --> J[Warming complete\\nHandoff to standard sending]\n    J --> Z" },
+        { "type": "prose", "page": 4, "html": "Warming must use the highest-engagement segment of the list first — recent openers, recent purchasers, recent sign-ups. Sending to a cold or stale list during warming is the most common cause of warming failure. Monitor the following metrics daily during warming: hard bounce rate (halt at >2%), spam complaint rate (halt at >0.08% as per Google/Yahoo 2024 requirements), soft bounce rate, and ISP-level block codes. Return Path, 250ok, or Adobe's Deliverability dashboard provide per-ISP inbox placement data — mandatory during warming, not optional." },
+        { "type": "callout", "page": 4, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>Single IP, no warming, first send to 1 million recipients on go-live day. Bounce rate hits 12% within 2 hours. Major ISP blocks the sending domain. 3-week recovery period.</p></div><div><div class=\"ba-col-label\">After</div><p>4-IP pool, 6-week warming schedule completing 2 weeks before go-live, all typology rules active, deliverability monitoring dashboard with alerting at 2% hard bounce rate.</p></div></div>" }
+      ]
+    },
+    {
+      "id": "adobe.camp.segmentation",
+      "title": "Segmentation and targeting — workflow-based vs AEP audience activation",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "4 · Segmentation and targeting — workflow-based vs AEP audience activation" },
+        { "type": "prose", "page": 5, "html": "Campaign supports two distinct targeting paradigms. Choosing the wrong one for a use case produces either an operationally brittle workflow or an audience latency problem." },
+        { "type": "cardgrid", "page": 5, "columns": 3, "cards": [
+          { "eyebrow": "Campaign-native", "title": "Workflow-based targeting", "body": "SQL queries against the Campaign database or FFDA (Snowflake in v8). Built inside Campaign workflow activities: Query, Split, Intersection, Exclusion. Fast iteration for data already resident in Campaign. Appropriate when the full profile data for targeting exists in Campaign's schema." },
+          { "eyebrow": "AEP-driven", "title": "AEP Audience Activation", "body": "Segments built in AEP Segment Builder, activated to Campaign via the AEP Destination connector. AEP is the system of record for the unified profile. Required when targeting depends on web behaviour, offline transactions, or third-party data that lives in AEP but not in Campaign. Activation is batch (hourly to daily) — not suitable for real-time triggers without supplementary Journey Optimizer." },
+          { "eyebrow": "Hybrid", "title": "AEP audience + Campaign refinement", "body": "AEP activates a broad segment; Campaign applies final exclusions (recent purchasers, active suppression, frequency-capped recipients) via workflow logic before delivery. The standard DEPT® pattern for enterprise deployments where profile data is split across both systems." }
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.camp.frequency",
+      "title": "Frequency capping and fatigue management — typology rules, pressure rules, control groups",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "5 · Frequency capping and fatigue management — typology rules, pressure rules, control groups" },
+        { "type": "prose", "page": 6, "html": "Typology rules are Campaign's enforcement layer for delivery governance. They run before every delivery — not as a configuration preference but as a blocking gate. A delivery that fails a typology rule does not send." },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Typology rule types</b> — filtering rules (exclude specific populations), pressure rules (cap contact frequency), capacity rules (limit throughput on a channel or IP), and control rules (enforce structural requirements on the delivery itself).",
+          "<b>Pressure rules</b> — define the maximum number of contacts per recipient per sliding time window. Example: no more than 3 emails in any 7-day window, no more than 1 SMS in any 3-day window. Pressure rules evaluate across all deliveries sharing the same typology, not per-campaign — this requires a single typology scheme applied consistently across all delivery templates.",
+          "<b>Control groups</b> — extract a holdout population before delivery to measure true causal lift. Campaign's control group feature operates at the delivery level. For programme-level holdouts (withheld from all sends in a period), manage the exclusion via a dedicated Campaign schema table and a filtering typology rule.",
+          "<b>Fatigue scoring</b> — for programmes with high send frequency, implement a fatigue score in the recipient schema updated by a nightly workflow: increment on send, decrement on engagement event (open, click), and apply a pressure rule threshold against the score. Adobe Campaign integration with AEP allows this score to be shared as a profile attribute for cross-channel suppression."
+        ] },
+        { "type": "callout", "page": 6, "variant": "tip", "html": "DEPT® field pattern — configure Campaign's typology rules in Sprint 1 as a delivery prerequisite, not a post-launch configuration. Three non-negotiable rules for every DEPT® Campaign implementation: maximum 3 emails per recipient per week, mandatory seed address list inclusion on every delivery, and suppression list refresh within 24 hours of any unsubscribe event." }
+      ]
+    },
+    {
+      "id": "adobe.camp.aem-integration",
+      "title": "AEM-to-Campaign content integration — content fragment API, dynamic content blocks, personalisation tokens",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "6 · AEM-to-Campaign content integration — content fragment API, dynamic content blocks, personalisation tokens" },
+        { "type": "prose", "page": 7, "html": "AEM and Campaign integrate at the content layer via two mechanisms: the native AEM-Campaign integration (push-based, author-driven) and the Content Fragment API (pull-based, workflow-driven). They serve different authoring models and should not be conflated." },
+        { "type": "notes", "page": 7, "items": [
+          "<b>Native AEM-Campaign integration</b> — authors create email templates in AEM Sites using Campaign-compatible components. The template is pushed to Campaign on activation. AEM manages authoring; Campaign manages delivery. Best suited when email templates follow page-like authoring patterns and the creative team works primarily in AEM.",
+          "<b>Content Fragment API</b> — Campaign workflows fetch fragment content via the AEM Assets HTTP API at delivery execution time. Fragments contain structured content (headline, body copy, CTA, image reference) that Campaign injects into a delivery template. Decouples content authoring lifecycle from delivery scheduling — a fragment can be updated in AEM without touching the Campaign workflow.",
+          "<b>Dynamic content blocks</b> — Campaign's native dynamic content uses JavaScript conditions against recipient attributes to select content blocks at render time. For content managed in AEM, the block content is fetched via API; the condition logic stays in Campaign. Keep condition logic in Campaign, content in AEM — do not embed business logic in AEM fragments.",
+          "<b>Personalisation tokens</b> — Campaign's <code>&lt;%= recipient.firstName %&gt;</code> syntax operates at MTA render time, after content is assembled. AEM content fragments must leave personalisation token placeholders intact — never resolve them during fragment authoring. Token validation (verifying the referenced schema field exists and is populated) must be part of the delivery pre-flight checklist.",
+          "<b>High-volume pattern</b> — for >500K sends with heavy personalisation, pre-render content variants as static HTML blocks stored in Campaign and refresh them on a schedule. Runtime API calls to AEM from the MTA at send time introduce latency and a critical-path external dependency — avoid it at scale."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.camp.bounce-unsubscribe",
+      "title": "Bounce and unsubscribe handling — hard/soft bounce classification, suppression automation, CAN-SPAM/GDPR",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "7 · Bounce and unsubscribe handling — hard/soft bounce classification, suppression automation, CAN-SPAM/GDPR" },
+        { "type": "prose", "page": 8, "html": "Bounce and unsubscribe handling is not an operational task — it is a compliance and deliverability architecture requirement. Misclassified bounces and delayed suppressions directly damage sending reputation and expose the organisation to regulatory liability." },
+        { "type": "cardgrid", "page": 8, "columns": 3, "cards": [
+          { "eyebrow": "Hard bounce", "title": "Permanent delivery failure", "body": "SMTP 5xx codes: address does not exist, domain does not exist, address permanently rejected. Campaign must quarantine the address immediately on first hard bounce. No retry. Quarantined addresses are excluded by Campaign's built-in filtering typology — verify this rule is active on all delivery typologies." },
+          { "eyebrow": "Soft bounce", "title": "Transient delivery failure", "body": "SMTP 4xx codes: mailbox full, server temporarily unavailable, message deferred. Campaign retries on a configurable schedule (default: up to 5 days, then quarantine). Configure retry intervals to match ISP-specific retry windows — Gmail and Outlook have different expectations. After the retry period, soft bounces that never deliver are promoted to hard bounce and quarantined." },
+          { "eyebrow": "Unsubscribe", "title": "Opt-out enforcement", "body": "CAN-SPAM requires opt-out processing within 10 business days. GDPR requires it without undue delay — in practice, 72 hours is the defensible maximum. Campaign's unsubscribe workflows must write to the opt-out flag in the recipient schema and sync that flag to any connected CRM, AEP profile, or consent management platform within 24 hours. List-unsubscribe headers (RFC 8058 one-click) are now required by Gmail and Yahoo for bulk senders — configure them in Campaign's delivery template settings." }
+        ] },
+        { "type": "notes", "page": 8, "items": [
+          "<b>Suppression list architecture</b> — maintain a master suppression list in Campaign that is the union of: hard bounces, unsubscribes, spam complaints (fed from feedback loops with Gmail, Yahoo, Outlook), and any legal suppression orders. This list must be the first exclusion applied in every targeting workflow, before any segment logic runs.",
+          "<b>Feedback loop registration</b> — register with ISP feedback loop programmes (Gmail Postmaster Tools, Yahoo Complaint Feedback Loop, Microsoft SNDS) to receive spam complaint data. These feeds must flow into Campaign's suppression list automatically — a manual process will always lag.",
+          "<b>GDPR right to erasure</b> — a Campaign deletion workflow triggered by a data subject request must delete or anonymise the recipient record, hard-delete all delivery logs referencing that recipient, and write confirmation to the request tracking system. Do not implement this as a manual operation."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.camp.mid-sourcing",
+      "title": "Campaign MID-sourcing architecture — when required, how it changes delivery routing",
+      "order": 8,
+      "blocks": [
+        { "type": "heading", "page": 9, "html": "8 · Campaign MID-sourcing architecture — when required, how it changes delivery routing" },
+        { "type": "prose", "page": 9, "html": "MID-sourcing (Message Centre or Marketing/Mid routing) is a Campaign topology where the marketing instance delegates actual SMTP delivery to one or more dedicated mid-sourcing servers. It is not the default topology — it is required for specific scenarios and changes the delivery routing model materially." },
+        { "type": "notes", "page": 9, "items": [
+          "<b>When MID-sourcing is required</b> — when the marketing instance is in a network zone without direct outbound SMTP access to the internet (common in highly regulated environments); when throughput requirements exceed what a single Campaign application server MTA can deliver; when delivery must be isolated from the main Campaign application for security or compliance segmentation; and in multi-region deployments where a regional MID server reduces SMTP latency to local ISPs.",
+          "<b>Routing change</b> — in a standard topology, Campaign's internal MTA delivers directly to ISPs. With MID-sourcing, the marketing instance sends delivery jobs (message payloads + recipient lists) to the mid-sourcing instance over an internal API. The mid instance owns the MTA, the IP pool, and all SMTP sessions with ISPs. The marketing instance receives delivery status callbacks from the mid instance and updates its tracking logs. The marketing instance has no direct connection to ISPs.",
+          "<b>Operational implication</b> — deliverability monitoring, bounce processing, and IP reputation management now occur on the mid-sourcing instance, not the marketing instance. Ensure DKIM keys, SPF records, and feedback loop registrations are associated with the mid-sourcing server's IP ranges and sending domains — not the marketing application server's.",
+          "<b>Hybrid MID patterns</b> — some programmes use MID-sourcing for bulk marketing sends and retain direct MTA on the marketing instance for low-volume transactional sends. This requires two delivery routing configurations in Campaign and two distinct IP pools — one per path. Typology rules must enforce which delivery type uses which routing."
+        ] },
+        { "type": "diagram", "page": 9, "render": "ascii", "title": "Campaign Delivery Flow", "source": "Campaign Delivery Flow\n\n  AEP Audience\n       │\n       ▼\n  Campaign Targeting Workflow\n  (SQL query · audience merge · exclusions)\n       │\n       ▼\n  Typology Check\n  (frequency cap · pressure rules · control group extraction)\n       │\n       ▼\n  MTA Delivery Engine\n  (SMTP routing · IP pool assignment · retry queue)\n       │\n       ├──────────────────────────┐\n       ▼                          ▼\n  ISP Gateway                Soft Bounce Queue\n  (SPF/DKIM/DMARC verify)    (retry schedule · max attempts)\n       │                          │\n       ├──── Inbox               │── Retry → ISP Gateway\n       │                          │\n       └──── Hard Bounce ─────────┴──► Suppression List\n                                        (24h sync to Campaign)\n       │\n       ▼\n  Campaign Tracking\n  (open · click · unsubscribe events → AEP Real-time Profile)" }
+      ]
+    }
+  ]
+}

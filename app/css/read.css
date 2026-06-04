@@ -1,41 +1,366 @@
-/* READ mode — the ebook. Newsreader reading body; turnable pages; telescope footer.
-   Loaded after monolith.css + app.css. Mobile-first. */
+@charset "UTF-8";
+/* READ mode — the ebook. A warm read-paper surface, a merged reference-style opener
+   with a drop-cap lede, a Newsreader reading body, ochre book-style callouts, book
+   tier rows, a telescope transition page, and page-dot navigation.
+   Loaded after monolith.css + app.css. Mobile-first.
 
-.read { max-width: 760px; margin: 0 auto; padding: 0 4px; }
-.read-stage { min-height: 64vh; padding: 26px 0 34px; }
+   SCOPING CONTRACT — every rule below is scoped under `.read` (the Read root). The
+   shared block renderers emit GLOBAL classes (.lead, .callout, .tierlist, <p>, <h4>);
+   we re-skin them ONLY inside `.read-page`, never globally, so Manual stays
+   byte-identical. Tokens only for colour; #fff/#000 appear only as text on ochre/ink,
+   exactly as the reference.
 
-/* cover */
-.read-cover { padding: 28px 0 8px; }
-.read-cover-mark { font-family: var(--serif); font-weight: 800; font-size: 64px; line-height: 1; color: var(--ochre); }
-.read-cover-ring { font-family: var(--mono); font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink-faint); margin: 12px 0 4px; }
-.read-cover-title { font-family: var(--serif); font-weight: 800; font-size: 48px; line-height: 1.02; letter-spacing: -.02em; color: var(--ink); margin-bottom: 8px; }
-.read-cover-tag { font-family: var(--mono); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ochre-deep); margin-bottom: 24px; }
+   TOKEN SEAM — the reading aesthetic leans on two tokens the base monolith.css does
+   not define: `--book` (Newsreader, the reading body) and `--read-paper` (the warm
+   page surface). Rather than edit the shared stylesheet we scope them HERE, mirroring
+   how feed.css scopes its tokens, so dark mode still flips. (`--ochre-tint` is already
+   defined globally in feed.css, which is always loaded.) */
+:root {
+  --book: 'Newsreader', Georgia, serif;
+  --read-paper: #faf8f2;
+}
+html[data-theme="dark"] {
+  --read-paper: #13110f;
+}
 
-/* reading flow — Newsreader serif body for the top-level prose only
-   (headings, callouts, cards, code, etc. keep their own type) */
-.read-flow > p, .read-flow > .lead { font-family: 'Newsreader', Georgia, serif; }
-.read-flow > p { font-size: 19px; line-height: 1.78; color: var(--ink-soft); margin: 0 0 18px; }
-.read-flow > .lead { font-size: 23px; line-height: 1.62; color: var(--ink); margin: 0 0 20px; }
-.read-flow > .lead.chapter-open { font-size: 21px; }
-.read-flow .sub-title { margin-top: 4px; }
+/* ── the reading surface + column ───────────────────────────────────────────── */
+.read { background: var(--read-paper); border-radius: 14px; overflow: hidden; }
+.read-stage { max-width: 680px; margin: 0 auto; min-height: 62vh; }
+.read-page { padding: 26px 26px 40px; outline: none; }
+.read-page:focus-visible { outline: none; }
+
+/* slide-in transition — direction set by read.js (slide-next / slide-prev) */
+@keyframes read-in-next { from { opacity: 0; transform: translateX(40px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes read-in-prev { from { opacity: 0; transform: translateX(-40px); } to { opacity: 1; transform: translateX(0); } }
+.read-page.slide-next { animation: read-in-next .26s cubic-bezier(.16, 1, .3, 1) both; }
+.read-page.slide-prev { animation: read-in-prev .26s cubic-bezier(.16, 1, .3, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .read-page.slide-next, .read-page.slide-prev { animation: none; }
+}
+
+/* ── PAGE 0 · the merged opener ─────────────────────────────────────────────── */
+.read-opener { display: flex; flex-direction: column; }
+.read-crumb {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ochre); font-weight: 700; margin-bottom: 8px;
+}
+.read-bigletter {
+  font-family: var(--serif); font-weight: 800; font-size: 84px; line-height: .9;
+  color: var(--ochre); letter-spacing: -.04em;
+}
+.read-name {
+  font-family: var(--serif); font-weight: 800; font-size: 30px; line-height: 1.05;
+  letter-spacing: -.02em; color: var(--ink); margin: 10px 0 4px;
+}
+.read-chtag {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-faint); font-weight: 700; margin-bottom: 20px;
+}
+
+/* the chapter-open drop-cap lede, re-skinned to the book in the opener */
+.read-lede .lead.chapter-open {
+  font-family: var(--book); font-size: 18px; line-height: 1.6; color: var(--ink-soft);
+  margin: 0;
+}
+.read-lede .lead.chapter-open .drop {
+  float: left; font-family: var(--serif); font-weight: 800; font-size: 62px; line-height: .78;
+  color: var(--ochre); margin: 6px 10px 0 0;
+}
+
+/* a quiet "In this chapter" scan panel — muted, sized to sit under the lede */
+.read-scan { margin-top: 22px; }
+.read-scan-label {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--ink-faint); font-weight: 700; margin-bottom: 8px;
+}
+.read-scan .scan-box { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px; }
+.read-scan .scan-box-label { display: none; }   /* replaced by our "In this chapter" label */
+.read-scan .scan-box ul { margin: 0; padding-left: 18px; }
+.read-scan .scan-box li {
+  font-family: var(--book); font-size: 14.5px; line-height: 1.5; color: var(--ink-soft);
+  margin: 0 0 7px;
+}
+.read-scan .scan-box li:last-child { margin-bottom: 0; }
+/* monolith.css styles scan-box strong as #fff (white-on-ink, its native dark box).
+   The Read panel re-skins the box to a light --card surface, so that white text
+   turns invisible. Repaint the bold lead words in ink — readable in both themes. */
+.read-scan .scan-box li strong { color: var(--ink); }
+
+.read-hint {
+  margin-top: 24px; font-family: var(--mono); font-size: 10px; letter-spacing: .08em;
+  text-transform: uppercase; color: var(--ink-faint); font-weight: 700;
+}
+
+/* ── CONTENT PAGES · re-skin the shared block output, scoped to Read ─────────── */
 .read-flow > :first-child { margin-top: 0; }
 
-/* page nav */
-.read-nav { position: sticky; bottom: 0; display: flex; align-items: center; justify-content: center; gap: 22px; padding: 14px; background: var(--paper); border-top: 1px solid var(--rule); }
-.read-btn { width: 48px; height: 48px; border: 1px solid var(--rule); background: var(--card); color: var(--ink); font-size: 20px; line-height: 1; cursor: pointer; transition: border-color .15s, color .15s; }
-.read-btn:hover:not(:disabled) { border-color: var(--ochre); color: var(--ochre); }
-.read-btn:disabled { opacity: .3; cursor: default; }
-.read-indicator { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; color: var(--ink-soft); min-width: 84px; text-align: center; }
+/* sub-section headings + standalone heading blocks → Syne reading head */
+.read-page .sub-title,
+.read-flow h4 {
+  font-family: var(--serif); font-weight: 800; font-size: 23px; line-height: 1.15;
+  letter-spacing: -.01em; color: var(--ink); margin: 0 0 14px;
+}
+.read-page .sub-title { margin-top: 4px; }
 
-/* end-of-book: telescope into a nested ring, or next chapter */
-.read-telescope, .read-end { margin-top: 32px; padding: 22px; border: 1px solid var(--rule); background: var(--card); }
-.read-telescope { border-color: var(--ochre); box-shadow: inset 0 0 0 1px var(--ochre); }
-.read-telescope-label, .read-end-label { font-family: var(--mono); font-size: 10px; letter-spacing: .16em; text-transform: uppercase; color: var(--ochre-deep); margin-bottom: 8px; }
-.read-telescope-target, .read-end-target { font-family: var(--serif); font-weight: 800; font-size: 26px; color: var(--ink); }
-.read-end-addr { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--ink-faint); letter-spacing: .04em; }
-.read-telescope p { font-size: 14px; color: var(--ink-soft); margin-top: 8px; line-height: 1.5; }
+/* reading body — Newsreader serif for prose + lead; bold ink emphasis */
+.read-flow p { font-family: var(--book); font-size: 17px; line-height: 1.68; color: var(--ink-soft); margin: 0 0 15px; }
+.read-flow p b, .read-flow p strong { color: var(--ink); font-weight: 600; }
+.read-flow .lead { font-family: var(--book); font-size: 18px; line-height: 1.6; color: var(--ink); }
+
+/* book tier rows — flatter, rounded, card surface */
+.read-flow .tierlist { margin: 16px 0; border: none; background: transparent; }
+.read-flow .tier {
+  display: flex; align-items: center; gap: 10px; padding: 9px 13px;
+  background: var(--card); border: 1px solid var(--rule); border-radius: 10px;
+  margin-bottom: 7px; font-size: 13px; font-weight: 600; color: var(--ink);
+}
+.read-flow .tier:last-child { border-bottom: 1px solid var(--rule); margin-bottom: 0; }
+.read-flow .tier-n { font-family: var(--mono); font-size: 10px; color: var(--ochre); font-weight: 700; min-width: 14px; }
+.read-flow .tier-label { font-weight: 600; font-size: 13px; color: var(--ink); }
+.read-flow .tier-note {
+  margin-left: auto; font-family: var(--mono); font-size: 9px; color: var(--ink-faint);
+  text-transform: uppercase; letter-spacing: .03em; text-align: right;
+}
+
+/* ochre book-style callout — left rule, ochre tint, italic Newsreader.
+   one rule covers every variant (why/tip/pitfall/before-after); the label rides above. */
+.read-flow .callout {
+  border-left: 3px solid var(--ochre); background: var(--ochre-tint);
+  border-radius: 0 12px 12px 0; padding: 13px 15px; margin: 16px 0;
+}
+.read-flow .callout .callout-label {
+  display: block; border: none; padding: 0; background: none;
+  font-family: var(--mono); font-size: 9.5px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--ochre-deep); margin-bottom: 6px;
+}
+html[data-theme="dark"] .read-flow .callout .callout-label { color: var(--ochre); }
+.read-flow .callout p {
+  font-family: var(--book); font-size: 15.5px; line-height: 1.55; font-style: italic;
+  color: var(--ink); margin: 0;
+}
+
+/* ── TELESCOPE / END PAGE ───────────────────────────────────────────────────── */
+.read .telescope {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 28px 20px; min-height: 48vh;
+}
+.read .tel-from { font-family: var(--serif); font-weight: 800; font-size: 36px; color: var(--ink-faint); opacity: .5; }
+.read .tel-arrow { margin: 14px 0; color: var(--ochre); font-size: 26px; line-height: 1; }
+.read .tel-eyebrow {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ochre); font-weight: 700; margin-bottom: 12px;
+}
+.read .tel-msg { font-family: var(--book); font-size: 18px; line-height: 1.5; color: var(--ink-soft); margin: 0 0 18px; max-width: 300px; }
+.read .tel-msg b { color: var(--ink); font-weight: 600; }
+.read .tel-into { display: flex; gap: 6px; margin-bottom: 24px; }
+.read .tel-into span { font-family: var(--serif); font-weight: 800; font-size: 30px; color: var(--ochre); }
+.read .tel-into span.dim { opacity: .35; }
+.read .tel-btn {
+  background: var(--ochre); color: #fff; border: none; border-radius: 14px;
+  padding: 14px 26px; font-family: var(--mono); font-weight: 700; font-size: 13px;
+  letter-spacing: .03em; cursor: pointer; transition: background .15s;
+}
+.read .tel-btn:hover { background: var(--ochre-deep); }
+.read .tel-btn:focus-visible { outline: 2px solid var(--ochre); outline-offset: 3px; }
+
+/* ── PAGE-DOT NAV ───────────────────────────────────────────────────────────── */
+/* Pinned to the bottom of the viewport so Prev/Next never shift as page height
+   changes from one page to the next. `position: sticky` could not hold here: the
+   `.read` root has `overflow: hidden` (for the rounded surface), which makes it the
+   sticky containing block — but it is exactly content-height, so the bar had no room
+   to stick and simply rode the end of each page. Fixed positioning escapes the
+   overflow box and anchors to the viewport instead. Inner content is capped to the
+   reading column so the buttons sit at the text edges, not the screen edges. */
+.read .page-nav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+  display: flex; justify-content: center;
+  padding: 10px 22px calc(10px + env(safe-area-inset-bottom, 0px));
+  background: var(--read-paper); border-top: 1px solid var(--rule);
+  box-shadow: 0 -6px 20px -16px rgba(0, 0, 0, .45);
+}
+.read .page-nav-inner {
+  width: 100%; max-width: 680px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+/* Leave room under the last lines so they clear the fixed control bar. */
+.read-reader { padding-bottom: 64px; }
+.read .pn-btn {
+  background: none; border: none; color: var(--ink-faint); cursor: pointer;
+  display: flex; align-items: center; gap: 5px; font-family: var(--mono); font-size: 10px;
+  font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding: 6px;
+}
+.read .pn-btn:hover:not(:disabled) { color: var(--ochre); }
+.read .pn-btn:disabled { opacity: .25; cursor: default; }
+.read .pn-btn:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; border-radius: 6px; }
+.read .pn-dots { display: flex; align-items: center; gap: 5px; }
+.read .pn-dot {
+  width: 6px; height: 6px; padding: 0; border: none; border-radius: 50%; background: var(--rule);
+  cursor: pointer; transition: width .2s, background .2s; appearance: none;
+}
+.read .pn-dot:hover { background: var(--ink-faint); }
+.read .pn-dot.on { background: var(--ochre); width: 18px; border-radius: 3px; }
+.read .pn-dot:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+/* screen-reader-only page announcement */
+.read-live {
+  position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+  clip-path: inset(50%); white-space: nowrap; border: 0; padding: 0; margin: -1px;
+}
 
 @media (min-width: 720px) {
-  .read-cover-title { font-size: 60px; }
-  .read-stage { padding: 38px 0 44px; }
+  .read-page { padding: 38px 38px 48px; }
+  .read-bigletter { font-size: 96px; }
+  .read-name { font-size: 36px; }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CONTENTS LIBRARY — the Read landing (#/read with no chapter).
+   A scannable table of contents: 5 ring categories, each collapsible, listing
+   the chapters that have a section file. Same read-paper surface + brand fonts.
+   ════════════════════════════════════════════════════════════════════════════ */
+.read-contents { padding: 26px 22px 36px; }
+.read-toc-head { margin-bottom: 22px; }
+.read-toc-eyebrow {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ochre); font-weight: 700; margin-bottom: 8px;
+}
+.read-toc-title {
+  font-family: var(--serif); font-weight: 800; font-size: 34px; line-height: 1.02;
+  letter-spacing: -.02em; color: var(--ink); margin: 0;
+}
+.read-toc-lede {
+  font-family: var(--book); font-size: 15px; line-height: 1.5; color: var(--ink-soft);
+  margin: 8px 0 0; max-width: 460px;
+}
+
+.read-toc-list { display: flex; flex-direction: column; gap: 12px; }
+
+.read-cat { border: 1px solid var(--rule); border-radius: 14px; background: var(--card); overflow: hidden; }
+
+.rcat-head {
+  width: 100%; display: flex; align-items: center; gap: 12px; text-align: left;
+  padding: 14px 16px; background: none; border: none; cursor: pointer;
+}
+.rcat-head:hover { background: var(--ochre-tint); }
+.rcat-head:focus-visible { outline: 2px solid var(--ochre); outline-offset: -2px; }
+.rcat-mark {
+  flex: 0 0 auto; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 11px; font-weight: 700; color: var(--ochre);
+  border: 1px solid var(--ochre); border-radius: 7px;
+}
+.rcat-titles { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.rcat-name {
+  font-family: var(--serif); font-weight: 800; font-size: 18px; line-height: 1.1;
+  letter-spacing: -.01em; color: var(--ink);
+}
+.rcat-sub {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .06em; text-transform: uppercase;
+  color: var(--ink-faint); font-weight: 700;
+}
+.rcat-count {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 9.5px; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--ink-faint); font-weight: 700;
+}
+.rcat-chev {
+  flex: 0 0 auto; color: var(--ink-faint); font-size: 12px; transition: transform .2s;
+}
+.read-cat.collapsed .rcat-chev { transform: rotate(-90deg); }
+
+.rcat-panel {
+  border-top: 1px solid var(--rule); display: flex; flex-direction: column;
+}
+.read-cat.collapsed .rcat-panel { display: none; }
+
+.read-chrow {
+  display: flex; align-items: center; gap: 13px; padding: 13px 16px; text-decoration: none;
+  border-bottom: 1px solid var(--rule); transition: background .12s;
+}
+.rcat-panel .read-chrow:last-child { border-bottom: none; }
+.read-chrow:hover { background: var(--ochre-tint); }
+.read-chrow:focus-visible { outline: 2px solid var(--ochre); outline-offset: -2px; }
+.rc-mark {
+  flex: 0 0 auto; min-width: 30px; text-align: center;
+  font-family: var(--mono); font-size: 13px; font-weight: 700; color: var(--ochre);
+  letter-spacing: .02em;
+}
+.rc-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.rc-title { font-family: var(--book); font-size: 16px; font-weight: 600; color: var(--ink); line-height: 1.25; }
+.rc-meta {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .02em; color: var(--ink-faint);
+  line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rc-go { flex: 0 0 auto; color: var(--ink-faint); font-size: 14px; transition: color .12s, transform .12s; }
+.read-chrow:hover .rc-go { color: var(--ochre); transform: translateX(2px); }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CHAPTER READER — section-aware nav (top control row + Sections drawer +
+   the scalable progress indicator that replaces the 35-dot row on long chapters).
+   ════════════════════════════════════════════════════════════════════════════ */
+.read-topbar {
+  position: sticky; top: 0; z-index: 3; display: flex; align-items: center; gap: 10px;
+  padding: 11px 18px; background: var(--read-paper); border-bottom: 1px solid var(--rule);
+}
+.read-back {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--ink-faint);
+  text-decoration: none; padding: 5px 7px; border-radius: 6px;
+}
+.read-back:hover { color: var(--ochre); }
+.read-back:focus-visible { outline: 2px solid var(--ochre); outline-offset: 1px; }
+.read-chtitle {
+  flex: 1; min-width: 0; text-align: center; font-family: var(--serif); font-weight: 800;
+  font-size: 14px; letter-spacing: -.01em; color: var(--ink);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.read-sections-btn {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--ochre);
+  background: var(--ochre-tint); border: 1px solid var(--ochre); border-radius: 8px;
+  padding: 6px 10px; cursor: pointer; transition: background .12s;
+}
+.read-sections-btn:hover { background: var(--ochre); color: #fff; }
+.read-sections-btn:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+.read-sections-spacer { flex: 0 0 auto; width: 64px; }
+
+/* Sections jump drawer — anchored under the topbar, keyboard-operable. */
+.read-drawer {
+  position: sticky; top: 49px; z-index: 4; max-height: 56vh; overflow-y: auto;
+  background: var(--card); border-bottom: 1px solid var(--rule);
+  box-shadow: 0 14px 24px -16px rgba(0, 0, 0, .35);
+  animation: read-drawer-in .18s ease both;
+}
+@keyframes read-drawer-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .read-drawer { animation: none; } }
+.rd-head {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink-faint); font-weight: 700; padding: 13px 18px 6px;
+}
+.rd-list { list-style: none; margin: 0; padding: 0 8px 8px; }
+.rd-item {
+  width: 100%; display: flex; align-items: center; gap: 10px; text-align: left;
+  font-family: var(--book); font-size: 14.5px; color: var(--ink-soft); line-height: 1.35;
+  background: none; border: none; border-radius: 9px; padding: 9px 10px; cursor: pointer;
+  transition: background .12s, color .12s;
+}
+.rd-item:hover { background: var(--ochre-tint); color: var(--ink); }
+.rd-item:focus-visible { outline: 2px solid var(--ochre); outline-offset: -2px; }
+.rd-item.on { color: var(--ink); font-weight: 600; }
+.rd-dot {
+  flex: 0 0 auto; width: 6px; height: 6px; border-radius: 50%; background: var(--rule);
+}
+.rd-item.on .rd-dot { background: var(--ochre); }
+
+/* The scalable indicator — slim progress bar + section/page meta for long chapters. */
+.read .page-nav.has-bar .page-nav-inner { gap: 14px; }
+.read .pn-progress { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.read .pn-bar { height: 4px; border-radius: 3px; background: var(--rule); overflow: hidden; }
+.read .pn-bar-fill {
+  display: block; height: 100%; border-radius: 3px;
+  background: linear-gradient(90deg, var(--ochre), var(--ochre-deep)); transition: width .26s ease;
+}
+.read .pn-meta {
+  font-family: var(--mono); font-size: 10px; letter-spacing: .03em; color: var(--ink-soft);
+  font-weight: 700; text-align: center; line-height: 1.3;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) { .read .pn-bar-fill { transition: none; } }

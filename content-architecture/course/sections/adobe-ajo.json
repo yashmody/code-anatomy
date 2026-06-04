@@ -1,0 +1,181 @@
+{
+  "frameworkAddress": "adobe.ajo",
+  "title": "Adobe Journey Optimizer",
+  "tag": "Adobe Journey Optimizer · Orchestration · XDM · Channels · Decision Management",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> AJO's position as the journey orchestration layer that sits on top of AEP segments and XDM events — and how that position determines every architectural decision downstream",
+    "<strong>Why it matters:</strong> AJO without schema governance produces journeys that break silently when the data layer changes — architects must define the XDM event contract before any journey is built",
+    "AJO is an orchestration layer, not a content layer — AEM provides the content fragments that AJO assembles into personalised experiences",
+    "Journey entry conditions depend on AEP segment evaluation — segment latency determines minimum viable journey response time",
+    "Frequency capping and suppression lists are compliance architecture not marketing configuration — design with legal before any journey launches"
+  ],
+  "sections": [
+    {
+      "id": "adobe.ajo.stack-position",
+      "title": "AJO stack position",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "A", "html": "JO is <strong>not</strong> a campaign tool and it is <strong>not</strong> a content platform. It is a real-time journey orchestration engine that consumes AEP profile data, evaluates journey entry conditions against XDM events and segment membership, and dispatches personalised messages across channels. Its position in the Adobe stack is unambiguous: AEP is the data foundation; AJO is the execution layer on top of it." },
+        { "type": "heading", "page": 1, "html": "AJO stack position · where it sits relative to AEP, AEM, Analytics and Campaign" },
+        { "type": "cardgrid", "page": 1, "columns": 5, "cards": [
+          { "eyebrow": "AEP", "title": "The data foundation", "body": "Real-Time Customer Profile, schema registry, segment engine, identity graph. AJO consumes AEP — it does not own the data layer. If AEP is unhealthy, AJO has no signal." },
+          { "eyebrow": "AJO", "title": "Journey orchestration", "body": "Entry conditions, wait nodes, branching logic, channel dispatch, frequency capping, decision management. The runtime that turns AEP signals into timed, sequenced, personalised outreach." },
+          { "eyebrow": "AEM", "title": "Content authoring", "body": "Content fragments authored in AEM are published to the AJO offer catalogue or injected into AJO email/push templates. AEM governs the copy; AJO decides who gets it and when." },
+          { "eyebrow": "Adobe Analytics", "title": "Behavioural signals", "body": "Analytics events (via Web SDK or AppMeasurement) stream into AEP as XDM events. AJO listens to those events as journey triggers. Analytics is the upstream signal source, not a peer orchestrator." },
+          { "eyebrow": "Campaign", "title": "Batch messaging legacy", "body": "Campaign Classic/Standard handles scheduled batch sends (newsletters, regulatory notices). AJO handles real-time and segment-based flows. In migrating clients, run both in parallel with clear channel ownership — do not route one audience through two systems." }
+        ] },
+        { "type": "diagram", "page": 1, "render": "ascii", "title": "AEP → AJO → channels", "source": "┌─────────────────────────────────────────────────────────────────────┐\n│                    ADOBE EXPERIENCE PLATFORM (AEP)                  │\n│  ┌─────────────────────┐      ┌─────────────────────────────────┐  │\n│  │   XDM Event Schema  │      │   Real-Time Customer Profile    │  │\n│  │   Registry          │─────▶│   Segment Evaluation Engine     │  │\n│  └─────────────────────┘      └────────────────┬────────────────┘  │\n└──────────────────────────────────────────────── │ ─────────────────┘\n                                                   │ events + segments\n                    ┌──────────────────────────────▼────────────────────┐\n                    │          ADOBE JOURNEY OPTIMIZER (AJO)             │\n                    │  Journey Engine · Decision Management · Offer Lib  │\n                    │                                                     │\n                    │   ┌───────────┐   ┌──────────┐   ┌─────────────┐ │\n                    │   │ Event-    │   │ Segment- │   │ Batch       │ │\n                    │   │ Triggered │   │ Based    │   │ Journeys    │ │\n                    │   └───────────┘   └──────────┘   └─────────────┘ │\n                    └──────┬──────────────┬───────────────────┬─────────┘\n                           │              │                   │ offers\n              ┌────────────▼───┐   ┌──────▼──────┐    ┌──────▼──────────┐\n              │  AEM Content   │   │  Channel    │    │  Offer          │\n              │  Fragments     │──▶│  Runtime    │    │  Catalogue      │\n              │  (authoring)   │   │             │    │  (Decision Mgmt)│\n              └────────────────┘   └──────┬──────┘    └─────────────────┘\n                                          │\n           ┌──────────┬───────────┬───────┴───────┬────────────┐\n           ▼          ▼           ▼               ▼            ▼\n        Email       Push       In-App            SMS          Web" }
+      ]
+    },
+    {
+      "id": "adobe.ajo.journey-types",
+      "title": "Journey types",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "Journey types · event-triggered, segment-based, batch — with use-case mapping" },
+        { "type": "prose", "page": 2, "html": "AJO supports three fundamentally different journey entry mechanisms. Choosing the wrong type for the use case is the most common architectural error — and it is expensive to unwind after go-live." },
+        { "type": "cardgrid", "page": 2, "columns": 3, "cards": [
+          { "eyebrow": "Event-triggered", "title": "React to a moment", "body": "A specific XDM event — cart abandonment, order placed, support ticket opened — fires and the journey begins for that profile within seconds. Latency is bounded by AEP event ingestion (&lt;1 min for streaming). <strong>Use for:</strong> transactional flows, real-time engagement, behavioural triggers. Entry is individual and timestamped. Re-entry rules govern whether the same profile can re-enter the journey." },
+          { "eyebrow": "Segment-based", "title": "React to a state", "body": "Profiles enter when they qualify for or exit a segment — \"high-value customer,\" \"lapsed user,\" \"loyalty tier upgrade.\" Entry fires on segment membership change, not on a discrete event. Latency is bounded by segment evaluation cadence (streaming segments: near-real-time; batch segments: up to 24h). <strong>Use for:</strong> lifecycle programmes, tier changes, re-engagement. The segment definition is the entry contract — change it and the journey audience changes with it." },
+          { "eyebrow": "Batch (read audience)", "title": "Scheduled audience send", "body": "A snapshot of an AEP audience is loaded and every profile in it enters the journey at a scheduled time. No real-time trigger — this is the AJO equivalent of a campaign send. <strong>Use for:</strong> newsletters, scheduled promotions, regulatory notices, one-time communications to a defined audience. Do not use this where real-time responsiveness is required — a batch journey cannot react faster than its schedule." }
+        ] },
+        { "type": "notes", "page": 2, "items": [
+          "<b>Re-entry rules</b> — for event-triggered journeys, define explicitly whether a profile can re-enter: never, after journey completes, or always. The default is restrictive; a purchase-confirmation journey that allows re-entry on every purchase is correct behaviour. A welcome journey that allows re-entry is a defect.",
+          "<b>Audience size vs journey type</b> — batch journeys can handle millions of profiles at schedule time. Event-triggered journeys scale to the event volume. Segment-based journeys depend on how many profiles change segment membership in a window. Size the Channel sandbox accordingly before launch.",
+          "<b>Journey versioning</b> — every change to a live journey produces a new version. Old profiles continue on their version; new entrants use the current version. This is not optional; it is AJO's safety model. It also means journey debt accumulates. Archive aggressively."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.ajo.xdm-governance",
+      "title": "XDM event schema governance",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "XDM event schema governance · the contract between Engineering and AJO" },
+        { "type": "prose", "page": 3, "html": "The XDM event schema is the interface between the data layer (owned by Engineering) and the journey layer (owned by Marketing/CX Operations). It is a contract. Both sides must agree to its terms before either side builds against it." },
+        { "type": "prose", "page": 3, "html": "The governance model has four requirements:" },
+        { "type": "notes", "page": 3, "items": [
+          "<b>Schema-first</b> — the XDM schema is finalised and versioned in the AEP Schema Registry before any journey references it. Not \"draft\" — finalised. A draft schema is not a contract.",
+          "<b>Field-level dependency tracking</b> — every journey entry condition and personalisation field must be mapped to a specific XDM field path. This is the \"journey dependency map\" (see Agency Tip). Without it, a field rename in the data layer silently kills a journey.",
+          "<b>Versioned schema changes</b> — breaking schema changes (field removal, rename, type change) require a new schema version and a mandatory review of all journeys that reference the affected fields. Non-breaking additions (new optional fields) do not. Define the policy in writing before Sprint 1.",
+          "<b>Schema change notification</b> — Engineering must notify AJO/CX Operations before merging any schema change that affects a live journey. The lead time must accommodate the 24-hour journey republication evaluation window."
+        ] },
+        { "type": "diagram", "page": 3, "render": "mermaid", "title": "The XDM contract · violation vs governed change", "source": "flowchart TD\n    A[Engineering defines XDM event schema\\nfield: commerce.purchase.orderId] --> B[Schema versioned in\\nAEP Schema Registry\\nversion: 1.3]\n    B --> C[AJO Journey references field\\nentry condition: xdm.commerce.purchase.orderId EXISTS]\n    C --> D{Contract\\nviolation?}\n    D -->|Schema updated — field renamed or removed\\nwithout journey version bump| E[Journey entry condition\\nevaluates to FALSE\\nNo error thrown · No alert fired]\n    E --> F[Users silently fall out\\nof journey — zero visibility\\nuntil business notices drop in KPIs]\n    D -->|Schema change triggers\\njourney dependency map review| G[Journey version bumped\\nTest profile dry-run executed\\nArchitect sign-off required]\n    G --> H[Journey republished\\nwith updated field reference\\n24h evaluation window]\n    H --> I([Journey live — contract intact])" },
+        { "type": "callout", "page": 3, "variant": "why", "html": "AJO schema governance is an architect responsibility. A journey that references an XDM field that no longer exists — because the data layer was updated without versioning — silently fails. No error, no fallback, no alert. Users fall out of the journey without explanation and without the business knowing. The XDM contract is what prevents this class of incident." }
+      ]
+    },
+    {
+      "id": "adobe.ajo.channel-governance",
+      "title": "Channel governance",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "Channel governance · email, push, in-app, SMS, web — with AEM content fragment integration" },
+        { "type": "prose", "page": 4, "html": "AJO dispatches across five channels. Each has a distinct credential, delivery surface, and content model. The architect's job is to define the governance layer — ownership, fallback logic, and content sourcing — before any channel is activated in production." },
+        { "type": "diagram", "page": 4, "render": "table", "title": "Channel governance matrix", "headers": ["Channel", "Credential required", "Content source", "AEM integration", "Fallback pattern"], "rows": [
+          ["Email", "SMTP / ESP (Sendgrid, SparkPost, Adobe native)", "AJO email designer or AEM fragment injection via offer API", "Content fragments published to offer catalogue; injected via personalisation tokens", "Suppress on hard bounce; soft-bounce threshold configurable"],
+          ["Push", "APNs (iOS) + FCM (Android) — per app", "AJO message template with dynamic fields from XDM profile", "Indirect — rich push payloads can reference AEM-hosted images via URL", "Device token expiry → suppress; no silent failure — token validation at send time"],
+          ["In-App", "Mobile SDK configured — no separate credential", "AJO in-app template; HTML/JSON payload", "AEM-authored HTML fragments deployed as in-app content via offer catalogue", "Trigger condition not met → message not shown; no explicit fallback node required"],
+          ["SMS", "Twilio / Sinch / Infobip — per campaign number", "AJO message body; character-limited", "No native AEM fragment integration — SMS is authored directly in AJO", "Opt-out list enforced at channel level; STOP keywords must be handled by the gateway, not AJO logic"],
+          ["Web", "AEP Web SDK (alloy.js) on the target domain", "AJO web experience via Visual Editing Surface or code-based", "AEM Sites pages instrumented with Web SDK become AJO web channel targets; AEM fragments injected via offer decisioning API", "Experimentation fallback to control variant; decisioning timeout defaults to 3s"]
+        ] },
+        { "type": "prose", "page": 4, "html": "<strong>AEM content fragment integration pattern:</strong> Content authors create fragments in AEM (structured content: headline, body, CTA, image reference). The AEM publish pipeline includes a step that pushes fragment payloads to the AJO offer catalogue via the Offer Library API. AJO journeys reference offers by placement ID — they do not reference AEM directly. This decoupling means AEM can be replaced or restructured without rewriting journey logic, provided the offer payload schema stays stable." }
+      ]
+    },
+    {
+      "id": "adobe.ajo.frequency-capping",
+      "title": "Frequency capping architecture",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "Frequency capping architecture · suppression lists, fatigue rules, compliance" },
+        { "type": "prose", "page": 5, "html": "Frequency capping in AJO is not a marketing preference — it is compliance architecture. GDPR, CAN-SPAM, TCPA, and equivalent regulations impose legally binding constraints on outreach volume and opt-out handling. Design this before you build journeys, not after." },
+        { "type": "notes", "page": 5, "items": [
+          "<b>Global frequency rules</b> — AJO supports business-unit-wide caps (e.g., max 3 emails per profile per week across all journeys). These are set at the sandbox level and apply across all channels unless channel-specific rules override. Confirm the cap values with legal — not with the email team.",
+          "<b>Journey-level capping</b> — individual journeys can declare their own frequency rules, which stack with global rules. The most restrictive rule wins. A profile at the global weekly cap will not receive a journey email even if the journey's own cap has not been reached.",
+          "<b>Suppression lists</b> — three types: global suppressions (hard bounces, unsubscribes — never contact again); regulatory suppressions (litigation hold, financial communication restrictions); campaign-level suppressions (exclude existing customers from acquisition journey). All three are maintained in AEP as datasets and referenced by AJO at journey-entry evaluation. They are not opt-in exclusions — they are mandatory pre-filters.",
+          "<b>Fatigue rules (AI-powered)</b> — AJO's AI send-time optimisation can suppress sends when the model predicts a profile has entered communication fatigue. This is additive to hard caps, not a replacement. Do not rely on AI fatigue detection as a substitute for explicit cap rules — it is probabilistic, not deterministic.",
+          "<b>Opt-out handling</b> — email and SMS opt-outs must be honoured within 10 business days (CAN-SPAM), with many jurisdictions requiring immediate effect. AJO's unsubscribe handling updates the AEP consent dataset; journeys read consent at entry and at send time. A profile can re-enter a journey after opting out if they re-opt-in — but the journey must re-check consent at every send node, not just at entry."
+        ] },
+        { "type": "callout", "page": 5, "variant": "pitfall", "html": "Building journeys before the XDM schema is finalised. Schema changes after journey deployment require journey republication — a 24-hour evaluation period before the fix is live in production. In that window, users either receive the wrong experience or fall out of the journey. Schema-first, journey-second is not a preference — it is a delivery constraint." }
+      ]
+    },
+    {
+      "id": "adobe.ajo.aem-integration",
+      "title": "AJO + AEM integration pattern",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "AJO + AEM integration pattern · content fragment publication to AJO offer catalogue" },
+        { "type": "prose", "page": 6, "html": "The canonical DEPT® integration pattern treats AEM as the system of record for all content — including the fragments that AJO delivers through journeys. AJO never authors content; it selects and dispatches content authored elsewhere." },
+        { "type": "notes", "page": 6, "items": [
+          "<b>Step 1 · Fragment authoring in AEM</b> — content authors create Content Fragments using a model that maps to the AJO offer payload schema: headline (text), body (rich text), CTA label (text), CTA URL (text), image reference (asset path), offer metadata (tags, expiry, placement IDs). The model is agreed between Engineering and CX Operations before any fragments are created.",
+          "<b>Step 2 · Publication pipeline</b> — AEM's publish workflow includes a custom step (OSGi bundle or workflow launcher) that invokes the Adobe Offer Library API to create or update an offer in AJO when a fragment is published. Fragment unpublication triggers offer status change to \"archived\" — not deletion, to preserve reporting history.",
+          "<b>Step 3 · Offer catalogue in AJO</b> — offers are organised by placement (email banner, in-app modal, web hero, SMS body) and by collection (product line, campaign, seasonal). Collections feed the Decision Management ranking engine. Placements define the content shape the channel expects.",
+          "<b>Step 4 · Journey content reference</b> — AJO journey nodes reference a placement ID, not a specific offer. Decision Management selects the ranked offer at runtime based on profile eligibility, priority, and capping rules. This means the same journey node can serve different content to different profiles without journey modification.",
+          "<b>Versioning consideration</b> — when an AEM fragment is updated and republished, the corresponding offer in AJO is updated in place. If the update changes the offer payload schema (e.g., adds a new required field), any journey template that does not reference that field will silently omit it. Fragment schema changes require a journey template review — add this to the dependency map."
+        ] }
+      ]
+    },
+    {
+      "id": "adobe.ajo.decision-management",
+      "title": "Decision Management",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "Decision Management (Offer Decisioning) · ranked offers integrating with journey branching" },
+        { "type": "prose", "page": 7, "html": "Decision Management is the AJO component that determines <em>which offer</em> a profile sees when a journey node requests content for a placement. It is a ranked eligibility engine, not a random selector. Getting the ranking model right determines the commercial outcome of every personalised touchpoint." },
+        { "type": "cardgrid", "page": 7, "columns": 4, "cards": [
+          { "eyebrow": "Eligibility rules", "title": "Who can see an offer", "body": "Each offer declares an eligibility rule — a segment or PQL expression evaluated against the real-time profile. If the profile does not qualify, the offer is excluded from the ranked set for that request. Eligibility is evaluated at decision time, not at journey entry — a profile's eligibility can change between journey entry and the message send node." },
+          { "eyebrow": "Priority scoring", "title": "Which offer wins", "body": "Each eligible offer has a priority integer (0–100). Among eligible offers, the highest priority wins. AI-powered ranking (auto-optimisation) replaces the static integer with a model-predicted conversion probability per profile — requires sufficient volume (typically &gt;10k decisions/day) to train. Below that threshold, use static priority." },
+          { "eyebrow": "Offer capping", "title": "How many times it can be shown", "body": "Offer-level capping limits total impressions (across all channels) or per-profile impressions. When an offer reaches its cap it is excluded from the ranked set regardless of priority. Capping resets on a configurable schedule. Cap reset timing must be coordinated with campaign flight dates." },
+          { "eyebrow": "Fallback offer", "title": "What serves when nothing qualifies", "body": "Every placement must define a fallback offer — a non-personalised default that serves when no eligible offer remains after capping and eligibility filtering. A placement without a fallback will produce an empty content slot in the channel template. That is a customer-facing defect, not an acceptable state." }
+        ] },
+        { "type": "prose", "page": 7, "html": "<strong>Journey branching integration:</strong> Decision Management runs inside a journey message node — the journey does not branch on the offer outcome, it requests a decision and renders whatever the engine returns. If branching on offer outcome is required (e.g., \"if profile received premium offer, send follow-up in 3 days; otherwise, send standard follow-up\"), use an AEP segment that is updated post-decision as the branch condition. Direct offer-outcome branching within the same journey is not natively supported." },
+        { "type": "callout", "page": 7, "variant": "tip", "html": "DEPT® field pattern — maintain a \"journey dependency map\": a spreadsheet linking each live journey to its entry event XDM fields, AEM content fragments used, channel credentials, and frequency cap rules. Update it as a required step in every journey deployment PR. Stale maps produce orphaned journeys that consume licence quota without serving users." }
+      ]
+    },
+    {
+      "id": "adobe.ajo.testing-preview",
+      "title": "Testing and preview",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "Testing and preview · journey dry-run, test profile creation, channel preview" },
+        { "type": "prose", "page": 8, "html": "AJO testing is a multi-stage discipline. \"It looks right in the designer\" is not a test. A journey is ready for production when it has passed all four stages below." },
+        { "type": "notes", "page": 8, "items": [
+          "<b>Stage 1 · Test profile creation</b> — AEP profiles flagged as <code>testProfile: true</code> are the only profiles that can enter a journey in test mode. Create test profiles that cover: entry condition satisfied, entry condition not satisfied, each major branch outcome, each suppression list scenario, and the frequency-capped state. Minimum: one profile per branch of every decision node in the journey.",
+          "<b>Stage 2 · Journey dry-run (test mode)</b> — activate the journey in test mode. Test profiles enter and traverse the journey in accelerated time (wait nodes can be collapsed to seconds). Validate: entry event fires correctly, branching evaluates as expected, each channel message is dispatched to the test profile, suppression rules prevent messages where expected, frequency caps apply. AJO's test mode logs every node evaluation — read the logs, not just the outcome.",
+          "<b>Stage 3 · Channel preview</b> — each message node has a preview function. Render the message using a test profile's attribute values and verify: personalisation tokens resolve correctly (no raw <code>{{xdm.field}}</code> showing in the rendered output), AEM content fragments load from the correct offer, images render, CTA URLs are correct. Preview across device types for email (desktop/mobile client rendering matrix) and push (iOS/Android OS version matrix).",
+          "<b>Stage 4 · Staging sandbox end-to-end</b> — fire a real XDM event (via Web SDK or Postman) against the staging AEP environment using a test profile identity. Verify the event appears in the profile timeline, the journey triggers, each node executes in order, and the channel message is delivered to the test device/inbox. This is the only test that validates the full data pipeline — from event emission to channel delivery."
+        ] },
+        { "type": "heading", "page": 8, "html": "Architect checklist · pre-launch" },
+        { "type": "notes", "page": 8, "items": [
+          "<b>XDM contract</b> — schema finalised and versioned; all journey field references documented in dependency map",
+          "<b>Channel credentials</b> — all channel surface configurations tested end-to-end in staging; no production credentials used in staging",
+          "<b>Frequency caps</b> — global and journey-level caps reviewed by legal; suppression lists loaded and verified",
+          "<b>Fallback offers</b> — every placement has a fallback; fallback has been previewed and approved by content owner",
+          "<b>Test profiles</b> — cover all branches, all suppression scenarios, frequency-capped state",
+          "<b>AEM fragment pipeline</b> — publish workflow tested end-to-end; offer catalogue reflects current fragment versions",
+          "<b>Monitoring</b> — AJO journey reporting dashboard configured; KPI baseline defined; alert thresholds set for entry rate drop, error rate spike"
+        ] },
+        { "type": "diagram", "page": 8, "render": "mermaid", "title": "Example journey · purchase trigger to multi-channel branch", "source": "flowchart LR\n    A([Trigger Event\\nXDM: commerce.purchase]) --> B[Journey Entry\\nEntry condition check]\n    B --> C[Wait Node\\n24h]\n    C --> D{Profile\\nattribute check}\n    D -->|high-value segment| E[Personalised Email\\nAEM fragment: premium-offer]\n    D -->|standard segment| F[Personalised Email\\nAEM fragment: standard-offer]\n    E --> G{Email Opened?\\n72h wait}\n    F --> G\n    G -->|opened — clicked CTA| H[In-App Message\\nOffer upsell]\n    G -->|no click| I[SMS Fallback\\nchannel: Twilio]\n    H --> J([Journey End])\n    I --> J" },
+        { "type": "callout", "page": 8, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>AJO journey built against a draft XDM schema. Engineering updates the data layer in Sprint 5. Journey silently stops triggering for 48 hours before the team notices.</p></div><div><div class=\"ba-col-label\">After</div><p>XDM schema version pinned in journey entry condition. Engineering schema changes require a journey version bump, a test-profile dry-run, and architect sign-off before republication.</p></div></div>" }
+      ]
+    },
+    {
+      "id": "adobe.ajo.review",
+      "title": "Architect's AJO review gate",
+      "order": 8,
+      "blocks": [
+        { "type": "architects-review", "page": 9, "label": "Architect's AJO review gate", "items": [
+          "XDM schema version pinned and dependency map current",
+          "All journey types justified against use-case requirements",
+          "Channel credentials verified in staging — never in production first",
+          "Frequency caps reviewed with legal; suppression lists loaded",
+          "AEM fragment publish pipeline tested end-to-end",
+          "Fallback offer defined for every placement",
+          "Decision Management priority model documented and approved",
+          "Four-stage test plan executed; dry-run logs reviewed",
+          "Journey dependency map committed to the repo as part of the deployment PR"
+        ] }
+      ]
+    }
+  ]
+}

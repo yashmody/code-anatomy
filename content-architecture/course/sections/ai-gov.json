@@ -1,0 +1,64 @@
+{
+  "frameworkAddress": "ai.gov",
+  "title": "AI Governance",
+  "tag": "The Governance",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The split between what AI generates and what humans govern — three human-owned domains (contracts, review, deployment) and the governance mechanisms that make agentic development safe at DEPT® scale",
+    "<strong>Why it matters:</strong> AI governance is not a policy document — it is an architecture — the mechanisms (contract validation, review gates, deployment controls) must be implemented in CI before any AI-generated code reaches production",
+    "The three human-owned domains are the irreducible minimum of human accountability in an AI-augmented engineering team — they are not negotiable trade-offs",
+    "Governance debt accumulates faster than technical debt in AI-generated codebases — each un-reviewed PR is a precedent that weakens the governance model"
+  ],
+  "sections": [
+    {
+      "id": "ai.gov.opener",
+      "title": "AI Governance — the new role split",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "I", "html": "n an AI-assisted team the work doesn't disappear, but it moves. The architect's job becomes more about <em>what AI is allowed to produce</em> and less about <em>writing it themselves</em>. Drawing the line clearly is the governance." },
+        { "type": "callout", "page": 1, "variant": "why", "html": "Human ownership of deployment is non-negotiable. An AI agent with deployment permissions acting on a misunderstood brief can take a production system offline. The deployment trigger must always require a human decision — not because AI is unreliable but because accountability requires a decision-maker who can be held responsible and who can exercise judgement in ambiguous situations." },
+        { "type": "callout", "page": 1, "variant": "pitfall", "html": "Governance frameworks that exist at the policy level but not at the CI level. The policy says \"all AI-generated code must be reviewed by a senior engineer.\" The CI check does not exist. Result: policy is aspirational; junior engineers merge AI-generated code under deadline pressure. CI is governance; policy is intent. Without CI, you have only intent." }
+      ]
+    },
+    {
+      "id": "ai.gov.split",
+      "title": "AI Governance — the new role split",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "AI Governance — the new role split" },
+        { "type": "diagram", "page": 2, "render": "versus", "columns": [
+          { "label": "AI generates", "body": "Components &middot; Functions &middot; Tests &middot; Data mappings &middot; API clients &middot; Boilerplate &middot; Documentation drafts &middot; Migration scripts" },
+          { "label": "Humans govern", "tone": "good", "body": "Architecture &middot; Security model &middot; Contracts &middot; Event vocabulary &middot; Release strategy &middot; Prompt templates &middot; Failure modes &middot; What the product should be" }
+        ] }
+      ]
+    },
+    {
+      "id": "ai.gov.humans",
+      "title": "Three things only humans should own",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "Three things only humans should own" },
+        { "type": "notes", "page": 3, "items": [
+          "<b>What gets built</b> — product intent, business priorities, the \"why.\"",
+          "<b>The shape it must take</b> — contracts, file rosters, event vocabulary, architectural rules.",
+          "<b>What it means to be safe</b> — security, compliance, audit, the things you cannot ship if wrong."
+        ] },
+        { "type": "prose", "page": 3, "html": "Everything else can flow through the AI loop. The architect who tries to govern <em>everything</em> ends up governing nothing. The architect who governs <em>these three</em> sets the whole system's quality ceiling." }
+      ]
+    },
+    {
+      "id": "ai.gov.review",
+      "title": "Architect's Review",
+      "order": 3,
+      "blocks": [
+        { "type": "architects-review", "page": 3, "label": "Architect's Review · AI Governance", "items": [
+          "Is the AI-vs-human split written down for this team?",
+          "Who approves changes to prompt templates?",
+          "Who approves changes to event vocabulary and contracts?",
+          "Is there a clear path for \"AI got it wrong\" — escalation and rollback?",
+          "How is AI-generated code attributed, and is that auditable?"
+        ] }
+      ]
+    }
+  ]
+}

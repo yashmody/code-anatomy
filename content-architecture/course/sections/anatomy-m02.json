@@ -1,0 +1,116 @@
+{
+  "frameworkAddress": "anatomy.m02",
+  "title": "The Primitives",
+  "tag": "Module 02 · The Irreducible Parts",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The five primitives every component is assembled from — Events/Triggers, Functions/Operators, Variables, Storage, and Collection Heads — and why naming them precisely makes code review actionable",
+    "<strong>Why it matters:</strong> An architect who can name what is wrong at the primitive level gives engineers a fix target, not a feeling; \"this function closes over the wrong variable\" is reviewable, \"this feels off\" is not",
+    "The three storage shapes — simple, grouped, attached — have distinct browser-lifetime equivalents (memory, session, persistent) with different security and compliance profiles; the wrong shape is a GDPR risk, not just technical debt",
+    "Collection Heads are the most underused primitive — teams that skip them write fetch logic inside render functions and cannot cache, paginate, or test data access in isolation"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m02.opener",
+      "title": "The Primitives",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "T",
+          "html": "he irreducible parts. Everything in Part I is built from these five, and an architect's framework is just these five seen from orbit."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m02.five",
+      "title": "The five primitives",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "cardgrid",
+          "page": 2,
+          "columns": 5,
+          "cards": [
+            { "eyebrow": "When", "title": "Events / Triggers", "body": "The moments that start work — a click, a timer, an inbound request, a state change." },
+            { "eyebrow": "Do", "title": "Functions / Operators", "body": "The verbs. Actions and transformations that turn inputs into outputs." },
+            { "eyebrow": "Hold", "title": "Variables", "body": "Named storage for a single value. The smallest unit of memory you control." },
+            { "eyebrow": "Group", "title": "Storage", "body": "Simple values, <em>grouped</em> collections (lists, maps), or <em>attached</em> references between them." },
+            { "eyebrow": "Index", "title": "Heads of Collections", "body": "The handle into a group — a registry, root or manager you ask instead of touching items directly." }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m02.shapes",
+      "title": "The three shapes of storage",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 3,
+          "html": "The three shapes of storage"
+        },
+        {
+          "type": "notes",
+          "page": 3,
+          "items": [
+            "<b>Simple</b> — a lone value: a name, a count, a flag.",
+            "<b>Grouped</b> — many of a kind kept together: an array, an object, a map.",
+            "<b>Attached</b> — a value that points <em>at</em> another structure: a relationship or reference."
+          ]
+        },
+        {
+          "type": "prose",
+          "page": 3,
+          "html": "Helper functions exist to <strong>build and maintain these groups</strong> — and the \"head\" (a manager or registry) is what the rest of the system talks to, so no one reaches into the raw collection by hand."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m02.storage",
+      "title": "Storage lifetimes — the compliance boundary",
+      "order": 3,
+      "blocks": [
+        {
+          "type": "diagram",
+          "page": 4,
+          "render": "ascii",
+          "title": "Storage lifetimes",
+          "source": "┌─────────────────────────────────────────────────┐\n│  Browser Memory  │  tab lifetime · volatile      │\n│  (JS heap, state)│  lost on navigation / close   │\n└─────────────────────────────────────────────────┘\n            │  survives page refresh\n            ▼\n┌─────────────────────────────────────────────────┐\n│  Session Storage │  tab-scoped · semi-volatile   │\n│                  │  lost when tab closes         │\n└─────────────────────────────────────────────────┘\n            │  survives tab close\n            ▼\n┌─────────────────────────────────────────────────┐\n│  localStorage /  │  persistent · origin-wide     │\n│  Cookie /        │  survives close — compliance  │\n│  IndexedDB       │  boundary for PII             │\n└─────────────────────────────────────────────────┘"
+        },
+        {
+          "type": "callout",
+          "page": 4,
+          "variant": "why",
+          "html": "Storage shape is a compliance decision. PII stored in <code>localStorage</code> persists across sessions and is accessible to any script on the same origin — including injected third-party analytics tags. The difference between <code>localStorage</code> and an <code>HttpOnly</code> cookie is the difference between GDPR compliance and a GDPR breach."
+        },
+        {
+          "type": "callout",
+          "page": 4,
+          "variant": "pitfall",
+          "html": "Storing derived state in storage instead of recomputing on read. A \"formatted price\" stored in <code>localStorage</code> becomes stale the moment the currency or locale changes. Store source data and the parameters needed to derive from it; compute derived values on read."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m02.review",
+      "title": "Architect's Review",
+      "order": 4,
+      "blocks": [
+        {
+          "type": "architects-review",
+          "page": 5,
+          "label": "Architect's Review · Primitives",
+          "items": [
+            "Where does each primitive live in the codebase?",
+            "Are storage shapes (simple / grouped / attached) used consistently?",
+            "Are heads of collections used, or do views reach into raw data?",
+            "Are helper functions over-coupled to specific groups?"
+          ]
+        }
+      ]
+    }
+  ]
+}

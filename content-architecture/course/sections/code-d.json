@@ -1,0 +1,212 @@
+{
+  "frameworkAddress": "code.d",
+  "title": "Design & Data",
+  "tag": "Analytics, Personalization & CDP 101",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The full analytics stack — data layer contracts, CDP architecture, segmentation maturity, GA4 vs Adobe Analytics trade-offs, and personalisation topology",
+    "<strong>Why it matters:</strong> Analytics without a data layer contract becomes unmaintainable — every redesign breaks dashboards and there is no error to catch it",
+    "The data layer is an Engineering deliverable, not an Analytics deliverable — the schema must be version-controlled as a public API",
+    "Segmentation maturity is a ladder — teams that skip rungs produce segments that don't activate in AJO or Campaign",
+    "Personalisation without a holdout group is marketing theatre — you cannot measure what you cannot isolate"
+  ],
+  "sections": [
+    {
+      "id": "code.d.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "D", "html": " of CODE has two halves — Design (behaviour) and Data (memory). Design we covered above; <em>data is what makes everything else work</em> — analytics, personalization, AI. This deep-dive walks an architect or PM through the data stack in plain language, ending with how an organisation matures from \"we have analytics\" to \"we have a unified customer profile firing real-time decisions across every channel.\"" },
+        { "type": "diagram", "page": 1, "render": "nodes", "title": "Martech data flow — source to activation", "rows": [
+          { "nodes": [ { "label": "Data Layer", "sub": "JS schema" } ] },
+          { "nodes": [ { "label": "Tag Manager", "sub": "GTM / Adobe Launch" } ] },
+          { "nodes": [ { "label": "Analytics Platform", "sub": "GA4 / Adobe Analytics" } ] },
+          { "nodes": [ { "label": "CDP", "sub": "RT-CDP / AEP", "variant": "new" } ] },
+          { "nodes": [ { "label": "AJO", "sub": "journeys", "variant": "edge" }, { "label": "Adobe Campaign", "sub": "batch email", "variant": "edge" }, { "label": "CJA", "sub": "reporting", "variant": "edge" } ] }
+        ] },
+        { "type": "notes", "page": 1, "items": [
+          "The data layer schema is the contract — rename a field without versioning and every downstream platform fails silently"
+        ] },
+        { "type": "callout", "page": 1, "variant": "why", "html": "The data layer schema is an architecture contract. When field names change without versioning, CJA dashboards break, AJO journey entry conditions stop evaluating, and Campaign segments return zero results. These are silent failures — no error, no alert, just wrong data flowing into every downstream decision." },
+        { "type": "callout", "page": 1, "variant": "pitfall", "html": "Teams that instrument events in GTM without a schema registry end up with 40+ custom dimensions that overlap, conflict, and cannot be trusted. The standard symptom: two analysts pull the \"same\" report and get different numbers. The cause is always the same — no single source of truth for what each field means." },
+        { "type": "callout", "page": 1, "variant": "before-after", "html": "<div class=\"ba-grid\"><div><div class=\"ba-col-label\">Before</div><p>Analytics implemented post-launch, retrofitted via GTM, data layer undocumented, report rebuilt after every redesign.</p></div><div><div class=\"ba-col-label\">After</div><p>Data layer contract defined in Sprint 1, JSON Schema validated in CI, analytics team co-authors the schema, dashboards survive the redesign.</p></div></div>" }
+      ]
+    },
+    {
+      "id": "code.d.analytics",
+      "title": "What is analytics?",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "What is analytics?" },
+        { "type": "prose", "page": 2, "html": "Analytics is the platform's <strong>memory of user behaviour</strong>. Every page view, click, video play, add-to-cart, abandoned form — it all gets recorded. Without analytics, you guess at what's working. With it, you can answer \"<em>how many people did X in the last week, broken down by Y, compared to last month?</em>\"" },
+        { "type": "prose", "page": 2, "html": "That answer is what every weekly business review, every campaign decision, every product change argument should ultimately be grounded in." }
+      ]
+    },
+    {
+      "id": "code.d.ga4-vs-aa",
+      "title": "GA4 vs Adobe Analytics",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "GA4 vs Adobe Analytics" },
+        { "type": "prose", "page": 3, "html": "Two dominant platforms. Same purpose, very different ergonomics." },
+        { "type": "diagram", "page": 3, "render": "versus", "columns": [
+          { "label": "GA4 · Google Analytics 4", "body": "Google's analytics platform. Free tier for most teams, paid (GA360) at enterprise scale. Event-based model — <em>everything</em> is an event. Tight integration with the Google ad ecosystem (Ads, Search Console, BigQuery).<br><br><strong>Best when</strong> · you're SMB to mid-market, already in Google's stack, and want fast time-to-insight without licence cost." },
+          { "label": "Adobe Analytics", "tone": "good", "body": "Enterprise-grade, paid. Deep segmentation, custom calculated metrics, flexible report builder. Integrates tightly with the rest of Adobe Experience Cloud (Target, AEM, AEP, AJO). Steeper learning curve.<br><br><strong>Best when</strong> · enterprise scale, multiple brands or channels, dedicated analytics team, already on Adobe." }
+        ] }
+      ]
+    },
+    {
+      "id": "code.d.vocabulary",
+      "title": "The vocabulary — terms you'll hear constantly",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "The vocabulary — terms you'll hear constantly" },
+        { "type": "cardgrid", "page": 4, "columns": 3, "cards": [
+          { "eyebrow": "add_to_cart { sku: \"ABC123\" }", "title": "Event", "body": "Something that happened — a page view, a click, a video start. The atomic unit of analytics." },
+          { "eyebrow": "country = \"IN\" · device = \"mobile\"", "title": "Dimension", "body": "A \"what\" describing an event — the qualitative attributes you slice by." },
+          { "eyebrow": "visits · revenue · conversion rate", "title": "Metric", "body": "A \"how many\" — the quantitative number you measure." },
+          { "eyebrow": "window.dataLayer = { page, product, user }", "title": "Data Layer", "body": "A JavaScript object on every page that holds context — page, product, user — for tags to read." },
+          { "eyebrow": "Launch · GTM · Tealium", "title": "Tag / Pixel", "body": "The snippet that fires an event to analytics. Managed by a Tag Manager (Adobe Launch, GTM) so non-developers can configure them." },
+          { "eyebrow": "\"Pageviews by country, last 7 days\"", "title": "Report", "body": "A view combining dimensions × metrics over a time range." },
+          { "eyebrow": "\"Mobile users from IN who viewed a product\"", "title": "Segment", "body": "A saved filter that defines a group of users." },
+          { "eyebrow": "purchase · signup · lead-form submit", "title": "Conversion", "body": "A desired action you're optimising for." },
+          { "eyebrow": "view → cart → checkout → purchase", "title": "Funnel", "body": "A sequence of events leading toward a conversion, used to find drop-off points." }
+        ] }
+      ]
+    },
+    {
+      "id": "code.d.data-layer",
+      "title": "A data layer, made concrete",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "A data layer, made concrete" },
+        { "type": "prose", "page": 5, "html": "The data layer is the single most underrated piece of any analytics stack. It's a plain JavaScript object that sits on every page, holding the context analytics tools need. Get the data layer right and every tool — GA4, Adobe Analytics, Target, every tag manager — reads from one place. Get it wrong and every team writes their own scraping logic against the DOM." },
+        { "type": "code", "page": 5, "lang": "javascript", "label": "layout.js — runs on every page", "code": "// The data layer is set once, per page, before any tags fire.\nwindow.dataLayer = {\n  page: {\n    name:     \"Product Detail\",\n    category: \"Electronics\",\n    language: \"en-IN\"\n  },\n  product: {\n    sku:      \"ABC123\",\n    name:     \"Wireless Headphones\",\n    price:    4999,\n    currency: \"INR\"\n  },\n  user: {\n    type:        \"registered\",\n    loyaltyTier: \"gold\"\n  }\n};\n\n// When something happens, push an event.\nwindow.dataLayer.push({\n  event:   \"product:view\",\n  product: { sku: \"ABC123\" }\n});" }
+      ]
+    },
+    {
+      "id": "code.d.personalization",
+      "title": "Personalization — Adobe Target",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "Personalization — Adobe Target" },
+        { "type": "prose", "page": 6, "html": "Analytics tells you <em>what happened</em>. Personalization decides <em>what should happen next</em>. <strong>Adobe Target</strong> is the engine that picks which experience to show which user — and measures whether it worked." },
+        { "type": "prose", "page": 6, "html": "The flow is straightforward:" },
+        { "type": "diagram", "page": 6, "render": "flow", "steps": [
+          { "label": "User arrives" },
+          { "label": "Which segment?", "variant": "ochre" },
+          { "label": "Pick experience", "variant": "alt" },
+          { "label": "Measure result" }
+        ] }
+      ]
+    },
+    {
+      "id": "code.d.segmentation",
+      "title": "Segmentation — how Target groups people",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "Segmentation — how Target groups people" },
+        { "type": "prose", "page": 7, "html": "A <strong>segment</strong> is a rule that defines a group. Rules can be simple (\"new visitors\") or composite (\"mobile users from India with order history greater than three, viewed a product in the last 7 days\"). Target evaluates each visitor against your segment rules and slots them into the matching group." },
+        { "type": "prose", "page": 7, "html": "How Target chooses what to show:" },
+        { "type": "notes", "page": 7, "items": [
+          "<b>Rule-based experience</b> — \"if user is in segment X, show variation Y.\" Deterministic, easy to reason about.",
+          "<b>A/B test</b> — split traffic evenly, measure which variation performs better, ship the winner.",
+          "<b>Multivariate test</b> — try multiple variations at once, learn which combinations work.",
+          "<b>Auto-allocate</b> — ML quietly sends more traffic to the winning variation as data accumulates.",
+          "<b>Auto-target</b> — ML picks the best variation <em>per individual user</em> based on what similar users converted on."
+        ] },
+        { "type": "prose", "page": 7, "html": "A concrete example: a retail homepage shows <em>\"New here? 10% off your first order\"</em> to first-time visitors, <em>\"Free shipping on orders over ₹2,000\"</em> to returning customers, and <em>\"VIP early access\"</em> to gold-tier loyalty members. Three experiences, three segments, one page — all decided by Target in the first 80ms before render." }
+      ]
+    },
+    {
+      "id": "code.d.aa-vs-cja",
+      "title": "Adobe Analytics vs CJA",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "Adobe Analytics vs CJA" },
+        { "type": "prose", "page": 8, "html": "Adobe Analytics is the classic. <strong>Customer Journey Analytics (CJA)</strong> is what Adobe built once they accepted that people don't live on one channel any more." },
+        { "type": "diagram", "page": 8, "render": "versus", "columns": [
+          { "label": "Adobe Analytics · AA", "body": "Hit-based and page-view centric. Built around <code>eVars</code>, <code>props</code> and <code>events</code>. Each visit lives in relative isolation; cross-channel joins are limited.<br><br><strong>Strength</strong> · deep web and app analytics, mature reporting, well-known by analysts." },
+          { "label": "CJA · Customer Journey Analytics", "tone": "good", "body": "Sits on top of Adobe Experience Platform (AEP). Journey-based and person-centric. Uses the XDM (Experience Data Model) schema. Can join web, app, call centre, in-store, email and anything else you can ingest.<br><br><strong>Strength</strong> · cross-channel journeys, one record per real person across every touchpoint." }
+        ] },
+        { "type": "prose", "page": 8, "html": "The difference becomes obvious with one example:" },
+        { "type": "notes", "page": 8, "items": [
+          "<b>AA</b> · \"100,000 sessions visited the product page this week.\"",
+          "<b>CJA</b> · \"Maria viewed the product on web Monday, opened the app Tuesday, called support Wednesday, then purchased on web Thursday — and 8,432 customers showed similar patterns.\""
+        ] }
+      ]
+    },
+    {
+      "id": "code.d.cdp",
+      "title": "The CDP — Customer Data Platform",
+      "order": 8,
+      "blocks": [
+        { "type": "heading", "page": 9, "html": "The CDP — Customer Data Platform" },
+        { "type": "prose", "page": 9, "html": "Every system in your stack has its own opinion of the customer. CRM sees orders. Analytics sees clicks. Support sees tickets. Loyalty sees points. A <strong>CDP unifies them all into one profile per real person</strong> — and makes that profile actionable in real time." },
+        { "type": "prose", "page": 9, "html": "What a CDP does:" },
+        { "type": "cardgrid", "page": 9, "columns": 4, "cards": [
+          { "eyebrow": "In", "title": "Ingest", "body": "Pulls data from every system — web, app, CRM, transactions, support, loyalty, email." },
+          { "eyebrow": "Resolve", "title": "Identity stitching", "body": "Figures out that <code>user@gmail.com</code> on web is the same person as loyalty card <code>#12345</code> in-store." },
+          { "eyebrow": "Profile", "title": "Unify", "body": "Builds one record per real person — attributes, behaviour, computed traits, segment memberships." },
+          { "eyebrow": "Out", "title": "Activate", "body": "Pushes segments and profile data to downstream systems — Target, Marketo, AJO, ad platforms — in milliseconds." }
+        ] },
+        { "type": "notes", "page": 9, "items": [
+          "Common products · Adobe Real-Time CDP (RT-CDP) · Segment (Twilio) · Tealium AudienceStream · mParticle · Salesforce CDP · Treasure Data"
+        ] }
+      ]
+    },
+    {
+      "id": "code.d.maturity",
+      "title": "The maturity ladder — where is your organisation today?",
+      "order": 9,
+      "blocks": [
+        { "type": "heading", "page": 10, "html": "The maturity ladder — where is your organisation today?" },
+        { "type": "prose", "page": 10, "html": "Most companies don't start with a CDP. They evolve toward one. Knowing which rung you're on — and which rung is next — is half the job of a data architect." },
+        { "type": "tierlist", "page": 10, "items": [
+          { "n": "0", "label": "Flying Blind", "note": "No analytics. Decisions are gut feel and HiPPO opinion. · Tool: —" },
+          { "n": "1", "label": "Basic Analytics", "note": "Pageviews, clicks, traffic sources. Enough to spot trends, not enough to explain them. · Tool: GA4" },
+          { "n": "2", "label": "Enterprise Analytics", "note": "Custom dimensions, calculated metrics, segments. Real analyst team owns it. · Tool: Adobe Analytics" },
+          { "n": "3", "label": "Cross-channel Analytics", "note": "One person seen across web, app, call, store. Journey-based reporting. · Tool: CJA on AEP" },
+          { "n": "4", "label": "Personalization", "note": "A/B tests, rule-based variations, segment-targeted experiences. · Tool: Adobe Target" },
+          { "n": "5", "label": "Unified CDP", "note": "One profile per real person, real-time segments activated to every channel. · Tool: RT-CDP" },
+          { "n": "6", "label": "Orchestrated Journeys", "note": "Predictive segments, AI-chosen next-best-action, journeys triggered by signals. · Tool: AJO + AI" }
+        ] },
+        { "type": "notes", "page": 10, "items": [
+          "↳ Most enterprises are at level 2 or 3, planning level 5. Skipping rungs is possible but rarely wise — each rung depends on data discipline the previous one taught."
+        ] }
+      ]
+    },
+    {
+      "id": "code.d.data-lakes",
+      "title": "Side note · Data lakes",
+      "order": 10,
+      "blocks": [
+        { "type": "heading", "page": 11, "html": "Side note · Data lakes" },
+        { "type": "prose", "page": 11, "html": "Many large organisations also have a <strong>data lake</strong> — Snowflake, Databricks, BigQuery, an S3 bucket. It holds the raw firehose from everywhere: clicks, transactions, logs, IoT, ad data, third-party feeds. Data scientists query it for analysis; ML models train on it; BI tools build dashboards from it." },
+        { "type": "prose", "page": 11, "html": "A CDP and a data lake are <em>not</em> the same thing — they coexist:" },
+        { "type": "notes", "page": 11, "items": [
+          "<b>CDP</b> — real-time, identity-resolved, profile-centric. Built for <em>activation</em> (sending segments to downstream marketing tools in milliseconds).",
+          "<b>Data lake</b> — batch or stream, raw, schema-on-read. Built for <em>analysis and ML</em> (data science notebooks, BI dashboards, model training)."
+        ] },
+        { "type": "prose", "page": 11, "html": "The data lake often feeds the CDP with historical context; the CDP often emits real-time events back to the lake for long-term storage. They are complementary, not redundant." }
+      ]
+    },
+    {
+      "id": "code.d.review",
+      "title": "Architect's Review",
+      "order": 11,
+      "blocks": [
+        { "type": "architects-review", "page": 12, "label": "Architect's Review · Data Stack", "items": [
+          "Which analytics platform owns the source of truth — GA4, AA, or both?",
+          "Is there a clean, governed data layer on every page?",
+          "Where do segments live — in the analytics tool, in Target, in a CDP?",
+          "Is identity resolved across channels, or does each channel have its own customer view?",
+          "What is the team's current maturity rung, and what is the next one?",
+          "Is there a data lake — and is its relationship with the CDP defined?",
+          "How is PII handled in each tool — collection, storage, retention, the right to be forgotten?",
+          "Who owns the event vocabulary, and is it documented?"
+        ] }
+      ]
+    }
+  ]
+}

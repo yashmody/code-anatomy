@@ -1,0 +1,109 @@
+{
+  "frameworkAddress": "anatomy.m03",
+  "title": "Functions · 3 Types",
+  "tag": "Module 03 · Functions",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The three function types — Logical, Render, Feature/Helper — and the lifecycle helper pattern (initialize / go) that bridges them",
+    "<strong>Why it matters:</strong> Functions with no declared type get mixed purposes: a render function that also fetches, a helper that also mutates state — type discipline prevents this at the design stage",
+    "Logical functions must be pure — same input, same output, no side effects — if a \"logical\" function calls an API it is a feature function mislabelled",
+    "Lifecycle helpers are glue between framework events and business logic — keep them thin (≤10 lines) to make debugging fast"
+  ],
+  "sections": [
+    {
+      "id": "anatomy.m03.opener",
+      "title": "Functions come in three types",
+      "order": 0,
+      "blocks": [
+        {
+          "type": "chapter-open",
+          "page": 1,
+          "drop": "M",
+          "html": "ost confusion in a codebase is one type of function quietly doing another's job. Keep them separate and the file almost organises itself."
+        },
+        {
+          "type": "callout",
+          "page": 1,
+          "variant": "why",
+          "html": "Pure logical functions are the testability foundation. A function that only transforms data can be tested with zero mocking overhead — no server, no database, no DOM. This makes test authorship 10× faster and makes test output deterministic. Every pure logical function you extract from a mixed-purpose function is a test that writes itself."
+        },
+        {
+          "type": "callout",
+          "page": 1,
+          "variant": "pitfall",
+          "html": "Helper functions that accumulate business logic over time become the hidden controllers of an application. The warning sign: a <code>helpers.js</code> or <code>utils.js</code> file over 200 lines. Audit any helper file quarterly; migrate business logic to the correct function type."
+        },
+        {
+          "type": "heading",
+          "page": 1,
+          "html": "Functions come in three types"
+        },
+        {
+          "type": "cardgrid",
+          "page": 1,
+          "columns": 3,
+          "cards": [
+            {
+              "eyebrow": "Type 1",
+              "title": "Logical",
+              "body": "Decide, compute, transform. They <em>compute</em>, <em>invoke</em> other code and call the <em>API</em>. No screen, no side-show — just answers."
+            },
+            {
+              "eyebrow": "Type 2",
+              "title": "Render",
+              "body": "Take data and <em>draw</em> it — to the DOM, a canvas, a response body. They show; they don't decide."
+            },
+            {
+              "eyebrow": "Type 3",
+              "title": "Feature / Helper",
+              "body": "Small reusable utilities the other two lean on. Format a date, validate a field, shape a payload."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m03.lifecycle",
+      "title": "Lifecycle helpers",
+      "order": 1,
+      "blocks": [
+        {
+          "type": "heading",
+          "page": 2,
+          "html": "Lifecycle helpers"
+        },
+        {
+          "type": "notes",
+          "page": 2,
+          "items": [
+            "<b>initialize</b> — set the stage: defaults, wiring, first state.",
+            "<b>go / run</b> — the entry point that kicks the whole thing into motion."
+          ]
+        },
+        {
+          "type": "quote",
+          "page": 2,
+          "html": "If a render function starts making decisions, or a logical function starts drawing — split it. That split is the cheapest refactor you'll ever do."
+        }
+      ]
+    },
+    {
+      "id": "anatomy.m03.review",
+      "title": "Architect's Review · Functions",
+      "order": 2,
+      "blocks": [
+        {
+          "type": "architects-review",
+          "page": 2,
+          "label": "Architect's Review · Functions",
+          "items": [
+            "Can each function be classified as logical / render / helper without ambiguity?",
+            "Are logical functions free of DOM manipulation?",
+            "Are render functions free of business decisions?",
+            "Is the initialize / go lifecycle consistent across features?"
+          ]
+        }
+      ]
+    }
+  ]
+}

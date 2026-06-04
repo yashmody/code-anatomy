@@ -1,0 +1,125 @@
+{
+  "frameworkAddress": "adobe.aa",
+  "title": "Adobe Analytics",
+  "tag": "D · Architect-Depth Implementation Guide",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> Adobe Analytics implementation architecture — data layer contract, report suite governance, processing rules, eVar allocation, and CJA migration path",
+    "<strong>Why it matters:</strong> AA implementations without an architect degrade within 18 months — prop/eVar naming conflicts, processing rule ordering bugs, and report suite proliferation create measurement debt costing weeks to audit",
+    "The data layer is the single input to Adobe Analytics — everything downstream depends on its contract being correct and stable",
+    "Processing rules execute in order and are not version-controlled by default — a rule in the wrong position silently overwrites the correct value with no error",
+    "Report suite strategy is an architecture decision with compliance, performance, and cost implications"
+  ],
+  "sections": [
+    {
+      "id": "adobe.aa.opener",
+      "title": "Opener",
+      "order": 0,
+      "blocks": [
+        { "type": "chapter-open", "page": 1, "drop": "D", "html": "he Data 101 section covers what Adobe Analytics <em>is</em>. This section covers how to build an AA implementation that holds together at enterprise scale — across brands, teams, and years. The decisions made in the first sprint of an AA engagement define the ceiling of measurement quality forever after. Most implementations degrade not because engineers made mistakes, but because no one owned the architecture." },
+        { "type": "heading", "page": 1, "html": "The collection pipeline" },
+        { "type": "diagram", "page": 1, "render": "ascii", "title": "Data collection pipeline", "source": "  ┌─────────────────────────────────────────────────────────────────────┐\n  │                         DATA COLLECTION PIPELINE                    │\n  └─────────────────────────────────────────────────────────────────────┘\n\n  ┌──────────────┐     ┌──────────────────┐     ┌──────────────────────┐\n  │  Data Layer  │────▶│  Adobe Launch /  │────▶│  AA Collection       │\n  │  (contract)  │     │  Tags (rules)    │     │  Server (AppMsmt.js) │\n  └──────────────┘     └──────────────────┘     └──────────┬───────────┘\n                                                            │\n                                              ┌─────────────▼────────────┐\n                                              │   Processing Rules        │\n                                              │   (execute in order,      │\n                                              │    position matters)      │\n                                              └─────────────┬────────────┘\n                                                            │\n                                              ┌─────────────▼────────────┐\n                                              │   VISTA Rules             │\n                                              │   (server-side,           │\n                                              │    permanent, billed)     │\n                                              └─────────────┬────────────┘\n                                                            │\n                                        ┌───────────────────▼──────────────────┐\n                                        │         Report Suite Storage          │\n                                        │  (global / brand / virtual)           │\n                                        └───────────┬──────────────────────────┘\n                                                    │\n                           ┌────────────────────────┼────────────────────────┐\n                           │                         │                        │\n               ┌───────────▼──────┐    ┌────────────▼──────┐   ┌────────────▼──────┐\n               │ Analysis          │    │  Reporting API     │   │  Data Feeds /     │\n               │ Workspace         │    │  (Oberon/2.0)      │   │  Data Warehouse   │\n               └──────────────────┘    └───────────────────┘   └───────────────────┘" }
+      ]
+    },
+    {
+      "id": "adobe.aa.datalayer",
+      "title": "Data layer to Analytics variable mapping",
+      "order": 1,
+      "blocks": [
+        { "type": "heading", "page": 2, "html": "1 · Data layer to Analytics variable mapping — the Engineering/Analytics contract" },
+        { "type": "prose", "page": 2, "html": "The data layer is the single authoritative input to Adobe Analytics. Every eVar, prop, and event ultimately traces back to a value that either existed in the data layer or was derived from it inside Launch. This means the data layer is not an analytics artefact — it is a <strong>product engineering contract</strong> that the analytics team depends on absolutely." },
+        { "type": "prose", "page": 2, "html": "Define the contract as a typed schema, version it alongside the codebase, and treat breaking changes to the data layer the same as breaking changes to an API. The mapping from data layer keys to AA variables (eVarN, propN, eventN) belongs in a <strong>Solution Design Reference (SDR)</strong> — a spreadsheet or Confluence table that is the living source of truth for every implementation decision." },
+        { "type": "prose", "page": 2, "html": "The SDR must contain: the data layer key, the AA variable it maps to, the allocation model, the expiration, the scope (hit / visit / visitor), the business owner, and the date last modified. Without this document, every analyst who joins the team re-audits the implementation from scratch." },
+        { "type": "prose", "page": 2, "html": "Enforce the contract at the Launch rule level — data elements read from <code>window.digitalData</code> or <code>window.dataLayer</code> exclusively. No Launch rule should scrape the DOM or read arbitrary JavaScript globals. DOM scraping breaks silently on every front-end refactor; a stable data layer API does not." }
+      ]
+    },
+    {
+      "id": "adobe.aa.reportsuite",
+      "title": "Report suite strategy",
+      "order": 2,
+      "blocks": [
+        { "type": "heading", "page": 3, "html": "2 · Report suite strategy — global suite vs virtual report suites vs multi-suite tagging" },
+        { "type": "callout", "page": 3, "variant": "why", "html": "Report suite strategy is an architecture decision. Switching from multi-suite to a global suite requires re-implementing all tagging, rebuilding all dashboards, and retraining all analysts. There is no incremental migration path — it is a full reimplementation. Get it right in discovery; the cost of getting it wrong is measured in months, not sprints." },
+        { "type": "prose", "page": 3, "html": "Three patterns exist. Choose one per engagement based on business structure, compliance requirements, and analyst team topology." },
+        { "type": "prose", "page": 3, "html": "<strong>Global suite + virtual report suites (VRS).</strong> A single report suite receives all hits. VRS filters segment the data for brand teams, regions, or product lines. This is the correct default for a single brand operating across regions or a multi-brand organisation that needs cross-brand attribution. Analyst permissions are controlled at the VRS level. Processing rules and VISTA rules are written once. The tradeoff: a single configuration error affects all brands simultaneously." },
+        { "type": "prose", "page": 3, "html": "<strong>Multi-suite tagging.</strong> Each hit fires to two or more report suites — typically a global rollup suite and a brand-specific suite. Useful when brand analytics teams need their own eVar/prop namespace and cannot share one with other brands. The cost: every processing rule must be configured independently in each suite; configuration drift is inevitable without tight governance. Use only when brand teams have hard autonomy requirements." },
+        { "type": "prose", "page": 3, "html": "<strong>Standalone brand suites (no global).</strong> Each brand owns an independent report suite with no shared tagging. Cross-brand analysis is impossible in AA — it requires CJA or a data warehouse. Appropriate for holding companies with fully independent brands. Do not use when the business asks cross-brand questions even occasionally." },
+        { "type": "diagram", "page": 3, "render": "mermaid", "title": "Report suite strategy decision tree", "source": "flowchart TD\n    A([Start: Report Suite Strategy]) --> B{Single brand?}\n    B -- Yes --> C{Single region?}\n    B -- No --> D[Multi-suite with shared base configuration]\n    C -- Yes --> E[Global suite — one report suite, virtual report suites for segments]\n    C -- No --> F{Data residency or compliance requirement per region?}\n    F -- Yes --> G[Regional report suites — data stays in-region]\n    F -- No --> E\n    D --> H{Need unified cross-brand attribution?}\n    H -- Yes --> I[Add CJA on top of global suite]\n    H -- No --> D\n    E --> J{Need cross-channel attribution beyond web?}\n    J -- Yes --> I\n    J -- No --> K[Analysis Workspace — done]\n    I --> L[Customer Journey Analytics — done]\n    G --> M[Consider CJA for cross-region rollup]" }
+      ]
+    },
+    {
+      "id": "adobe.aa.processing-rules",
+      "title": "Processing rules governance",
+      "order": 3,
+      "blocks": [
+        { "type": "heading", "page": 4, "html": "3 · Processing rules governance — ordering, version control, dev suite testing" },
+        { "type": "prose", "page": 4, "html": "Processing rules transform, copy, and set variable values at collection time — before data is written to the report suite. They execute sequentially, top to bottom, and each rule operates on the state left by all rules above it. This sequential dependency is the primary source of silent data quality failures in AA implementations." },
+        { "type": "prose", "page": 4, "html": "The governance model DEPT® applies: processing rules are owned by the Analytics Architect, not the Analytics team at large. Changes require a pull request against the rule export JSON (see Agency Tip below). Rules are numbered with a three-digit prefix in their names — <code>010_set_pagename</code>, <code>020_copy_product_sku</code> — so the intended order is self-documenting in the admin UI. No rule is deployed to production without first being tested in a dedicated development report suite using Charles Proxy or Requestly to redirect image requests." },
+        { "type": "callout", "page": 4, "variant": "pitfall", "html": "Processing rules that reference variables set by other processing rules without accounting for execution order. A rule at position 3 reads a variable set by a rule at position 7. The result is always empty — a silent data quality failure that shows up only in specific traffic segments and takes hours to diagnose without version-controlled rule exports." },
+        { "type": "callout", "page": 4, "variant": "tip", "html": "DEPT® field pattern — export all processing rules as JSON at the end of each sprint and commit to the project repository. Processing rules are configuration-as-code; without version control, rollback requires manual recreation from screenshots. With version control, rollback is a copy-paste into the AA admin UI." }
+      ]
+    },
+    {
+      "id": "adobe.aa.vista",
+      "title": "VISTA rules",
+      "order": 4,
+      "blocks": [
+        { "type": "heading", "page": 5, "html": "4 · VISTA rules — when to use, when not to" },
+        { "type": "prose", "page": 5, "html": "VISTA (Visitor Identification, Segmentation, and Transformation Architecture) rules run server-side at Adobe's data collection layer, before processing rules. They are permanent — a VISTA rule that modifies a hit rewrites the stored record. There is no undo. They are also billed separately from the base AA contract." },
+        { "type": "prose", "page": 5, "html": "<strong>Use VISTA when:</strong> you need to route hits to different report suites based on hit content (suite routing); you need to manipulate data that is not accessible via processing rules (e.g., the raw query string before URL decoding); or you need a transformation that must be irreversible for compliance reasons (e.g., stripping PII from the stored record before it reaches any report suite)." },
+        { "type": "prose", "page": 5, "html": "<strong>Do not use VISTA when:</strong> the transformation is something processing rules can accomplish — processing rules are free, configurable by the client, and reversible. Do not use VISTA for variable copying, string concatenation, or conditional logic that belongs in Launch or processing rules. Every VISTA rule is an Adobe Professional Services engagement; account for lead time and cost in project planning." },
+        { "type": "prose", "page": 5, "html": "The test for VISTA: ask \"if we need to undo this in six months, what happens?\" If the answer is \"we can't — the raw data is gone,\" then VISTA is appropriate and the decision must be documented in the SDR with business owner sign-off. If the answer is \"we just change a processing rule,\" then VISTA is the wrong tool." }
+      ]
+    },
+    {
+      "id": "adobe.aa.evar-prop",
+      "title": "eVar and prop allocation strategy",
+      "order": 5,
+      "blocks": [
+        { "type": "heading", "page": 6, "html": "5 · eVar and prop allocation strategy — attribution model as a business question" },
+        { "type": "prose", "page": 6, "html": "Every eVar has an allocation model (Last Touch, First Touch, Linear, Participation) and an expiration (hit, visit, visitor, custom date, or never). These are not technical defaults — they are answers to a business question: <em>when a conversion happens, which touchpoint gets credit?</em> The wrong allocation model produces directionally incorrect reports, not just inaccurate ones." },
+        { "type": "prose", "page": 6, "html": "<strong>Last Touch</strong> gives 100% credit to the most recent value before conversion. Use for campaign tracking where the final click drives action — internal search term that preceded purchase, last product viewed. Do not use for content or channel variables where the full journey matters." },
+        { "type": "prose", "page": 6, "html": "<strong>Linear</strong> distributes credit equally across all values in the conversion window. Use when no single touchpoint is more important than others — multi-step content sequences, onboarding flows, drip campaign attribution where you want to see the full sequence rather than only the last step." },
+        { "type": "prose", "page": 6, "html": "<strong>Participation</strong> gives 100% credit to every value that participated in the conversion path. Use for binary questions: \"did this content appear in any successful conversion path?\" Participation inflates totals (they will not sum to conversion count) but answers the right question for content contribution analysis." },
+        { "type": "prose", "page": 6, "html": "Props (traffic variables) have no persistence and no allocation — they capture the value at the moment of the hit only. Use props for pathing (Next Page Flow, Previous Page Flow) and for high-cardinality dimensions where visitor-level persistence is not needed. Props do not convert; if you need a value to participate in conversion reports, use an eVar." },
+        { "type": "prose", "page": 6, "html": "Naming convention is enforcement. Every eVar and prop in the SDR must carry a human-readable name in the AA admin UI — <code>eVar15 = Internal Search Term (Last Touch, Visit)</code>. Anonymous variable names (<code>eVar15</code> with no label) mean the next analyst cannot audit the implementation without interviewing the original team. Lock down variable naming changes behind the same governance process as rule changes." }
+      ]
+    },
+    {
+      "id": "adobe.aa.classifications",
+      "title": "Classification sets",
+      "order": 6,
+      "blocks": [
+        { "type": "heading", "page": 7, "html": "6 · Classification sets — migrating from SAINT, governance model" },
+        { "type": "prose", "page": 7, "html": "Classifications add lookup dimensions to existing variables — a SKU eVar gets Product Name, Category, and Margin Tier without those values ever being sent in the beacon. Adobe has deprecated the SAINT (SiteCatalyst Attribute Importing and Naming Tool) FTP import workflow and replaced it with <strong>Classification Sets</strong>, the current architecture." },
+        { "type": "prose", "page": 7, "html": "Classification Sets are managed in the AA Admin UI under Data Management. Each set defines the source variable, the lookup keys, and the classification columns. Import is via file upload (tab-delimited) or the Classifications API. The critical governance requirement: classification data is owned by a business system (ERP, PIM, CRM) — not by the analytics team. Establish an automated feed from the source system rather than manual uploads. Manual uploads create stale classification data the moment the source system changes." },
+        { "type": "prose", "page": 7, "html": "Migration from SAINT: export all existing SAINT files, validate key coverage against current traffic (keys not in the SAINT file produce unclassified rows — find and backfill them before migrating), create the equivalent Classification Sets, and establish the automated import pipeline before decommissioning the SAINT process. Do not run both in parallel longer than one sprint — divergence between SAINT and Classification Sets in the same report suite produces inconsistent dimension values that are invisible to analysts without a schema audit." }
+      ]
+    },
+    {
+      "id": "adobe.aa.data-feeds",
+      "title": "Data feeds and data warehouse",
+      "order": 7,
+      "blocks": [
+        { "type": "heading", "page": 8, "html": "7 · Data feeds and data warehouse — when Analytics data needs to leave Adobe's ecosystem" },
+        { "type": "prose", "page": 8, "html": "Analysis Workspace and the Reporting API answer questions within Adobe's UI. When the business needs to join AA data with non-Adobe data, build custom models, or retain raw hit-level data beyond Adobe's retention window, the data must leave the ecosystem." },
+        { "type": "prose", "page": 8, "html": "<strong>Data Feeds</strong> deliver raw, hit-level data as flat files (tab-delimited, gzip) to an S3 bucket or SFTP endpoint on a defined schedule (hourly or daily). Each file contains one row per hit with every column from the report suite schema — including post-processed values after processing rules and VISTA. Data Feeds are the right choice for teams that need to build a data warehouse or lake from AA hit data, run custom attribution models, or integrate with BI tools (Databricks, Snowflake, BigQuery) at the row level." },
+        { "type": "prose", "page": 8, "html": "<strong>Data Warehouse</strong> runs SQL-like queries against the AA data store and delivers results as Excel or CSV files, usually to S3. It handles datasets larger than Analysis Workspace can render and supports custom calculated columns. Use Data Warehouse for large ad-hoc exports (full year of session-level data for a cohort), regulatory audit exports, or one-time migration snapshots. Do not use Data Warehouse for recurring operational reporting — that belongs in Analysis Workspace or the Reporting API." },
+        { "type": "prose", "page": 8, "html": "Both products are governed by the AA data retention setting (default 25 months). If the business requires raw hit data beyond 25 months, Data Feeds must be running before the retention window closes. There is no backfill option — data not exported before the retention cutoff is gone permanently." }
+      ]
+    },
+    {
+      "id": "adobe.aa.cja-migration",
+      "title": "AA-to-CJA migration path",
+      "order": 8,
+      "blocks": [
+        { "type": "heading", "page": 9, "html": "8 · AA-to-CJA migration path — what to keep, rebuild, and abandon" },
+        { "type": "prose", "page": 9, "html": "Customer Journey Analytics (CJA) is not an upgrade to Adobe Analytics — it is a different product with a different data model, built on Adobe Experience Platform datasets. The migration decision is architectural: it requires budget, a data engineering workstream, and analyst retraining. Most organisations run AA and CJA in parallel indefinitely rather than fully migrating." },
+        { "type": "prose", "page": 9, "html": "<strong>What to keep in AA:</strong> real-time operational dashboards (CJA latency is minutes, not seconds); any workflow dependent on processing rules or VISTA that has not been replicated in AEP data prep; and any integration with AA-native products (Target via Analytics for Target, AAM segments via audience publishing) until those integrations are rebuilt on the AEP connector." },
+        { "type": "prose", "page": 9, "html": "<strong>What to rebuild in CJA:</strong> cross-channel attribution (online + offline + CRM + call center in a single Analysis Workspace panel — this is CJA's primary value proposition and cannot be replicated in AA); long-window cohort analysis (AA workspace is limited in cohort depth; CJA operates on full historical datasets in AEP); and any report that requires stitching anonymous and authenticated sessions across devices." },
+        { "type": "prose", "page": 9, "html": "<strong>What to abandon:</strong> prop-based pathing built for session-scoped traffic analysis — CJA's object-array data model makes traditional AA pathing reports obsolete; SAINT classification files (CJA uses AEP lookup datasets, which are schema-validated and version-controlled by default); and custom VISTA rules whose logic can be handled by AEP data prep transformations at ingestion time." },
+        { "type": "prose", "page": 9, "html": "The migration prerequisite that teams consistently underestimate: the AEP Web SDK must be deployed and validated before CJA receives usable data. Teams that try to migrate CJA on top of an AppMeasurement implementation via the Analytics source connector will spend the first three months debugging schema mismatches rather than building analysis. Deploy the Web SDK first, validate data parity between AppMeasurement and Web SDK for a minimum of two billing periods, then light up the CJA connection." }
+      ]
+    }
+  ]
+}
