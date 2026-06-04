@@ -1,0 +1,44 @@
+{
+  "frameworkAddress": "coder.c",
+  "title": "Code",
+  "tag": "The concepts beneath the Code letter",
+  "status": "published",
+  "scan": [
+    "<strong>What you will learn:</strong> The eight Stalwart file types — init, model, biz, api, render, config, state, events — and the structural contract each one encodes: a single responsibility, a fixed list of what it must not contain",
+    "<strong>Why it matters:</strong> Stalwart is the production implementation of modules 00–10 — it converts architectural principles into a file-system convention an AI agent can be instructed to follow, making every generated feature structurally identical and reviewable",
+    "The distinction between a naive prompt and a Stalwart prompt is the difference between working code and architecturally correct code — the prompt carries the architecture so the AI cannot invent its own",
+    "The architect's role in a Stalwart project is contract definition and code review, not code authorship — this is the correct division of labour for AI-augmented teams",
+    "Stalwart is opinionated by design — deviations must be documented as Architecture Decision Records, not silent exceptions"
+  ],
+  "sections": [
+    {
+      "id": "coder.c.intro",
+      "title": "The vocabulary beneath the code",
+      "order": 0,
+      "blocks": [
+        { "type": "lead", "page": 1, "html": "Before <strong>Stalwart</strong> (one implementation) comes the conceptual vocabulary the implementation is built from. Thirteen short modules, each collapsed by default — expand the ones you need, or dip in via the sidebar. The anchors still work; clicking a deep link auto-opens the matching module." },
+        { "type": "prose", "page": 1, "html": "<b>How to use ·</b> Modules cluster naturally into <em>foundations</em> (00–02b), <em>verbs &amp; events</em> (03–04), <em>state &amp; collections</em> (05–07), and <em>discipline</em> (08–10). Read sequentially or jump in." }
+      ]
+    },
+    {
+      "id": "coder.c.stalwart",
+      "title": "Stalwart · the reference implementation",
+      "order": 1,
+      "blocks": [
+        { "type": "diagram", "page": 2, "render": "nodes", "title": "Stalwart file structure", "rows": [
+          { "nodes": [ { "label": "init.js", "sub": "bootstrap · hydrate · register" } ] },
+          { "nodes": [ { "label": "biz.js", "sub": "decide · validate · orchestrate", "variant": "new" } ] },
+          { "nodes": [
+            { "label": "model.js", "sub": "shape + local" },
+            { "label": "api.js", "sub": "external comms only" },
+            { "label": "render.js", "sub": "DOM only · reads state" }
+          ] }
+        ] },
+        { "type": "prose", "page": 2, "html": "Optional &mdash; promote when the core file is overloaded &middot; config.js &middot; flags, endpoints, thresholds (no other file hard-codes these) &middot; state.js &middot; reactive runtime store (model.js holds the shape; state.js the current value) &middot; events.js &middot; event vocabulary and dispatcher wiring (biz.js still owns decisions)" },
+        { "type": "callout", "page": 2, "variant": "why", "html": "AI-generated code that does not conform to a file structure convention produces PRs that take 3× longer to review — because the reviewer must reconstruct context (what does this file do? where does its state live? who calls it?) on every PR. Stalwart answers those questions before the reviewer opens a file." },
+        { "type": "callout", "page": 3, "variant": "tip", "html": "DEPT® field pattern — add a Stalwart file-type comment at the top of every generated file: <code>// stalwart: model</code> or <code>// stalwart: render</code>. A CI grep on this comment catches misplaced logic before human review. Cost: one comment per file. Benefit: 20 minutes of review time saved per PR." },
+        { "type": "callout", "page": 3, "variant": "pitfall", "html": "Treating <code>biz.js</code> as a catch-all for \"business logic and everything else.\" The biz file owns orchestration only — it calls model and api, it does not transform data or render output. A biz file with more than 80 lines is almost always doing work that belongs in model or render. This is the most common Stalwart violation on live DEPT® projects." }
+      ]
+    }
+  ]
+}
