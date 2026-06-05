@@ -204,6 +204,35 @@ pg_socket_dir() {
   return 1
 }
 
+# ── env_set ──────────────────────────────────────────────────────────────────
+# Set or update a KEY=VALUE line in an env file safely.
+# Uses Python so values with special chars (|, &, /, \, etc.) don't break sed.
+#
+#   env_set <file> <KEY> <VALUE>
+env_set() {
+  local file="$1" key="$2" value="$3"
+  python3 - "$file" "$key" "$value" <<'PY'
+import sys, pathlib
+path = pathlib.Path(sys.argv[1])
+key  = sys.argv[2]
+val  = sys.argv[3]
+new_line = f"{key}={val}"
+if not path.exists():
+    path.write_text(new_line + "\n"); raise SystemExit
+lines = path.read_text().splitlines()
+out, found = [], False
+for ln in lines:
+    stripped = ln.lstrip()
+    if stripped.startswith(f"{key}=") or stripped.startswith(f"#{key}="):
+        out.append(new_line); found = True
+    else:
+        out.append(ln)
+if not found:
+    out.append(new_line)
+path.write_text("\n".join(out) + "\n")
+PY
+}
+
 # ── pg_hba_path ──────────────────────────────────────────────────────────────
 # Locate pg_hba.conf by filesystem inspection (no psql call required).
 # Covers PGDG (/var/lib/pgsql/<ver>/data) and Debian (/etc/postgresql/<ver>/main).
@@ -293,15 +322,43 @@ fi
 step "Pre-flight checks"
 
 if ! $UPDATE_ONLY; then
-  # Python
+  # Python — prefer 3.9+ explicitly. The pinned versions in
+  # requirements.txt (jinja2==3.1.4 etc.) require Python ≥3.7, so we
+  # refuse 3.6 with a clear install hint.
   PYBIN=""
-  for candidate in python3.11 python3.10 python3.9 python3.8 python3; do
+  for candidate in python3.12 python3.11 python3.10 python3.9 python3.8; do
     if command -v "$candidate" &>/dev/null; then
       PYBIN="$(command -v "$candidate")"; break
     fi
   done
-  [[ -n "$PYBIN" ]] \
-    || die "Python 3 not found. Install: sudo apt install python3 python3-venv python3-pip"
+
+  # If no 3.8+ found, offer to install python39 on RHEL automatically
+  if [[ -z "$PYBIN" && "$OS_FAMILY" == "rhel" ]]; then
+    warn "No Python ≥3.8 found. Trying to install python39 from RHEL AppStream…"
+    if dnf install -y python39 python39-devel python39-pip 2>&1 | tail -3 \
+        | while read -r l; do info "  $l"; done; then
+      PYBIN="$(command -v python3.9)"
+      ok "python39 installed: $PYBIN"
+    fi
+  fi
+
+  # Last-resort fallback (Ubuntu apt)
+  if [[ -z "$PYBIN" ]] && command -v python3 &>/dev/null; then
+    PY_FALLBACK="$(command -v python3)"
+    FALLBACK_VER="$("$PY_FALLBACK" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+    # Only accept if ≥3.7
+    if "$PY_FALLBACK" -c 'import sys; sys.exit(0 if sys.version_info >= (3,7) else 1)'; then
+      PYBIN="$PY_FALLBACK"
+    fi
+  fi
+
+  if [[ -z "$PYBIN" ]]; then
+    if [[ "$OS_FAMILY" == "rhel" ]]; then
+      die "Python ≥3.8 required. Install with:  sudo dnf install python39 python39-devel python39-pip"
+    else
+      die "Python ≥3.8 required. Install with:  sudo apt install python3.10 python3.10-venv python3.10-dev"
+    fi
+  fi
 
   PY_VER="$("$PYBIN" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
   ok "Python      : $PYBIN  ($PY_VER)"
@@ -477,7 +534,7 @@ if [[ ! -f "$QUIZ_DIR/.env" ]]; then
   cp "$QUIZ_DIR/.env.example" "$QUIZ_DIR/.env"
 
   SECRET="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(32))')"
-  sed -i "s|^SECRET_KEY=.*|SECRET_KEY=${SECRET}|" "$QUIZ_DIR/.env"
+  env_set "$QUIZ_DIR/.env" SECRET_KEY "$SECRET"
   ok "Generated SECRET_KEY"
 
   if [[ -z "$DB_PASS" ]]; then
@@ -486,21 +543,16 @@ if [[ ! -f "$QUIZ_DIR/.env" ]]; then
   fi
   DB_URL="postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}"
 
-  sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://${DOMAIN}/auth/google/callback|" \
-    "$QUIZ_DIR/.env"
+  env_set "$QUIZ_DIR/.env" GOOGLE_REDIRECT_URI "https://${DOMAIN}/auth/google/callback"
   ok "OAuth redirect URI   → https://${DOMAIN}/auth/google/callback"
 
-  if grep -qE '^#?\s*DATABASE_URL=' "$QUIZ_DIR/.env"; then
-    sed -i "s|^#\?\s*DATABASE_URL=.*|DATABASE_URL=${DB_URL}|" "$QUIZ_DIR/.env"
-  else
-    echo "DATABASE_URL=${DB_URL}" >> "$QUIZ_DIR/.env"
-  fi
+  env_set "$QUIZ_DIR/.env" DATABASE_URL "$DB_URL"
   ok "DATABASE_URL         → postgresql://${DB_USER}:***@localhost:5432/${DB_NAME}"
 
   if [[ -n "$GOOGLE_CLIENT_ID" && -n "$GOOGLE_CLIENT_SECRET" ]]; then
-    sed -i "s|^QUIZ_DEV_MODE=.*|QUIZ_DEV_MODE=false|"                       "$QUIZ_DIR/.env"
-    sed -i "s|^GOOGLE_CLIENT_ID=.*|GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}|"   "$QUIZ_DIR/.env"
-    sed -i "s|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}|" "$QUIZ_DIR/.env"
+    env_set "$QUIZ_DIR/.env" QUIZ_DEV_MODE        "false"
+    env_set "$QUIZ_DIR/.env" GOOGLE_CLIENT_ID     "$GOOGLE_CLIENT_ID"
+    env_set "$QUIZ_DIR/.env" GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
     ok "Mode                 → PRODUCTION (OAuth enabled)"
     warn "Remember to set SMTP_HOST/USER/PASS in $QUIZ_DIR/.env"
   else
@@ -601,9 +653,10 @@ else
   ok "Role '${DB_USER}' exists — password synced to .env"
 fi
 
-# Persist the (possibly newly generated) password into .env
-sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}|" \
-  "$QUIZ_DIR/.env"
+# Persist the (possibly newly generated) password into .env using env_set
+# to avoid sed delimiter clashes with any character in DB_PASS.
+env_set "$QUIZ_DIR/.env" DATABASE_URL \
+  "postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}"
 
 # Database
 if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" \
