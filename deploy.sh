@@ -133,12 +133,30 @@ else
 fi
 
 # ── pg_exec helper ───────────────────────────────────────────────────────────
+# Run a command as the postgres OS user. Tries runuser first (RHEL standard,
+# bypasses PAM su restrictions), then su -. Always wrapped in `timeout` so a
+# misconfigured socket / TCP fallback cannot hang the script.
+# Inherits PGCONNECT_TIMEOUT and PGHOST from the parent environment.
 pg_exec() {
+  local cmd="PGCONNECT_TIMEOUT=${PGCONNECT_TIMEOUT:-3} ${PGHOST:+PGHOST=$PGHOST} $*"
   if command -v runuser &>/dev/null; then
-    runuser -l postgres -c "$*"
+    timeout 10 runuser -l postgres -c "$cmd"
   else
-    su - postgres -c "$*"
+    timeout 10 su - postgres -c "$cmd"
   fi
+}
+
+# ── pg_socket_dir ────────────────────────────────────────────────────────────
+# Find where the PostgreSQL server is actually creating its Unix socket.
+# Checks the two standard locations: /var/run/postgresql (Debian/RHEL PGDG)
+# and /tmp (some source builds). Returns the first one that has the socket.
+pg_socket_dir() {
+  for d in /var/run/postgresql /tmp; do
+    if [[ -S "$d/.s.PGSQL.5432" ]]; then
+      echo "$d"; return 0
+    fi
+  done
+  return 1
 }
 
 # ── pg_service_name ──────────────────────────────────────────────────────────
@@ -224,11 +242,7 @@ if ! $UPDATE_ONLY; then
     || die "psql not found. Install the PostgreSQL client package."
   ok "psql        : $(psql --version)"
 
-  # PostgreSQL connectivity — check via the local socket (always works
-  # when Postgres is up). TCP/127.0.0.1 is enabled in step 6 if needed,
-  # so we don't depend on it here. pg_isready -h 127.0.0.1 was removed:
-  # it hangs for the full TCP timeout when Postgres listens only on the
-  # Unix socket (common default on RHEL).
+  # PostgreSQL connectivity
   PG_SVC="$(pg_service_name || echo 'postgresql-14')"
   info "PG service  : $PG_SVC"
 
@@ -237,11 +251,33 @@ if ! $UPDATE_ONLY; then
   fi
   ok "PG service  : active"
 
-  # Query via local socket (runuser, no -h flag → uses /var/run/postgresql)
+  # Find the actual socket location BEFORE attempting any psql call.
+  # This avoids the silent TCP-fallback hang.
+  PG_SOCK="$(pg_socket_dir || echo '')"
+  if [[ -z "$PG_SOCK" ]]; then
+    warn "No PostgreSQL Unix socket found in /var/run/postgresql or /tmp"
+    info "Diagnostics:"
+    info "  ls -la /var/run/postgresql/ :"
+    ls -la /var/run/postgresql/ 2>&1 | head -5 | while read -r l; do info "    $l"; done
+    info "  ls -la /tmp/.s.PGSQL.5432   :"
+    ls -la /tmp/.s.PGSQL.5432 2>&1 | head -3 | while read -r l; do info "    $l"; done
+    info "  Listening TCP ports        :"
+    ss -tlnp 2>/dev/null | grep -E ':(5432|postgres)' \
+      | while read -r l; do info "    $l"; done || true
+    die "Cannot locate the Postgres socket. The server is running but unreachable. Check: journalctl -u $PG_SVC -n 30"
+  fi
+  ok "Socket dir  : $PG_SOCK"
+
+  # Run a trivial query with explicit socket path + connect timeout.
+  # PGHOST forces psql to use the socket (no silent TCP fallback).
+  export PGHOST="$PG_SOCK"
+  export PGCONNECT_TIMEOUT=3
   if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
-    ok "PostgreSQL  : reachable via local socket"
+    ok "PostgreSQL  : reachable via socket ($PG_SOCK)"
   else
-    die "Cannot query PostgreSQL via local socket. Check: journalctl -u $PG_SVC -n 20"
+    info "Trying to capture the actual psql error:"
+    pg_exec "psql -c 'SELECT 1'" 2>&1 | head -5 | while read -r l; do warn "  $l"; done
+    die "psql failed even with explicit socket path. Check $PG_SOCK permissions."
   fi
 
   ok "All pre-flight checks passed"
@@ -382,9 +418,15 @@ if ! systemctl is-active --quiet "$PG_SVC"; then
     || die "Could not start $PG_SVC. Run: systemctl status $PG_SVC"
 fi
 
-# Wait for socket readiness (up to 20 s). Uses the local socket via runuser
-# instead of pg_isready -h 127.0.0.1 (which hangs for the full TCP timeout
-# when Postgres isn't listening on TCP yet — common on first start).
+# Wait for socket readiness. Uses the explicit socket path discovered in
+# pre-flight (PGHOST is already exported above) plus PGCONNECT_TIMEOUT,
+# so every psql call returns in ≤3 s instead of hanging on TCP fallback.
+# Re-discover the socket here in case step 6 ran without preflight (--update).
+if [[ -z "${PGHOST:-}" ]]; then
+  PG_SOCK="$(pg_socket_dir || echo '/var/run/postgresql')"
+  export PGHOST="$PG_SOCK"
+  export PGCONNECT_TIMEOUT=3
+fi
 info "Waiting for PostgreSQL to accept connections "
 for i in {1..20}; do
   if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
