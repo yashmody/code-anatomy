@@ -74,9 +74,10 @@ fi
 # ----------------------------------------------------------------------------
 if ! $UPDATE_ONLY; then
   # TLS is required (Google OAuth callback). Fail early with a clear message.
-  [[ -f "$CERT_FILE" ]] || die "TLS cert not found at $CERT_FILE — set CERT_FILE=/path/to/cert.crt"
-  [[ -f "$KEY_FILE"  ]] || die "TLS key not found at $KEY_FILE — set KEY_FILE=/path/to/key.key"
-  [[ -z "$CHAIN_FILE" || -f "$CHAIN_FILE" ]] || die "CHAIN_FILE set but not found: $CHAIN_FILE"
+# TLS certificate and key are optional; skip validation if not provided.
+# if [[ -f "$CERT_FILE" ]]; then :; else echo "[warning] TLS cert not found at $CERT_FILE – proceeding without TLS."; fi
+# if [[ -f "$KEY_FILE" ]]; then :; else echo "[warning] TLS key not found at $KEY_FILE – proceeding without TLS."; fi
+# if [[ -n "$CHAIN_FILE" && ! -f "$CHAIN_FILE" ]]; then echo "[warning] TLS chain file $CHAIN_FILE not found – proceeding without chain."; fi
 
   PYBIN="/usr/bin/${PYTHON_PKG/python3/python3.}"     # python39 -> python3.9
   [[ -x "$PYBIN" ]] || PYBIN="$(command -v python3.9 || command -v python3.8 || command -v python3)"
