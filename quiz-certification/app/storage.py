@@ -71,7 +71,8 @@ def upsert_user(email: str, name: Optional[str] = None, picture: Optional[str] =
     with get_session() as s:
         u = s.get(User, email)
         if u is None:
-            u = User(email=email, name=name, picture=picture, provider=provider)
+            role = "QuizManager" if config.DEV_MODE else None
+            u = User(email=email, name=name, picture=picture, provider=provider, role=role)
             s.add(u)
         else:
             if name is not None:
@@ -80,6 +81,8 @@ def upsert_user(email: str, name: Optional[str] = None, picture: Optional[str] =
                 u.picture = picture
             if provider is not None:
                 u.provider = provider
+            if config.DEV_MODE and not u.role:
+                u.role = "QuizManager"
         s.commit()
         s.refresh(u)
         return _user_to_dict(u)
