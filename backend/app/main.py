@@ -26,7 +26,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
-from app.core import config, db, security
+from app.core import config, db, security, users as core_users
 from app.modules.auth import routes as auth_routes
 from app.modules.cms import routes as cms_routes
 from app.modules.content import routes as content_routes
@@ -39,6 +39,18 @@ from app.modules.quiz import routes as quiz_routes
 async def lifespan(app: FastAPI):
     # Phase 2a will replace this with an Alembic-migrated startup check.
     db.init_db()
+    # Phase 2b owns the real ensure_first_admin() — call defensively so 2e
+    # ships without depending on the 2b landing order. Once 2b lands, this
+    # will resolve and seed the first platform_admin from ADMIN_EMAILS.
+    _ensure_first_admin = getattr(core_users, "ensure_first_admin", None)
+    if callable(_ensure_first_admin):
+        try:
+            _ensure_first_admin()
+        except Exception as exc:  # noqa: BLE001 — lifespan must not fail closed on seeding
+            import logging
+            logging.getLogger("app.lifespan").warning(
+                "ensure_first_admin() raised %s; continuing startup", exc
+            )
     yield
 
 

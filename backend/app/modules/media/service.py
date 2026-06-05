@@ -6,13 +6,22 @@ Features:
   - Image size & dimensions validation via Pillow.
   - Media asset storage using PostgreSQL Large Objects (pg_largeobject) and BYTEA.
   - Range-request-compatible chunked video streaming generator.
+
+Phase 2e hardening (v2/07 §6):
+  - Explicit SVG deny — F-UPL-03. SVG can carry inline <script>; never allow.
+  - tempfile permissions tightened to 0o600 — defence in depth on shared hosts.
+  - detect_mime_type already verifies the WebP `WEBP` tag at offset 8 and the
+    MP4 `ftyp` box at offsets 4–12, so polyglot defence is partly there.
+    Phase 2d may further extend with sniffs at additional offsets.
 """
 import os
+import stat
 import tempfile
 import uuid
 import datetime
 from typing import Dict, Tuple, Generator, Optional
 
+from fastapi import HTTPException
 from PIL import Image
 import ffmpeg
 from sqlalchemy import select
@@ -29,24 +38,85 @@ _SIGNATURES = {
     "video/webm": [b"\x1a\x45\xdf\xa3"],
 }
 
+# Phase 2e — F-UPL-03: SVG and other XML-y image formats are never allowed.
+# SVG can carry <script>; serving it from same-origin = stored XSS.
+_DENY_MIMES = frozenset({
+    "image/svg+xml",
+    "image/svg",
+    "application/xml",
+    "text/xml",
+    "text/html",
+})
+
+
 def detect_mime_type(data: bytes) -> Optional[str]:
-    """Detect mime type from magic bytes to prevent spoofed extensions."""
-    # Check simple signatures
+    """Detect mime type from magic bytes to prevent spoofed extensions.
+
+    Multi-offset checks today:
+      - JPEG / PNG / WebM at offset 0
+      - WebP confirmed via `WEBP` at offset 8
+      - MP4 confirmed via `ftyp` at offsets 4-12
+    SVG / XML / HTML headers are rejected explicitly (F-UPL-03).
+    """
+    if not data:
+        return None
+
+    # Hard-deny SVG / XML / HTML headers before any positive-match below.
+    stripped = data.lstrip()[:64].lower()
+    if (
+        stripped.startswith(b"<?xml")
+        or stripped.startswith(b"<svg")
+        or stripped.startswith(b"<!doctype html")
+        or stripped.startswith(b"<html")
+    ):
+        return None
+
+    # Check simple signatures at offset 0
     for mime, sigs in _SIGNATURES.items():
         for sig in sigs:
             if data.startswith(sig):
                 if mime == "image/webp":
-                    # Extra check for WebP
+                    # Extra check for WebP — confirm offset-8 magic
                     if len(data) >= 12 and data[8:12] == b"WEBP":
                         return mime
                 else:
                     return mime
-                    
+
     # Check MP4 signature (typically has 'ftyp' at offset 4)
     if len(data) >= 12 and b"ftyp" in data[4:12]:
         return "video/mp4"
-        
+
     return None
+
+
+def assert_mime_allowed(mime_type: Optional[str]) -> None:
+    """Raise HTTPException(415) if the MIME type is denied or unknown.
+
+    Centralised so both the upload route and any internal callers share the
+    same deny-list. F-UPL-03 (SVG denial) lives here.
+    """
+    if not mime_type:
+        raise HTTPException(status_code=415, detail="Unsupported or unrecognised media type")
+    if mime_type.lower() in _DENY_MIMES:
+        raise HTTPException(status_code=415, detail="SVG and XML-based media are not allowed")
+
+
+def create_secure_tempfile(suffix: str = "") -> Tuple[int, str]:
+    """`tempfile.mkstemp` wrapper that hardens permissions to 0o600.
+
+    mkstemp() on POSIX already opens with `O_CREAT|O_EXCL|O_RDWR` and mode
+    0o600 — but the umask on some hosts can widen the resulting mode on
+    very old kernels, so we re-chmod explicitly. Returns (fd, path) just
+    like the stdlib for drop-in replacement.
+    """
+    fd, path = tempfile.mkstemp(suffix=suffix)
+    try:
+        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)  # 0o600
+    except OSError:
+        # Best-effort: a host that refuses chmod still has the mkstemp default,
+        # which is already 0600 on every POSIX we care about.
+        pass
+    return fd, path
 
 
 def validate_image(file_path: str) -> Tuple[bool, Optional[str]]:
@@ -85,10 +155,14 @@ def validate_video(file_path: str) -> Tuple[bool, Optional[str]]:
 
 def store_media_asset(file_path: str, filename: str, mime_type: str, uploader_email: str) -> Tuple[str, int]:
     """Upload file into PostgreSQL pg_largeobject and record metadata.
-    
+
+    Defensive: refuses denied MIMEs (SVG / XML / HTML) even when called
+    directly, in case a future caller skips the route-level check (F-UPL-03).
+
     Returns:
       Tuple[asset_id_str, large_object_oid]
     """
+    assert_mime_allowed(mime_type)
     raw_conn = engine.raw_connection()
     try:
         lobj = raw_conn.lobject(0, 'w') # Create a new large object
