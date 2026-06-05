@@ -11,6 +11,9 @@ venv/
 .env.local
 .claude/settings.local.json
 
+# --- Dev-only shims (never ship to prod) ---
+quiz-certification/app/dev_quiz.py
+
 # --- Runtime data (Q0 quiz) ---
 quiz-certification/q0.db
 quiz-certification/q0.db-journal
