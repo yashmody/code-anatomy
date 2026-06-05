@@ -652,9 +652,11 @@ fi
 ok "Schema applied (tables/indexes created or already exist)"
 
 # ETL seed
+# Note: we do NOT `source .env` here. app/config.py uses python-dotenv to
+# load it directly, which correctly handles values with spaces or special
+# characters like "FROM_NAME=DEPT® Academy" that break bash source.
 info "Running ETL migration: question bank + feed + course chapters + framework …"
 cd "$QUIZ_DIR"
-set -a; source "$QUIZ_DIR/.env"; set +a
 "$QUIZ_DIR/.venv/bin/python" -m scripts.migrate_to_postgres \
   2>&1 | while read -r line; do info "  etl: $line"; done
 ok "ETL migration complete"
