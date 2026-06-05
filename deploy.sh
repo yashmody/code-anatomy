@@ -47,6 +47,20 @@ QUIZ_WORKERS="${QUIZ_WORKERS:-1}"
 DOMAIN="${DOMAIN:-internal.in.deptagency.com}"
 SERVER_NAME="${SERVER_NAME:-$DOMAIN}"
 
+# Application environment (05 §5 · environment management).
+#   development | staging | production
+# A real deploy defaults to production: the app's validate_for_env() then
+# refuses to boot on dev-default SECRET_KEY / APP_PAYLOAD_SECRET, so the .env
+# step below generates fresh secrets. Override for a staging box:
+#   sudo APP_ENV=staging ./deploy.sh
+APP_ENV="${APP_ENV:-production}"
+
+# CSP rollout gate (07 §3 · safe-rollout path). 0 = Report-Only (observe
+# violations without breaking the page); 1 = enforced Content-Security-Policy.
+# Ship Report-Only first, watch the browser console / report-to sink, then
+# re-run with CSP_ENFORCE=1 once the allowlist is proven clean.
+CSP_ENFORCE="${CSP_ENFORCE:-0}"
+
 DB_NAME="${DB_NAME:-codecoder}"
 DB_USER="${DB_USER:-codecoder}"
 DB_PASS="${DB_PASS:-}"
@@ -68,7 +82,7 @@ GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
 GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
 
 SERVICE_NAME="cca-quiz"
-TOTAL_STEPS=10
+TOTAL_STEPS=11
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_START=$SECONDS
 STEP_NUM=0
@@ -91,6 +105,8 @@ if [[ -f "$SRC_DIR/deploy.env" ]]; then
   POSTGRES_SUPERUSER_PASSWORD="${POSTGRES_SUPERUSER_PASSWORD:-${PGPASSWORD:-}}"
   DOMAIN="${DOMAIN:-internal.in.deptagency.com}"
   SERVER_NAME="${SERVER_NAME:-$DOMAIN}"
+  APP_ENV="${APP_ENV:-production}"
+  CSP_ENFORCE="${CSP_ENFORCE:-0}"
 fi
 
 # ── Console helpers ──────────────────────────────────────────────────────────
@@ -136,6 +152,7 @@ printf '╔═══════════════════════
 printf '║   DEPT®  ·  Anatomy of Code  ·  Deployment Script       ║\n'
 printf '║   Domain : %-46s║\n' "$DOMAIN"
 printf '║   Target : %-46s║\n' "$APP_HOME"
+printf '║   Env    : %-46s║\n' "$APP_ENV"
 printf '║   Mode   : %-46s║\n' "$( $UPDATE_ONLY && echo '--update (code + restart only)' || echo 'full install')"
 [[ -f "$SRC_DIR/deploy.env" ]] && \
 printf '║   Config : %-46s║\n' "deploy.env loaded ✓"
@@ -544,6 +561,50 @@ if [[ ! -f "$QUIZ_DIR/.env" ]]; then
   env_set "$QUIZ_DIR/.env" SECRET_KEY "$SECRET"
   ok "Generated SECRET_KEY"
 
+  # ── Environment management (05 §5) ─────────────────────────────────────────
+  # Stamp APP_ENV so the app's validate_for_env() boots in the right mode.
+  # The .env.example shipped here is the dev template (APP_ENV=development,
+  # QUIZ_DEV_MODE=true). For staging/production we overwrite both and provide
+  # the secrets validate_for_env() insists on (SECRET_KEY + APP_PAYLOAD_SECRET
+  # must not carry their dev defaults). The per-env .env.*.example templates
+  # (.env.development.example / .env.staging.example / .env.production.example,
+  # authored in Phase 2d) document the full key set for hand-tuning.
+  env_set "$QUIZ_DIR/.env" APP_ENV "$APP_ENV"
+  ok "APP_ENV              → $APP_ENV"
+
+  # APP_PAYLOAD_SECRET — required non-dev in staging/production (the app rejects
+  # the 'dev-payload-' default). Generate it unconditionally so a dev box also
+  # gets a real value.
+  PAYLOAD_SECRET="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(32))')"
+  env_set "$QUIZ_DIR/.env" APP_PAYLOAD_SECRET "$PAYLOAD_SECRET"
+  ok "Generated APP_PAYLOAD_SECRET"
+
+  # Certificate-signing continuity (03 §7 / cert HMAC chain):
+  #   • CERT_HMAC_LEGACY mirrors the SECRET_KEY that signed certs at v2 cutover,
+  #     so every previously issued certificate keeps verifying. We seed it from
+  #     the SECRET_KEY just generated for this fresh install.
+  #   • CERT_HMAC_PROD is the active production signing key — generated fresh.
+  # Only set these if the template left them blank (don't clobber an operator
+  # who pre-populated CERT_HMAC_LEGACY with the real cutover key).
+  if ! grep -qE '^CERT_HMAC_LEGACY=.+' "$QUIZ_DIR/.env"; then
+    env_set "$QUIZ_DIR/.env" CERT_HMAC_LEGACY "$SECRET"
+    ok "CERT_HMAC_LEGACY     → mirrored from SECRET_KEY (cert continuity)"
+  else
+    ok "CERT_HMAC_LEGACY     → preserved from template (operator-supplied)"
+  fi
+  if ! grep -qE '^CERT_HMAC_PROD=.+' "$QUIZ_DIR/.env"; then
+    CERT_PROD="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(32))')"
+    env_set "$QUIZ_DIR/.env" CERT_HMAC_PROD "$CERT_PROD"
+    ok "Generated CERT_HMAC_PROD"
+  fi
+
+  # In a non-development env, the v1 dev-login path must be off so the OAuth
+  # flow is the only way in. QUIZ_DEV_MODE=false also aligns DEV_MODE with
+  # APP_ENV in config.py for the handful of legacy call-sites that read it.
+  if [[ "$APP_ENV" != "development" ]]; then
+    env_set "$QUIZ_DIR/.env" QUIZ_DEV_MODE "false"
+  fi
+
   if [[ -z "$DB_PASS" ]]; then
     DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
     ok "Generated DB password"
@@ -568,11 +629,17 @@ if [[ ! -f "$QUIZ_DIR/.env" ]]; then
     env_set "$QUIZ_DIR/.env" QUIZ_DEV_MODE        "false"
     env_set "$QUIZ_DIR/.env" GOOGLE_CLIENT_ID     "$GOOGLE_CLIENT_ID"
     env_set "$QUIZ_DIR/.env" GOOGLE_CLIENT_SECRET "$GOOGLE_CLIENT_SECRET"
-    ok "Mode                 → PRODUCTION (OAuth enabled)"
+    ok "Mode                 → PRODUCTION (OAuth enabled, APP_ENV=$APP_ENV)"
     warn "Remember to set SMTP_HOST/USER/PASS in $QUIZ_DIR/.env"
+  elif [[ "$APP_ENV" != "development" ]]; then
+    # APP_ENV is staging/production but no OAuth creds were supplied. The app
+    # will boot (secrets are real), but the OAuth login flow is not wired yet.
+    ok "Mode                 → $APP_ENV (QUIZ_DEV_MODE=false — OAuth not yet configured)"
+    warn "Supply GOOGLE_CLIENT_ID/SECRET + SMTP_* to enable real sign-in:"
+    warn "  sudo GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... APP_ENV=$APP_ENV ./deploy.sh"
   else
     ok "Mode                 → DEV (email login, no OAuth required)"
-    warn "To enable production auth: set QUIZ_DEV_MODE=false + GOOGLE_CLIENT_ID/SECRET + SMTP"
+    warn "To enable production auth: set APP_ENV=production + GOOGLE_CLIENT_ID/SECRET + SMTP"
     warn "  then re-run: sudo GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... ./deploy.sh"
   fi
 else
@@ -772,6 +839,9 @@ Type=exec
 User=${APP_USER}
 Group=${APP_USER}
 WorkingDirectory=${QUIZ_DIR}
+# APP_ENV is also in .env, but set it here so the unit's mode is visible in
+# 'systemctl show' and survives an operator hand-editing .env (05 §5).
+Environment=APP_ENV=${APP_ENV}
 EnvironmentFile=${QUIZ_DIR}/.env
 ExecStart=${QUIZ_DIR}/.venv/bin/uvicorn app.main:app \\
     --host 127.0.0.1 \\
@@ -781,11 +851,24 @@ ExecStart=${QUIZ_DIR}/.venv/bin/uvicorn app.main:app \\
     --forwarded-allow-ips='*'
 Restart=on-failure
 RestartSec=5
-# Security hardening
+# ── Security hardening (07 §9, softened per C-64) ───────────────────────────
+# Phase-1 baseline:
 NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=full
 ReadWritePaths=${QUIZ_DIR}
+# Phase-3 additions — kernel / cgroup / namespace surface reduction:
+ProtectKernelTunables=true
+ProtectControlGroups=true
+ProtectKernelModules=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+# Allow the broad service syscall set. Deliberately NOT MemoryDenyWriteExecute
+# (Pillow/ffprobe need W^X off) and NOT the aggressive ~@resources deny-list —
+# both are deferred to a Phase 3c 24h soak to avoid media-pipeline regressions
+# (C-64).
+SystemCallFilter=@system-service
 
 [Install]
 WantedBy=multi-user.target
@@ -831,14 +914,37 @@ fi
 if ! $UPDATE_ONLY; then
   step "Apache vhost config"
 
-  # Ubuntu: enable required modules
+  # Enable required Apache modules (06 §2.1).
+  #   proxy/proxy_http/ssl/rewrite — reverse proxy + TLS + HTTP→HTTPS redirect.
+  #   headers   — 'Header always set' for HSTS/CSP/Cache-Control (already on).
+  #   deflate   — gzip text/JSON/CSS/JS/SVG.
+  #   expires   — Cache-Control / Expires per location.
+  #   http2     — HTTP/2 over TLS (ALPN 'h2').
+  #   ratelimit — mod_ratelimit, outbound throttle on /api/media/upload (C-29).
   if [[ "$OS_FAMILY" == "debian" ]]; then
     info "Enabling Apache modules …"
-    for mod in proxy proxy_http ssl rewrite headers; do
+    for mod in proxy proxy_http ssl rewrite headers deflate expires http2 ratelimit; do
       if a2enmod "$mod" >/dev/null 2>&1; then
         ok "  a2enmod $mod"
       else
         info "  $mod already enabled"
+      fi
+    done
+  else
+    # RHEL/CentOS: these modules ship as separate packages but are loaded by
+    # default via /etc/httpd/conf.modules.d/*.conf once installed. mod_proxy,
+    # mod_proxy_http, mod_ssl, mod_rewrite, mod_headers, mod_deflate,
+    # mod_expires, mod_http2 and mod_ratelimit are all in the base httpd /
+    # mod_ssl / mod_http2 packages. We verify rather than LoadModule by hand so
+    # we don't duplicate a directive the distro already ships.
+    info "Verifying Apache modules are loaded (RHEL loads via conf.modules.d) …"
+    for mod in proxy_module proxy_http_module ssl_module rewrite_module \
+               headers_module deflate_module expires_module \
+               http2_module ratelimit_module; do
+      if httpd -M 2>/dev/null | grep -q "$mod"; then
+        ok "  $mod"
+      else
+        warn "  $mod NOT loaded — install/enable it (e.g. dnf install mod_http2 mod_ssl)"
       fi
     done
   fi
@@ -895,12 +1001,47 @@ if ! $UPDATE_ONLY; then
 </VirtualHost>"
   fi
 
+  # ── Content-Security-Policy profiles (07 §3) ───────────────────────────────
+  # CDN allowlist discovered by grepping frontend/ + content/frozen/:
+  #   • https://cdn.jsdelivr.net — mermaid 11 (SPA diagram.js + course HTML)
+  #   • https://esm.sh           — Ajv 2020 + ajv-formats (SPA feed/validate.js)
+  #   • https://fonts.googleapis.com / https://fonts.gstatic.com — web fonts
+  #   • https://www.deptagency.com — the DEPT® logo SVG
+  # DEFAULT profile (/, /app/, /api): both CDNs in script-src because the SPA
+  # loads mermaid (jsdelivr) AND ajv (esm.sh); esm.sh also in connect-src since
+  # its ESM build pulls peer modules at import time.
+  # COURSE profile (/anatomy/): only jsdelivr (mermaid) + media-src 'self' for
+  # the monolith's <video> tags (C-67).
+  # Single quotes here are literal — they sit inside the double-quoted
+  # HTTPS_BLOCK heredoc, so Apache receives real 'self' / 'none' tokens.
+  CSP_DEFAULT="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://www.deptagency.com; connect-src 'self' https://esm.sh; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; report-to csp-endpoint"
+  CSP_COURSE="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://www.deptagency.com; media-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; report-to csp-endpoint"
+
+  # Safe-rollout gate (C-31): default ships Report-Only so a too-tight policy
+  # logs violations instead of breaking the page. Flip CSP_ENFORCE=1 to enforce
+  # once the report-to sink is quiet. report-to (NOT report-uri) per C-31; the
+  # named group below points at the app's /csp/report endpoint (07 §3.2).
+  if [[ "$CSP_ENFORCE" == "1" ]]; then
+    CSP_HEADER="Content-Security-Policy"
+    info "CSP mode    : ENFORCED (Content-Security-Policy)"
+  else
+    CSP_HEADER="Content-Security-Policy-Report-Only"
+    info "CSP mode    : Report-Only (set CSP_ENFORCE=1 to enforce)"
+  fi
+  # The Report-To group JSON. Doubled inner quotes survive the heredoc; the
+  # endpoint is same-origin so no extra CSP allowance is needed.
+  REPORT_TO_JSON='{\"group\":\"csp-endpoint\",\"max_age\":10886400,\"endpoints\":[{\"url\":\"/csp/report\"}]}'
+
   if $TLS_AVAILABLE; then
     CHAIN_LINE=""
     [[ -n "$CHAIN_FILE" && -f "$CHAIN_FILE" ]] && \
       CHAIN_LINE="    SSLCertificateChainFile ${CHAIN_FILE}"
     HTTPS_BLOCK="<VirtualHost *:443>
     ServerName ${SERVER_NAME}
+
+    # ── HTTP/2 (06 §2.2) ────────────────────────────────────────────────────
+    # ALPN advertises h2; clients that don't speak it fall back to http/1.1.
+    Protocols h2 http/1.1
 
     SSLEngine on
     SSLCertificateFile    ${CERT_FILE}
@@ -909,7 +1050,19 @@ ${CHAIN_LINE}
     SSLProtocol           -all +TLSv1.2 +TLSv1.3
     SSLCipherSuite        HIGH:!aNULL:!MD5
     SSLHonorCipherOrder   on
+
+    # ── Security headers (07 §3) — Apache owns HSTS + CSP only ──────────────
+    # The other 6 headers (X-Content-Type-Options, X-Frame-Options,
+    # Referrer-Policy, Permissions-Policy, COOP, CORP) are set by the app's
+    # SecurityHeadersMiddleware — do NOT duplicate them here.
     Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains\"
+    # DEFAULT CSP profile (/, /app/, /api). Overridden for /anatomy/ below.
+    # ${CSP_HEADER} is enforced or Report-Only per the CSP_ENFORCE gate.
+    Header always set ${CSP_HEADER} \"${CSP_DEFAULT}\"
+    Header always set Report-To \"${REPORT_TO_JSON}\"
+
+    # ── Compression (06 §2.3) ───────────────────────────────────────────────
+    AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml application/xml
 
     # v2 paths — see docs/architecture/v2/01-blueprint.md §7
     Alias /anatomy \"${APP_HOME}/content/frozen\"
@@ -929,6 +1082,66 @@ ${CHAIN_LINE}
 
     # Q-13: NO 'Alias /static/' — FastAPI mounts /static/ itself; let it fall
     # through to ProxyPass so the app's CSS/JS bundles ship from uvicorn.
+
+    # ── Cache-Control per location (06 §2.4) ────────────────────────────────
+    # Every directive uses 'Header always set' so the value rides 304s too
+    # (C-09 — 'Header set' alone is dropped on Not-Modified responses). Apache
+    # auto-emits ETag for static files under /app/ and /anatomy/.
+
+    # Buildless SPA: no content-hash in the URL, so revalidate every load. Do
+    # NOT use immutable here — the filenames are stable across deploys.
+    <Location \"/app/\">
+        Header always set Cache-Control \"public, max-age=0, must-revalidate\"
+    </Location>
+    # Enable when cache-bust versioning lands (06 §3): hashed URLs are
+    # content-addressed and safe to cache forever.
+    #<LocationMatch \"^/app/(css|js)/v=[0-9a-f]+/\">
+    #    Header always set Cache-Control \"public, max-age=31536000, immutable\"
+    #</LocationMatch>
+
+    # Frozen monolith + runbooks/FAQs: changes rarely, 1-day window + ETag.
+    <Location \"/anatomy/\">
+        Header always set Cache-Control \"public, max-age=86400, must-revalidate\"
+        # COURSE CSP profile — adds media-src 'self' for the monolith's <video>
+        # tags (C-67). Overrides the vhost-level DEFAULT profile above for this
+        # path; 'always set' replaces, so no duplicate header ships.
+        Header always set ${CSP_HEADER} \"${CSP_COURSE}\"
+    </Location>
+
+    # Course JSON: app emits a strong ETag; revalidate every load.
+    <LocationMatch \"^/api/course/\">
+        Header always set Cache-Control \"public, max-age=0, must-revalidate\"
+    </LocationMatch>
+    # Feed mutates (posts, flags) — never serve a cached copy without revalidating.
+    <LocationMatch \"^/api/feed\">
+        Header always set Cache-Control \"no-cache\"
+    </LocationMatch>
+    # Media: stable asset_id, but moderated/deleted media must be able to expire,
+    # so NOT immutable (C-30) — a 1-day revalidating window instead.
+    <LocationMatch \"^/media/\">
+        Header always set Cache-Control \"public, max-age=86400, must-revalidate\"
+    </LocationMatch>
+    # Signed certificate PDFs are user-private and byte-stable. 'private' keeps
+    # them out of shared caches; Vary: Cookie defends in depth against a
+    # misconfigured proxy serving one user's PDF to another (C-10).
+    <LocationMatch \"^/certificate/\">
+        Header always set Cache-Control \"private, max-age=86400, must-revalidate\"
+        Header always set Vary \"Cookie\"
+    </LocationMatch>
+
+    # ── Rate limiting (C-29) — throttle the media upload endpoint ────────────
+    <Location \"/api/media/upload\">
+        SetOutputFilter RATE_LIMIT
+        SetEnv rate-limit 4096
+    </Location>
+
+    # ── CMS webhook loopback-only (Q-15 / C-52) ─────────────────────────────
+    # Defense in depth — the app already rejects non-loopback callers. This
+    # <Location> sits AFTER ProxyPass / below so the Require is evaluated for
+    # the proxied request (mod_authz_core Require applies alongside ProxyPass).
+    <Location \"/api/cms/webhook\">
+        Require ip 127.0.0.1 ::1
+    </Location>
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"https\"
@@ -990,6 +1203,112 @@ if ! $UPDATE_ONLY; then
     warn "No active firewall detected (ufw / firewalld)"
     warn "Open ports 80 and 443 manually if needed."
     warn "Azure users: also check Network Security Group → Inbound rules in the Azure Portal."
+  fi
+fi
+
+# ── STEP 11 · Postgres tuning + LO sweep (3-ops artefacts) ───────────────────
+# Installs two files authored by the 3-ops slice:
+#   • infra/postgres/cca-tuning.conf → PG conf.d, then reload (06 §6.1)
+#   • infra/cron/vacuumlo.sh         → nightly systemd timer (cron fallback)
+#                                      to sweep orphaned large objects (03 §7.2)
+# Both are GUARDED by existence checks: 3-ops runs in parallel and the files may
+# not be present in an older bundle. Missing source = skip with a warning, never
+# fatal. Every action is idempotent — safe to re-run.
+if ! $UPDATE_ONLY; then
+  step "Postgres tuning + LO sweep"
+
+  PG_TUNING_SRC="$SRC_DIR/infra/postgres/cca-tuning.conf"
+  VACUUMLO_SRC="$SRC_DIR/infra/cron/vacuumlo.sh"
+
+  # ── (a) Postgres tuning conf → conf.d ──────────────────────────────────────
+  if [[ -f "$PG_TUNING_SRC" ]]; then
+    # Detect the active server's conf.d. Prefer the directory next to the live
+    # postgresql.conf (PG_CONF was resolved in step 6); fall back to scanning
+    # the standard Debian / RHEL locations.
+    PG_CONFD=""
+    if [[ -n "${PG_CONF:-}" && -f "${PG_CONF:-}" ]]; then
+      PG_CONFD="$(dirname "$PG_CONF")/conf.d"
+    fi
+    if [[ -z "$PG_CONFD" || ! -d "$PG_CONFD" ]]; then
+      for d in /etc/postgresql/*/main/conf.d \
+               /var/lib/pgsql/*/data/conf.d \
+               /var/lib/pgsql/data/conf.d; do
+        [[ -d "$d" ]] && { PG_CONFD="$d"; break; }
+      done
+    fi
+    # If no conf.d exists yet, create one next to postgresql.conf and make sure
+    # the base config includes it.
+    if [[ -z "$PG_CONFD" && -n "${PG_CONF:-}" && -f "${PG_CONF:-}" ]]; then
+      PG_CONFD="$(dirname "$PG_CONF")/conf.d"
+      mkdir -p "$PG_CONFD"
+      if ! grep -qE "^\s*include_dir\s+'?conf\.d'?" "$PG_CONF"; then
+        echo "include_dir 'conf.d'" >> "$PG_CONF"
+        info "Added include_dir 'conf.d' to $PG_CONF"
+      fi
+    fi
+
+    if [[ -n "$PG_CONFD" && -d "$PG_CONFD" ]]; then
+      cp "$PG_TUNING_SRC" "$PG_CONFD/cca-tuning.conf"
+      chmod 644 "$PG_CONFD/cca-tuning.conf"
+      ok "PG tuning conf installed → $PG_CONFD/cca-tuning.conf"
+      if [[ -n "${PG_SVC:-}" ]]; then
+        systemctl reload "$PG_SVC" 2>/dev/null \
+          || systemctl restart "$PG_SVC" 2>/dev/null \
+          || warn "Could not reload $PG_SVC — apply tuning manually"
+        ok "PostgreSQL reloaded to pick up tuning"
+      else
+        warn "PG service name unknown — reload PostgreSQL manually to apply tuning"
+      fi
+    else
+      warn "No PostgreSQL conf.d found — copy cca-tuning.conf in by hand"
+    fi
+  else
+    warn "infra/postgres/cca-tuning.conf absent (3-ops slice not in bundle) — skipping PG tuning"
+  fi
+
+  # ── (b) vacuumlo nightly sweep → systemd timer (cron fallback) ─────────────
+  if [[ -f "$VACUUMLO_SRC" ]]; then
+    install -m 0755 "$VACUUMLO_SRC" /usr/local/bin/dept-vacuumlo.sh
+    ok "LO sweep installed → /usr/local/bin/dept-vacuumlo.sh"
+
+    if command -v systemctl &>/dev/null; then
+      # Preferred: systemd timer (journald integration, per 06 §6.4).
+      cat > /etc/systemd/system/dept-vacuumlo.service <<EOF
+[Unit]
+Description=DEPT CCA — sweep orphaned Postgres large objects (vacuumlo)
+After=${PG_SVC:-postgresql}.service
+
+[Service]
+Type=oneshot
+User=postgres
+ExecStart=/usr/local/bin/dept-vacuumlo.sh
+EOF
+      cat > /etc/systemd/system/dept-vacuumlo.timer <<EOF
+[Unit]
+Description=DEPT CCA — nightly vacuumlo sweep
+
+[Timer]
+OnCalendar=*-*-* 03:30:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF
+      systemctl daemon-reload
+      systemctl enable --now dept-vacuumlo.timer >/dev/null 2>&1 \
+        && ok "dept-vacuumlo.timer enabled (nightly 03:30)" \
+        || warn "Could not enable dept-vacuumlo.timer — enable it manually"
+    elif [[ -d /etc/cron.d ]]; then
+      # Fallback: cron.d entry running as postgres.
+      printf '30 3 * * * postgres /usr/local/bin/dept-vacuumlo.sh\n' \
+        > /etc/cron.d/dept-vacuumlo
+      chmod 644 /etc/cron.d/dept-vacuumlo
+      ok "LO sweep cron installed → /etc/cron.d/dept-vacuumlo (nightly 03:30)"
+    else
+      warn "Neither systemd nor /etc/cron.d available — schedule dept-vacuumlo.sh manually"
+    fi
+  else
+    warn "infra/cron/vacuumlo.sh absent (3-ops slice not in bundle) — skipping LO sweep install"
   fi
 fi
 
