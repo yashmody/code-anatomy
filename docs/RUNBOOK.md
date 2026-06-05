@@ -309,3 +309,233 @@ number of times. Output is logged to `/var/log/dept-anatomy/vacuumlo.log`. The
 
 - **No Redis at launch.** As above (§4), the in-process cache is the v2 default;
   Redis is an opt-in scale lever, not a dependency.
+
+---
+
+## 7 · Directus CMS (editorial write plane)
+
+Directus is the **content + media + config write plane** — a separate Node
+service that runs over the *same* `codecoder` Postgres the FastAPI app uses, and
+is reverse-proxied under `/cms/` on the existing HTTPS vhost. It is the editorial
+console only: the SPA and quiz still read all content through FastAPI `/api/*`
+(cache-backed), **never** through Directus. This section is the day-two runbook
+for it. The design contract is `05-config-cms.md` (§5.5 coexistence, §8.2 4a
+checklist); the as-code lives in `cms/`.
+
+> **Phase 4a is additive and reversible.** Directus introspects the existing
+> tables — it does not move content, does not decompose `course_chapters`, and
+> does not migrate media off Postgres large objects. Those are later *gated*
+> slices (see §7.7). To run a box with no CMS at all, set `DEPLOY_DIRECTUS=false`
+> in `deploy.env`; nothing else changes.
+
+### 7.1 Stand-up — systemd + npm (default) vs Docker Compose
+
+`deploy.sh` runs Directus as a **systemd Node service** (`cms-directus.service`)
+to match the one operational shape the box already uses for `cca-quiz` (one
+hardened unit, one `journalctl` stream). The unit is written automatically when
+`DEPLOY_DIRECTUS=true` (the default):
+
+- **Type:** `exec`, **User/Group:** `directus`, **WorkingDirectory:**
+  `${APP_HOME}/cms`, **EnvironmentFile:** `${APP_HOME}/cms/.env`,
+  **ExecStart:** `${APP_HOME}/cms/node_modules/.bin/directus start`,
+  **Restart:** `on-failure`. It carries the **same** hardening keys as
+  `cca-quiz` (`NoNewPrivileges`, `ProtectSystem=full`, `ProtectKernelTunables`,
+  `RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX`, …) and the **same**
+  deliberate omission of `MemoryDenyWriteExecute` (the V8 JIT needs W^X off,
+  same rationale as the Pillow/ffprobe carve-out, C-64). `ReadWritePaths` is
+  scoped to `cms/uploads` (local storage) and `cms/.directus` (cache).
+
+On a **fresh install** `deploy.sh` does, in order:
+
+1. create the `directus` system user,
+2. set the `directus_app` DB-role password (the role itself comes from Alembic
+   0008 — see §7.4 bootstrap order),
+3. seed `cms/.env` (KEY/SECRET/admin/DB/PUBLIC_URL/Google),
+4. `npm ci --omit=dev` in `cms/`,
+5. `npx directus bootstrap` (creates the `directus_*` tables + the admin),
+6. `cms/bootstrap.sh` (roles, permissions, webhooks),
+7. `npx directus schema apply ./snapshot.yaml` (the introspected collections),
+8. write + enable + start the unit.
+
+On `./deploy.sh --update` it **restarts** the service and **re-applies** the
+schema snapshot + `bootstrap.sh` (both idempotent) — it does not re-bootstrap.
+
+Manual control:
+
+```bash
+sudo systemctl status  cms-directus
+sudo systemctl restart cms-directus
+sudo journalctl -u cms-directus -f
+```
+
+**Docker Compose alternative.** `cms/docker-compose.yml` (slice 4a-2) runs the
+official `directus/directus` image against the host Postgres
+(`DB_HOST=host.docker.internal` or the host's bridge IP) with `cms/.env` as the
+`env_file` and `cms/uploads` bind-mounted. Use it only if the box already runs
+Docker; the Apache `/cms/` proxy and the `8055` port are identical, so nothing
+downstream changes. Do **not** run both the systemd unit and the container at
+once — they would contend for port 8055 and the same DB tables. On this VM the
+Docker daemon is not the deployment path; systemd is canonical.
+
+### 7.2 Node version constraint
+
+Directus officially supports **Node 18 / 20 / 22 LTS**. `deploy.sh` detects the
+Node major and **warns** (does not fail) on anything outside that set, because
+the as-code install should still land. If `cms-directus` refuses to boot with a
+Node-version error in the journal, pin an LTS:
+
+```bash
+# Option A — nodesource (system-wide):
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -   # Debian
+#   then: sudo apt-get install -y nodejs
+
+# Option B — nvm for the directus user, then point ExecStart at it:
+#   sudo -u directus bash -lc 'nvm install 20'
+#   override ExecStart in /etc/systemd/system/cms-directus.service.d/node.conf:
+#     [Service]
+#     ExecStart=
+#     ExecStart=/home/directus/.nvm/versions/node/v20.x.x/bin/node \
+#       /opt/dept-anatomy/cms/node_modules/.bin/directus start
+```
+
+(Local-dev note: the dev box currently has Node 25, which is newer than the
+supported set. `start_local.sh --with-cms` will attempt to boot Directus anyway;
+if it crash-loops, switch the local shell to a Node 20 LTS before retrying.)
+
+### 7.3 Google SSO console setup + redirect URI
+
+Staff sign in to Directus with Google SSO restricted to `deptagency.com`, using
+a **separate OAuth client** from the FastAPI app's (one client per plane,
+per `05 §4.1`). There is always one **break-glass local Directus admin**
+(generated on first deploy, printed once in the deploy summary, stored in
+`cms/.env`) so a misconfigured SSO can never lock everyone out.
+
+In the Google Cloud Console (same project as the app is fine):
+
+1. **APIs & Services → Credentials → Create OAuth client ID → Web application.**
+2. **Authorised redirect URI** — this must match Directus's callback exactly:
+   ```
+   https://<DOMAIN>/cms/auth/login/google/callback
+   ```
+   (e.g. `https://internal.in.deptagency.com/cms/auth/login/google/callback`).
+   The path routes through the Apache `/cms/` proxy to Directus on `:8055`;
+   `PUBLIC_URL=https://<DOMAIN>/cms` in `cms/.env` is what makes Directus build
+   that callback.
+3. Put the client id/secret into the deploy via
+   `AUTH_GOOGLE_CLIENT_ID` / `AUTH_GOOGLE_CLIENT_SECRET` (deploy.sh writes the
+   `AUTH_GOOGLE_*` block into `cms/.env`). If you do not supply CMS-specific
+   creds, deploy.sh falls back to the FastAPI `GOOGLE_CLIENT_ID/SECRET` — fine
+   for a quick stand-up, but a dedicated client is the documented end state.
+4. Restrict to the workspace domain (`deptagency.com`); first-login role mapping
+   is governed by `bootstrap.sh` and the six roles in `04-authz-model.md`.
+
+After changing any Google value, restart: `sudo systemctl restart cms-directus`.
+
+### 7.4 Bootstrap order (get this right or the stand-up fails)
+
+The dependency order is strict:
+
+1. **Alembic `0008` first** — creates the scoped `directus_app` DB role (DDL on
+   `directus_*`, DML on the content tables only; no access to `attempts` /
+   `quiz_sessions` / `signing_keys`). `deploy.sh` only sets that role's
+   password; it does **not** create the role. If you stand Directus up by hand:
+   ```bash
+   cd /opt/dept-anatomy/backend && .venv/bin/alembic upgrade head
+   ```
+2. **`npx directus bootstrap`** — creates the `directus_*` system tables and the
+   break-glass admin account from `ADMIN_EMAIL`/`ADMIN_PASSWORD` in `cms/.env`.
+3. **`cms/bootstrap.sh`** — wires the six roles, the per-collection permissions
+   (the C/R/U/D matrices in `05 §3`), and the loopback webhooks (each content
+   table → `http://127.0.0.1:<FASTAPI_PORT>/api/cms/webhook`, no HMAC — network
+   reachability is the auth, C-52).
+4. **`npx directus schema apply ./snapshot.yaml`** — applies the introspected
+   collection schema (interfaces, validations, field groups) over the existing
+   tables. The snapshot is the source of truth for the editor UI; regenerate it
+   after an intentional collection change with
+   `npx directus schema snapshot ./snapshot.yaml`.
+
+`deploy.sh` runs steps 2–4 for you; step 1 is part of the backend migration
+chain. Re-running any of 2–4 is idempotent.
+
+### 7.5 Storage-adapter flip to S3 (for media volume)
+
+The default storage adapter is **local** — uploads land in `cms/uploads/`
+(a `ReadWritePath` on the unit, backed up per §7.6). This is correct for the
+single-VM launch. When upload volume outgrows the VM disk, flip Directus's
+storage to S3 (or any S3-compatible bucket) by editing `cms/.env`:
+
+```ini
+STORAGE_LOCATIONS=s3
+STORAGE_S3_DRIVER=s3
+STORAGE_S3_KEY=<access-key>
+STORAGE_S3_SECRET=<secret-key>
+STORAGE_S3_BUCKET=<bucket>
+STORAGE_S3_REGION=<region>
+STORAGE_S3_ENDPOINT=<https://s3.… or compatible>
+```
+
+then `sudo systemctl restart cms-directus`. Migrate existing files with
+`npx directus files import` / a bucket sync of `cms/uploads/` before cutting
+over. **This is independent of the FastAPI media path** — the runtime media the
+SPA serves still lives in Postgres large objects via `/api/media/...`; the
+storage adapter here only governs files an editor uploads *through Directus*.
+
+### 7.6 Backup — BOTH halves
+
+A Directus backup is two artefacts, and a restore needs both:
+
+1. **The `directus_*` tables** — these are *already inside* the `codecoder`
+   `pg_dump` from §1.1 (Directus shares the database). No separate dump is
+   needed; the nightly custom-format dump captures schema + content + Directus
+   system tables in one file.
+2. **The local upload store** — `cms/uploads/` is on the filesystem, **not** in
+   Postgres, so the DB dump does not cover it. Back it up alongside:
+   ```bash
+   sudo tar -C /opt/dept-anatomy/cms -czf \
+       /var/backups/cms-uploads-$(date +%F).tgz uploads
+   ```
+   If you have flipped to S3 (§7.5), the bucket *is* the durable store — enable
+   bucket versioning / lifecycle there and you can drop the tar.
+
+Restore order: restore the `codecoder` dump (§1.2) **then** untar `cms/uploads/`
+(or rely on the S3 bucket). The cert canary in §1.2 is unaffected by Directus —
+it reads `signing_keys` / `attempts`, which `directus_app` cannot touch.
+
+### 7.7 `directus_app` password rotation
+
+The Directus DB-role password lives in two places that must stay in sync: the
+Postgres role and `cms/.env`. Rotate in this order (no app-plane downtime — the
+FastAPI app uses a different role):
+
+```bash
+# 1. New password.
+NEW=$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')
+
+# 2. Update the Postgres role (as the superuser).
+sudo -u postgres psql -c "ALTER ROLE directus_app WITH PASSWORD '$NEW';"
+
+# 3. Write it into cms/.env (same key deploy.sh manages).
+sudo sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$NEW|" /opt/dept-anatomy/cms/.env
+
+# 4. Restart Directus to pick it up.
+sudo systemctl restart cms-directus
+```
+
+Or simply re-run `sudo CMS_DB_PASS="$NEW" ./deploy.sh --update`, which does steps
+2–4 (the `ALTER ROLE` is idempotent and `cms/.env` is rewritten with the new
+connection block). Confirm with `journalctl -u cms-directus -n 20` that Directus
+reconnected.
+
+### 7.8 Deferred gated slices (NOT part of 4a)
+
+Two pieces are intentionally **out of scope** here and gated behind their own
+later slices:
+
+- **Media off large objects.** Media bytes stay in Postgres `pg_largeobject`
+  served by the FastAPI `/api/media/...` path. Moving them to object storage is
+  a separate, gated migration — the storage-adapter flip in §7.5 affects only
+  Directus-side uploads, not the runtime media pipeline.
+- **`course_chapters` decomposition.** The chapter `sections` JSONB stays a
+  single column that Directus edits via the JSON editor. Decomposing it into
+  relational section/block tables is a later gated slice; do not attempt it as
+  part of a 4a stand-up.

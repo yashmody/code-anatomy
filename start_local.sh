@@ -15,6 +15,13 @@
 #   ./start_local.sh                       # development (default)
 #   ./start_local.sh --env staging         # boot as staging
 #   ./start_local.sh --env=production --db # production env + start local PG
+#   ./start_local.sh --with-cms            # also boot Directus on :8055
+#
+# --with-cms (Phase 4a · 05-config-cms.md §5.5):
+#   After the FastAPI + static server, boots Directus locally
+#   (cd cms && npx directus start) and prints http://localhost:8055.
+#   Without the flag, behaviour is unchanged. Requires cms/ (slice 4a-2),
+#   cms/node_modules, and a reachable Postgres (use --db or a running PG).
 #
 # --env {development|staging|production} (05 §5 · environment management):
 #   selects which backend/.env.<env>.example seeds backend/.env when no .env
@@ -33,11 +40,16 @@ trap "kill 0" EXIT
 
 # Parse options
 START_DB=false
+WITH_CMS=false             # --with-cms: also boot Directus locally on :8055
 APP_ENV_SEL="development"   # --env: development (default) | staging | production
 for arg in "$@"; do
     case $arg in
         --db)
             START_DB=true
+            shift
+            ;;
+        --with-cms)
+            WITH_CMS=true
             shift
             ;;
         --env=*)
@@ -173,6 +185,26 @@ echo "🚀 [2/2] Starting Static Web Server on port 8080..."
 python3 -m http.server 8080 --directory "$ROOT_DIR" > /dev/null 2>&1 &
 APP_PID=$!
 
+# 3. (Optional) Start Directus CMS  (--with-cms · Phase 4a · 05 §5.5)
+#    Boots Directus on :8055 over the same Postgres the backend uses. Best-effort:
+#    a CMS failure does NOT bring down the FastAPI/static pair — the flag is for
+#    editorial work, not the runtime read path. Requires cms/ + cms/node_modules.
+CMS_PID=""
+CMS_DIR="$ROOT_DIR/cms"
+if [ "$WITH_CMS" = true ]; then
+    if [ ! -d "$CMS_DIR" ]; then
+        echo "⚠️  --with-cms: no cms/ directory at $CMS_DIR (slice 4a-2 not present). Skipping CMS."
+    elif ! command -v npx > /dev/null 2>&1; then
+        echo "⚠️  --with-cms: npx not found on PATH. Install Node 18/20/22 LTS. Skipping CMS."
+    elif [ ! -d "$CMS_DIR/node_modules" ]; then
+        echo "⚠️  --with-cms: cms/node_modules missing. Run 'cd cms && npm install' first. Skipping CMS."
+    else
+        echo "🚀 [3/3] Starting Directus CMS on port 8055..."
+        ( cd "$CMS_DIR" && npx directus start ) > /dev/null 2>&1 &
+        CMS_PID=$!
+    fi
+fi
+
 # Wait briefly for process validation
 sleep 1.5
 
@@ -184,6 +216,11 @@ if ps -p $QUIZ_PID > /dev/null && ps -p $APP_PID > /dev/null; then
     echo "👉 Main App:   http://127.0.0.1:8080/frontend/index.html"
     echo "👉 Course:     http://127.0.0.1:8080/content/frozen/anatomy-of-code-course.html"
     echo "👉 Quiz App:   http://127.0.0.1:8000/"
+    if [ "$WITH_CMS" = true ] && [ -n "$CMS_PID" ] && ps -p "$CMS_PID" > /dev/null; then
+        echo "👉 CMS Admin:  http://localhost:8055"
+    elif [ "$WITH_CMS" = true ]; then
+        echo "⚠️  CMS:        not running (see warnings above; check 'cd cms && npx directus start')"
+    fi
     echo "====================================================="
     echo "Press [Ctrl+C] to terminate all servers."
 
