@@ -159,6 +159,59 @@ pg_socket_dir() {
   return 1
 }
 
+# ── pg_hba_path ──────────────────────────────────────────────────────────────
+# Locate pg_hba.conf by filesystem inspection (no psql call required).
+# Covers PGDG (/var/lib/pgsql/<ver>/data) and Debian (/etc/postgresql/<ver>/main).
+pg_hba_path() {
+  for f in \
+      /var/lib/pgsql/16/data/pg_hba.conf \
+      /var/lib/pgsql/15/data/pg_hba.conf \
+      /var/lib/pgsql/14/data/pg_hba.conf \
+      /var/lib/pgsql/13/data/pg_hba.conf \
+      /var/lib/pgsql/12/data/pg_hba.conf \
+      /var/lib/pgsql/data/pg_hba.conf \
+      /etc/postgresql/16/main/pg_hba.conf \
+      /etc/postgresql/15/main/pg_hba.conf \
+      /etc/postgresql/14/main/pg_hba.conf \
+      /etc/postgresql/13/main/pg_hba.conf \
+      /etc/postgresql/12/main/pg_hba.conf; do
+    [[ -f "$f" ]] && { echo "$f"; return 0; }
+  done
+  return 1
+}
+
+# ── ensure_postgres_peer_auth ────────────────────────────────────────────────
+# Make sure the postgres OS user can connect to the postgres PG role via the
+# Unix socket without a password. Prepends `local all postgres peer` to
+# pg_hba.conf if not already there, then reloads PostgreSQL.
+# Idempotent — safe to re-run.
+ensure_postgres_peer_auth() {
+  local hba="$1"
+  local svc="$2"
+  [[ -f "$hba" ]] || return 1
+
+  # Already has a working rule for the postgres user via local socket?
+  if grep -qE "^\s*local\s+all\s+postgres\s+(peer|trust)" "$hba"; then
+    return 0
+  fi
+  info "Adding 'local all postgres peer' to $hba …"
+  # Backup once
+  [[ -f "${hba}.deploy-backup" ]] || cp -p "$hba" "${hba}.deploy-backup"
+  # Prepend the rule before any other 'local' rule
+  if grep -qE "^\s*local\s+" "$hba"; then
+    sed -i "0,/^\s*local\s\+/{s||local   all   postgres   peer\nlocal   |}" "$hba"
+  else
+    # No existing local rules — add at top of file
+    sed -i "1i local   all   postgres   peer" "$hba"
+  fi
+  info "Reloading $svc to apply auth change…"
+  systemctl reload "$svc" 2>/dev/null || systemctl restart "$svc" || true
+  # Give the reload a moment
+  sleep 1
+  ok "Peer auth enabled for postgres user"
+  return 0
+}
+
 # ── pg_service_name ──────────────────────────────────────────────────────────
 # Resolve the active (or installed) PostgreSQL systemd unit name.
 pg_service_name() {
@@ -268,6 +321,17 @@ if ! $UPDATE_ONLY; then
   fi
   ok "Socket dir  : $PG_SOCK"
 
+  # Locate pg_hba.conf and ensure peer auth is enabled for the postgres
+  # OS user. Without this, RHEL PGDG defaults prompt for a password,
+  # which we have no way to supply non-interactively.
+  PG_HBA_PATH="$(pg_hba_path || echo '')"
+  if [[ -n "$PG_HBA_PATH" ]]; then
+    ok "pg_hba.conf : $PG_HBA_PATH"
+    ensure_postgres_peer_auth "$PG_HBA_PATH" "$PG_SVC"
+  else
+    warn "Could not locate pg_hba.conf — relying on existing auth config"
+  fi
+
   # Run a trivial query with explicit socket path + connect timeout.
   # PGHOST forces psql to use the socket (no silent TCP fallback).
   export PGHOST="$PG_SOCK"
@@ -277,7 +341,7 @@ if ! $UPDATE_ONLY; then
   else
     info "Trying to capture the actual psql error:"
     pg_exec "psql -c 'SELECT 1'" 2>&1 | head -5 | while read -r l; do warn "  $l"; done
-    die "psql failed even with explicit socket path. Check $PG_SOCK permissions."
+    die "psql failed even with explicit socket path. Check $PG_SOCK permissions or $PG_HBA_PATH auth rules."
   fi
 
   ok "All pre-flight checks passed"
