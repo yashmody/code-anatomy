@@ -1,10 +1,12 @@
 """Migration script to transfer data from SQLite/JSON to PostgreSQL.
 
-Ingests:
+Ingests (v2 paths, post Phase 1):
   1. data/question_bank.json -> questions table
   2. q0.db (SQLite) -> users and attempts tables
-  3. ../content-architecture/feed/feed.json -> feed_items table
-  4. ../media/Anatomy of Code.mp4 -> pg_largeobject + media_assets
+  3. ../content/source/feed/feed.json -> feed_items table
+  4. ../content/source/course/framework{,-explainer}.json -> frameworks table
+  5. ../content/source/course/sections/*.json -> course_chapters table
+  6. ../media/Anatomy of Code.mp4 -> pg_largeobject + media_assets
 """
 import os
 import sys
@@ -25,11 +27,15 @@ from app.core.models import Question, User, Attempt, FeedItem, MediaAsset, Cours
 BASE_DIR = config.BASE_DIR
 QUESTION_BANK_PATH = config.QUESTION_BANK
 SQLITE_DB_PATH = BASE_DIR / "q0.db"
-FEED_JSON_PATH = BASE_DIR.parent / "content-architecture" / "feed" / "feed.json"
+# v2 content layout — content/source/ is the git-tracked seed; Postgres
+# becomes the editable runtime source after the first ETL run (Phase 0
+# gate decision B). See docs/architecture/v2/00-gate-report.md §9.1.
+CONTENT_SOURCE = BASE_DIR.parent / "content" / "source"
+FEED_JSON_PATH = CONTENT_SOURCE / "feed" / "feed.json"
 VIDEO_PATH = BASE_DIR.parent / "media" / "Anatomy of Code.mp4"
-FRAMEWORK_PATH = BASE_DIR.parent / "content-architecture" / "course" / "framework.json"
-FRAMEWORK_EXPLAINER_PATH = BASE_DIR.parent / "content-architecture" / "course" / "framework-explainer.json"
-SECTIONS_DIR = BASE_DIR.parent / "content-architecture" / "course" / "sections"
+FRAMEWORK_PATH = CONTENT_SOURCE / "course" / "framework.json"
+FRAMEWORK_EXPLAINER_PATH = CONTENT_SOURCE / "course" / "framework-explainer.json"
+SECTIONS_DIR = CONTENT_SOURCE / "course" / "sections"
 
 
 def migrate_questions(pg_session: Session):

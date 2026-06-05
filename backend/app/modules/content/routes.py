@@ -57,7 +57,7 @@ async def get_framework_explainer():
 
     Source order:
       1. PostgreSQL  (frameworks table, id='explainer')  — seeded by the ETL
-      2. Filesystem  (content-architecture/course/framework-explainer.json)
+      2. Filesystem  (content/source/course/framework-explainer.json)
          — fallback for partial deploys where the ETL hasn't run yet.
     """
     # 1. Try the DB
@@ -65,12 +65,12 @@ async def get_framework_explainer():
     if expl:
         return expl
 
-    # 2. Fallback to the on-disk JSON.
-    # BASE_DIR is now the backend root (post-Phase-1), so the legacy
-    # ../content-architecture path is repo-root → content-architecture.
-    # Slice C moves this to content/source/course/framework-explainer.json.
+    # 2. Fallback to the on-disk JSON. BASE_DIR is the backend root, so
+    # BASE_DIR.parent is the repo root and the seed lives at
+    # content/source/course/framework-explainer.json (Slice C moved it
+    # here from the v1 content-architecture/ tree).
     explainer_path = (
-        config.BASE_DIR.parent / "content-architecture" / "course" / "framework-explainer.json"
+        config.BASE_DIR.parent / "content" / "source" / "course" / "framework-explainer.json"
     )
     if explainer_path.exists():
         try:
