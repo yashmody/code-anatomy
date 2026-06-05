@@ -463,3 +463,25 @@ def get_framework() -> Optional[Dict]:
         fw = s.get(Framework, "framework")
         return fw.data if fw else None
 
+
+# Framework-explainer — the static framing JSON (masthead, Part banners,
+# CODE/CODER outer/inner wrappers, node-blocks, #nest, Review, Watch).
+# Stored in the same `frameworks` table with id='explainer' so we get
+# one canonical place for all framework-shaped JSON without a new table.
+
+def save_framework_explainer(data: Dict) -> None:
+    with get_session() as s:
+        fw = s.get(Framework, "explainer")
+        if fw:
+            fw.data = data
+        else:
+            fw = Framework(id="explainer", data=data)
+            s.add(fw)
+        s.commit()
+
+
+def get_framework_explainer() -> Optional[Dict]:
+    with get_session() as s:
+        fw = s.get(Framework, "explainer")
+        return fw.data if fw else None
+

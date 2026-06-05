@@ -28,6 +28,7 @@ SQLITE_DB_PATH = BASE_DIR / "q0.db"
 FEED_JSON_PATH = BASE_DIR.parent / "content-architecture" / "feed" / "feed.json"
 VIDEO_PATH = BASE_DIR.parent / "media" / "Anatomy of Code.mp4"
 FRAMEWORK_PATH = BASE_DIR.parent / "content-architecture" / "course" / "framework.json"
+FRAMEWORK_EXPLAINER_PATH = BASE_DIR.parent / "content-architecture" / "course" / "framework-explainer.json"
 SECTIONS_DIR = BASE_DIR.parent / "content-architecture" / "course" / "sections"
 
 
@@ -262,6 +263,17 @@ def migrate_course_content(pg_session: Session):
         print("[ETL] Ingested framework hierarchy.")
     else:
         print(f"[Warn] Framework JSON not found at {FRAMEWORK_PATH}")
+
+    # Framework-explainer — the static framing JSON (masthead, Part banners,
+    # CODE/CODER outer/inner wrappers, node-blocks, #nest, Review, Watch).
+    if FRAMEWORK_EXPLAINER_PATH.exists():
+        with open(FRAMEWORK_EXPLAINER_PATH, "r", encoding="utf-8") as f:
+            expl_data = json.load(f)
+        from app.storage import save_framework_explainer
+        save_framework_explainer(expl_data)
+        print(f"[ETL] Ingested framework-explainer ({len(json.dumps(expl_data))} bytes).")
+    else:
+        print(f"[Warn] Framework-explainer JSON not found at {FRAMEWORK_EXPLAINER_PATH}")
         
     if SECTIONS_DIR.exists():
         from app.storage import save_chapter

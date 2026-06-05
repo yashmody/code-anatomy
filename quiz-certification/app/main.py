@@ -575,24 +575,35 @@ async def get_course_chapter(filename: str):
 
 @app.get("/api/course/framework-explainer")
 async def get_framework_explainer():
-    """Serve the static framing JSON (masthead + Part banners + CODE/CODER wrappers).
+    """Serve the static framing JSON (masthead, Part banners, CODE/CODER
+    outer/inner wrappers, node-blocks, #nest, Review, Watch).
 
-    This file is verbatim copy used by the SPA's Manual mode to render the
-    framing around the dynamic section content. It is NOT ingested into
-    PostgreSQL — it's a static framing artefact maintained alongside the
-    course HTML in content-architecture/course/framework-explainer.json.
+    Source order:
+      1. PostgreSQL  (frameworks table, id='explainer')  — seeded by the ETL
+      2. Filesystem  (content-architecture/course/framework-explainer.json)
+         — fallback for partial deploys where the ETL hasn't run yet.
     """
+    # 1. Try the DB
+    expl = storage.get_framework_explainer()
+    if expl:
+        return expl
+
+    # 2. Fallback to the on-disk JSON
     explainer_path = config.BASE_DIR.parent / "content-architecture" / "course" / "framework-explainer.json"
-    if not explainer_path.exists():
-        raise HTTPException(
-            status_code=404,
-            detail=f"framework-explainer.json not found at {explainer_path}",
-        )
-    try:
-        with open(explainer_path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to read framework-explainer.json: {e}")
+    if explainer_path.exists():
+        try:
+            with open(explainer_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to read framework-explainer.json: {e}",
+            )
+
+    raise HTTPException(
+        status_code=404,
+        detail="framework-explainer not found in DB or filesystem. Run the ETL migration.",
+    )
 
 
 # ---------- Feed APIs ----------
