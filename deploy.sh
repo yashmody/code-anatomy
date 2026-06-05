@@ -4,9 +4,11 @@
 #   Target: CentOS 8 / RHEL 8 with Apache httpd (mod_proxy)
 #
 # Installs and runs the deploy bundle on a CentOS 8 VM:
-#   • content-system/        → served as static files by Apache at /anatomy/
+#   • content-system/         → served as static files by Apache at /anatomy/
 #   • quiz-certification/     → FastAPI app under systemd (uvicorn), proxied at /
-#   • prompt-library/         → NOT deployed (consumed as a code/teaching resource)
+#   • app/                    → static SPA served by FastAPI at /app
+#   • content-architecture/   → ingested into PostgreSQL by the migration script
+#   • prompt-library/         → NOT deployed (consumed as a code resource)
 #
 # Layout produced on the VM:
 #   http://<vm>/             → quiz app (FastAPI, behind Apache reverse proxy)
@@ -31,6 +33,11 @@ QUIZ_PORT="${QUIZ_PORT:-8000}"                    # internal uvicorn port
 QUIZ_WORKERS="${QUIZ_WORKERS:-2}"                 # uvicorn worker count
 DOMAIN="${DOMAIN:-internal.in.deptagency.com}"    # public hostname this VM answers on
 SERVER_NAME="${SERVER_NAME:-$DOMAIN}"             # Apache ServerName
+
+# Database (PostgreSQL)
+DB_NAME="${DB_NAME:-codecoder}"                   # PostgreSQL database name
+DB_USER="${DB_USER:-codecoder}"                   # PostgreSQL application user
+DB_PASS="${DB_PASS:-}"                            # Set for production — generated if empty on first deploy
 
 # TLS cert files (already provisioned on this VM). Override if they live elsewhere.
 CERT_FILE="${CERT_FILE:-/etc/pki/tls/certs/${DOMAIN}.crt}"
@@ -63,22 +70,19 @@ if command -v getenforce &>/dev/null && [[ "$(getenforce)" != "Disabled" ]]; the
 fi
 
 # ----------------------------------------------------------------------------
-# 1. System packages  (httpd + proxy modules already present on this VM;
-#    install is idempotent and just fills any gaps)
+# 1. Pre-flight checks  (Python, httpd, PostgreSQL assumed pre-installed)
 # ----------------------------------------------------------------------------
 if ! $UPDATE_ONLY; then
-  log "Installing system packages (${PYTHON_PKG}, httpd, mod_ssl, rsync, SELinux tools)…"
-  dnf install -y -q "${PYTHON_PKG}" "${PYTHON_PKG}-devel" httpd mod_ssl rsync \
-    policycoreutils-python-utils
-
   # TLS is required (Google OAuth callback). Fail early with a clear message.
   [[ -f "$CERT_FILE" ]] || die "TLS cert not found at $CERT_FILE — set CERT_FILE=/path/to/cert.crt"
   [[ -f "$KEY_FILE"  ]] || die "TLS key not found at $KEY_FILE — set KEY_FILE=/path/to/key.key"
   [[ -z "$CHAIN_FILE" || -f "$CHAIN_FILE" ]] || die "CHAIN_FILE set but not found: $CHAIN_FILE"
-  # mod_proxy / mod_proxy_http / mod_headers ship with httpd and are loaded by
-  # default via /etc/httpd/conf.modules.d/00-proxy.conf — no extra package.
+
   PYBIN="/usr/bin/${PYTHON_PKG/python3/python3.}"     # python39 -> python3.9
   [[ -x "$PYBIN" ]] || PYBIN="$(command -v python3.9 || command -v python3.8 || command -v python3)"
+  [[ -x "$PYBIN" ]] || die "Python 3 not found. Install python39 (or set PYTHON_PKG)."
+  command -v httpd &>/dev/null || die "Apache httpd not found. Install httpd + mod_ssl first."
+  command -v psql  &>/dev/null || die "PostgreSQL client (psql) not found. Install postgresql-server first."
 else
   PYBIN="$APP_HOME/quiz-certification/.venv/bin/python"
 fi
@@ -103,8 +107,11 @@ rsync -a --delete \
   --exclude 'quiz-certification/certificates/' \
   --exclude 'quiz-certification/outbox/' \
   --exclude 'quiz-certification/.env' \
+  --exclude 'content-architecture/venv/' \
   "$SRC_DIR/content-system" \
   "$SRC_DIR/quiz-certification" \
+  "$SRC_DIR/app" \
+  "$SRC_DIR/content-architecture" \
   "$APP_HOME/"
 
 QUIZ_DIR="$APP_HOME/quiz-certification"
@@ -131,6 +138,20 @@ if [[ ! -f "$QUIZ_DIR/.env" ]]; then
   # OAuth callback over https on this VM's domain.
   sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://${DOMAIN}/auth/google/callback|" "$QUIZ_DIR/.env"
 
+  # Wire up the PostgreSQL DATABASE_URL
+  if [[ -n "$DB_PASS" ]]; then
+    DB_URL="postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}"
+  else
+    # Peer auth (no password) — works when the service user matches the Postgres role
+    DB_URL="postgresql://${DB_USER}@localhost:5432/${DB_NAME}"
+  fi
+  # Replace or append DATABASE_URL
+  if grep -q '^# *DATABASE_URL=' "$QUIZ_DIR/.env" || grep -q '^DATABASE_URL=' "$QUIZ_DIR/.env"; then
+    sed -i "s|^#\? *DATABASE_URL=.*|DATABASE_URL=${DB_URL}|" "$QUIZ_DIR/.env"
+  else
+    echo "DATABASE_URL=${DB_URL}" >> "$QUIZ_DIR/.env"
+  fi
+
   if [[ -n "$GOOGLE_CLIENT_ID" && -n "$GOOGLE_CLIENT_SECRET" ]]; then
     log "OAuth creds supplied — switching to production mode (QUIZ_DEV_MODE=false)."
     sed -i "s|^QUIZ_DEV_MODE=.*|QUIZ_DEV_MODE=false|"                       "$QUIZ_DIR/.env"
@@ -147,6 +168,61 @@ fi
 
 chown -R "$APP_USER:$APP_USER" "$APP_HOME"
 chmod 600 "$QUIZ_DIR/.env"
+
+# ----------------------------------------------------------------------------
+# 5.5. PostgreSQL — initialise cluster, create role + database, apply schema
+# ----------------------------------------------------------------------------
+log "Setting up PostgreSQL database…"
+
+# Initialise the PostgreSQL data directory if it has never been set up
+if [[ ! -f /var/lib/pgsql/data/PG_VERSION ]]; then
+  log "  Initialising PostgreSQL data directory…"
+  postgresql-setup --initdb
+fi
+
+systemctl enable postgresql >/dev/null 2>&1 || true
+systemctl start  postgresql
+
+# Wait until Postgres is accepting connections
+for i in {1..10}; do
+  su - postgres -c "psql -c 'SELECT 1'" >/dev/null 2>&1 && break
+  sleep 1
+done
+
+# Generate a random password if one was not provided (first-time deploy)
+if [[ -z "$DB_PASS" ]]; then
+  DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
+  # Persist it into the .env so the app can connect
+  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}|" "$QUIZ_DIR/.env"
+  log "  Generated DB password and wrote it to .env."
+fi
+
+# Create the Postgres role + database (idempotent)
+su - postgres -c "psql -tc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" | grep -q 1 \
+  || su - postgres -c "psql -c \"CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\""
+su - postgres -c "psql -tc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" | grep -q 1 \
+  || su - postgres -c "psql -c \"CREATE DATABASE ${DB_NAME} OWNER ${DB_USER}\""
+
+# Allow password-based local connections for the app user
+# (add a line to pg_hba.conf if it's not there yet)
+PG_HBA="/var/lib/pgsql/data/pg_hba.conf"
+if ! grep -q "${DB_USER}" "$PG_HBA" 2>/dev/null; then
+  # Insert before the first "local" line so it takes priority
+  sed -i "/^local/i local   ${DB_NAME}   ${DB_USER}   md5" "$PG_HBA"
+  sed -i "/^host.*127/i host   ${DB_NAME}   ${DB_USER}   127.0.0.1/32   md5" "$PG_HBA"
+  systemctl reload postgresql
+fi
+
+# Apply the DDL schema (extensions, tables, indexes) — idempotent (IF NOT EXISTS)
+log "  Applying deploy_schema.sql…"
+PGPASSWORD="$DB_PASS" psql -U "$DB_USER" -d "$DB_NAME" -h 127.0.0.1 \
+  -f "$QUIZ_DIR/deploy_schema.sql" 2>&1 | head -5
+
+# Run the ETL migration to seed questions, feed items, course content, and framework
+log "  Running data migration (ETL seed)…"
+cd "$QUIZ_DIR"
+"$QUIZ_DIR/.venv/bin/python" -m scripts.migrate_to_postgres 2>&1 | tail -10
+log "  Database setup complete."
 
 # ----------------------------------------------------------------------------
 # 6. systemd service for the FastAPI app
@@ -262,12 +338,14 @@ fi
 log "Deploy complete."
 echo
 echo "  Quiz app : https://${DOMAIN}/        (status: $(systemctl is-active ${SERVICE_NAME}))"
+echo "  Web app  : https://${DOMAIN}/app/     (SPA reader + feed)"
 echo "  Course   : https://${DOMAIN}/anatomy/anatomy-of-code-course.html"
 echo "  Checklist: https://${DOMAIN}/anatomy/code-coder-checklist.html"
 echo "  Runbook  : https://${DOMAIN}/anatomy/architect-runbook.html"
 echo "  FAQs     : https://${DOMAIN}/anatomy/faqs/index.html"
 echo "  OAuth cb : https://${DOMAIN}/auth/google/callback   (must match Google console)"
 echo
+echo "  Database : PostgreSQL (${DB_NAME}) — systemctl status postgresql"
 echo "  App logs : journalctl -u ${SERVICE_NAME} -f"
 echo "  Web logs : tail -f /var/log/httpd/${SERVICE_NAME}_error.log"
 echo "  Restart  : systemctl restart ${SERVICE_NAME} && systemctl reload httpd"
