@@ -11,7 +11,14 @@ export function ensureMermaid() {
   if (mermaidPromise) return mermaidPromise;
   mermaidPromise = new Promise((resolve, reject) => {
     const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+    // SRI (07 §3.3 / F-SUP-02): pin the exact version and verify the bytes.
+    // The integrity hash is computed from the immutable jsdelivr asset:
+    //   curl -fsSL https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js \
+    //     | openssl dgst -sha384 -binary | openssl base64 -A
+    // Re-compute and update both src and integrity together when bumping mermaid.
+    s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js';
+    s.integrity = 'sha384-rbtjAdnIQE/aQJGEgXrVUlMibdfTSa4PQju4HDhN3sR2PmaKFzhEafuePsl9H/9I';
+    s.crossOrigin = 'anonymous';
     s.onload = () => {
       // themeVariables match the live monolith (dark nodes, ochre borders/lines).
       window.mermaid.initialize({

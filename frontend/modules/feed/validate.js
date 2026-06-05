@@ -22,6 +22,21 @@
 import { getFeedBase } from './store.js';
 
 // CDN ES-module endpoints. Ajv's 2020 build is the draft-2020-12 entry point.
+//
+// SRI note (07 §3.3 / F-SUP-02): these are loaded via dynamic `import()`, not a
+// <script> tag, so they CANNOT carry an `integrity` attribute — subresource
+// integrity for ES modules needs an import map `integrity` field (not yet
+// broadly supported) or a `<link rel=modulepreload integrity>`, neither of
+// which this lazy loader uses. The hardening we CAN apply is exact version
+// pinning: esm.sh's pinned `@8.17.1` / `@3.0.1` URLs are immutable, so the
+// resolved artefact can't silently drift under us. The CSP `script-src`
+// allow-list (07 §3.2, Apache-owned) restricts these imports to `esm.sh`
+// alone — that is the real supply-chain gate for the module path. If a future
+// loader switches to a <link rel=modulepreload>, compute the hashes with:
+//   curl -fsSL https://esm.sh/ajv@8.17.1/dist/2020.js \
+//     | openssl dgst -sha384 -binary | openssl base64 -A
+// (note esm.sh varies the entry module by target/User-Agent, so pin the
+//  resolved /denonext/... artefact, not the redirecting entry URL).
 const AJV_2020_URL = 'https://esm.sh/ajv@8.17.1/dist/2020.js';
 const AJV_FORMATS_URL = 'https://esm.sh/ajv-formats@3.0.1';
 
