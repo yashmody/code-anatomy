@@ -5,9 +5,13 @@ question helpers stay alongside the attempt helpers because both belong
 to the same domain (an attempt is graded against a question); the feed
 moderation queue *reads* questions but does so by importing
 `_question_to_dict` from here rather than fragmenting the table.
+
+Phase 2c: certificate signing/verification semantics moved into
+`app.modules.quiz.verification`. The functions below stay as thin wrappers
+so existing callers (routes.py, certificate.py, smoke.py) keep working
+unchanged. The new contract carries `attempt.environment` +
+`attempt.signing_key_id` end-to-end.
 """
-import hashlib
-import hmac
 import secrets
 from datetime import datetime
 from typing import Dict, List, Optional
@@ -16,37 +20,38 @@ from sqlalchemy import select
 
 from app.core import config
 from app.core.db import get_session
-from app.core.models import Attempt, Question, User
+from app.core.models import Attempt, Question, SigningKey, User
+
+from app.modules.quiz import verification
 
 
 # ── Certificate signature (anti-tamper) ──────────────────────────────────────
 
-def _sign_payload(cert_id: str, email: str, score: float, submitted_at: str) -> str:
-    """HMAC-SHA256 over pipe-delimited fields using SECRET_KEY."""
-    payload = f"{cert_id}|{email.lower()}|{score:.6f}|{submitted_at}"
-    return hmac.new(
-        config.SECRET_KEY.encode("utf-8"),
-        payload.encode("utf-8"),
-        hashlib.sha256,
-    ).hexdigest()
 
+def sign_attempt(record: Dict) -> Dict:
+    """Sign a record in-place: set `signature`, `signing_key_id`, `environment`.
 
-def sign_attempt(cert_id: str, email: str, score: float, submitted_at: str) -> str:
-    return _sign_payload(cert_id, email, score, submitted_at)
+    Phase 2c shape change: takes the full record (so we can carry environment
+    + key id alongside the signature). Returns the same dict for chaining.
+    Callers in this module (`save_attempt`) drive it; cross-module callers
+    were rewired in the same slice.
+    """
+    record["environment"] = record.get("environment") or verification.current_environment()
+    signature, signing_key_id = verification.sign_record(record, record["environment"])
+    record["signature"] = signature
+    record["signing_key_id"] = signing_key_id
+    return record
 
 
 def verify_signature(attempt: Dict) -> bool:
-    """Return True if the stored signature matches a fresh HMAC over the record."""
-    stored = attempt.get("signature")
-    if not stored:
-        return False  # legacy cert — no signature stored
-    expected = _sign_payload(
-        attempt["cert_id"],
-        attempt["user"]["email"],
-        float(attempt["score"]),
-        attempt["submitted_at"],
-    )
-    return hmac.compare_digest(expected, stored)
+    """Return True if the stored signature matches a fresh HMAC over the record.
+
+    Delegates to `verification.verify_attempt`; this wrapper preserves the
+    existing boolean contract that routes.py + smoke.py expect. Callers that
+    need the structured result (environment badge, retirement reason) should
+    call `verification.verify_attempt` directly.
+    """
+    return bool(verification.verify_attempt(attempt).get("valid"))
 
 
 # Confusable-free alphabet for human-readable test codes (no 0/O/1/I)
@@ -81,9 +86,26 @@ def _generate_unique_code(session) -> str:
 # ── Attempts ─────────────────────────────────────────────────────────────────
 
 def save_attempt(record: Dict) -> str:
-    """Persist a graded attempt."""
+    """Persist a graded attempt.
+
+    Phase 2c: applies the environment cert-ID prefix (`DEV-`/`STG-`) on the
+    first save when the process is running outside production, and stamps
+    `environment` + `signing_key_id` onto the row alongside the HMAC. Existing
+    production certs (CCA-F-…) are NEVER re-prefixed — the idempotence guards
+    in `verification.apply_env_prefix` and the `att.cert_id` reload below keep
+    re-saves byte-stable.
+    """
     email = record["user"]["email"].lower()
     existing_code = record.get("test_code")
+
+    environment = record.get("environment") or verification.current_environment()
+    record["environment"] = environment
+
+    # Stamp the env prefix before we sign — the prefix is part of the cert_id
+    # that goes into the HMAC input, so the order matters. Idempotent.
+    cert_id_in = record.get("cert_id")
+    if cert_id_in:
+        record["cert_id"] = verification.apply_env_prefix(cert_id_in, environment)
 
     with get_session() as s:
         if s.get(User, email) is None:
@@ -101,9 +123,18 @@ def save_attempt(record: Dict) -> str:
         if att is None:
             cert_id = record.get("cert_id")
             submitted_at_str = record["submitted_at"]
-            sig = None
+            sig: Optional[str] = None
+            signing_key_id: Optional[int] = None
             if cert_id:
-                sig = sign_attempt(cert_id, email, float(record["score"]), submitted_at_str)
+                # Build a minimal signing-shape dict so verification doesn't
+                # need to know about the larger record payload.
+                signing_view = {
+                    "cert_id": cert_id,
+                    "user": {"email": email},
+                    "score": float(record["score"]),
+                    "submitted_at": submitted_at_str,
+                }
+                sig, signing_key_id = verification.sign_record(signing_view, environment)
 
             att = Attempt(
                 test_code=existing_code or _generate_unique_code(s),
@@ -119,6 +150,8 @@ def save_attempt(record: Dict) -> str:
                 cert_id=cert_id,
                 certificate_path=record.get("certificate_path"),
                 signature=sig,
+                environment=environment,
+                signing_key_id=signing_key_id,
                 payload={
                     "questions": record.get("questions", []),
                     "user_answers": record.get("user_answers", {}),
@@ -131,9 +164,21 @@ def save_attempt(record: Dict) -> str:
             att.cert_id = record.get("cert_id") or att.cert_id
             att.certificate_path = record.get("certificate_path") or att.certificate_path
             if not att.signature and att.cert_id:
-                att.signature = sign_attempt(
-                    att.cert_id, email, att.score, att.submitted_at.isoformat() + "Z"
-                )
+                signing_view = {
+                    "cert_id": att.cert_id,
+                    "user": {"email": email},
+                    "score": float(att.score),
+                    "submitted_at": att.submitted_at.isoformat() + "Z",
+                }
+                sig, signing_key_id = verification.sign_record(signing_view, environment)
+                att.signature = sig
+                att.signing_key_id = signing_key_id
+                # Leave att.environment alone if it's already set (existing rows
+                # default to 'production' via the column default). Only stamp it
+                # if it's somehow missing — i.e. brand-new row whose insert raced
+                # past the default, which should never happen on Postgres.
+                if not att.environment:
+                    att.environment = environment
 
         s.commit()
         return att.test_code
@@ -188,9 +233,29 @@ def attempt_by_cert_id(cert_id: str) -> Optional[Dict]:
 
 
 def attempt_by_cert_id_public(cert_id: str) -> Optional[Dict]:
+    """Public verifier read path. JOINS `signing_keys` so the verifier can
+    reason about key rotation/expiry without a second round-trip.
+
+    Phase 2c adds `environment` + the signing-key snapshot. Existing callers
+    that only consume the legacy fields are unaffected.
+    """
     with get_session() as s:
         a = s.scalar(select(Attempt).where(Attempt.cert_id == cert_id))
-        return _attempt_to_dict(a) if a else None
+        if not a:
+            return None
+        result = _attempt_to_dict(a)
+        sk: Optional[SigningKey] = a.signing_key  # relationship; None for null FK
+        if sk is not None:
+            result["signing_key"] = {
+                "id": sk.id,
+                "name": sk.name,
+                "environment": sk.environment,
+                "env_var_name": sk.env_var_name,
+                "is_active": bool(sk.is_active),
+                "can_verify": bool(sk.can_verify),
+                "verify_until": sk.verify_until.isoformat() + "Z" if sk.verify_until else None,
+            }
+        return result
 
 
 def _attempt_to_dict(a: Attempt) -> Dict:
@@ -209,6 +274,10 @@ def _attempt_to_dict(a: Attempt) -> Dict:
         "submitted_at": a.submitted_at.isoformat() + "Z",
         "certificate_path": a.certificate_path,
         "signature": a.signature,
+        # Phase 2c — every attempt now carries the environment it was issued
+        # in, plus the signing-key FK that proves which key signed it.
+        "environment": a.environment or "production",
+        "signing_key_id": a.signing_key_id,
         "questions": payload.get("questions", []),
         "user_answers": payload.get("user_answers", {}),
         "grading": payload.get("grading", {}),

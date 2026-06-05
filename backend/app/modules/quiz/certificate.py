@@ -2,6 +2,11 @@
 
 Uses reportlab Canvas for precise layout. Same colour palette and typography
 spirit as the course (orange #FF4900 accent, serif title, mono details).
+
+Phase 2c: non-production environments overlay a diagonal watermark and a
+clarifying footer line so a DEV/STG certificate is visibly distinct from a
+real credential. Production-environment certs are byte-stable — the watermark
+branch is skipped entirely when `record["environment"] == "production"`.
 """
 from datetime import datetime
 from pathlib import Path
@@ -25,6 +30,43 @@ INK_FAINT = HexColor("#6f6f6f")
 RULE = HexColor("#e6e3dc")
 
 
+# Per-environment watermark + footer copy. Production is intentionally `None`
+# so the production rendering path has zero visual change versus Phase 1.
+_ENV_OVERLAY = {
+    "development": {
+        "watermark": "DEVELOPMENT — NOT VALID FOR CREDENTIALS",
+        "footer": "Issued by DEPT® Academy — development environment. Not a credential.",
+    },
+    "staging": {
+        "watermark": "STAGING — TEST CERTIFICATE",
+        "footer": "Issued by DEPT® Academy — staging environment. Test certificate.",
+    },
+}
+
+
+def _draw_dev_watermark(c: "canvas.Canvas", w: float, h: float, text: str) -> None:
+    """Diagonal semi-transparent ochre watermark, drawn behind the main layout.
+
+    Called immediately after `Canvas()` is constructed so subsequent strokes
+    sit on top — the watermark reads as a tint rather than obscuring detail.
+    Ochre #FF4900 at ~22% opacity keeps the cert readable while making the
+    DEV/STG status unmistakable on screen and in print.
+    """
+    c.saveState()
+    try:
+        c.setFillColor(OCHRE)
+        # ReportLab Canvas exposes alpha via setFillAlpha; 0.22 is the same
+        # tint scrim the course HTML uses for blockquote backgrounds, which
+        # keeps the brand language consistent across PDF + web.
+        c.setFillAlpha(0.22)
+        c.setFont("Helvetica-Bold", 64)
+        c.translate(w / 2, h / 2)
+        c.rotate(30)  # shallower than 45° — keeps the text horizontal-ish so it reads cleanly
+        c.drawCentredString(0, 0, text)
+    finally:
+        c.restoreState()
+
+
 def generate(record: Dict) -> Path:
     """Generate a PDF certificate for a passing attempt.
 
@@ -37,6 +79,8 @@ def generate(record: Dict) -> Path:
     score_pct = int(round(record["score"] * 100))
     difficulty = record["difficulty"].capitalize()
     date_str = datetime.utcnow().strftime("%d %B %Y")
+    environment = record.get("environment") or "production"
+    overlay = _ENV_OVERLAY.get(environment)
 
     fname = f"{cert_id}.pdf"
     path = config.CERTIFICATES_DIR / fname
@@ -44,6 +88,12 @@ def generate(record: Dict) -> Path:
     page_size = landscape(A4)
     w, h = page_size
     c = canvas.Canvas(str(path), pagesize=page_size)
+
+    # Dev/staging watermark — drawn first so the rest of the layout sits on
+    # top. Production skips this branch entirely; existing prod certs are
+    # byte-stable relative to Phase 1.
+    if overlay:
+        _draw_dev_watermark(c, w, h, overlay["watermark"])
 
     # Outer border
     c.setStrokeColor(INK)
@@ -146,14 +196,21 @@ def generate(record: Dict) -> Path:
     verify_url = f"dept.academy/verify/{cert_id}"
     c.drawRightString(w - 30 * mm, 24 * mm, verify_url)
 
-    # Verify hint
-    c.setFillColor(INK_FAINT)
-    c.setFont("Helvetica-Oblique", 7)
-    c.drawCentredString(
-        w / 2,
-        17 * mm,
-        f"Authenticate this certificate by quoting the ID above. Issued by DEPT® Academy.",
-    )
+    # Verify hint — non-prod environments swap in the explicit "not a credential"
+    # line per 07 §8.2 so a casual reader cannot mistake a DEV/STG cert for the
+    # real thing. Production copy is unchanged.
+    if overlay:
+        c.setFillColor(OCHRE)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawCentredString(w / 2, 17 * mm, overlay["footer"])
+    else:
+        c.setFillColor(INK_FAINT)
+        c.setFont("Helvetica-Oblique", 7)
+        c.drawCentredString(
+            w / 2,
+            17 * mm,
+            f"Authenticate this certificate by quoting the ID above. Issued by DEPT® Academy.",
+        )
 
     c.showPage()
     c.save()
