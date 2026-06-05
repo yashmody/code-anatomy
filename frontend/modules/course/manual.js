@@ -1,16 +1,16 @@
 // SCROLL mode — sections in framework order, every block rendered linearly.
 // This is the renderer-based reproduction of the live monolith page. Built ALONGSIDE
 // the monolith (which stays live); it does not replace it.
-import { loadFramework, indexFramework, orderIndex } from '../util/framework.js';
-import { loadJSON } from '../util/load.js';
-import { renderBlock } from '../registry.js';
-import { renderScanBox } from '../render/chapter.js';
-import { runMermaid } from '../render/diagram.js';
-import { esc } from '../util/dom.js';
+import { loadFramework, indexFramework, orderIndex } from '../../shared/framework.js';
+import { loadJSON } from '../../core/api-client.js';
+import { renderBlock } from '../../shared/registry.js';
+import { renderScanBox } from '../../shared/render/chapter.js';
+import { runMermaid } from '../../shared/render/diagram.js';
+import { esc } from '../../shared/dom.js';
 import {
   renderMasthead, renderPartBanner, renderCodeOuter, renderNodeBlock,
   renderCoderInner, renderCoderWrapper, renderNest, renderReview, renderWatch
-} from '../render/explainer.js';
+} from '../../shared/render/explainer.js';
 
 // Block types that render their own heading — don't repeat the sub-section title above them.
 const SELF_HEADED = new Set(['chapter-open', 'heading', 'architects-review']);

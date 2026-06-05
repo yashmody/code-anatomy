@@ -1,5 +1,5 @@
 // architects-review — .arch-review > .arch-label + ul>li, matching the monolith.
-import { esc, raw } from '../util/dom.js';
+import { esc, raw } from '../dom.js';
 
 export function architectsReview(block) {
   const label = block.label || "Architect's Review";

@@ -1,6 +1,6 @@
 // list — checklists / "6 things" posts. card-top → Syne title → optional intro →
 // items as a clean list (text left, note muted/mono right). Items are UGC → escaped.
-import { esc } from '../util/dom.js';
+import { esc } from '../../shared/dom.js';
 import { cardTop } from './envelope.js';
 export function list(item) {
   const intro = item.intro ? `<p class="card-sub fc-intro">${esc(item.intro)}</p>` : '';

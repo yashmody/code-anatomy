@@ -9,8 +9,8 @@
 // called after a successful sign-in or sign-out so the shell can re-render the current
 // view (e.g. the Feed's compose/flag gates react to the new session).
 
-import { getCurrentSession, signInWithEmail, signOut } from './feed/auth.js';
-import { esc } from './util/dom.js';
+import { getCurrentSession, signInWithEmail, signOut } from '../modules/feed/auth.js';
+import { esc } from '../shared/dom.js';
 
 let _onChange = null;
 

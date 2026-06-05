@@ -1,7 +1,7 @@
 // The shared media renderer — hangs on the envelope, works for EVERY feed type.
 // image  -> <img> with mandatory alt
 // diagram -> the SAME renderDiagram helper the course `diagram` block uses (no second impl)
-import { esc } from '../util/dom.js';
+import { esc } from '../../shared/dom.js';
 import { renderDiagram } from '../render/diagram.js';
 
 export function renderMedia(media) {

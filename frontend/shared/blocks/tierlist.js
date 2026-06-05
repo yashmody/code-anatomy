@@ -1,6 +1,6 @@
 // tierlist — first-class component (numbered tiers: n · label · note). On-brand new
 // component; no monolith equivalent. Data fields are text → escaped.
-import { esc } from '../util/dom.js';
+import { esc } from '../dom.js';
 
 export function tierlist(block) {
   const rows = (block.items || []).map((it) =>

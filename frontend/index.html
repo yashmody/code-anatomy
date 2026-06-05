@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
 <!-- monolith design system, COPIED (monolith stays frozen & live) -->
-<link rel="stylesheet" href="css/monolith.css">
-<link rel="stylesheet" href="css/app.css">
-<link rel="stylesheet" href="css/read.css">
-<link rel="stylesheet" href="css/feed.css">
+<link rel="stylesheet" href="styles/monolith.css">
+<link rel="stylesheet" href="styles/app.css">
+<link rel="stylesheet" href="styles/read.css">
+<link rel="stylesheet" href="styles/feed.css">
 </head>
 <body>
   <header class="app-bar">
@@ -24,14 +24,14 @@
         <button class="mode-tab res-toggle" type="button" id="resToggle"
                 aria-haspopup="true" aria-expanded="false" aria-controls="resDropdown">Resources ▾</button>
         <div class="res-dropdown" id="resDropdown" role="menu" aria-label="Resources" hidden>
-          <!-- Quiz is a separate FastAPI server; its href is set from QUIZ_URL in js/main.js -->
-          <a class="res-item" role="menuitem" id="resQuiz" target="_blank" rel="noopener" href="http://localhost:8000">
+          <!-- Quiz href set from QUIZ_URL (core/config.js) by core/main.js. Resources served via Apache Alias /anatomy/ → content/frozen/. -->
+          <a class="res-item" role="menuitem" id="resQuiz" target="_blank" rel="noopener" href="/">
             <span class="res-name">Quiz</span><span class="res-meta">Certification · CCA-F</span></a>
-          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="resources/faqs/aem-banking-faq.html">
+          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="/anatomy/faqs/aem-banking-faq.html">
             <span class="res-name">FAQs</span><span class="res-meta">AEM × Banking</span></a>
-          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="resources/code-coder-checklist.html">
+          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="/anatomy/code-coder-checklist.html">
             <span class="res-name">Checklist</span><span class="res-meta">Discovery</span></a>
-          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="resources/architect-runbook.html">
+          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="/anatomy/architect-runbook.html">
             <span class="res-name">Runbooks</span><span class="res-meta">Architect's</span></a>
         </div>
       </div>
@@ -44,6 +44,6 @@
     <span class="app-foot-text">The Anatomy of Code — a DEPT® field manual</span>
     <span class="app-version">v0.1.0-beta</span>
   </footer>
-  <script type="module" src="js/main.js"></script>
+  <script type="module" src="core/main.js"></script>
 </body>
 </html>

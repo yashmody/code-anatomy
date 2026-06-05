@@ -18,7 +18,7 @@
 // backdrop close, focus returns to the trigger, every input labelled, errors via
 // aria-describedby + an aria-live summary, the word counter is aria-live polite.
 
-import { esc } from '../util/dom.js';
+import { esc } from '../../shared/dom.js';
 import { requireSession } from './auth.js';
 import { getAllCategories, createPost } from './store.js';
 import { validateFeedItem } from './validate.js';

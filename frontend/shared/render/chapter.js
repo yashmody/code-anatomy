@@ -1,6 +1,6 @@
 // Chapter-level composition helpers shared by Scroll + Read (the scan box is a chapter
 // element, not a block, so it lives here rather than in the block registry).
-import { raw } from '../util/dom.js';
+import { raw } from '../dom.js';
 
 export function renderScanBox(scan) {
   if (!scan || !scan.length) return '';

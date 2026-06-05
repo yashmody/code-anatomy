@@ -1,7 +1,7 @@
 // card — a single concept callout. card-top → Syne title → teaser → optional
 // linkUrl as a small "Open ↗" link. The ochre left border is the .card--concept
 // modifier applied in feed.js. linkUrl is optional. All UGC → escaped.
-import { esc } from '../util/dom.js';
+import { esc } from '../../shared/dom.js';
 import { cardTop } from './envelope.js';
 export function card(item) {
   const link = item.linkUrl

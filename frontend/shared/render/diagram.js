@@ -1,7 +1,7 @@
 // THE single diagram helper — shared by the course `diagram` block (ascii|mermaid|table|versus)
 // and the feed `media` diagram (mermaid|ascii|image). Mermaid is never implemented twice.
 // table & versus are REAL HTML, never ASCII.
-import { esc, raw } from '../util/dom.js';
+import { esc, raw } from '../dom.js';
 
 let mermaidPromise = null;
 

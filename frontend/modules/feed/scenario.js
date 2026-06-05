@@ -3,7 +3,7 @@
 // reveal block. The ochre border is the .card--scenario modifier in feed.js.
 // The correct index is marked on each option (data-correct) for the feed.js handler.
 // A lettered key (A/B/C…) precedes each option. All UGC → escaped.
-import { esc } from '../util/dom.js';
+import { esc } from '../../shared/dom.js';
 import { cardTop } from './envelope.js';
 
 const KEYS = 'ABCDEFGHIJ';

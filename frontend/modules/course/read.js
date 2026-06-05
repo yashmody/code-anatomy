@@ -8,16 +8,16 @@
 // with a slide-in transition + swipe + Prev/Next + arrow keys. All presentation;
 // the data logic (framework load, section load, opensInto, nextLetter, routing) is
 // unchanged. Styling is scoped under `.read` so Manual stays byte-identical.
-import { loadFramework, indexFramework } from '../util/framework.js';
-import { loadJSON } from '../util/load.js';
-import { renderBlock } from '../registry.js';
-import { renderScanBox } from '../render/chapter.js';
-import { runMermaid } from '../render/diagram.js';
-import { esc } from '../util/dom.js';
+import { loadFramework, indexFramework } from '../../shared/framework.js';
+import { loadJSON } from '../../core/api-client.js';
+import { renderBlock } from '../../shared/registry.js';
+import { renderScanBox } from '../../shared/render/chapter.js';
+import { runMermaid } from '../../shared/render/diagram.js';
+import { esc } from '../../shared/dom.js';
 import {
   renderMasthead, renderPartBanner, renderCodeOuter, renderNodeBlock,
   renderCoderInner, renderCoderWrapper, renderNest, renderReview, renderWatch
-} from '../render/explainer.js';
+} from '../../shared/render/explainer.js';
 
 const SELF_HEADED = new Set(['chapter-open', 'heading', 'architects-review']);
 let activeKeyHandler = null;

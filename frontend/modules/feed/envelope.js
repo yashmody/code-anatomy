@@ -1,7 +1,7 @@
 // The shared UGC envelope — pill, kind tag, author, topics, engagement, the
 // frameworkRef bridge. Read by EVERY feed type so the card chrome is identical
 // regardless of payload. All fields are user-supplied → escaped.
-import { esc } from '../util/dom.js';
+import { esc } from '../../shared/dom.js';
 
 export function relativeTime(iso) {
   try {

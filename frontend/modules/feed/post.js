@@ -2,7 +2,7 @@
 // (avatar gradient + name + role) → optional Syne title → body as a stronger-ink
 // card-sub. Body is UGC → escaped. The violet left border is the .card--post
 // modifier applied in feed.js.
-import { esc } from '../util/dom.js';
+import { esc } from '../../shared/dom.js';
 import { cardTop, authorBlock } from './envelope.js';
 export function post(item) {
   const title = item.title ? `<h3 class="card-title">${esc(item.title)}</h3>` : '';

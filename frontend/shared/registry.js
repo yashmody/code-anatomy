@@ -14,14 +14,14 @@ import { cardgrid } from './blocks/cardgrid.js';
 import { chips } from './blocks/chips.js';
 import { notes } from './blocks/notes.js';
 import { map } from './blocks/map.js';
-import { esc } from './util/dom.js';
+import { esc } from './dom.js';
 
-import { post } from './feed/post.js';
-import { video } from './feed/video.js';
-import { list } from './feed/list.js';
-import { card } from './feed/card.js';
-import { vocab } from './feed/vocab.js';
-import { scenario } from './feed/scenario.js';
+import { post } from '../modules/feed/post.js';
+import { video } from '../modules/feed/video.js';
+import { list } from '../modules/feed/list.js';
+import { card } from '../modules/feed/card.js';
+import { vocab } from '../modules/feed/vocab.js';
+import { scenario } from '../modules/feed/scenario.js';
 
 export const blockRenderers = {
   'chapter-open': chapterOpen,

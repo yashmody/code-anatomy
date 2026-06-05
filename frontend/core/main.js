@@ -1,55 +1,31 @@
-// App shell: hash router across three modes (Manual, Read, Feed) + per-page theme toggle.
-import { renderScroll } from './modes/scroll.js';
-import { renderRead } from './modes/read.js';
-import { renderFeed } from './modes/feed.js';
+// App shell: hash router across three modes (Manual, Read, Feed) +
+// app-bar chrome. All runtime constants live in core/config.js; theme
+// state lives in core/theme.js.
+
+import { renderScroll } from '../modules/course/manual.js';
+import { renderRead } from '../modules/course/read.js';
+import { renderFeed } from '../modules/feed/feed.js';
 import { initAuthUI } from './auth-ui.js';
-import { initializeAuth } from './feed/auth.js';
+import { initializeAuth } from '../modules/feed/auth.js';
+import { QUIZ_URL, SECTION_FILES } from './config.js';
+import { initTheme, toggleTheme } from './theme.js';
 
-// Quiz URL — in production the FastAPI quiz app is reverse-proxied at the
-// same origin as this SPA (Apache routes /app/* to the static SPA and
-// everything else to FastAPI). In local dev (file:// or python -m
-// http.server on a different port), fall back to localhost:8000 where the
-// quiz typically runs.
-const QUIZ_URL = (location.protocol === 'http:' || location.protocol === 'https:')
-  ? `${location.origin}/`
-  : 'http://localhost:8000/';
+// BASE was the on-disk relative root the old api-client used to derive
+// API paths; the api-client now routes through /api/* directly, so this
+// only matters as a tag — kept to avoid breaking renderScroll's signature.
+const BASE = '';
 
-const BASE = '../content-architecture';            // app/ reads from its sibling data package
-const SECTION_FILES = [   // extracted chapters (Manual orders them by framework, not by this list)
-  'code-c.json', 'code-o.json', 'code-d.json', 'code-e.json',
-  'coder-c.json', 'coder-o.json', 'coder-d.json', 'coder-e.json', 'coder-r.json',
-  'anatomy-m00.json', 'anatomy-m01.json', 'anatomy-m01b.json',
-  'anatomy-m02.json', 'anatomy-m02b.json', 'anatomy-m03.json',
-  'anatomy-m04.json', 'anatomy-m05.json', 'anatomy-m06.json',
-  'anatomy-m07.json', 'anatomy-m08.json', 'anatomy-m09.json', 'anatomy-m10.json',
-  'adobe-cm.json', 'adobe-aa.json', 'adobe-cja.json', 'adobe-ajo.json', 'adobe-camp.json',
-  'adobe-csc.json', 'adobe-ab.json',
-  'ai-bmad.json', 'ai-gov.json'
-];
-const THEME_KEY = 'anatomy-app-theme';             // per-page theme key
+// Wire the inline-onclick theme button to the theme manager. Kept as a
+// global so index.html's <button onclick="toggleAppTheme()"> still works
+// without changing the HTML's listener style — Phase 4 nav unification
+// can replace this with a managed event.
+window.toggleAppTheme = toggleTheme;
 
 const view = document.getElementById('view');
 
-// ---- theme (per-page key, like the monolith family) ----
-function applyTheme(t) {
-  document.documentElement.dataset.theme = t;
-  const label = document.getElementById('themeLabel');
-  if (label) label.textContent = t === 'dark' ? 'Light' : 'Dark';
-}
-function initTheme() {
-  let t = 'light';
-  try { t = localStorage.getItem(THEME_KEY) || 'light'; } catch (e) {}
-  applyTheme(t);
-}
-window.toggleAppTheme = function () {
-  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
-  applyTheme(next);
-};
-
 // ---- app-bar chrome: Resources dropdown + global sign-in ----
 function initChrome() {
-  // Quiz link → the (separately served) quiz app. One constant to repoint (QUIZ_URL).
+  // Quiz link → the (separately served) quiz app. One constant to repoint (QUIZ_URL in config.js).
   const quiz = document.getElementById('resQuiz');
   if (quiz) quiz.href = QUIZ_URL;
 

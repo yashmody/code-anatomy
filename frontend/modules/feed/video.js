@@ -1,7 +1,7 @@
 // video — short-form. A .video tile FIRST (play button + duration badge + vlabel),
 // THEN card-top (pill + kind) → Syne title → hook as sub. If url is empty, the tile
 // is the gradient placeholder (no real hosting this pass). All UGC → escaped.
-import { esc } from '../util/dom.js';
+import { esc } from '../../shared/dom.js';
 import { cardTop } from './envelope.js';
 
 // durationSec → "M:SS" (e.g. 45 → "0:45", 95 → "1:35").

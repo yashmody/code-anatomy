@@ -18,17 +18,17 @@
 // flagging and real moderator deletion are the backend pass. The flag-to-mark threshold is
 // store.js's FLAG_THRESHOLD (default 1) — referenced, never duplicated, so a single
 // confirm flips a post to 'flagged'. We only build the UI that CALLS flagPost.
-import { listPosts, getAllTopics, getAllCategories, configureFeedStore, flagPost } from '../feed/store.js';
+import { listPosts, getAllTopics, getAllCategories, configureFeedStore, flagPost } from './store.js';
 import {
   getCurrentSession, isSignedIn, signInWithGoogle, signInDevMock, signOut,
   GOOGLE_CLIENT_ID, DEV_MOCK
-} from '../feed/auth.js';
-import { renderFeedBody } from '../registry.js';
-import { renderFooter, topicChips, flaggedBadge, flagConfirmHTML } from '../feed/envelope.js';
-import { renderMedia } from '../feed/media.js';
-import { runMermaid } from '../render/diagram.js';
-import { esc } from '../util/dom.js';
-import { openComposer } from '../feed/composer.js';
+} from './auth.js';
+import { renderFeedBody } from '../../shared/registry.js';
+import { renderFooter, topicChips, flaggedBadge, flagConfirmHTML } from './envelope.js';
+import { renderMedia } from './media.js';
+import { runMermaid } from '../../shared/render/diagram.js';
+import { esc } from '../../shared/dom.js';
+import { openComposer } from './composer.js';
 
 // Card modifiers per type, applied alongside the base .card class. The visual
 // language: post → violet field-note border, scenario → ochre judgement border,

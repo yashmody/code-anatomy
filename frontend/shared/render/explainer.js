@@ -12,7 +12,7 @@
 // Use raw() for prose that may contain <strong>/<em>/<b>/&entities; — esc() for plain text
 // fields (glyphs, names, chips, table cells).
 
-import { raw, esc } from '../util/dom.js';
+import { raw, esc } from '../dom.js';
 
 // ────────────────────────────────────────────────────────────────────────────
 // Helpers — letter card (used by every .telescope and by #nest's scopes)

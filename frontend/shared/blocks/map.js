@@ -1,7 +1,7 @@
 // map — the question→answer grid (<div class="map"><div class="map-row"><span class="q">…
 // <span class="arrow">→</span><span class="c">…). Used in the Mental Model module.
 // q/c are authored course HTML → raw().
-import { esc, raw } from '../util/dom.js';
+import { esc, raw } from '../dom.js';
 
 export function map(block) {
   const title = block.title ? `<div class="arch-title">${esc(block.title)}</div>` : '';

@@ -1,7 +1,7 @@
 // callout — .callout.callout-{variant} + .callout-label, matching the monolith.
 // why/tip/pitfall wrap their html in a <p> (monolith pattern); before-after carries
 // its own .ba-grid markup in html (re-shelled verbatim).
-import { raw } from '../util/dom.js';
+import { raw } from '../dom.js';
 
 const LABEL = {
   why: 'Why This Matters',
