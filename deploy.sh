@@ -96,7 +96,7 @@ fi
 
 # ── pg_exec helper ───────────────────────────────────────────────────────────
 # Run a command as the postgres OS user.
-# Tries `runuser` first (RHEL standard, works even when su is PAM-restricted),
+# Tries `runuser` first (RHEL standard, bypasses PAM su restrictions),
 # then falls back to `su -`.
 pg_exec() {
   if command -v runuser &>/dev/null; then
@@ -104,6 +104,33 @@ pg_exec() {
   else
     su - postgres -c "$*"
   fi
+}
+
+# ── pg_service_name ──────────────────────────────────────────────────────────
+# Resolve the active PostgreSQL systemd unit name.
+# Handles: postgresql (Ubuntu generic), postgresql-14/13/12 (RHEL PGDG),
+#          postgresql@14-main (Ubuntu versioned).
+# Returns the first active unit found, or empty string.
+pg_service_name() {
+  for candidate in \
+      postgresql \
+      postgresql-16 postgresql-15 postgresql-14 postgresql-13 postgresql-12 \
+      "postgresql@16-main" "postgresql@15-main" "postgresql@14-main" \
+      "postgresql@13-main" "postgresql@12-main"; do
+    if systemctl is-active --quiet "$candidate" 2>/dev/null; then
+      echo "$candidate"; return 0
+    fi
+  done
+  # Not yet started — find any installed unit and return it so caller can start it
+  for candidate in \
+      postgresql \
+      postgresql-16 postgresql-15 postgresql-14 postgresql-13 postgresql-12; do
+    if systemctl list-unit-files --type=service 2>/dev/null \
+        | grep -q "^${candidate}\.service"; then
+      echo "$candidate"; return 0
+    fi
+  done
+  return 1
 }
 
 # SELinux is only relevant on RHEL-family VMs
@@ -160,15 +187,15 @@ if ! $UPDATE_ONLY; then
     || die "psql not found. Install the PostgreSQL client package."
 
   # Verify PostgreSQL is accepting connections.
-  # pg_isready does not require superuser access and is immune to PAM / shell
-  # restrictions on the postgres OS account.
+  # -h 127.0.0.1 avoids Unix socket path differences between distros.
+  # pg_isready needs no credentials and is immune to PAM restrictions.
+  PG_SVC="$(pg_service_name || echo 'postgresql-14')"
   if command -v pg_isready &>/dev/null; then
-    pg_isready -q \
-      || die "PostgreSQL is not accepting connections. Check: systemctl status postgresql"
+    pg_isready -h 127.0.0.1 -q \
+      || die "PostgreSQL is not accepting connections. Check: systemctl status ${PG_SVC}"
   else
-    # Fallback: attempt a trivial query via runuser/su
-    pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1 \
-      || die "Cannot connect to PostgreSQL. Check: systemctl status postgresql"
+    pg_exec "psql -h 127.0.0.1 -c 'SELECT 1'" >/dev/null 2>&1 \
+      || die "Cannot connect to PostgreSQL. Check: systemctl status ${PG_SVC}"
   fi
 
   log "  All pre-flight checks passed."
@@ -272,17 +299,25 @@ chmod 600 "$QUIZ_DIR/.env"
 # ── 6. PostgreSQL — role, database, schema, ETL seed ────────────────────────
 log "Setting up PostgreSQL database '${DB_NAME}'…"
 
-# Ensure PostgreSQL is running
-systemctl is-active --quiet postgresql \
-  || systemctl start postgresql \
-  || systemctl start "postgresql@$(pg_lsclusters -h 2>/dev/null | awk '{print $1}' | head -1)-main" \
-  || die "Could not start PostgreSQL. Check: systemctl status postgresql"
+# Resolve the PostgreSQL service unit name (handles postgresql-14, postgresql, etc.)
+PG_SVC="$(pg_service_name)" \
+  || die "No PostgreSQL systemd unit found. Ensure postgresql (or postgresql-14) is installed."
+log "  PostgreSQL service unit: ${PG_SVC}"
 
-# Wait until accepting connections (up to 15 s)
-for i in {1..15}; do
-  pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1 && break
+# Start if not already active
+systemctl is-active --quiet "$PG_SVC" \
+  || systemctl start "$PG_SVC" \
+  || die "Could not start ${PG_SVC}. Check: systemctl status ${PG_SVC}"
+
+# Wait until accepting TCP connections on 127.0.0.1 (up to 20 s)
+for i in {1..20}; do
+  if command -v pg_isready &>/dev/null; then
+    pg_isready -h 127.0.0.1 -q && break
+  else
+    pg_exec "psql -h 127.0.0.1 -c 'SELECT 1'" >/dev/null 2>&1 && break
+  fi
   sleep 1
-  [[ $i -eq 15 ]] && die "PostgreSQL did not become ready in time."
+  [[ $i -eq 20 ]] && die "PostgreSQL did not become ready after 20 s."
 done
 log "  PostgreSQL is up."
 
@@ -327,9 +362,7 @@ if [[ -n "$PG_HBA" && -f "$PG_HBA" ]]; then
     HBA_CHANGED=true
   fi
   if $HBA_CHANGED; then
-    systemctl reload postgresql \
-      || systemctl reload "postgresql@$(pg_lsclusters -h 2>/dev/null | awk '{print $1}' | head -1)-main" \
-      || true
+    systemctl reload "$PG_SVC" 2>/dev/null || systemctl restart "$PG_SVC" || true
     log "  pg_hba.conf updated and PostgreSQL reloaded."
   fi
 fi
@@ -365,7 +398,7 @@ log "Writing systemd unit /etc/systemd/system/${SERVICE_NAME}.service…"
 cat > "/etc/systemd/system/${SERVICE_NAME}.service" <<EOF
 [Unit]
 Description=DEPT CCA Quiz (FastAPI / uvicorn)
-After=network.target postgresql.service
+After=network.target ${PG_SVC}.service
 
 [Service]
 Type=exec
