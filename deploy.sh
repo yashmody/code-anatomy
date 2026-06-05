@@ -57,20 +57,59 @@ GOOGLE_CLIENT_ID="${GOOGLE_CLIENT_ID:-}"
 GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
 
 SERVICE_NAME="cca-quiz"
+TOTAL_STEPS=10
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+DEPLOY_START=$SECONDS
+STEP_NUM=0
 
-log()  { printf '\033[1;36m==>\033[0m %s\n' "$*"; }
-warn() { printf '\033[1;33m!! \033[0m %s\n' "$*"; }
-die()  { printf '\033[1;31mERR\033[0m %s\n' "$*" >&2; exit 1; }
+# ── Console helpers ──────────────────────────────────────────────────────────
+# Colours
+C_CYAN='\033[1;36m'
+C_GREEN='\033[1;32m'
+C_YELLOW='\033[1;33m'
+C_RED='\033[1;31m'
+C_DIM='\033[2m'
+C_BOLD='\033[1m'
+C_RESET='\033[0m'
+
+# step N "title" — prints a numbered section header with elapsed time
+step() {
+  STEP_NUM=$((STEP_NUM + 1))
+  local elapsed=$(( SECONDS - DEPLOY_START ))
+  printf '\n%b%s%b\n' "$C_CYAN" \
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" "$C_RESET"
+  printf '%b[%d/%d]%b %b%s%b  %b+%ds%b\n' \
+    "$C_CYAN" "$STEP_NUM" "$TOTAL_STEPS" "$C_RESET" \
+    "$C_BOLD" "$*" "$C_RESET" \
+    "$C_DIM" "$elapsed" "$C_RESET"
+  printf '%b%s%b\n' "$C_CYAN" \
+    "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" "$C_RESET"
+}
+
+ok()   { printf '  %b✓%b  %s\n'  "$C_GREEN"  "$C_RESET" "$*"; }
+info() { printf '  %b·%b  %s\n'  "$C_CYAN"   "$C_RESET" "$*"; }
+warn() { printf '  %b!!%b %s\n'  "$C_YELLOW" "$C_RESET" "$*"; }
+die()  { printf '%bERR%b %s\n'   "$C_RED"    "$C_RESET" "$*" >&2; exit 1; }
+
+# wait_dot — prints a dot on the same line while waiting
+wait_dot() { printf '.'; }
 
 [[ $EUID -eq 0 ]] || die "Run as root:  sudo ./deploy.sh"
 
 UPDATE_ONLY=false
 [[ "${1:-}" == "--update" ]] && UPDATE_ONLY=true
 
+# ── Startup banner ───────────────────────────────────────────────────────────
+printf '\n%b' "$C_CYAN"
+printf '╔══════════════════════════════════════════════════════════╗\n'
+printf '║   DEPT®  ·  Anatomy of Code  ·  Deployment Script       ║\n'
+printf '║   Domain : %-46s║\n' "$DOMAIN"
+printf '║   Target : %-46s║\n' "$APP_HOME"
+printf '║   Mode   : %-46s║\n' "$( $UPDATE_ONLY && echo '--update (code + restart only)' || echo 'full install')"
+printf '╚══════════════════════════════════════════════════════════╝\n'
+printf '%b\n' "$C_RESET"
+
 # ── OS detection ─────────────────────────────────────────────────────────────
-# Sets all platform-specific variables in one place so the rest of the script
-# can use them without branching.
 if grep -qi 'ubuntu\|debian' /etc/os-release 2>/dev/null; then
   OS_FAMILY="debian"
   APACHE_SERVICE="apache2"
@@ -78,10 +117,9 @@ if grep -qi 'ubuntu\|debian' /etc/os-release 2>/dev/null; then
   APACHE_SITE_FILE="/etc/apache2/sites-available/${SERVICE_NAME}.conf"
   APACHE_LOG_DIR="/var/log/apache2"
   APACHE_TEST="apache2ctl -t"
-  # Cert defaults for Ubuntu/Azure (Let's Encrypt or manually placed)
   CERT_FILE="${CERT_FILE:-/etc/ssl/certs/${DOMAIN}.crt}"
   KEY_FILE="${KEY_FILE:-/etc/ssl/private/${DOMAIN}.key}"
-  log "Detected OS family: Ubuntu / Debian"
+  info "OS family : Ubuntu / Debian"
 else
   OS_FAMILY="rhel"
   APACHE_SERVICE="httpd"
@@ -91,13 +129,10 @@ else
   APACHE_TEST="httpd -t"
   CERT_FILE="${CERT_FILE:-/etc/pki/tls/certs/${DOMAIN}.crt}"
   KEY_FILE="${KEY_FILE:-/etc/pki/tls/private/${DOMAIN}.key}"
-  log "Detected OS family: RHEL / CentOS"
+  info "OS family : RHEL / CentOS"
 fi
 
 # ── pg_exec helper ───────────────────────────────────────────────────────────
-# Run a command as the postgres OS user.
-# Tries `runuser` first (RHEL standard, bypasses PAM su restrictions),
-# then falls back to `su -`.
 pg_exec() {
   if command -v runuser &>/dev/null; then
     runuser -l postgres -c "$*"
@@ -107,10 +142,7 @@ pg_exec() {
 }
 
 # ── pg_service_name ──────────────────────────────────────────────────────────
-# Resolve the active PostgreSQL systemd unit name.
-# Handles: postgresql (Ubuntu generic), postgresql-14/13/12 (RHEL PGDG),
-#          postgresql@14-main (Ubuntu versioned).
-# Returns the first active unit found, or empty string.
+# Resolve the active (or installed) PostgreSQL systemd unit name.
 pg_service_name() {
   for candidate in \
       postgresql \
@@ -121,7 +153,6 @@ pg_service_name() {
       echo "$candidate"; return 0
     fi
   done
-  # Not yet started — find any installed unit and return it so caller can start it
   for candidate in \
       postgresql \
       postgresql-16 postgresql-15 postgresql-14 postgresql-13 postgresql-12; do
@@ -133,43 +164,47 @@ pg_service_name() {
   return 1
 }
 
-# SELinux is only relevant on RHEL-family VMs
+# SELinux check (RHEL only)
 SELINUX_ON=false
 if [[ "$OS_FAMILY" == "rhel" ]] \
    && command -v getenforce &>/dev/null \
    && [[ "$(getenforce 2>/dev/null)" == "Enforcing" ]]; then
   SELINUX_ON=true
+  info "SELinux   : Enforcing — will apply httpd policies"
 fi
 
-# ── 1. Pre-flight checks ─────────────────────────────────────────────────────
-# Python, Apache, and PostgreSQL are expected to be pre-installed.
-# This section fails early with a clear message if any are missing.
-if ! $UPDATE_ONLY; then
-  log "Running pre-flight checks…"
+# ── STEP 1 · Pre-flight checks ───────────────────────────────────────────────
+step "Pre-flight checks"
 
-  # Python — look for python3.x or python3 in order of preference
+if ! $UPDATE_ONLY; then
+  # Python
   PYBIN=""
   for candidate in python3.11 python3.10 python3.9 python3.8 python3; do
     if command -v "$candidate" &>/dev/null; then
-      PYBIN="$(command -v "$candidate")"
-      break
+      PYBIN="$(command -v "$candidate")"; break
     fi
   done
   [[ -n "$PYBIN" ]] \
-    || die "Python 3 not found. Install python3 (Ubuntu: sudo apt install python3 python3-venv python3-pip)."
+    || die "Python 3 not found. Install: sudo apt install python3 python3-venv python3-pip"
 
   PY_VER="$("$PYBIN" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
-  log "  Python: $PYBIN  ($PY_VER)"
+  ok "Python      : $PYBIN  ($PY_VER)"
 
-  # python3-venv may need to be installed separately on Ubuntu
+  # python3-venv / build tools (Ubuntu)
   if [[ "$OS_FAMILY" == "debian" ]]; then
     if ! "$PYBIN" -c "import venv" &>/dev/null; then
-      log "  Installing python3-venv…"
-      apt-get install -y -q "python3-venv" "python3-pip"
+      info "Installing python3-venv…"
+      apt-get install -y -q python3-venv python3-pip
+      ok "python3-venv installed"
     fi
-    # Build tools required for some pip packages (e.g. psycopg2)
     for pkg in build-essential libpq-dev python3-dev; do
-      dpkg -s "$pkg" &>/dev/null || apt-get install -y -q "$pkg"
+      if ! dpkg -s "$pkg" &>/dev/null; then
+        info "Installing $pkg…"
+        apt-get install -y -q "$pkg"
+        ok "$pkg installed"
+      else
+        ok "$pkg          : already present"
+      fi
     done
   fi
 
@@ -177,44 +212,56 @@ if ! $UPDATE_ONLY; then
   if [[ "$OS_FAMILY" == "debian" ]]; then
     command -v apache2 &>/dev/null \
       || die "apache2 not found. Install: sudo apt install apache2 libapache2-mod-proxy"
+    ok "Apache      : $(apache2 -v 2>&1 | head -1)"
   else
     command -v httpd &>/dev/null \
       || die "httpd not found. Install: sudo dnf install httpd mod_ssl"
+    ok "Apache      : $(httpd -v 2>&1 | head -1)"
   fi
 
-  # PostgreSQL client (psql) — the server is assumed to be running
+  # PostgreSQL client
   command -v psql &>/dev/null \
     || die "psql not found. Install the PostgreSQL client package."
+  ok "psql        : $(psql --version)"
 
-  # Verify PostgreSQL is accepting connections.
-  # -h 127.0.0.1 avoids Unix socket path differences between distros.
-  # pg_isready needs no credentials and is immune to PAM restrictions.
+  # PostgreSQL connectivity
   PG_SVC="$(pg_service_name || echo 'postgresql-14')"
+  info "PG service  : $PG_SVC"
   if command -v pg_isready &>/dev/null; then
     pg_isready -h 127.0.0.1 -q \
-      || die "PostgreSQL is not accepting connections. Check: systemctl status ${PG_SVC}"
+      || die "PostgreSQL not accepting connections. Check: systemctl status ${PG_SVC}"
+    ok "PostgreSQL  : $(pg_isready -h 127.0.0.1 2>&1)"
   else
     pg_exec "psql -h 127.0.0.1 -c 'SELECT 1'" >/dev/null 2>&1 \
       || die "Cannot connect to PostgreSQL. Check: systemctl status ${PG_SVC}"
+    ok "PostgreSQL  : accepting connections"
   fi
 
-  log "  All pre-flight checks passed."
+  ok "All pre-flight checks passed"
 else
   PYBIN="$APP_HOME/quiz-certification/.venv/bin/python"
+  PG_SVC="$(pg_service_name || echo 'postgresql-14')"
+  info "Update mode — skipping pre-flight checks"
+  info "Using venv  : $PYBIN"
 fi
 
-# ── 2. Service user ──────────────────────────────────────────────────────────
+# ── STEP 2 · Service user ────────────────────────────────────────────────────
+step "Service user"
+
 if ! id "$APP_USER" &>/dev/null; then
-  log "Creating service user '$APP_USER'…"
   useradd --system --create-home --home-dir "/home/$APP_USER" --shell /sbin/nologin "$APP_USER"
+  ok "Created user '$APP_USER'  (system, nologin)"
+else
+  ok "User '$APP_USER' already exists — skipping"
 fi
 
-# ── 3. Sync bundle into place ────────────────────────────────────────────────
-log "Syncing bundle into $APP_HOME…"
-mkdir -p "$APP_HOME"
+# ── STEP 3 · Sync bundle ─────────────────────────────────────────────────────
+step "Sync bundle → $APP_HOME"
 
-# rsync the bundle. Runtime data dirs and .env are preserved across updates.
-rsync -a --delete \
+mkdir -p "$APP_HOME"
+info "Running rsync from $SRC_DIR …"
+
+RSYNC_OUT="$(rsync -a --delete --stats \
   --exclude '.venv/' \
   --exclude 'quiz-certification/quiz_results/' \
   --exclude 'quiz-certification/certificates/' \
@@ -228,173 +275,200 @@ rsync -a --delete \
   "$SRC_DIR/quiz-certification" \
   "$SRC_DIR/app" \
   "$SRC_DIR/content-architecture" \
-  "$APP_HOME/"
+  "$APP_HOME/" 2>&1)"
+
+# Print key rsync stats
+echo "$RSYNC_OUT" | grep -E 'Number of files:|transferred|speedup' | while read -r line; do
+  info "$line"
+done
 
 QUIZ_DIR="$APP_HOME/quiz-certification"
 mkdir -p "$QUIZ_DIR"/{quiz_results,certificates,outbox}
+ok "Bundle synced to $APP_HOME"
 
-# ── 4. Python venv + pip dependencies ───────────────────────────────────────
-log "Setting up Python virtualenv in $QUIZ_DIR/.venv…"
+# ── STEP 4 · Python venv + dependencies ─────────────────────────────────────
+step "Python virtualenv + pip dependencies"
 
 if [[ ! -d "$QUIZ_DIR/.venv" ]]; then
+  info "Creating virtualenv at $QUIZ_DIR/.venv …"
   "$PYBIN" -m venv "$QUIZ_DIR/.venv"
-  log "  Virtualenv created."
+  ok "Virtualenv created"
+else
+  ok "Virtualenv exists — reusing"
 fi
 
-"$QUIZ_DIR/.venv/bin/pip" install --upgrade -q pip
-"$QUIZ_DIR/.venv/bin/pip" install -q -r "$QUIZ_DIR/requirements.txt"
-log "  Dependencies installed."
+info "Upgrading pip…"
+"$QUIZ_DIR/.venv/bin/pip" install --upgrade pip --quiet
 
-# ── 5. Environment file (.env) ───────────────────────────────────────────────
+info "Installing requirements from requirements.txt…"
+"$QUIZ_DIR/.venv/bin/pip" install -r "$QUIZ_DIR/requirements.txt" \
+  | grep -E '^(Collecting|Successfully installed|Already satisfied)' \
+  | while read -r line; do info "$line"; done || true
+
+ok "pip dependencies up to date"
+
+# ── STEP 5 · Environment file (.env) ─────────────────────────────────────────
+step "Environment file (.env)"
+
 if [[ ! -f "$QUIZ_DIR/.env" ]]; then
-  log "Creating .env from .env.example…"
+  info "Creating from .env.example …"
   cp "$QUIZ_DIR/.env.example" "$QUIZ_DIR/.env"
 
-  # Fresh secret key
   SECRET="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(32))')"
   sed -i "s|^SECRET_KEY=.*|SECRET_KEY=${SECRET}|" "$QUIZ_DIR/.env"
+  ok "Generated SECRET_KEY"
 
-  # Generate DB password if not supplied — written now so it's available in
-  # step 6 (PostgreSQL) and doesn't require a second sed pass.
   if [[ -z "$DB_PASS" ]]; then
     DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
-    log "  Generated DB password."
+    ok "Generated DB password"
   fi
   DB_URL="postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}"
 
-  # OAuth redirect must match the configured Google Cloud project exactly
-  sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://${DOMAIN}/auth/google/callback|" "$QUIZ_DIR/.env"
+  sed -i "s|^GOOGLE_REDIRECT_URI=.*|GOOGLE_REDIRECT_URI=https://${DOMAIN}/auth/google/callback|" \
+    "$QUIZ_DIR/.env"
+  ok "OAuth redirect URI   → https://${DOMAIN}/auth/google/callback"
 
-  # Write DATABASE_URL (comment line or existing value, or append)
   if grep -qE '^#?\s*DATABASE_URL=' "$QUIZ_DIR/.env"; then
     sed -i "s|^#\?\s*DATABASE_URL=.*|DATABASE_URL=${DB_URL}|" "$QUIZ_DIR/.env"
   else
     echo "DATABASE_URL=${DB_URL}" >> "$QUIZ_DIR/.env"
   fi
+  ok "DATABASE_URL         → postgresql://${DB_USER}:***@localhost:5432/${DB_NAME}"
 
-  # Flip to production mode if OAuth creds were supplied
   if [[ -n "$GOOGLE_CLIENT_ID" && -n "$GOOGLE_CLIENT_SECRET" ]]; then
-    log "  OAuth creds supplied — enabling production mode (QUIZ_DEV_MODE=false)."
     sed -i "s|^QUIZ_DEV_MODE=.*|QUIZ_DEV_MODE=false|"                       "$QUIZ_DIR/.env"
     sed -i "s|^GOOGLE_CLIENT_ID=.*|GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}|"   "$QUIZ_DIR/.env"
     sed -i "s|^GOOGLE_CLIENT_SECRET=.*|GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}|" "$QUIZ_DIR/.env"
-    warn "  Production mode active. Set SMTP_HOST/USER/PASS in $QUIZ_DIR/.env."
+    ok "Mode                 → PRODUCTION (OAuth enabled)"
+    warn "Remember to set SMTP_HOST/USER/PASS in $QUIZ_DIR/.env"
   else
-    warn "  Running in DEV mode. No Google OAuth or SMTP required."
-    warn "  To switch: set QUIZ_DEV_MODE=false + GOOGLE_CLIENT_ID/SECRET + SMTP in $QUIZ_DIR/.env"
-    warn "  Or re-run:  sudo GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... ./deploy.sh"
+    ok "Mode                 → DEV (email login, no OAuth required)"
+    warn "To enable production auth: set QUIZ_DEV_MODE=false + GOOGLE_CLIENT_ID/SECRET + SMTP"
+    warn "  then re-run: sudo GOOGLE_CLIENT_ID=... GOOGLE_CLIENT_SECRET=... ./deploy.sh"
   fi
 else
-  log ".env already exists — leaving it untouched."
-  # Read the existing DB_PASS from .env for use in the PostgreSQL step
+  ok ".env already exists — leaving untouched"
   if [[ -z "$DB_PASS" ]]; then
     DB_PASS="$(grep '^DATABASE_URL=' "$QUIZ_DIR/.env" \
                | sed -E 's|.*://[^:]+:([^@]+)@.*|\1|')" || DB_PASS=""
   fi
+  info "DB user              : $DB_USER"
+  info "Database             : $DB_NAME"
 fi
 
 chown -R "$APP_USER:$APP_USER" "$APP_HOME"
 chmod 600 "$QUIZ_DIR/.env"
+ok "Permissions set (owner: $APP_USER, .env: 600)"
 
-# ── 6. PostgreSQL — role, database, schema, ETL seed ────────────────────────
-log "Setting up PostgreSQL database '${DB_NAME}'…"
+# ── STEP 6 · PostgreSQL ──────────────────────────────────────────────────────
+step "PostgreSQL — role, database, schema, ETL seed"
 
-# Resolve the PostgreSQL service unit name (handles postgresql-14, postgresql, etc.)
+# Resolve unit name
 PG_SVC="$(pg_service_name)" \
   || die "No PostgreSQL systemd unit found. Ensure postgresql (or postgresql-14) is installed."
-log "  PostgreSQL service unit: ${PG_SVC}"
+info "Service unit         : $PG_SVC"
 
-# Start if not already active
-systemctl is-active --quiet "$PG_SVC" \
-  || systemctl start "$PG_SVC" \
-  || die "Could not start ${PG_SVC}. Check: systemctl status ${PG_SVC}"
+# Ensure running
+if ! systemctl is-active --quiet "$PG_SVC"; then
+  info "Starting $PG_SVC …"
+  systemctl start "$PG_SVC" \
+    || die "Could not start $PG_SVC. Run: systemctl status $PG_SVC"
+fi
 
-# Wait until accepting TCP connections on 127.0.0.1 (up to 20 s)
+# Wait for TCP readiness (up to 20 s)
+info "Waiting for PostgreSQL to accept connections "
 for i in {1..20}; do
   if command -v pg_isready &>/dev/null; then
-    pg_isready -h 127.0.0.1 -q && break
+    pg_isready -h 127.0.0.1 -q 2>/dev/null && break
   else
     pg_exec "psql -h 127.0.0.1 -c 'SELECT 1'" >/dev/null 2>&1 && break
   fi
-  sleep 1
-  [[ $i -eq 20 ]] && die "PostgreSQL did not become ready after 20 s."
+  wait_dot; sleep 1
+  [[ $i -eq 20 ]] && { echo; die "PostgreSQL did not become ready after 20 s."; }
 done
-log "  PostgreSQL is up."
+echo  # newline after dots
+ok "PostgreSQL is up and accepting connections"
 
-# Create role (idempotent)
-if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" | grep -q 1; then
+# Role
+if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" \
+    2>/dev/null | grep -q 1; then
   [[ -z "$DB_PASS" ]] && \
     DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
   pg_exec "psql -c \"CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\""
-  # Persist generated password into .env
   sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}|" \
     "$QUIZ_DIR/.env"
-  log "  Role '${DB_USER}' created."
+  ok "Role '${DB_USER}' created"
 else
-  log "  Role '${DB_USER}' already exists."
+  ok "Role '${DB_USER}' already exists"
 fi
 
-# Create database (idempotent)
-if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" | grep -q 1; then
+# Database
+if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" \
+    2>/dev/null | grep -q 1; then
   pg_exec "psql -c \"CREATE DATABASE ${DB_NAME} OWNER ${DB_USER}\""
-  log "  Database '${DB_NAME}' created."
+  ok "Database '${DB_NAME}' created"
 else
-  log "  Database '${DB_NAME}' already exists."
+  ok "Database '${DB_NAME}' already exists"
 fi
 
-# Grant privileges (idempotent — GRANT is safe to re-run)
-pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER}\""
+# Privileges
+pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER}\"" \
+  >/dev/null 2>&1
+ok "Privileges granted to '${DB_USER}'"
 
-# ── pg_hba.conf — add md5 entry for the app user if missing ─────────────────
-# Resolve hba_file dynamically — works on Ubuntu (/etc/postgresql/…) and RHEL (/var/lib/pgsql/…)
-PG_HBA="$(pg_exec "psql -tAc 'SHOW hba_file'")"
-log "  pg_hba.conf: $PG_HBA"
+# pg_hba.conf
+PG_HBA="$(pg_exec "psql -tAc 'SHOW hba_file'" 2>/dev/null | tr -d '[:space:]')"
+info "pg_hba.conf          : $PG_HBA"
 
 if [[ -n "$PG_HBA" && -f "$PG_HBA" ]]; then
   HBA_CHANGED=false
   if ! grep -qE "^local\s+${DB_NAME}\s+${DB_USER}" "$PG_HBA"; then
-    # Prepend before the first "local all" line
     sed -i "/^local\s\+all/i local   ${DB_NAME}   ${DB_USER}   md5" "$PG_HBA"
-    HBA_CHANGED=true
+    HBA_CHANGED=true; info "Added local md5 rule"
   fi
   if ! grep -qE "^host\s+${DB_NAME}\s+${DB_USER}\s+127\.0\.0\.1" "$PG_HBA"; then
     sed -i "/^host\s\+all/i host   ${DB_NAME}   ${DB_USER}   127.0.0.1/32   md5" "$PG_HBA"
-    HBA_CHANGED=true
+    HBA_CHANGED=true; info "Added host md5 rule (127.0.0.1)"
   fi
   if $HBA_CHANGED; then
     systemctl reload "$PG_SVC" 2>/dev/null || systemctl restart "$PG_SVC" || true
-    log "  pg_hba.conf updated and PostgreSQL reloaded."
+    ok "pg_hba.conf updated and PostgreSQL reloaded"
+  else
+    ok "pg_hba.conf already has correct entries"
   fi
 fi
 
-# ── Apply DDL schema (IF NOT EXISTS throughout — fully idempotent) ───────────
-log "  Applying deploy_schema.sql…"
-# Use the password from .env if DB_PASS is still empty (existing deployment)
+# Schema (DDL)
 if [[ -z "$DB_PASS" ]]; then
   DB_PASS="$(grep '^DATABASE_URL=' "$QUIZ_DIR/.env" \
              | sed -E 's|.*://[^:]+:([^@]+)@.*|\1|')" || DB_PASS=""
 fi
 
+info "Applying deploy_schema.sql …"
 if [[ -n "$DB_PASS" ]]; then
   PGPASSWORD="$DB_PASS" psql -U "$DB_USER" -d "$DB_NAME" -h 127.0.0.1 \
-    -f "$QUIZ_DIR/deploy_schema.sql"
+    -f "$QUIZ_DIR/deploy_schema.sql" \
+    2>&1 | grep -v '^$' | while read -r line; do info "  pg: $line"; done
 else
-  # Peer auth fallback (DB_USER matches an OS user with pg_ident)
   su - "$APP_USER" -c "psql -d ${DB_NAME} -f ${QUIZ_DIR}/deploy_schema.sql" 2>/dev/null \
-    || pg_exec "psql -d ${DB_NAME} -f ${QUIZ_DIR}/deploy_schema.sql"
+    | while read -r line; do info "  pg: $line"; done \
+  || pg_exec "psql -d ${DB_NAME} -f ${QUIZ_DIR}/deploy_schema.sql" \
+    | while read -r line; do info "  pg: $line"; done
 fi
-log "  Schema applied."
+ok "Schema applied (tables/indexes created or already exist)"
 
-# ── ETL seed (questions, feed, course chapters, framework) ───────────────────
-log "  Running ETL migration (content-architecture → PostgreSQL)…"
+# ETL seed
+info "Running ETL migration: question bank + feed + course chapters + framework …"
 cd "$QUIZ_DIR"
-# Load DATABASE_URL from .env so the migration script picks it up
 set -a; source "$QUIZ_DIR/.env"; set +a
-"$QUIZ_DIR/.venv/bin/python" -m scripts.migrate_to_postgres
-log "  ETL complete."
+"$QUIZ_DIR/.venv/bin/python" -m scripts.migrate_to_postgres \
+  2>&1 | while read -r line; do info "  etl: $line"; done
+ok "ETL migration complete"
 
-# ── 7. systemd service ───────────────────────────────────────────────────────
-log "Writing systemd unit /etc/systemd/system/${SERVICE_NAME}.service…"
+# ── STEP 7 · systemd service ─────────────────────────────────────────────────
+step "systemd service  ($SERVICE_NAME)"
+
+info "Writing /etc/systemd/system/${SERVICE_NAME}.service …"
 cat > "/etc/systemd/system/${SERVICE_NAME}.service" <<EOF
 [Unit]
 Description=DEPT CCA Quiz (FastAPI / uvicorn)
@@ -424,40 +498,65 @@ ReadWritePaths=${QUIZ_DIR}
 WantedBy=multi-user.target
 EOF
 
+info "Reloading systemd daemon …"
 systemctl daemon-reload
+
+info "Enabling and (re)starting ${SERVICE_NAME} …"
 systemctl enable "${SERVICE_NAME}" >/dev/null 2>&1
 systemctl restart "${SERVICE_NAME}"
-log "  ${SERVICE_NAME} started. ($(systemctl is-active ${SERVICE_NAME}))"
 
-# ── 8. SELinux (RHEL/CentOS only) ───────────────────────────────────────────
+# Brief pause then check
+sleep 2
+SVC_STATUS="$(systemctl is-active "${SERVICE_NAME}" 2>/dev/null || echo 'unknown')"
+if [[ "$SVC_STATUS" == "active" ]]; then
+  ok "${SERVICE_NAME} is running  (active)"
+else
+  warn "${SERVICE_NAME} status: $SVC_STATUS"
+  warn "Check logs: journalctl -u ${SERVICE_NAME} -n 30 --no-pager"
+fi
+
+# ── STEP 8 · SELinux (RHEL only) ─────────────────────────────────────────────
 if $SELINUX_ON && ! $UPDATE_ONLY; then
-  log "Applying SELinux policy (httpd network connect + content labels)…"
+  step "SELinux policy"
+  info "Allowing httpd network connections …"
   setsebool -P httpd_can_network_connect 1
+  ok "httpd_can_network_connect = on"
+
+  info "Labelling content directories …"
   semanage fcontext -a -t httpd_sys_content_t "${APP_HOME}/content-system(/.*)?" 2>/dev/null \
     || semanage fcontext -m -t httpd_sys_content_t "${APP_HOME}/content-system(/.*)?"
   semanage fcontext -a -t httpd_sys_content_t "${APP_HOME}/app(/.*)?" 2>/dev/null \
     || semanage fcontext -m -t httpd_sys_content_t "${APP_HOME}/app(/.*)?"
   restorecon -Rv "${APP_HOME}/content-system" "${APP_HOME}/app" >/dev/null
+  ok "SELinux file contexts applied"
+else
+  # Don't consume a step number when SELinux is skipped
+  TOTAL_STEPS=$((TOTAL_STEPS - 1))
 fi
 
-# ── 9. Apache vhost config ───────────────────────────────────────────────────
+# ── STEP 9 · Apache vhost config ─────────────────────────────────────────────
 if ! $UPDATE_ONLY; then
-  log "Configuring Apache vhost ($APACHE_SITE_FILE)…"
+  step "Apache vhost config"
 
-  # Ubuntu: enable required modules before writing the config
+  # Ubuntu: enable required modules
   if [[ "$OS_FAMILY" == "debian" ]]; then
+    info "Enabling Apache modules …"
     for mod in proxy proxy_http ssl rewrite headers; do
-      a2enmod "$mod" >/dev/null 2>&1 && log "  a2enmod $mod" || true
+      if a2enmod "$mod" >/dev/null 2>&1; then
+        ok "  a2enmod $mod"
+      else
+        info "  $mod already enabled"
+      fi
     done
   fi
 
-  # Determine whether TLS certs exist; build the HTTPS block conditionally
   TLS_AVAILABLE=false
   [[ -f "$CERT_FILE" && -f "$KEY_FILE" ]] && TLS_AVAILABLE=true
 
-  # ── HTTP vhost (always present) ─────────────────────────────────────────
-  # When TLS is available this just redirects; when not it serves the app.
   if $TLS_AVAILABLE; then
+    info "TLS certs found — configuring HTTPS vhost"
+    ok "  Cert : $CERT_FILE"
+    ok "  Key  : $KEY_FILE"
     HTTP_BLOCK="# Redirect plain HTTP → HTTPS
 <VirtualHost *:80>
     ServerName ${SERVER_NAME}
@@ -465,11 +564,13 @@ if ! $UPDATE_ONLY; then
     RewriteRule ^/?(.*) https://${SERVER_NAME}/\$1 [R=301,L]
 </VirtualHost>"
   else
-    warn "TLS cert not found at $CERT_FILE — serving over HTTP only."
-    warn "To add TLS later: obtain a cert, set CERT_FILE/KEY_FILE, and re-run deploy.sh."
+    warn "TLS certs not found at $CERT_FILE"
+    warn "Serving over HTTP only. To add TLS:"
+    warn "  sudo certbot --apache -d ${DOMAIN}"
+    warn "  or set CERT_FILE/KEY_FILE and re-run ./deploy.sh"
     HTTP_BLOCK="<VirtualHost *:80>
     ServerName ${SERVER_NAME}
-    # --- Static content -------------------------------------------------------
+
     Alias /anatomy \"${APP_HOME}/content-system\"
     <Directory \"${APP_HOME}/content-system\">
         Require all granted
@@ -485,7 +586,6 @@ if ! $UPDATE_ONLY; then
         FallbackResource /app/index.html
     </Directory>
 
-    # --- Reverse proxy → FastAPI / uvicorn ------------------------------------
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"http\"
     ProxyPass        /anatomy !
@@ -498,7 +598,6 @@ if ! $UPDATE_ONLY; then
 </VirtualHost>"
   fi
 
-  # ── HTTPS vhost (only when certs are present) ────────────────────────────
   if $TLS_AVAILABLE; then
     CHAIN_LINE=""
     [[ -n "$CHAIN_FILE" && -f "$CHAIN_FILE" ]] && \
@@ -506,18 +605,15 @@ if ! $UPDATE_ONLY; then
     HTTPS_BLOCK="<VirtualHost *:443>
     ServerName ${SERVER_NAME}
 
-    # TLS
     SSLEngine on
     SSLCertificateFile    ${CERT_FILE}
     SSLCertificateKeyFile ${KEY_FILE}
 ${CHAIN_LINE}
-    # Modern TLS only
     SSLProtocol           -all +TLSv1.2 +TLSv1.3
     SSLCipherSuite        HIGH:!aNULL:!MD5
     SSLHonorCipherOrder   on
     Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains\"
 
-    # --- Static content -------------------------------------------------------
     Alias /anatomy \"${APP_HOME}/content-system\"
     <Directory \"${APP_HOME}/content-system\">
         Require all granted
@@ -533,7 +629,6 @@ ${CHAIN_LINE}
         FallbackResource /app/index.html
     </Directory>
 
-    # --- Reverse proxy → FastAPI / uvicorn ------------------------------------
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"https\"
     ProxyPass        /anatomy !
@@ -548,81 +643,92 @@ ${CHAIN_LINE}
     HTTPS_BLOCK=""
   fi
 
-  # Write the config file
+  info "Writing $APACHE_SITE_FILE …"
   printf '%s\n\n%s\n' "$HTTP_BLOCK" "$HTTPS_BLOCK" > "$APACHE_SITE_FILE"
 
-  # Ubuntu: disable default site, enable ours
   if [[ "$OS_FAMILY" == "debian" ]]; then
-    a2dissite 000-default.conf >/dev/null 2>&1 || true
+    a2dissite 000-default.conf >/dev/null 2>&1 && info "Disabled 000-default.conf" || true
     a2ensite "${SERVICE_NAME}.conf" >/dev/null 2>&1
+    ok "Site ${SERVICE_NAME}.conf enabled"
   else
-    # RHEL: silence the stock welcome page
     [[ -f /etc/httpd/conf.d/welcome.conf ]] && \
-      mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf.disabled 2>/dev/null || true
+      mv /etc/httpd/conf.d/welcome.conf /etc/httpd/conf.d/welcome.conf.disabled 2>/dev/null \
+      && info "Disabled welcome.conf" || true
   fi
 
-  log "Validating Apache configuration…"
-  "$APACHE_TEST" 2>&1 | grep -v "Syntax OK" || true
-  "$APACHE_TEST" 2>&1 | grep -q "Syntax OK" || die "Apache config has errors — check above output."
-
-  systemctl enable  "$APACHE_SERVICE" >/dev/null 2>&1 || true
-  systemctl restart "$APACHE_SERVICE"
-  log "  Apache restarted. ($(systemctl is-active $APACHE_SERVICE))"
-fi
-
-# ── 10. Firewall ─────────────────────────────────────────────────────────────
-if ! $UPDATE_ONLY; then
-  if command -v ufw &>/dev/null && systemctl is-active --quiet ufw 2>/dev/null; then
-    log "Opening ports 80 + 443 in ufw…"
-    ufw allow 80/tcp  >/dev/null
-    ufw allow 443/tcp >/dev/null
-    ufw --force enable >/dev/null
-    log "  ufw rules applied."
-  elif systemctl is-active --quiet firewalld 2>/dev/null; then
-    log "Opening ports 80 + 443 in firewalld…"
-    firewall-cmd --permanent --add-service=http  >/dev/null
-    firewall-cmd --permanent --add-service=https >/dev/null
-    firewall-cmd --reload >/dev/null
-    log "  firewalld rules applied."
+  info "Validating Apache config ($APACHE_TEST) …"
+  if "$APACHE_TEST" 2>&1 | grep -q "Syntax OK"; then
+    ok "Apache config syntax OK"
   else
-    warn "No active firewall detected (ufw / firewalld). Open ports 80 and 443 manually if needed."
-    warn "  Azure: also check the Network Security Group inbound rules in the Azure Portal."
+    "$APACHE_TEST" 2>&1 | while read -r line; do warn "  $line"; done
+    die "Apache config has errors — see above."
+  fi
+
+  systemctl enable "$APACHE_SERVICE" >/dev/null 2>&1 || true
+  info "(Re)starting $APACHE_SERVICE …"
+  systemctl restart "$APACHE_SERVICE"
+  ok "$APACHE_SERVICE running  ($(systemctl is-active $APACHE_SERVICE))"
+fi
+
+# ── STEP 10 · Firewall ───────────────────────────────────────────────────────
+if ! $UPDATE_ONLY; then
+  step "Firewall"
+  if command -v ufw &>/dev/null && systemctl is-active --quiet ufw 2>/dev/null; then
+    info "Firewall: ufw detected"
+    ufw allow 80/tcp  >/dev/null && ok "  ufw: port 80 allowed"
+    ufw allow 443/tcp >/dev/null && ok "  ufw: port 443 allowed"
+    ufw --force enable >/dev/null
+    ok "ufw rules applied"
+  elif systemctl is-active --quiet firewalld 2>/dev/null; then
+    info "Firewall: firewalld detected"
+    firewall-cmd --permanent --add-service=http  >/dev/null && ok "  firewalld: http allowed"
+    firewall-cmd --permanent --add-service=https >/dev/null && ok "  firewalld: https allowed"
+    firewall-cmd --reload >/dev/null
+    ok "firewalld rules applied and reloaded"
+  else
+    warn "No active firewall detected (ufw / firewalld)"
+    warn "Open ports 80 and 443 manually if needed."
+    warn "Azure users: also check Network Security Group → Inbound rules in the Azure Portal."
   fi
 fi
 
-# ── Done ─────────────────────────────────────────────────────────────────────
-PROTO="https"
-$TLS_AVAILABLE || PROTO="http"
+# ── Summary ──────────────────────────────────────────────────────────────────
+ELAPSED=$(( SECONDS - DEPLOY_START ))
+PROTO="https"; $TLS_AVAILABLE || PROTO="http"
 
-log "Deploy complete."
-echo
-echo "  ┌─ URLs ──────────────────────────────────────────────────────────────────┐"
-echo "  │  Quiz / cert app : ${PROTO}://${DOMAIN}/"
-echo "  │  SPA (Feed/Read) : ${PROTO}://${DOMAIN}/app/"
-echo "  │  Course          : ${PROTO}://${DOMAIN}/anatomy/anatomy-of-code-course.html"
-echo "  │  Checklist       : ${PROTO}://${DOMAIN}/anatomy/code-coder-checklist.html"
-echo "  │  Runbooks        : ${PROTO}://${DOMAIN}/anatomy/architect-runbook.html"
-echo "  │  FAQs            : ${PROTO}://${DOMAIN}/anatomy/faqs/index.html"
+printf '\n%b' "$C_GREEN"
+printf '╔══════════════════════════════════════════════════════════╗\n'
+printf '║   ✓  Deploy complete in %ds%-31s║\n' "$ELAPSED" ""
+printf '╚══════════════════════════════════════════════════════════╝\n'
+printf '%b\n' "$C_RESET"
+
+printf '%b┌─ URLs ──────────────────────────────────────────────────────────────────┐%b\n' "$C_CYAN" "$C_RESET"
+printf '%b│%b  Quiz / cert app  : %s://%s/\n'                  "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  SPA (Feed/Read)  : %s://%s/app/\n'              "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Course           : %s://%s/anatomy/anatomy-of-code-course.html\n' "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Checklist        : %s://%s/anatomy/code-coder-checklist.html\n'   "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Runbooks         : %s://%s/anatomy/architect-runbook.html\n'      "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  FAQs             : %s://%s/anatomy/faqs/index.html\n'             "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 $TLS_AVAILABLE && \
-echo "  │  OAuth callback  : ${PROTO}://${DOMAIN}/auth/google/callback" || true
-echo "  └─────────────────────────────────────────────────────────────────────────┘"
-echo
-echo "  ┌─ Operations ────────────────────────────────────────────────────────────┐"
-echo "  │  App status  : systemctl status ${SERVICE_NAME}"
-echo "  │  App logs    : journalctl -u ${SERVICE_NAME} -f"
-echo "  │  Web logs    : tail -f ${APACHE_LOG_DIR}/${SERVICE_NAME}_error.log"
-echo "  │  Restart app : systemctl restart ${SERVICE_NAME}"
-echo "  │  Reload web  : systemctl reload ${APACHE_SERVICE}"
-echo "  │  Update code : sudo $APP_HOME/deploy.sh --update"
-echo "  │  DB connect  : psql -U ${DB_USER} -d ${DB_NAME} -h 127.0.0.1"
-echo "  └─────────────────────────────────────────────────────────────────────────┘"
-echo
+printf '%b│%b  OAuth callback   : https://%s/auth/google/callback\n'             "$C_CYAN" "$C_RESET" "$DOMAIN" || true
+printf '%b└─────────────────────────────────────────────────────────────────────────┘%b\n\n' "$C_CYAN" "$C_RESET"
+
+printf '%b┌─ Operations ────────────────────────────────────────────────────────────┐%b\n' "$C_CYAN" "$C_RESET"
+printf '%b│%b  App status   : systemctl status %s\n'              "$C_CYAN" "$C_RESET" "$SERVICE_NAME"
+printf '%b│%b  App logs     : journalctl -u %s -f\n'              "$C_CYAN" "$C_RESET" "$SERVICE_NAME"
+printf '%b│%b  Web logs     : tail -f %s/%s_error.log\n'          "$C_CYAN" "$C_RESET" "$APACHE_LOG_DIR" "$SERVICE_NAME"
+printf '%b│%b  Restart app  : systemctl restart %s\n'             "$C_CYAN" "$C_RESET" "$SERVICE_NAME"
+printf '%b│%b  Reload web   : systemctl reload %s\n'              "$C_CYAN" "$C_RESET" "$APACHE_SERVICE"
+printf '%b│%b  Update code  : sudo %s/deploy.sh --update\n'       "$C_CYAN" "$C_RESET" "$APP_HOME"
+printf '%b│%b  DB connect   : psql -U %s -d %s -h 127.0.0.1\n'   "$C_CYAN" "$C_RESET" "$DB_USER" "$DB_NAME"
+printf '%b└─────────────────────────────────────────────────────────────────────────┘%b\n\n' "$C_CYAN" "$C_RESET"
+
 if grep -q '^QUIZ_DEV_MODE=true' "$QUIZ_DIR/.env" 2>/dev/null; then
-  warn "Running in DEV mode — email login only, no real OAuth or SMTP."
-  warn "To enable production auth, edit $QUIZ_DIR/.env and restart the service."
+  warn "DEV mode active — email login only, no real OAuth or SMTP."
+  warn "Edit $QUIZ_DIR/.env and restart to enable production auth."
 fi
 if ! $TLS_AVAILABLE; then
-  warn "TLS is not configured. HTTPS is disabled."
-  warn "Obtain a cert (Let's Encrypt: sudo certbot --apache -d ${DOMAIN})"
-  warn "then set CERT_FILE/KEY_FILE and re-run ./deploy.sh to enable HTTPS."
+  warn "TLS not configured — running on HTTP."
+  warn "Get a cert:  sudo certbot --apache -d ${DOMAIN}"
+  warn "Then set CERT_FILE/KEY_FILE and re-run ./deploy.sh"
 fi
