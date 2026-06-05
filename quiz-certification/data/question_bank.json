@@ -1,7 +1,7 @@
 {
   "version": 2,
   "course": "anatomy-of-code",
-  "updated": "2026-06-03",
+  "updated": "2026-06-05",
   "questions": [
     {
       "id": "b01",
@@ -4802,6 +4802,3206 @@
       "correct": 0,
       "explanation": "Optimization (O) focuses on loading speed, responsive INP, accessibility, unit and load testing, and security compliance.",
       "id": "a100"
+    },
+    {
+      "id": "b101",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the primary goal of the Content Supply Chain operating model?",
+      "options": [
+        "To build custom Node.js modules for e-commerce sites",
+        "To connect Workfront, AEM Assets, GenStudio, and Firefly into a single brief-to-activation pipeline",
+        "To deploy cloud infrastructure templates on AWS or Azure",
+        "To manage the database replication cycle for CRM records"
+      ],
+      "correct": 1,
+      "explanation": "The Content Supply Chain is not a single product; it is an operating model connecting Workfront, AEM Assets, GenStudio, and Firefly to streamline content from brief to activation."
+    },
+    {
+      "id": "b102",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which tool in the Content Supply Chain owns the brief ingestion, request queues, and resource capacity management?",
+      "options": [
+        "AEM Assets",
+        "Adobe Firefly",
+        "Workfront",
+        "Adobe Express"
+      ],
+      "correct": 2,
+      "explanation": "Workfront manages the upstream operations: brief intake, review-and-approval routing, and creative team capacity."
+    },
+    {
+      "id": "b103",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the role of Workfront Fusion in the Content Supply Chain?",
+      "options": [
+        "To edit and resize images directly using AI models",
+        "To act as the database storage engine for user profiles",
+        "To automate workflows and integrate systems like Workfront, GenStudio, and AEM Assets",
+        "To compile storefront CSS and JavaScript packages"
+      ],
+      "correct": 2,
+      "explanation": "Workfront Fusion is the integration and automation layer that connects Workfront with other applications, removing manual handoff latency."
+    },
+    {
+      "id": "b104",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which system is the single source of truth for the activated and approved asset corpus?",
+      "options": [
+        "Workfront",
+        "AEM Assets",
+        "Adobe Express",
+        "Adobe GenStudio"
+      ],
+      "correct": 1,
+      "explanation": "AEM Assets is the Digital Asset Management (DAM) system and the system of record for approved, activated assets."
+    },
+    {
+      "id": "b105",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is Adobe GenStudio primarily used for in the Content Supply Chain?",
+      "options": [
+        "To monitor database connection pools",
+        "To generate channel-ready creative variants from briefs, brand kits, and claims libraries",
+        "To manage the DNS TTL settings ahead of go-live",
+        "To translate source code into multiple programming languages"
+      ],
+      "correct": 1,
+      "explanation": "Adobe GenStudio for Performance Marketing is the creative generation surface that uses AI to produce channel-ready asset variants from brand kits and briefs."
+    },
+    {
+      "id": "b106",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which generative engine powers the asset generation within GenStudio and Express?",
+      "options": [
+        "Adobe Sensei",
+        "Adobe Target",
+        "Adobe Firefly",
+        "Adobe I/O Runtime"
+      ],
+      "correct": 2,
+      "explanation": "Adobe Firefly is the image, video, and 3D generative model powering GenStudio, Express, and Creative Cloud applications."
+    },
+    {
+      "id": "b107",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the primary role of Adobe Express in the Content Supply Chain?",
+      "options": [
+        "Stateless API integration",
+        "Template-based, lightweight content authoring and asset modification",
+        "CDN caching configuration",
+        "Real-time event analytics tracking"
+      ],
+      "correct": 1,
+      "explanation": "Adobe Express is a creation surface that allows marketing and business users to perform template-based, lightweight asset authoring."
+    },
+    {
+      "id": "b108",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which tool provides frame-accurate review-and-approval specifically for video assets?",
+      "options": [
+        "Workfront Fusion",
+        "Frame.io",
+        "AEM Assets",
+        "Adobe Journey Optimizer"
+      ],
+      "correct": 1,
+      "explanation": "Frame.io provides frame-accurate review, timed feedback, and version comparison for video and rich media."
+    },
+    {
+      "id": "b109",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the primary operational metric that a Content Supply Chain architect owns?",
+      "options": [
+        "API calls per second",
+        "Brief-to-activated-asset cycle time",
+        "SQL query execution latency",
+        "Git repository commits per week"
+      ],
+      "correct": 1,
+      "explanation": "The primary metric is brief-to-activated-asset cycle time, representing the median elapsed time from a brief entering Workfront to the asset serving in a live channel."
+    },
+    {
+      "id": "b110",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Why is a parallel approval path for AI-generated assets considered a governance defect?",
+      "options": [
+        "It increases the licensing cost of GenStudio",
+        "It bypasses standard brand consistency, legal claims, and review gates",
+        "It slows down developer releases in Cloud Manager",
+        "It prevents assets from being compressed at the CDN level"
+      ],
+      "correct": 1,
+      "explanation": "AI-generated assets must go through the same review-and-approval gates as human-created assets; bypassing them introduces severe legal and brand risks."
+    },
+    {
+      "id": "b111",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is a 'claims library' in the context of Content Supply Chain governance?",
+      "options": [
+        "A list of database backup locations",
+        "The repository of legally approved product claims, regulatory disclaimers, and prohibited phrases",
+        "A set of user login credentials and roles",
+        "The repository of storefront theme stylesheets"
+      ],
+      "correct": 1,
+      "explanation": "The claims library contains legally vetted product claims and disclaimers enforced at generation time to prevent false or unapproved marketing statements."
+    },
+    {
+      "id": "b112",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Who owns and controls the brand kits containing colours, typefaces, and logos in GenStudio?",
+      "options": [
+        "Individual marketing agencies or external creators",
+        "Brand governance teams, as a locked change-controlled asset",
+        "Storefront developers in their codebases",
+        "The automated AI generation agents"
+      ],
+      "correct": 1,
+      "explanation": "Brand kits are locked, change-controlled assets managed by brand governance to ensure consistency and prevent unauthorized modifications."
+    },
+    {
+      "id": "b113",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What are the six distinct stages in the Content Supply Chain brief-to-activated-asset pipeline?",
+      "options": [
+        "Brief, Generate, Review, Approve, Store, Activate",
+        "Code, Test, Build, Package, Release, Monitor",
+        "Inbound, Parse, Save, Format, Print, Archive",
+        "Hypothesis, Design, Component, Event, Deploy, Rollback"
+      ],
+      "correct": 0,
+      "explanation": "The correct sequence of stages in the Content Supply Chain pipeline is: Brief, Generate, Review, Approve, Store, and Activate."
+    },
+    {
+      "id": "b114",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Where do downstream activation tools like Adobe Campaign or Adobe Journey Optimizer (AJO) read assets from?",
+      "options": [
+        "Directly from Workfront briefs",
+        "Directly from AEM Assets (the DAM)",
+        "Directly from the developer's laptop",
+        "Directly from the Frame.io feedback portal"
+      ],
+      "correct": 1,
+      "explanation": "Downstream activation systems only read from AEM Assets (the DAM), which acts as the approved repository, not the production tools."
+    },
+    {
+      "id": "b115",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the critical input required in a Workfront brief intake form before generation begins?",
+      "options": [
+        "A completed codebase pull request",
+        "Audience parameters, claims allowed, brand kit reference, and a trace key brief ID",
+        "The client's AWS credentials",
+        "The designer's hourly billing rate"
+      ],
+      "correct": 1,
+      "explanation": "A complete brief requires structured fields like audience, channel mix, claims allowed, brand kit, and a unique brief ID to act as a trace key."
+    },
+    {
+      "id": "b116",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What does 'p90 cycle time' measure in the context of Content Supply Chain performance?",
+      "options": [
+        "The performance of AEM Assets database reads",
+        "The duration of 90% of the asset generation requests",
+        "The elapsed time under which 90% of briefs are fully activated, showing how the pipeline performs under pressure",
+        "The ratio of AI-generated assets to human-generated assets"
+      ],
+      "correct": 2,
+      "explanation": "p50 represents the normal behavioral baseline, while p90 reveals tail latency and pipeline performance under heavy operational pressure."
+    },
+    {
+      "id": "b117",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Under Indian DPDP and global regulations, why is end-to-end asset auditability important in the Content Supply Chain?",
+      "options": [
+        "To speed up the Node.js compilation time",
+        "To trace any activated asset impression back to its reviewers, approver, claims library version, and brief",
+        "To automate billing inside external payment gateways",
+        "To bypass standard review gates for local campaigns"
+      ],
+      "correct": 1,
+      "explanation": "Auditability ensures that the team can trace any live asset back to its source brief, approved claims, and reviewers in the event of compliance checks or safety incidents."
+    },
+    {
+      "id": "m101",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the primary purpose of the 'First-time approval rate' metric in Content Supply Chain governance?",
+      "options": [
+        "To measure the server's cache hit ratio",
+        "To track the percentage of assets that pass review gates without requiring rework",
+        "To log the speed of image variant rendering",
+        "To verify the deployment success of Cloud Manager"
+      ],
+      "correct": 1,
+      "explanation": "First-time approval rate measures assets approved on first pass. A low rate points to weak brief quality, mis-tuned brand controls, or out-of-date claims libraries."
+    },
+    {
+      "id": "m102",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "If the 'Asset reuse rate' in AEM Assets is trending downwards, what is the most likely cause?",
+      "options": [
+        "A failure in the CDN's cache invalidation rules",
+        "Poor metadata tagging and indexing, preventing teams from discovering existing assets",
+        "The AI generator creating low-resolution images",
+        "An outage in the Adobe I/O Runtime service"
+      ],
+      "correct": 1,
+      "explanation": "A downward trend in asset reuse rate is typically a search-and-tagging failure in the DAM, causing teams to re-brief and re-create assets that already exist."
+    },
+    {
+      "id": "m103",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the role of Workfront Fusion in connecting Frame.io review loops back to Workfront?",
+      "options": [
+        "It compiles video assets directly using cloud GPUs",
+        "It mirrors the review comments and approval status from Frame.io to the parent Workfront brief automatically",
+        "It acts as a CDN cache proxy for video playback",
+        "It checks the WCAG compliance of the video files"
+      ],
+      "correct": 1,
+      "explanation": "Fusion scenarios automate the synchronization between Frame.io and Workfront, maintaining a single consolidated audit trail in Workfront."
+    },
+    {
+      "id": "m104",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Why is the Workfront brief ID carried as metadata into AEM Assets?",
+      "options": [
+        "To optimize image compression settings",
+        "To enable the trace chain linking the final asset back to the initial brief and capacity plan",
+        "To determine the CDN caching TTL value",
+        "To assign user roles in the Experience Cloud Shell"
+      ],
+      "correct": 1,
+      "explanation": "The brief ID acts as a trace key across the entire pipeline. Storing it in the AEM Assets metadata ensures complete provenance."
+    },
+    {
+      "id": "m105",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In a DEPT® Content Supply Chain deployment, how is a generated asset tracked in activation systems like AJO?",
+      "options": [
+        "By querying GenStudio directly at runtime",
+        "By writing code inside the storefront template to check Workfront Fusion",
+        "By stamping the asset with the brief ID and exposing it in the offer catalogue and delivery reports",
+        "By bypassing the DAM and fetching from Frame.io"
+      ],
+      "correct": 2,
+      "explanation": "Stamping every asset with the Workfront brief ID in the AEM metadata and surfacing it in AJO or Campaign allows audits to trace live impressions back to their source briefs."
+    },
+    {
+      "id": "m106",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the risk of allowing creatives to use direct Firefly playgrounds rather than GenStudio for campaign variants?",
+      "options": [
+        "Higher licensing costs on Adobe Creative Cloud",
+        "Loss of trace history and claims library validation before review gates",
+        "Slower load times of the public storefronts",
+        "Incorrect DNS caching invalidation"
+      ],
+      "correct": 1,
+      "explanation": "Using unguided playgrounds bypasses the locked brand controls, claims libraries, and Workfront tracking, breaking the governed supply chain."
+    },
+    {
+      "id": "m107",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How are custom-trained Firefly models governed within GenStudio?",
+      "options": [
+        "Any user can upload brand images and train a model on their laptop",
+        "Custom models are trained strictly on verified brand assets and restricted via access control policies",
+        "They are hosted on external public platforms and called via APIs",
+        "They bypass the standard AEM Assets review gates"
+      ],
+      "correct": 1,
+      "explanation": "Custom Firefly models are restricted and governed to ensure they train only on owned brand corpus, avoiding licensing or intellectual property issues."
+    },
+    {
+      "id": "m108",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What determines the cycle time of the Content Supply Chain more than individual tool speeds?",
+      "options": [
+        "The hosting provider of AEM Assets",
+        "The handoffs between tools and the automation of metadata propagation via Fusion",
+        "The layout of the storefront HTML page",
+        "The resolution of the generated Firefly images"
+      ],
+      "correct": 1,
+      "explanation": "Handoff latency is the biggest bottleneck. Automating handoffs via Fusion scenario designs is the primary lever to reduce cycle time."
+    },
+    {
+      "id": "m109",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What metadata schema fields are essential in AEM Assets for proper Content Supply Chain audit trails?",
+      "options": [
+        "Database connection limits and server port numbers",
+        "Brief ID, GenStudio session, Firefly model reference, approver identity, and rights expiry",
+        "Storefront CSS classes and image width/height only",
+        "The designer's username and Git commit hash"
+      ],
+      "correct": 1,
+      "explanation": "The AEM Assets metadata model must hold the brief ID, GenStudio session, Firefly model, approver identity, and rights/licensing expiry to support governance."
+    },
+    {
+      "id": "m110",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Why is the claims library sourced from legal and enforced at GenStudio generation time rather than in final review?",
+      "options": [
+        "To reduce AEM Assets database storage size",
+        "To catch regulatory disclaimers and brand-safety violations early, avoiding review-cycle rework waste",
+        "To speed up the video encoding rate in Frame.io",
+        "To prevent authors from using Adobe Express"
+      ],
+      "correct": 1,
+      "explanation": "Enforcing claims during generation is a 'shift-left' pattern that prevents invalid options from ever entering the human review queue, reducing cycle times."
+    },
+    {
+      "id": "m111",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How should rejected assets be managed in the Content Supply Chain?",
+      "options": [
+        "They should be deleted immediately from AEM Assets and restarted",
+        "They should return to the Generate phase with the reviewer comments and rejection status appended in Workfront",
+        "They should bypass Workfront and go directly to Express",
+        "They should be archived in the local developer workspace"
+      ],
+      "correct": 1,
+      "explanation": "Rejected assets flow back to the generation/rework stage with explicit reviewer annotations attached in the work management tool (Workfront)."
+    },
+    {
+      "id": "m112",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the risk of having review-and-approval gates without named owners and defined SLAs?",
+      "options": [
+        "The AEM Cloud Manager pipeline will fail to deploy",
+        "These gates become unbounded bottlenecks, silently dominating overall cycle time",
+        "The CDN will fail to invalidate static files",
+        "The claims library will expire automatically"
+      ],
+      "correct": 1,
+      "explanation": "Unbounded review steps with no named owners or SLAs are the most common source of pipeline congestion and cycle time bloat."
+    },
+    {
+      "id": "m113",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is a 'Workfront Request Type' in Content Supply Chain intake design?",
+      "options": [
+        "A database index structure",
+        "A tailored form mapping the required inputs (audience, claims, channel) for a creative demand type",
+        "A Node.js API endpoint routing rule",
+        "An Adobe IMS security group role"
+      ],
+      "correct": 1,
+      "explanation": "Request types standardise intake, ensuring fields like audience, channel, and claims are populated before any creative work starts."
+    },
+    {
+      "id": "m114",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In the Content Supply Chain, which tool is responsible for managing creative resource allocation?",
+      "options": [
+        "AEM Assets",
+        "Workfront",
+        "Frame.io",
+        "Workfront Fusion"
+      ],
+      "correct": 1,
+      "explanation": "Workfront handles task assignment and capacity views across internal teams and agencies, governing allocation before work begins."
+    },
+    {
+      "id": "m115",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How are Workfront Fusion scenarios managed from an engineering perspective?",
+      "options": [
+        "As manual GUI changes made directly in the production environment by any operator",
+        "As software assets that are versioned, code-reviewed, and monitored in pipelines",
+        "As static text files stored in the AEM JCR database",
+        "As transient functions that are deleted after execution"
+      ],
+      "correct": 1,
+      "explanation": "Because Fusion runs the integration backbone, scenarios are treated like software: versioned, reviewed, and monitored for errors."
+    },
+    {
+      "id": "m116",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Under the DPDP Act, what is the consequence of activating an asset whose license has expired?",
+      "options": [
+        "Increased CDN traffic",
+        "Legal non-compliance and brand liability for distributing unapproved or unlicensed personal images/brand marks",
+        "Automatic deletion of the asset from the CDN cache",
+        "Slower loading speed of the storefront"
+      ],
+      "correct": 1,
+      "explanation": "Licensing expirations create severe regulatory and legal liabilities, requiring automated alerts and retirement workflows in the DAM."
+    },
+    {
+      "id": "m117",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What does the 'AI-asset performance lift' metric evaluate?",
+      "options": [
+        "The speed improvement of the Firefly generation API",
+        "The performance comparison (clicks, conversions) between AI-generated variants and human-created controls in the same placement",
+        "The CPU usage of the App Builder environment",
+        "The bandwidth savings of WebP versus AVIF images"
+      ],
+      "correct": 1,
+      "explanation": "Performance lift compares conversion or click rates between GenStudio-generated variants and human-authored controls to evaluate effectiveness."
+    },
+    {
+      "id": "a101",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "When designing a Content Supply Chain metadata model in AEM Assets, how do you enforce accountability under audit?",
+      "options": [
+        "Allow users to manually fill out the author field in a free-text text box",
+        "Statically lock metadata values based on local file extension types",
+        "Inject read-only fields (brief ID, GenStudio session, Firefly model, approver identity, timestamp) via Fusion on asset creation",
+        "Configure the CDN to attach HTTP request headers on every image fetch"
+      ],
+      "correct": 2,
+      "explanation": "Read-only fields must be automatically populated by the integration layer (Fusion) at creation time to prevent modification and guarantee traceability."
+    },
+    {
+      "id": "a102",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "An architect is faced with a p90 cycle time that has spiked from 2 hours to 4 days. Which area is the highest-priority target for investigation?",
+      "options": [
+        "Firefly image rendering execution latency",
+        "Unbounded human approval gates and queues in Workfront without SLA alerts",
+        "The database indexing strategy for AEM Assets metadata",
+        "CDN static cache eviction rates"
+      ],
+      "correct": 1,
+      "explanation": "Spikes in p90 cycle time are almost always caused by human bottleneck gates (e.g. legal or brand review queues) lacking explicit owners, alerts, or SLAs."
+    },
+    {
+      "id": "a103",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should the Content Supply Chain contract be architected for downstream activation systems (AJO and Campaign)?",
+      "options": [
+        "Activation systems query Workfront directly at runtime to verify if a brief is approved",
+        "Activation systems read metadata and references solely from AEM Assets, decoupling execution from the upstream creative process",
+        "Workfront Fusion pushes asset binary arrays to AJO on every approval event",
+        "Storefront code calls GenStudio APIs directly to fetch personalized variants"
+      ],
+      "correct": 1,
+      "explanation": "Decoupling is critical. Downstream activation platforms read only from AEM Assets, insulating runtime serving from creative pipeline availability."
+    },
+    {
+      "id": "a104",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the primary governance risk of bypassing GenStudio and calling the Firefly generative API directly in custom application code?",
+      "options": [
+        "Increased infrastructure hosting costs",
+        "Breaking the claims library and brand kit enforcement, allowing unvetted content to reach review",
+        "Failing WCAG accessibility guidelines at runtime",
+        "Reducing CDN cache hit efficiency"
+      ],
+      "correct": 1,
+      "explanation": "Calling Firefly directly bypasses the template rules, locked brand colors, and the legal claims library defined inside GenStudio, creating severe brand risk."
+    },
+    {
+      "id": "a105",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In a regulated BFSI digital campaign, how should the claims library be integrated into the architect's workflow?",
+      "options": [
+        "Maintained on a wiki page for designers to reference manually",
+        "Maintained in a central database and dynamically queried by storefront templates at compile-time",
+        "Sourced from the compliance team and locked as a generation-time constraint configuration in GenStudio",
+        "Managed via CSS stylesheets and hidden/shown based on user geolocation"
+      ],
+      "correct": 2,
+      "explanation": "Integrating compliance constraints directly into the AI generation layer (GenStudio) prevents non-compliant variants from being created, eliminating downstream compliance errors."
+    },
+    {
+      "id": "a106",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "If an asset is flagged for legal or regulatory reasons in production, what is the '30-second trace' requirement?",
+      "options": [
+        "The developer must pull the Git repository and find the code within 30 seconds",
+        "The architect must be able to navigate from the live impression back to the source brief in Workfront in under 30 seconds using DAM metadata",
+        "The database administrator must execute a SQL query to drop the table in under 30 seconds",
+        "The CDN must purge all assets globally in under 30 seconds"
+      ],
+      "correct": 1,
+      "explanation": "The 'DEPT® field pattern' requires that AEM metadata links any live impression directly to its Workfront brief ID, allowing rapid auditing within 30 seconds during compliance emergencies."
+    },
+    {
+      "id": "a107",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Under the DPDP Act in India, how should asset expiry and consent withdrawal be managed in the Content Supply Chain?",
+      "options": [
+        "By setting infinite cache-control headers on the CDN",
+        "By utilizing automated metadata alerts, expiration gates, and auto-retirement workflows linked to the asset metadata model",
+        "By deleting the asset from the developer's laptop",
+        "By setting up a manual monthly spreadsheet review of all creative folders"
+      ],
+      "correct": 1,
+      "explanation": "DPDP requires enforcing data privacy and consent windows. Expiry dates must be embedded in asset metadata and connected to auto-retirement workflows to prevent live exposure."
+    },
+    {
+      "id": "a108",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Why is the first-time approval rate considered a brief-quality indicator rather than a creative-quality indicator?",
+      "options": [
+        "Because creatives always build high-quality work",
+        "Because a low rate usually indicates vague brief parameters, forcing creatives to guess claims and brand requirements",
+        "Because legal teams reject work due to server-side rendering latency",
+        "Because AEM Assets handles brief ingestion automatically"
+      ],
+      "correct": 1,
+      "explanation": "A high reject rate on the first pass usually signals that the brief lacked clear audience constraints or claims parameters, forcing creative rework due to alignment failures."
+    },
+    {
+      "id": "a109",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How does the architect prevent 'shadow creative work' where teams use unapproved personal AI accounts?",
+      "options": [
+        "By restricting developer pipeline permissions in Cloud Manager",
+        "By closing side doors, enforcing that only assets carrying the Workfront brief ID in metadata can be stored in the DAM",
+        "By writing code to detect AI-generated pixels on every storefront load",
+        "By blocking the Adobe Express domain at the corporate firewall"
+      ],
+      "correct": 1,
+      "explanation": "By gating the DAM to reject any asset upload lacking a valid brief ID, you force all creative assets to originate from the tracked and governed pipeline."
+    },
+    {
+      "id": "a110",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the primary trade-off of maintaining custom brand kits as locked, change-controlled assets?",
+      "options": [
+        "It reduces the image generation speed of Firefly API calls",
+        "It slows down rapid adjustments by individual authors but guarantees brand protection and consistency at scale",
+        "It limits the number of channels that AJO can activate assets to",
+        "It forces the development team to use React UIs inside the shell"
+      ],
+      "correct": 1,
+      "explanation": "Locked brand kits introduce lightweight operational overhead for changes but prevent massive brand compliance debt when generating thousands of variants via AI."
+    },
+    {
+      "id": "a111",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should Workfront Fusion scenario failures be monitored in a production environment?",
+      "options": [
+        "By logging into the Workfront Fusion UI once a week and reviewing error logs",
+        "By forwarding scenario exception events to the project's central observability stack (Datadog, Splunk) with active paging alerts",
+        "By writing exception handling code directly inside AEM publisher instances",
+        "By training a custom Firefly model to identify broken scenarios"
+      ],
+      "correct": 1,
+      "explanation": "Production integrations require automated operations: errors must be forwarded to the enterprise SRE tools with alerting to prevent silent pipeline halts."
+    },
+    {
+      "id": "a112",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "During a 90-minute 'BMAD sprint zero' workshop, what are the primary outputs the architect must secure?",
+      "options": [
+        "A completed React codebase and a deployed database schema",
+        "One Hypothesis, one Component Inventory, and the initial ADR log covering highest-risk decisions",
+        "The client's budget sheet and the agency's billing schedule",
+        "A series of high-fidelity UX mockups created in Figma"
+      ],
+      "correct": 1,
+      "explanation": "Sprint zero establishes the governance spine: the outcome Hypothesis, the Component Inventory (what will be built), and the key Architecture Decision Records (ADRs)."
+    },
+    {
+      "id": "a113",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the consequence of designing a Content Supply Chain where metadata propagation is manual?",
+      "options": [
+        "The DAM will fail to compress files to WebP formats",
+        "Cycle time climbs due to human keying latency, and the audit trail becomes highly prone to missing or incorrect references",
+        "Downstream channels will fail to authenticate with IMS",
+        "The developers will be forced to use Python instead of Node.js"
+      ],
+      "correct": 1,
+      "explanation": "Manual metadata input introduces latency and human error, undermining auditability and slowing down the throughput of high-volume asset variants."
+    },
+    {
+      "id": "a114",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should video review and approval be handled at scale to minimize review cycle bottlenecks?",
+      "options": [
+        "By emailing MP4 files directly to all stakeholders",
+        "By using Frame.io for timestamped annotations and version overlays, synchronising resolution status to Workfront via Fusion",
+        "By publishing videos directly to production channels and relying on post-launch comments",
+        "By routing all reviews through a single project manager's inbox"
+      ],
+      "correct": 1,
+      "explanation": "Frame.io provides specialized rich media review tools. Combining this with Fusion sync keeps the audit log centered in Workfront while optimizing reviewer velocity."
+    },
+    {
+      "id": "a115",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the recommended approach for managing translated versions of assets in AEM Assets?",
+      "options": [
+        "Store translations in separate standalone folders with no relationship to the source asset",
+        "Leverage AEM's Multi-Site Manager (MSM) or translation connectors, retaining the source asset's brief ID and metadata links",
+        "Force editors to submit a new Workfront brief for every language variant",
+        "Translate assets dynamically in the browser using public search engines"
+      ],
+      "correct": 1,
+      "explanation": "Translated assets must preserve the lineage. Retaining the parent brief ID in the localized DAM metadata ensures consistent compliance tracking."
+    },
+    {
+      "id": "a116",
+      "topic": "content-supply-chain",
+      "section": "adobe.csc",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Which trade-off is accepted when enforcing strict metadata schemas on DAM ingestion?",
+      "options": [
+        "We sacrifice client-side rendering speed for better database writes",
+        "We sacrifice a small amount of upload convenience for guaranteed auditability, compliance, and asset discoverability",
+        "We limit the system to only accept static images (no video or audio)",
+        "We require all stakeholders to be trained in database SQL syntax"
+      ],
+      "correct": 1,
+      "explanation": "Strict metadata gates require users or automated tools to provide parameters at upload, introducing a minor friction point to secure downstream compliance."
+    },
+    {
+      "id": "b118",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is Adobe App Builder?",
+      "options": [
+        "A drag-and-drop tool to construct public storefronts",
+        "An enterprise serverless extensibility platform for Node.js workloads inside Adobe's perimeter",
+        "A monitoring service for database performance",
+        "A component editor for creating AEM HTML fragments"
+      ],
+      "correct": 1,
+      "explanation": "Adobe App Builder is a serverless extensibility framework that enables developers to build custom Node.js applications and event handlers hosted within Adobe's secure perimeter."
+    },
+    {
+      "id": "b119",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the runtime environment that hosts App Builder serverless actions?",
+      "options": [
+        "AWS Lambda",
+        "Adobe I/O Runtime (OpenWhisk-based FaaS)",
+        "Google Cloud Functions",
+        "Local JCR repository node"
+      ],
+      "correct": 1,
+      "explanation": "App Builder applications execute as serverless functions on Adobe I/O Runtime, which is built on Apache OpenWhisk."
+    },
+    {
+      "id": "b120",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is Adobe API Mesh?",
+      "options": [
+        "A high-speed database replication layer",
+        "A declarative GraphQL gateway that aggregates multiple upstream services into a single endpoint",
+        "A frontend routing library for single-page applications",
+        "A firewall manager for Experience Cloud sites"
+      ],
+      "correct": 1,
+      "explanation": "API Mesh allows developers to stitch multiple API sources (REST, GraphQL, SOAP, OData) into a single, unified GraphQL endpoint."
+    },
+    {
+      "id": "b121",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "How are custom UIs built in App Builder integrated into the Experience Cloud?",
+      "options": [
+        "They are hosted on external sites and loaded via pop-ups",
+        "They mount inside the Experience Cloud Shell, sharing the same SSO chrome and interface guidelines",
+        "They are deployed as AEM client libraries inside the JCR",
+        "They compile to native mobile apps on iOS and Android"
+      ],
+      "correct": 1,
+      "explanation": "App Builder custom UIs (typically React applications) run directly inside the Experience Cloud Shell, offering a native, seamless administrator experience."
+    },
+    {
+      "id": "b122",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which command-line tool is used to scaffold, deploy, and configure App Builder and API Mesh?",
+      "options": [
+        "git",
+        "aio",
+        "npm",
+        "mvn"
+      ],
+      "correct": 1,
+      "explanation": "The Adobe I/O CLI (`aio`) is the central tool for managing App Builder apps, deploying serverless actions, and updating API Mesh configurations."
+    },
+    {
+      "id": "b123",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the atomic unit of custom logic inside App Builder?",
+      "options": [
+        "A React Component",
+        "A serverless Action (Node.js function)",
+        "A mesh.json file",
+        "An AEM template"
+      ],
+      "correct": 1,
+      "explanation": "An Action is the basic unit of execution in App Builder — a stateless, short-lived Node.js function running on Adobe I/O Runtime."
+    },
+    {
+      "id": "b124",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which authentication service do App Builder and API Mesh use natively?",
+      "options": [
+        "Auth0",
+        "Adobe IMS (Identity Management System)",
+        "Firebase Authentication",
+        "AWS Cognito"
+      ],
+      "correct": 1,
+      "explanation": "Both products use Adobe IMS, validating inbound tokens and using OAuth credentials to authenticate upstream/downstream requests."
+    },
+    {
+      "id": "b125",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the primary configuration file for an API Mesh instance?",
+      "options": [
+        "package.json",
+        "mesh.json",
+        "app.config.yaml",
+        "index.js"
+      ],
+      "correct": 1,
+      "explanation": "API Mesh is configured declaratively using a JSON configuration file (conventionally `mesh.json`) defining the upstream sources."
+    },
+    {
+      "id": "b126",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "How do App Builder actions receive real-time updates from Adobe Commerce or AEM?",
+      "options": [
+        "By polling their databases every 5 seconds",
+        "Through Adobe I/O Events subscriptions",
+        "By reading local cache files",
+        "Through storefront browser cookies"
+      ],
+      "correct": 1,
+      "explanation": "Adobe I/O Events publishes event triggers (e.g. Commerce order placed) that directly execute subscribed App Builder actions."
+    },
+    {
+      "id": "b127",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Where are database credentials or API keys stored securely in App Builder?",
+      "options": [
+        "Committed inside the `mesh.json` configuration",
+        "In the App Builder built-in secret store",
+        "Hardcoded in the Action's `index.js` source code",
+        "In the browser's localStorage"
+      ],
+      "correct": 1,
+      "explanation": "App Builder includes a secure secret store. Secrets are injected into running actions as environment variables, keeping them out of source control."
+    },
+    {
+      "id": "b128",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which upstream protocol is NOT supported natively by API Mesh?",
+      "options": [
+        "GraphQL",
+        "OpenAPI / REST",
+        "SOAP",
+        "IMAP (Email)"
+      ],
+      "correct": 3,
+      "explanation": "API Mesh supports GraphQL, OpenAPI/REST, JSON Schema, SOAP, and OData handlers, but not mail protocols like IMAP."
+    },
+    {
+      "id": "b129",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What command deploys App Builder actions to Adobe I/O Runtime?",
+      "options": [
+        "aio app deploy",
+        "npm run build",
+        "git push origin main",
+        "mvn clean install"
+      ],
+      "correct": 0,
+      "explanation": "The CLI command `aio app deploy` builds the application frontend and uploads the actions to the Adobe I/O Runtime."
+    },
+    {
+      "id": "b130",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What programming language is used to write serverless actions in App Builder?",
+      "options": [
+        "Java",
+        "JavaScript (Node.js)",
+        "Python",
+        "Go"
+      ],
+      "correct": 1,
+      "explanation": "App Builder serverless actions are written in Node.js (JavaScript/TypeScript) running on Adobe I/O Runtime."
+    },
+    {
+      "id": "b131",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "In the DEPT® framework, what is a primary use case for App Builder?",
+      "options": [
+        "Hosting a large relational transactional database",
+        "Building Adobe-adjacent integrations like order forwarding, custom admin panels, or workflow extensions",
+        "Building standard storefront React layouts without Adobe products",
+        "Writing low-level hardware drivers"
+      ],
+      "correct": 1,
+      "explanation": "App Builder is designed for lightweight, event-driven, or request-driven workloads that sit directly adjacent to Adobe systems."
+    },
+    {
+      "id": "b132",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the primary benefit of API Mesh for a frontend storefront developer?",
+      "options": [
+        "It speeds up their local machine's compilation speed",
+        "It lets them fetch data from Commerce, AEM, and third-party APIs via a single GraphQL query and endpoint",
+        "It automatically compresses all CSS styling sheets",
+        "It runs the storefront in offline-only mode"
+      ],
+      "correct": 1,
+      "explanation": "API Mesh simplifies frontend development by stitching multiple downstream APIs into one schema, saving the storefront from writing separate API clients."
+    },
+    {
+      "id": "b133",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "How do developers view execution logs for App Builder actions during local development?",
+      "options": [
+        "By checking the AEM Publisher log files",
+        "By running the CLI command `aio app logs`",
+        "By querying the database directly",
+        "Logs are printed in the browser's console only"
+      ],
+      "correct": 1,
+      "explanation": "The command `aio app logs` streams runtime execution logs from the Adobe Developer Console directly to the local terminal."
+    },
+    {
+      "id": "b134",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the modern replacement for the deprecated JWT service-to-service credential in Adobe IMS?",
+      "options": [
+        "OAuth Server-to-Server credential",
+        "API keys passed in query strings",
+        "Basic authentication with usernames and passwords",
+        "SAML single sign-on assertions"
+      ],
+      "correct": 0,
+      "explanation": "Adobe IMS has replaced legacy JWT credentials with the OAuth Server-to-Server credential for secure, automated service-to-service flows."
+    },
+    {
+      "id": "m118",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How do App Builder and API Mesh compose to create a unified storefront API?",
+      "options": [
+        "App Builder compiles the mesh.json configuration automatically",
+        "An App Builder action exposes computed logic (e.g. pricing rules) which is declared as an upstream OpenAPI source in API Mesh",
+        "The Mesh replicates its database directly into the App Builder state store",
+        "Actions run inside the Mesh resolvers directly as JavaScript strings"
+      ],
+      "correct": 1,
+      "explanation": "API Mesh aggregates endpoints. An App Builder action can compute custom rules and expose them as an OpenAPI REST endpoint, which the Mesh stitches in."
+    },
+    {
+      "id": "m119",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is a key difference between App Builder and API Mesh?",
+      "options": [
+        "App Builder is used for static styling; API Mesh is used for database backups",
+        "App Builder is for custom code execution (compute); API Mesh is for declarative data orchestration (composition)",
+        "App Builder only runs on AWS; API Mesh only runs on Google Cloud",
+        "There is no difference; they are the same product"
+      ],
+      "correct": 1,
+      "explanation": "App Builder is a serverless code environment. API Mesh is a declarative gateway configuring resolvers and type merging without writing custom routing code."
+    },
+    {
+      "id": "m120",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How does API Mesh translate a REST API into a GraphQL schema?",
+      "options": [
+        "By writing manual resolver code for every endpoint",
+        "By consuming the REST API's OpenAPI/Swagger specification file and auto-generating corresponding GraphQL types",
+        "By converting REST data arrays into static HTML code",
+        "API Mesh cannot ingest REST endpoints"
+      ],
+      "correct": 1,
+      "explanation": "The OpenAPI handler in API Mesh automatically inspects the OpenAPI spec document and creates GraphQL queries and mutations mapping to the REST routes."
+    },
+    {
+      "id": "m121",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the consequence of configuring an App Builder action as a 'web action'?",
+      "options": [
+        "It can only be executed by logged-in database administrators",
+        "It is exposed as a public HTTP endpoint, bypassing the default Adobe I/O activation authentication check",
+        "It compiles the action into static HTML pages",
+        "It migrates the action execution to the browser client side"
+      ],
+      "correct": 1,
+      "explanation": "Web actions are accessible via HTTP requests without needing the developer's Adobe credentials, though application-level auth (like IMS validation) should still be handled in code."
+    },
+    {
+      "id": "m122",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Where does the configuration for upstream credentials reside in an API Mesh deployment?",
+      "options": [
+        "Committed inside the public mesh.json file",
+        "Injected using environment variables or resolved via headers passed from the client session",
+        "Stored in the AEM JCR config folders",
+        "Inside the storefront's package.json file"
+      ],
+      "correct": 1,
+      "explanation": "Upstream credentials should be passed dynamically using request headers, or set securely in environments, rather than hardcoded in the committed configuration."
+    },
+    {
+      "id": "m123",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Which API Mesh configuration property defines the list of upstream service endpoints?",
+      "options": [
+        "meshConfig.sources",
+        "app.dependencies",
+        "runtime.actions",
+        "meshConfig.endpoints"
+      ],
+      "correct": 0,
+      "explanation": "The `meshConfig.sources` array in `mesh.json` holds the schema handlers, endpoints, and headers for each upstream API."
+    },
+    {
+      "id": "m124",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In App Builder, how does the system support event-driven integrations with third-party systems like Shiprocket or Razorpay?",
+      "options": [
+        "By writing a loop that executes every second",
+        "By subscribing to Adobe I/O Events (e.g. order complete) that trigger serverless actions, which call the 3PL APIs",
+        "By exporting database spreadsheets daily",
+        "By executing custom logic in the browser console"
+      ],
+      "correct": 1,
+      "explanation": "Event-driven design connects Adobe event publishers to FaaS actions. When an event fires, the action executes, runs integration logic, and calls external webhooks."
+    },
+    {
+      "id": "m125",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the recommended practice for managing the deployment of API Mesh configurations?",
+      "options": [
+        "Update settings manually using the Adobe Developer Console UI",
+        "Version-control `mesh.json` in git and deploy changes via `aio api-mesh:update` inside a CI/CD pipeline",
+        "Copy configurations directly onto AEM publish instances",
+        "Configure the Mesh configuration inside storefront CSS files"
+      ],
+      "correct": 1,
+      "explanation": "To maintain environment parity and audit history, `mesh.json` is stored in the code repo and deployed via CLI tools in a pipeline."
+    },
+    {
+      "id": "m126",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How do you secure inbound calls to an App Builder action?",
+      "options": [
+        "By checking that the client is running on a Mac browser",
+        "By validating the IMS access token in the request headers and checking permitted scopes",
+        "By using database table locks",
+        "By obfuscating the action's URL endpoint"
+      ],
+      "correct": 1,
+      "explanation": "Security requires verifying the client's IMS access token and scopes inside the action's entry point code."
+    },
+    {
+      "id": "m127",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How are logs from production App Builder actions typically managed?",
+      "options": [
+        "They are stored in local flat files on the Adobe server and rotated daily",
+        "They are forwarded to enterprise observability platforms (Splunk, Datadog) via the Adobe I/O log forwarding configurations",
+        "They are emailed to the developer when errors occur",
+        "They are discarded immediately after the action completes"
+      ],
+      "correct": 1,
+      "explanation": "For production, logs are forwarded from Adobe Developer Console to tools like Datadog or Splunk to support monitoring and alerting."
+    },
+    {
+      "id": "m128",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What happens when an API Mesh upstream source times out or returns a 500 error?",
+      "options": [
+        "The entire Mesh endpoint crashes and returns a 502",
+        "The Mesh returns partial data for the successful sources, along with an array of errors detailing the failed source",
+        "The Mesh automatically retries the call for 10 minutes",
+        "The Mesh serves cached data from the last successful response indefinitely"
+      ],
+      "correct": 1,
+      "explanation": "GraphQL supports partial successes: the Mesh returns data for healthy nodes and lists execution errors for the timed-out upstreams."
+    },
+    {
+      "id": "m129",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In App Builder, what is the default execution timeout for a standard serverless action?",
+      "options": [
+        "100 milliseconds",
+        "60 seconds",
+        "2 hours",
+        "There is no timeout"
+      ],
+      "correct": 1,
+      "explanation": "Adobe I/O Runtime actions are designed to be short-lived. The default execution limit is 60 seconds (configurable up to a maximum limit)."
+    },
+    {
+      "id": "m130",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the purpose of 'API Mesh Resolvers'?",
+      "options": [
+        "To resolve domain name settings (DNS)",
+        "To lightly transform request/response payloads or define custom links between different upstream sources",
+        "To connect client databases directly to the CDN",
+        "To compile React component stylesheets"
+      ],
+      "correct": 1,
+      "explanation": "Resolvers map GraphQL queries to upstream endpoints and can transform formats or join entities (e.g. stitching customer IDs to profile records)."
+    },
+    {
+      "id": "m131",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "When configuring API Mesh, how do you handle upstream REST APIs that require SOAP envelopes?",
+      "options": [
+        "Translate them using custom code inside the storefront",
+        "Utilize the built-in SOAP handler in `mesh.json` to map SOAP operations to GraphQL types",
+        "Bypass the Mesh and connect directly to the SOAP endpoint in the browser",
+        "Re-write the upstream ERP system to support GraphQL natively"
+      ],
+      "correct": 1,
+      "explanation": "API Mesh features a native SOAP handler that parses WSDL definitions and maps SOAP operations to query and mutation fields."
+    },
+    {
+      "id": "m132",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How are secrets rotated in an active App Builder production app?",
+      "options": [
+        "By editing the deployed index.js file directly in the runtime console",
+        "By setting the new secret via the `aio` CLI or Developer Console and triggering a re-deployment to apply the new values",
+        "By modifying files inside the AEM dispatcher configuration",
+        "Secrets are static and cannot be rotated without creating a new application"
+      ],
+      "correct": 1,
+      "explanation": "Rotating secrets involves updating the secure variables in the Adobe Developer Console or via `aio` CLI commands, which refreshes the container environment."
+    },
+    {
+      "id": "m133",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How does App Builder handle static assets like CSS and HTML files for its custom admin UIs?",
+      "options": [
+        "They are served directly from the database of AEM Author",
+        "They are deployed and hosted on Adobe's out-of-the-box CDN (surfaced via unique URL subdomains)",
+        "They must be hosted on external platforms like AWS S3 by the client",
+        "They are bundle-compiled and stored inside the database rows"
+      ],
+      "correct": 1,
+      "explanation": "The CLI deploys custom administrative UIs to Adobe's built-in CDN storage, exposing them directly inside the Experience Cloud interface."
+    },
+    {
+      "id": "m134",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Under what circumstance does App Builder support background, recurring scheduled workloads?",
+      "options": [
+        "Actions can run indefinitely if marked as daemon processes",
+        "Through scheduled triggers (alarms) configured in the app manifest, executing stateless actions at set intervals",
+        "By running a persistent Node.js express server inside I/O Runtime",
+        "App Builder does not support cron-like tasks"
+      ],
+      "correct": 1,
+      "explanation": "Manifest files can define cron-like alarm triggers that run designated actions on a schedule, though execution must remain within the 60-second limit."
+    },
+    {
+      "id": "a117",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "An architect is evaluating where to place business logic for pricing calculation. What is the danger of writing this logic directly inside API Mesh resolvers?",
+      "options": [
+        "The client-side React UI will fail to compile",
+        "It couples logic to the gateway's deployment cycle, limits testability, and increases the difficulty of monitoring compared to an App Builder action",
+        "API Mesh will restrict the database to read-only queries",
+        "The CDN will refuse to cache the pricing queries"
+      ],
+      "correct": 1,
+      "explanation": "Mesh resolvers should remain declarative (mapping, stitching). Price calculations are compute workloads that belong in version-controlled, testable serverless actions."
+    },
+    {
+      "id": "a118",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "When does a workload exceed App Builder's capabilities and require placement on a separate engineering platform (e.g. AWS or GCP)?",
+      "options": [
+        "When the storefront is built using Next.js instead of React",
+        "When the task is long-running (>15 min), stateful, or requires heavy data volumes, persistent file systems, or specialized database drivers",
+        "Whenever the workload requires authentication with Adobe IMS",
+        "When the target deployment is located in India"
+      ],
+      "correct": 1,
+      "explanation": "App Builder is serverless and stateless. Heavy compute, long-running batch jobs, or persistent disk needs belong on general cloud platforms, not short-lived FaaS functions."
+    },
+    {
+      "id": "a119",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In a secure BFSI environment, how should API Mesh call a sensitive legacy SOAP service that restricts traffic by IP?",
+      "options": [
+        "By writing a client-side proxy in the storefront browser code",
+        "By routing calls from API Mesh through an App Builder action acting as a gateway with static IP routing or proxying",
+        "By disabling the SOAP service's firewall",
+        "By routing all queries via public search engines"
+      ],
+      "correct": 1,
+      "explanation": "API Mesh execution IPs are dynamic. Routing sensitive requests through an intermediate action allows proxying or static egress IP configuration to meet strict corporate firewall rules."
+    },
+    {
+      "id": "a120",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the correct rollback strategy for an API Mesh configuration error deployed in production?",
+      "options": [
+        "Manually delete the mesh instances inside the Developer Console",
+        "Re-apply the last known-good `mesh.json` configuration from git via `aio api-mesh:update` inside the deployment pipeline",
+        "Flush the database cache of AEM Publisher",
+        "Wait for the DNS TTL cache to expire"
+      ],
+      "correct": 1,
+      "explanation": "Since API Mesh configurations are declarative, rollback is achieved by pushing the previous configuration file back through the CLI deployment process."
+    },
+    {
+      "id": "a121",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should an architect design error handling inside API Mesh when one of the secondary upstream REST APIs fails?",
+      "options": [
+        "Allow the failure to bubble up and return a global HTTP 500 error to the client",
+        "Configure the Mesh schema to allow the affected fields to be nullable, enabling the client to gracefully render around missing content",
+        "Write a resolver that retries the REST API synchronously in a loop for 30 seconds",
+        "Redirect the storefront user to the login screen"
+      ],
+      "correct": 1,
+      "explanation": "GraphQL architecture dictates that optional fields should be nullable so that partial upstream failures do not break the entire user experience."
+    },
+    {
+      "id": "a122",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the security risk of deploying an App Builder action as a 'web action' without validating request signatures or IMS tokens?",
+      "options": [
+        "The action's source code will be deleted from git",
+        "Any public internet user can call the action, exposing internal databases or consuming execution budgets",
+        "The action will compile slowly in the pipeline",
+        "The database will fail to execute read-write transactions"
+      ],
+      "correct": 1,
+      "explanation": "Exposing actions as web-accessible makes them public. Authors must validate tokens or use HMAC signatures to verify authenticity before processing the payload."
+    },
+    {
+      "id": "a123",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How is high availability and scalability managed for custom admin UIs deployed on App Builder?",
+      "options": [
+        "Developers must provision additional AWS EC2 server instances in a auto-scaling group",
+        "Adobe manages the scaling and distribution automatically, as the static assets are deployed directly to Adobe's enterprise CDN",
+        "UIs must be compiled as static local files and shipped on flash drives to administrators",
+        "Scaling is limited to a maximum of 5 concurrent users"
+      ],
+      "correct": 1,
+      "explanation": "App Builder UI applications are compiled to static files and served via Adobe's global CDN nodes, providing built-in scaling and high availability."
+    },
+    {
+      "id": "a124",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How does an App Builder action maintain state if Adobe I/O Runtime containers are destroyed after execution?",
+      "options": [
+        "By writing data to local temporary flat files on the container disk",
+        "By utilizing external databases (e.g. Postgres) or Adobe's built-in Key-Value storage service (AIO State)",
+        "Actions cannot maintain state and must be entirely stateless",
+        "By keeping variables in global memory scope"
+      ],
+      "correct": 1,
+      "explanation": "Containers are ephemeral. To maintain state, actions must write to external databases or use the built-in out-of-the-box AIO State storage SDK."
+    },
+    {
+      "id": "a125",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the recommended design pattern to avoid the 'hot-start' latency penalty in App Builder serverless actions?",
+      "options": [
+        "Increase the database pool limit in AEM publisher",
+        "Minimise package size, avoid importing heavy unnecessary libraries, and use lightweight HTTP clients",
+        "Keep a background thread running in the browser console to poll the action",
+        "Deploy actions as static HTML pages"
+      ],
+      "correct": 1,
+      "explanation": "FaaS containers spin up dynamically. Keeping code files small and reducing dependency bloat in `package.json` accelerates container initialization."
+    },
+    {
+      "id": "a126",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Under what condition should an architect configure 'Type Merging' in API Mesh?",
+      "options": [
+        "When merging CSS styles from AEM and Commerce",
+        "When two independent upstream sources return types with the same name that need to be unified into a single schema entity",
+        "When translating SOAP variables into JSON formats",
+        "When compressing database tables"
+      ],
+      "correct": 1,
+      "explanation": "Type merging is used to combine fields from different APIs (e.g. AEM content and Commerce pricing) that share an identifier (like SKU) into one cohesive GraphQL type."
+    },
+    {
+      "id": "a127",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should database connection pools be handled inside an App Builder action?",
+      "options": [
+        "Open a database connection on boot and keep it in a global variable indefinitely",
+        "Open the connection on request, execute queries, and close it immediately, as containers can be frozen or destroyed at any time",
+        "Bypass the database and write to flat files",
+        "Configure the database to accept infinite connections"
+      ],
+      "correct": 1,
+      "explanation": "Serverless container lifetimes are untrusted. Connection leaks occur if connections are left open. Opening and closing connections per invocation prevents resource starvation."
+    },
+    {
+      "id": "a128",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should an App Builder action react to a webhook event trigger that fails with a transient error (e.g., rate limit exceeded)?",
+      "options": [
+        "Fail silently and log the warning in the console",
+        "Treat event delivery as at-least-once, design action logic to be idempotent, and return a non-200 code to trigger the provider's retry loop",
+        "Spin in a CPU loop for 2 hours until the target system is up",
+        "Delete the event subscription configuration automatically"
+      ],
+      "correct": 1,
+      "explanation": "Robust integrations require idempotency. Returning an error code tells the event provider (like Adobe I/O) to retry the delivery later, preventing data loss."
+    },
+    {
+      "id": "a129",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the risk of utilizing custom, complex, inline JavaScript resolvers inside the API Mesh config?",
+      "options": [
+        "The Mesh will fail to validate against JSON schema rules",
+        "Resolvers are compiled into the gateway and lack proper SRE tooling, local testing, and isolated error boundaries",
+        "It will force the storefront to use REST instead of GraphQL",
+        "The database connection pool will be locked"
+      ],
+      "correct": 1,
+      "explanation": "Inline Mesh code is difficult to test, debug, and trace. Complex computation belongs in App Builder actions, keeping the Mesh configuration clean and declarative."
+    },
+    {
+      "id": "a130",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should the security contract be designed for API Mesh caching?",
+      "options": [
+        "Cache all responses globally to speed up storefront load times",
+        "Verify that cached queries do not contain user-specific data or personal details, caching only public catalog or content responses",
+        "Rely on browser cookies to purge cached data on the Mesh",
+        "Encrypt cached arrays using database keys"
+      ],
+      "correct": 1,
+      "explanation": "Caching personal data at the gateway level is a major data leak risk. Only public, non-personalized content (like catalog files) should be cached at the Mesh level."
+    },
+    {
+      "id": "a131",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How do you verify local changes to a `mesh.json` file before updating the production gateway?",
+      "options": [
+        "Deploy directly to production and test live queries",
+        "Run a local instance of the Mesh schema using the CLI or run schema validation locally against `mesh.json`",
+        "Re-compile the AEM dispatcher configuration",
+        "Local validation is not possible for API Mesh"
+      ],
+      "correct": 1,
+      "explanation": "The CLI provides validation tools to run the Mesh locally or check its schema syntax against `mesh.json` before triggering a pipeline update."
+    },
+    {
+      "id": "a132",
+      "topic": "app-builder-api-mesh",
+      "section": "adobe.ab",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the recommended caching layer structure when combining API Mesh and App Builder?",
+      "options": [
+        "Disable all caching to ensure real-time accuracy on every query",
+        "Cache public schemas in the Mesh gateway, cache static assets in the App Builder CDN, and use a semantic/redis cache for heavy compute actions",
+        "Store all cached data in the storefront browser's localStorage",
+        "Configure cache-control headers on the database level"
+      ],
+      "correct": 1,
+      "explanation": "Layered caching optimizes performance: static CDN for assets, declarative gateway caching for catalog data, and micro-caching or caching-aside for slow computed operations."
+    },
+    {
+      "id": "b135",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What does BMAD stand for in AI-native development?",
+      "options": [
+        "Build-Method Automated Deployment",
+        "Brief-Method Architect-Driven Development",
+        "Business Model Architecture Document",
+        "Basic Model and Data Registry"
+      ],
+      "correct": 1,
+      "explanation": "BMAD stands for Brief-Method Architect-Driven Development, a process that converts client briefs into structured contracts and architecture records before writing code."
+    },
+    {
+      "id": "b136",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Where is the quality of an AI-generated codebase primarily determined in BMAD?",
+      "options": [
+        "In the debugging phase",
+        "In the brief and architecture phase",
+        "In the hosting deployment phase",
+        "In the database optimization phase"
+      ],
+      "correct": 1,
+      "explanation": "Under BMAD, the quality of AI output is set by the clarity of the constraints, schemas, and instructions provided in the brief phase."
+    },
+    {
+      "id": "b137",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the role of an Architecture Decision Record (ADR) in BMAD?",
+      "options": [
+        "To log the daily hours worked by developers",
+        "To capture a single significant architectural decision, its context, and its trade-offs",
+        "To auto-generate unit test files",
+        "To serve as a user documentation guide"
+      ],
+      "correct": 1,
+      "explanation": "An ADR is the atomic unit of BMAD governance, recording the rationale, context, and consequences of each architecture decision."
+    },
+    {
+      "id": "b138",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "How many core artifacts are produced by the BMAD process?",
+      "options": [
+        "One file (the prompt)",
+        "Six artifacts",
+        "Twelve databases",
+        "Fifty code repositories"
+      ],
+      "correct": 1,
+      "explanation": "BMAD produces six structured artifacts: Hypothesis, Component Inventory, Contract Set, Event Registry, ADR Log, and the Stalwart Prompt Library."
+    },
+    {
+      "id": "b139",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Is BMAD designed as a sequential Waterfall methodology?",
+      "options": [
+        "Yes, every phase must be locked permanently before code begins",
+        "No, it is a five-phase loop producing living documents that evolve with the project",
+        "Yes, it is a sub-class of Agile Kanban",
+        "No, it only contains a single coding phase"
+      ],
+      "correct": 1,
+      "explanation": "BMAD is a five-phase loop (Discovery, Architecture, Prompt Engineering, Delivery, Review) where new decisions cycle back to the architecture stage."
+    },
+    {
+      "id": "b140",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the Hypothesis in the BMAD process?",
+      "options": [
+        "A temporary guess about server scaling limits",
+        "A single paragraph stating technical approach, target outcome, and measurable success metrics check-in on day one",
+        "The client's budget estimation worksheet",
+        "An AI-generated code template"
+      ],
+      "correct": 1,
+      "explanation": "The Hypothesis frames project scope, detailing what must be achieved, how, and how success is measured without ambiguity."
+    },
+    {
+      "id": "b141",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the Component Inventory in BMAD?",
+      "options": [
+        "A Jira ticket list for task allocation",
+        "An architectural register table mapping each component to its type, contract ref, and Stalwart file set",
+        "A folder containing static image assets",
+        "A list of database table schemas"
+      ],
+      "correct": 1,
+      "explanation": "The Component Inventory registers all components, defining their architectural constraints (e.g. file rosters) to guide the generator prompts."
+    },
+    {
+      "id": "b142",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is a 'Contract Set' in the BMAD framework?",
+      "options": [
+        "The legal contract signed with the client",
+        "Structured specifications defining file rosters, state shapes, and 'not for' logic boundaries for components",
+        "A set of environment variables for local testing",
+        "A listing of developer usernames"
+      ],
+      "correct": 1,
+      "explanation": "The Contract Set defines code boundaries (e.g. prohibiting DOM updates inside business logic files) to enforce structure on the AI builder."
+    },
+    {
+      "id": "b143",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What does the Event Registry define in BMAD?",
+      "options": [
+        "The list of user click events tracked by analytics",
+        "The dynamic contract governing domain event names, payloads, producers, and subscribers",
+        "The calendar schedule of release deployments",
+        "A list of server system errors"
+      ],
+      "correct": 1,
+      "explanation": "The Event Registry defines the communication interface between components (using names like `domain:entity:action`), ensuring messaging is decoupled and structured."
+    },
+    {
+      "id": "b144",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the Stalwart Prompt Library?",
+      "options": [
+        "A set of sample code templates stored on GitHub",
+        "A collection of structured prompt files embedding contracts, rules, and APIs used to guide the AI in generating compliant code",
+        "A library of AEM client bundles",
+        "A list of search engine optimized keywords"
+      ],
+      "correct": 1,
+      "explanation": "The Stalwart Prompt Library translates architectural decisions into machine-legible instructions, embedding contracts so the AI cannot deviate."
+    },
+    {
+      "id": "b145",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Why does BMAD forbid deleting old ADRs?",
+      "options": [
+        "Because database storage limits prevent deletes",
+        "To preserve audit history; reversed decisions are marked 'Superseded' and link to a new ADR",
+        "Because git does not support file deletion",
+        "To ensure the codebase compiles in Cloud Manager"
+      ],
+      "correct": 1,
+      "explanation": "ADRs represent history. Deleting records destroys context; instead, old decisions are marked 'Superseded' with references to the replacing ADR."
+    },
+    {
+      "id": "b146",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What are the four mandatory fields in a BMAD Architecture Decision Record (ADR)?",
+      "options": [
+        "Name, Date, Budget, Scope",
+        "Context, Decision, Consequences, Status",
+        "ID, File, Repository, Line",
+        "Brief, Input, Output, Review"
+      ],
+      "correct": 1,
+      "explanation": "A complete ADR must contain the Context (the forces), the Decision (the choice), the Consequences (the costs/benefits), and the Status (the lifecycle state)."
+    },
+    {
+      "id": "b147",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the consequence field of an ADR designed to capture?",
+      "options": [
+        "The names of developers who failed to follow instructions",
+        "The trade-offs and costs accepted, ensuring negative consequences are considered",
+        "The calendar schedule of the release pipeline",
+        "The final financial cost of the cloud resources"
+      ],
+      "correct": 1,
+      "explanation": "Every decision has a cost. An ADR without stated negative consequences or trade-offs is considered incomplete and poorly analysed."
+    },
+    {
+      "id": "b148",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "When must an ADR be written under the BMAD methodology?",
+      "options": [
+        "Three months after the system has gone live",
+        "Before the implementing pull request (PR) is merged",
+        "Only when the client requests a compliance report",
+        "At the end of each developer sprint during retrospectives"
+      ],
+      "correct": 1,
+      "explanation": "ADRs must be written *before* implementation to guide code reviews. Retrospective ADR writing is archaeology, not governance."
+    },
+    {
+      "id": "b149",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the relationship between the BMAD Hypothesis and the ADR Log?",
+      "options": [
+        "They are completely independent and stored in different repositories",
+        "The Hypothesis constrains the ADR Log; decisions that do not support the Hypothesis are out of scope",
+        "The ADR Log generates the Hypothesis automatically",
+        "The Hypothesis is only written if the ADR Log is empty"
+      ],
+      "correct": 1,
+      "explanation": "The Hypothesis is the project's north star. Decisions recorded in the ADR log must align with and support the outcomes stated in the Hypothesis."
+    },
+    {
+      "id": "b150",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is a 'Stalwart file set' defined in a Component Inventory?",
+      "options": [
+        "A list of database backup files",
+        "The specific array of files (e.g. init, model, biz, api, render) allocated to a component",
+        "A collection of stylesheets used for responsive web design",
+        "The security keys used to log into Adobe Cloud"
+      ],
+      "correct": 1,
+      "explanation": "The file set specifies the structural breakdown of the component under Stalwart design rules, constraining the AI builder from creating monolithic files."
+    },
+    {
+      "id": "b151",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which phase of the BMAD loop focuses on validating whether the generated code complies with the contract?",
+      "options": [
+        "Discovery",
+        "Architecture",
+        "Review",
+        "Delivery"
+      ],
+      "correct": 2,
+      "explanation": "The Review phase validates the generated code against the contract set, ensuring the pull request is compliant before merge."
+    },
+    {
+      "id": "m135",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How does BMAD represent the flow of data within a component contract?",
+      "options": [
+        "By writing free-form comments inside files",
+        "By declaring the 'stateShape' and enforcing boundaries (like prohibiting DOM writes in biz.js)",
+        "By letting the AI define variables dynamically at runtime",
+        "By compiling code to native database schemas"
+      ],
+      "correct": 1,
+      "explanation": "Contracts govern components by defining state schemas and 'not for' constraints (e.g. render.js must not call fetch; api.js must not update UI)."
+    },
+    {
+      "id": "m136",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In the BMAD worked product-filter example, what is the role of the URL query string?",
+      "options": [
+        "It acts as a temporary cache for image assets",
+        "It serves as the persistence layer for the filter state, ensuring bookmark-ability and shareability",
+        "It manages user session access tokens",
+        "It routes database queries to the backup nodes"
+      ],
+      "correct": 1,
+      "explanation": "Per ADR-004, state.js is the runtime source of truth, but mutations are serialized to the URL query string to meet the bookmarking success criteria."
+    },
+    {
+      "id": "m137",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Why does BMAD include a 'notFor' block inside its contract files?",
+      "options": [
+        "To list features that the client did not pay for",
+        "To define explicit code restrictions, preventing the AI from combining logic and UI code",
+        "To specify developers who are blocked from writing code",
+        "To blacklist external API endpoints"
+      ],
+      "correct": 1,
+      "explanation": "The 'notFor' configuration enforces strict separation of concerns (e.g. biz.js: direct DOM writes), preventing the AI from creating spaghetti code."
+    },
+    {
+      "id": "m138",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How is the Event Registry utilized when writing Stalwart prompts?",
+      "options": [
+        "It is used to check the speed of network requests",
+        "It is embedded in the prompt to define the event names, payloads, and triggers that the code must support",
+        "It is generated by the AI after code has been compiled",
+        "It replaces the need for an ADR log"
+      ],
+      "correct": 1,
+      "explanation": "The prompt incorporates the event registry entries to ensure the AI creates listeners and emitters matching the exact naming and payload schemas."
+    },
+    {
+      "id": "m139",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the recommended naming convention for event names inside the Event Registry?",
+      "options": [
+        "CamelCase strings representing functions",
+        "domain:entity:action (e.g. filter:applied)",
+        "SQL query commands in lowercase",
+        "The name of the component that handles the event"
+      ],
+      "correct": 1,
+      "explanation": "DEPT® guidelines recommend the `domain:entity:action` namespace format to maintain readability and avoid collision across large event buses."
+    },
+    {
+      "id": "m140",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How are changes to the Event Registry or Contract Set governed when a new component feature is requested?",
+      "options": [
+        "The developer edits the codebase and updates the registry retrospectively",
+        "The architect drafts a new or updated ADR, updates the contract files, and regenerates prompt templates",
+        "The AI agent updates the registry automatically on deploy",
+        "Registry modifications are disallowed after sprint zero"
+      ],
+      "correct": 1,
+      "explanation": "Modifications flow through the loop: Architecture (ADR update) -> Contract update -> Prompt update -> Delivery. Code changes follow the plan."
+    },
+    {
+      "id": "m141",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In the five-phase BMAD loop, what is the input to the 'Prompt Engineering' phase?",
+      "options": [
+        "Vague business descriptions",
+        "Approved contracts, ADRs, component schemas, and event registries from the Architecture phase",
+        "The compiled code binary from Delivery",
+        "The client's feedback sheet"
+      ],
+      "correct": 1,
+      "explanation": "Prompt Engineering relies on precise, structured outputs from the Architecture phase to create the feature prompts."
+    },
+    {
+      "id": "m142",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the risk of not running a 'sprint zero' workshop under the BMAD methodology?",
+      "options": [
+        "Cloud Manager will reject the developer accounts",
+        "The project is highly likely to encounter mid-sprint architectural pivots or misaligned component designs",
+        "The database will run out of storage space on day one",
+        "The code will fail WCAG accessibility compliance checks"
+      ],
+      "correct": 1,
+      "explanation": "Sprint zero aligns the team and locks in the initial design. Skipping it leads to ad-hoc design decisions that degrade AI generation quality."
+    },
+    {
+      "id": "m143",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How are ADR files organized in the codebase repository?",
+      "options": [
+        "Stored inside database blobs",
+        "As numbered markdown files in a version-controlled directory (e.g. `/docs/adr/0001-storage.md`)",
+        "Inlined as comment blocks inside frontend CSS files",
+        "Shared on external team cloud drives"
+      ],
+      "correct": 1,
+      "explanation": "Storing ADRs as versioned markdown files alongside the source code ensures they remain a living part of the repository, reviewable via PRs."
+    },
+    {
+      "id": "m144",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Which lifecycle state in an ADR indicates that the decision is ready for implementation?",
+      "options": [
+        "Proposed",
+        "Accepted",
+        "Superseded",
+        "Draft"
+      ],
+      "correct": 1,
+      "explanation": "An ADR must be in the 'Accepted' status before developers (or AI agents) are allowed to merge pull requests implementing it."
+    },
+    {
+      "id": "m145",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the role of the 'fileRoster' array in a BMAD contract file?",
+      "options": [
+        "To restrict the size of files in the repo",
+        "To define the exact files that comprise the component, enforcing the Stalwart architectural pattern",
+        "To list the authors who edited the files",
+        "To check that the codebase uses correct file formats"
+      ],
+      "correct": 1,
+      "explanation": "The file roster declares the expected files (like init.js, model.js, etc.) so that the AI generates exactly these files and does not combine or omit them."
+    },
+    {
+      "id": "m146",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How does BMAD manage structural drift in high-volume, AI-generated codebases?",
+      "options": [
+        "By blocking developer commits using corporate firewalls",
+        "By verifying each PR's code structure against the contract files during CI validation steps",
+        "By writing new code to replace the database every week",
+        "By requiring the client to review code syntax manually"
+      ],
+      "correct": 1,
+      "explanation": "Governance is enforced in CI. Structural validators check that the file layout and imports match the defined contract before allowing a merge."
+    },
+    {
+      "id": "m147",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In a BMAD Hypothesis template, what is the role of the 'measurable signal'?",
+      "options": [
+        "To track developer velocity in story points",
+        "To define clear, target metrics (e.g. latency under 120 ms at p95) that can be verified at launch",
+        "To verify database backup schedules",
+        "To configure DNS TTL records"
+      ],
+      "correct": 1,
+      "explanation": "Measurable signals ensure that success is not subjective: they represent clear, metric-driven targets that prove the architecture's efficiency."
+    },
+    {
+      "id": "m148",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "If an ADR decision is reversed because it caused slow performance, what happens to the ADR document?",
+      "options": [
+        "It is deleted from the git history to save space",
+        "It is marked as 'Superseded' and updated with a pointer to a new ADR explaining the reversal",
+        "Its contents are replaced with the new decision directly",
+        "It is moved to a private archive folder outside the repo"
+      ],
+      "correct": 1,
+      "explanation": "To maintain historical records, the old ADR is preserved in a 'Superseded' state, and the new decision is captured in a fresh ADR."
+    },
+    {
+      "id": "m149",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How does the Component Inventory guide the generation of feature prompts?",
+      "options": [
+        "By supplying the pricing details for cloud services",
+        "By mapping out the file set, type, and governing contracts, ensuring the prompt contains precise boundary conditions",
+        "By setting the caching headers for the edge network",
+        "By defining the user onboarding roles"
+      ],
+      "correct": 1,
+      "explanation": "The Component Inventory serves as the registry: it defines what files are required and which contracts govern them, providing structured prompt inputs."
+    },
+    {
+      "id": "m150",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the primary role of the 'Context' field in an ADR?",
+      "options": [
+        "To list the names of the development team",
+        "To describe the forces, constraints, and risks that made the decision necessary, helping future readers understand the rationale",
+        "To store environment variables",
+        "To compile code templates automatically"
+      ],
+      "correct": 1,
+      "explanation": "The Context section details 'why' a decision was needed, capturing the problems, requirements, and trade-offs that led to the chosen design."
+    },
+    {
+      "id": "m151",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Under BMAD, who is responsible for authoring the initial Hypothesis and ADR log?",
+      "options": [
+        "The client product owner",
+        "The software architect, in collaboration with the engineering lead",
+        "The AI agent compiler",
+        "The QA validation team"
+      ],
+      "correct": 1,
+      "explanation": "The architect is responsible for establishing the technical governance framework, collaborating with engineering leads to ensure accuracy."
+    },
+    {
+      "id": "a133",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "An architect needs to enforce state separation inside a high-volume, AI-generated component. What is the best contract constraint strategy?",
+      "options": [
+        "Write a code comment inside `index.js` asking the AI not to write state",
+        "Declare a strict state schema inside the contract file, and implement a CI step verifying that files like `render.js` or `api.js` contain no state mutations",
+        "Allow the AI to define state dynamically using browser localStorage",
+        "Lock the file system to prevent any state writes at runtime"
+      ],
+      "correct": 1,
+      "explanation": "Enforcing contracts requires automated checks. CI tools must parse files to ensure state mutations are restricted to the designated `state.js` file."
+    },
+    {
+      "id": "a134",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "Why does BMAD place 'Hypothesis' at the top of the artifact dependency chain, before ADRs and contracts?",
+      "options": [
+        "To document the project's financial budget limitations",
+        "To serve as the root boundary condition; all subsequent design decisions (ADRs) must be justified by their ability to achieve the Hypothesis' outcomes",
+        "Because the compilation pipeline requires it to build first",
+        "To define user credentials for Google OAuth"
+      ],
+      "correct": 1,
+      "explanation": "The Hypothesis is the contract of success. If a proposed ADR cannot be traced back to fulfilling the success conditions of the Hypothesis, it is out of scope."
+    },
+    {
+      "id": "a135",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In a BMAD-governed storefront project, a developer submits a PR containing a custom IndexedDB cache logic that is not documented in the ADR log. What should the reviewer do?",
+      "options": [
+        "Merge the PR and document the decision later in retro",
+        "Reject the PR because it implements a significant decision that has not yet been proposed and accepted in the ADR log",
+        "Ask the developer to explain the code verbally in stand-up",
+        "Rename the files to bypass the CI contract validation checks"
+      ],
+      "correct": 1,
+      "explanation": "PRs must match decisions. If a developer introduces new patterns (like IndexedDB) without an accepted ADR, the PR is rejected until the decision is reviewed and accepted."
+    },
+    {
+      "id": "a136",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How do you evaluate the quality of an ADR's 'Consequences' section?",
+      "options": [
+        "By verifying that it does not contain any negative points",
+        "By ensuring it documents concrete trade-offs, detailing what becomes harder or what constraints are introduced alongside what becomes easier",
+        "By checking if it list the developer names and dates",
+        "By verifying that it compiles automatically into a PDF report"
+      ],
+      "correct": 1,
+      "explanation": "A quality ADR accepts trade-offs. Stating 'no negative consequences' indicates poor analysis, as every technical choice restricts other options."
+    },
+    {
+      "id": "a137",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the trade-off of maintaining state in the URL query string (as in the product filter worked example)?",
+      "options": [
+        "It increases the server's cache invalidation frequency",
+        "It guarantees shareability and back-button compliance, but query length limits must be guarded to prevent HTTP header size failures",
+        "It requires the storefront to run on Node.js instead of Java",
+        "It bypasses accessibility WCAG guidelines"
+      ],
+      "correct": 1,
+      "explanation": "URL state is excellent for UX, but long strings can fail proxy limits, requiring the architect to configure a maximum parameter guard in `config.js`."
+    },
+    {
+      "id": "a138",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should an architect construct prompt instructions to ensure the AI does not write business logic inside rendering files?",
+      "options": [
+        "Rely on the AI's default general coding style settings",
+        "Embed the contract's 'notFor' rules (e.g. 'render.js must not contain business rules or fetch calls') as explicit constraints in the Stalwart prompt",
+        "Deploy the code and run a script to refactor the files later",
+        "Remove render.js from the component's file roster entirely"
+      ],
+      "correct": 1,
+      "explanation": "AI models follow boundaries. Explicitly declaring negative constraints ('do not write X in Y') in the prompt is highly effective at preventing structure violations."
+    },
+    {
+      "id": "a139",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the primary risk of using free-form, unversioned prompts for code generation across a distributed team?",
+      "options": [
+        "Increased licensing costs on OpenAI or Anthropic platforms",
+        "Inconsistent codebase patterns, structural drift, and varying implementation quality that breaks testing and integration",
+        "The local virtualenv failing to load Python packages",
+        "AEM Cloud Manager rejecting the deployed packages"
+      ],
+      "correct": 1,
+      "explanation": "Without a governed prompt library, engineers write prompts differently, leading to massive inconsistencies and structural drift that defeats standard code reviews."
+    },
+    {
+      "id": "a140",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How does the Event Registry maintain dynamic interface contracts in micro-frontend architectures?",
+      "options": [
+        "By compiling code to static HTML assets",
+        "By acting as the schema definition for all cross-component messages, preventing teams from changing event payloads without changing the registry",
+        "By setting the server's database connection pool parameters",
+        "By routing all queries via public gateways"
+      ],
+      "correct": 1,
+      "explanation": "The Event Registry is the API contract for events. Changes to payload shapes must update the registry first, preventing integration breakages at runtime."
+    },
+    {
+      "id": "a141",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In the context of BMAD, how does a 'Stalwart prompt' differ from a generic code generation prompt?",
+      "options": [
+        "It is written in Python instead of plain English",
+        "It forces the AI to output exactly the file structure, event vocabulary, and architectural constraints defined by the component's contract",
+        "It does not require any correct index mappings",
+        "It is compiled in Cloud Manager before execution"
+      ],
+      "correct": 1,
+      "explanation": "Stalwart prompts are constrained inputs containing exact schemas, file rosters, and 'not for' parameters, leaving no room for AI assumptions."
+    },
+    {
+      "id": "a142",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the primary benefit of versioning ADR files inside the source code repository instead of on an external wiki?",
+      "options": [
+        "It reduces the financial cost of hosting the documentation",
+        "It binds the architectural decisions to the branch state, allowing developers to see the exact rules in place at any point in the commit history",
+        "It allows the database to read records faster",
+        "It prevents the QA team from finding the files"
+      ],
+      "correct": 1,
+      "explanation": "Versioning decisions inside the repo ensures they live alongside the code. A change in design is reviewable via standard git pull request flows."
+    },
+    {
+      "id": "a143",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should an architect handle a conflict between two accepted ADRs?",
+      "options": [
+        "Ignore the conflict and let the development team decide at implementation",
+        "Draft a new ADR that resolves the conflict, superseding the contradictory parts of the previous records",
+        "Delete both ADRs from the repository history",
+        "Ask the AI agent to pick the correct path during compilation"
+      ],
+      "correct": 1,
+      "explanation": "Conflicts must be resolved at the governance level. A new ADR must explicitly reconcile the contradictions and supersede the outdated decisions."
+    },
+    {
+      "id": "a144",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How does BMAD address the risk of AI agents writing redundant helper libraries?",
+      "options": [
+        "By restricting the AI's execution budget to 60 seconds",
+        "By defining a shared library schema inside the contract set, forcing the AI to import existing helpers rather than generating new ones",
+        "By manually deleting files from the workspace during review",
+        "By blocking external internet access inside the build pipeline"
+      ],
+      "correct": 1,
+      "explanation": "Enforcing a shared library roster in the prompt constraints tells the AI which utility files are available, preventing the creation of duplicate helper functions."
+    },
+    {
+      "id": "a145",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the architectural cost of introducing a new, unvetted event name into the runtime event bus?",
+      "options": [
+        "It will cause Cloud Manager deployments to time out",
+        "It creates silent integration debt, as subscribers have no schema contract and the event cannot be audited via the registry",
+        "It locks the database connection pool in production",
+        "It forces the storefront to reload on every event emission"
+      ],
+      "correct": 1,
+      "explanation": "Unregistered events break tracing and decoupling. They bypass schemas, introducing silent integration errors that escape compile-time validation."
+    },
+    {
+      "id": "a146",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In the delivery phase of the BMAD loop, what is the best practice for tracking which AI model was used to generate a specific feature?",
+      "options": [
+        "Add the AI model reference and generation parameters in the prompt log or as header comments in the generated files",
+        "Ask the developer to remember which model they used",
+        "There is no value in tracking the model reference",
+        "Store the model name in the database table schema"
+      ],
+      "correct": 0,
+      "explanation": "Recording the generation model and version in file comments or prompt logs provides valuable metadata for tracing defects or quality variations in the future."
+    },
+    {
+      "id": "a147",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the trade-off of utilizing an strict component inventory contract compared to free-form development?",
+      "options": [
+        "It decreases security compliance at launch",
+        "It requires significant upstream design effort but dramatically reduces debugging, integration, and refactoring costs",
+        "It forces all code to run slower in the browser",
+        "It increases database transaction lock times"
+      ],
+      "correct": 1,
+      "explanation": "BMAD requires upfront effort to define contracts, but this investment pays off by eliminating structure drift and incorrect assumptions in AI-generated code."
+    },
+    {
+      "id": "a148",
+      "topic": "bmad",
+      "section": "ai.bmad",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How does the architect verify that the 'measurable signal' of a Hypothesis is realistic before coding starts?",
+      "options": [
+        "By setting arbitrary performance targets",
+        "By running lightweight prototypes, reviewing baseline benchmarks, and verifying that the target matches customer SRE metrics",
+        "By copying success targets from unrelated projects",
+        "By letting the AI compile a random performance profile"
+      ],
+      "correct": 1,
+      "explanation": "Success targets must be defensible. Architects analyze benchmarks and constraints to set achievable, quantifiable performance objectives."
+    },
+    {
+      "id": "b152",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the core philosophy of AI Governance at DEPT®?",
+      "options": [
+        "AI does all the work, and humans only manage billing",
+        "AI generates, and humans govern",
+        "AI is restricted from writing any code at all",
+        "AI manages deployment, and humans write all tests"
+      ],
+      "correct": 1,
+      "explanation": "The core split is: AI generates the code blocks (components, boilerplate), but humans retain complete accountability and govern the architecture, security, and gates."
+    },
+    {
+      "id": "b153",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which of the following is NOT one of the three domains that only humans should own?",
+      "options": [
+        "What gets built (product intent, why)",
+        "The shape it must take (contracts, event vocabulary)",
+        "Writing the boilerplate component code and data mappings",
+        "What it means to be safe (security, compliance, audit)"
+      ],
+      "correct": 2,
+      "explanation": "Writing boilerplate code can be automated and handled by AI. The three domains reserved for humans are: what is built, the shape it takes, and safety compliance."
+    },
+    {
+      "id": "b154",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Why is AI Governance described as an architecture rather than a policy document?",
+      "options": [
+        "Because policy documents are too expensive to write",
+        "Because governance rules must be implemented as automated checks in CI/CD, not just written in text files",
+        "Because architects are the only people who read it",
+        "Because it only applies to cloud database structures"
+      ],
+      "correct": 1,
+      "explanation": "A policy that isn't enforced in CI is just intent. True governance requires automated tooling to validate contracts and layouts before merge."
+    },
+    {
+      "id": "b155",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Who owns final deployment permissions in an AI-assisted engineering team?",
+      "options": [
+        "The code-generation AI agent",
+        "A named human operator (developer or architect)",
+        "The client's automated webhook",
+        "The database server administrator only"
+      ],
+      "correct": 1,
+      "explanation": "Human ownership of deployment is non-negotiable. An AI agent must not have autonomous permissions to release code to production."
+    },
+    {
+      "id": "b156",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is 'governance debt' in the context of AI-generated codebases?",
+      "options": [
+        "The financial cost of running AI model APIs",
+        "The accumulation of un-reviewed, automated code merges that weaken the team's control and understanding of the codebase",
+        "The number of lines of documentation missing from git",
+        "A delay in database backups"
+      ],
+      "correct": 1,
+      "explanation": "Governance debt accumulates rapidly when teams merge AI-generated PRs without validation, leaving the architecture unmonitored."
+    },
+    {
+      "id": "b157",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which component of the system is responsible for verifying that AI-generated code matches the defined architecture schema?",
+      "options": [
+        "The storefront browser page",
+        "The Continuous Integration (CI) pipeline",
+        "The third-party payment gateway",
+        "The database indexing daemon"
+      ],
+      "correct": 1,
+      "explanation": "The CI pipeline executes the automated contract and structural checks to gate non-compliant code from merging."
+    },
+    {
+      "id": "b158",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "In AI-native development, what does the 'AI generates' column include?",
+      "options": [
+        "Security models and access policies",
+        "Components, helper functions, unit tests, and data mappings",
+        "The release strategy and deployment commands",
+        "Final product intent and business roadmap"
+      ],
+      "correct": 1,
+      "explanation": "AI handles execution tasks like writing component code, tests, and API clients, leaving interface designs and safety rules to humans."
+    },
+    {
+      "id": "b159",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the primary risk of a 'policy-only' governance framework?",
+      "options": [
+        "It increases the build duration in Cloud Manager",
+        "It exists as intent but is bypassed under deadline pressure due to a lack of automated enforcement in CI",
+        "It requires the client to pay additional licensing fees",
+        "It blocks developers from using Node.js"
+      ],
+      "correct": 1,
+      "explanation": "A policy-only framework has no teeth: without automated gates, team members bypass instructions to meet schedules."
+    },
+    {
+      "id": "b160",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Under DEPT® AI Governance, who is accountable if an AI-generated bug takes a production system offline?",
+      "options": [
+        "The AI platform provider (e.g. OpenAI or Anthropic)",
+        "The human engineering lead and architect who approved and deployed the code",
+        "The client product owner who submitted the brief",
+        "The CI pipeline compiler"
+      ],
+      "correct": 1,
+      "explanation": "Accountability is human. Humans govern the release, so the final responsibility for codebase reliability rests on the team's leads."
+    },
+    {
+      "id": "b161",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is the recommended practice for attributing AI-generated code inside a git repository?",
+      "options": [
+        "Use the name of the AI model as the git commit author",
+        "Annotate generated files with metadata comments and link the PR to the governing ADR",
+        "Delete the git history to anonymise authors",
+        "Commit all code under a single shared administrator account"
+      ],
+      "correct": 1,
+      "explanation": "Governance requires legibility. Linking commits and files to their prompting ADRs and tracking model references supports code auditing."
+    },
+    {
+      "id": "b162",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Which of the following is considered a human-owned domain in AI Governance?",
+      "options": [
+        "Writing standard unit tests",
+        "Security models and compliance structures",
+        "Mapping API variables",
+        "Generating boilerplate schemas"
+      ],
+      "correct": 1,
+      "explanation": "Defining the security model (access control, encryption, compliance rules) is an irreducible human responsibility."
+    },
+    {
+      "id": "b163",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What does a clear 'AI-vs-human split' document outline?",
+      "options": [
+        "The server IP routing configuration",
+        "The explicit responsibilities of what AI can generate and what human engineers must control and review",
+        "The billing rates of creative designers",
+        "The list of third-party API keys"
+      ],
+      "correct": 1,
+      "explanation": "A role-split document establishes team expectations, separating the automated tasks from the governed controls."
+    },
+    {
+      "id": "b164",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "What is a 'governed prompt template'?",
+      "options": [
+        "A prompt that is generated dynamically by search engines",
+        "A version-controlled prompt structure approved by the architect to ensure consistent code generation quality",
+        "A text file stored on the developer's desktop",
+        "A system that bypasses CI validations"
+      ],
+      "correct": 1,
+      "explanation": "Governed templates standardise prompting across the team, ensuring architectural rules and contracts are consistently injected."
+    },
+    {
+      "id": "b165",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Why should changes to prompt templates require human approval?",
+      "options": [
+        "To reduce compiler CPU usage",
+        "Because prompt modifications directly alter how the AI generates code, changing codebase consistency and logic boundaries",
+        "To lower API connection fees",
+        "Because git does not allow automated updates"
+      ],
+      "correct": 1,
+      "explanation": "Prompts are code instructions. A change in a template can introduce structural bugs across many components, requiring review."
+    },
+    {
+      "id": "b166",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "In AI Governance, what is the role of an escalation and rollback path?",
+      "options": [
+        "To restore the database when query connections fail",
+        "To quickly revert code changes and handle incidents when AI-generated implementations fail in production",
+        "To auto-correct code bugs at runtime in the browser",
+        "To reset developer logins on Google SSO"
+      ],
+      "correct": 1,
+      "explanation": "A rollback path is a safety net: it ensures that when automated code fails, the team can immediately revert to the last green build."
+    },
+    {
+      "id": "b167",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "How does the architect establish a quality ceiling in an AI-augmented team?",
+      "options": [
+        "By writing all the code themselves",
+        "By governing the three core domains: what is built, its shape (contracts), and safety compliance",
+        "By blocking the team from using generative AI tools",
+        "By increasing the number of QA test engineers"
+      ],
+      "correct": 1,
+      "explanation": "Architects set the quality ceiling by focusing their governance on interfaces, rules, and safety, allowing AI to handle the volume safely."
+    },
+    {
+      "id": "b168",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "beginner",
+      "type": "mcq",
+      "question": "Why is the event vocabulary considered a human-owned asset in AI Governance?",
+      "options": [
+        "Because events cannot be parsed by AI models",
+        "To maintain a clear and governed communication interface between systems, avoiding messy or conflicting event names",
+        "To optimize CDN static asset delivery",
+        "To minimize the code size in git"
+      ],
+      "correct": 1,
+      "explanation": "The event vocabulary is the system contract. Humans govern the vocabulary to ensure decoupled components communicate cleanly and consistently."
+    },
+    {
+      "id": "m152",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How is AI Governance enforced within a pull request (PR) review process?",
+      "options": [
+        "By manually checking code files on a local desktop",
+        "By utilizing automated linters to check structure against contracts, requiring a senior engineer's sign-off on the linked ADR",
+        "By running SQL queries against the user database",
+        "By executing the application in debug mode only"
+      ],
+      "correct": 1,
+      "explanation": "PR reviews combine automation (contract linter validation) and human oversight (verifying that the code follows the accepted ADR)."
+    },
+    {
+      "id": "m153",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Why must changes to the event vocabulary and contract schemas require approval from the architect?",
+      "options": [
+        "To prevent changes from affecting the CDN cache headers",
+        "Because modifications can break data contracts and runtime messaging across independent components",
+        "To reduce database replication lag",
+        "To ensure the files are compressed to WebP formats"
+      ],
+      "correct": 1,
+      "explanation": "Interface schemas are the glue. If changed without architectural oversight, dependent components will fail to communicate at runtime."
+    },
+    {
+      "id": "m154",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How does automated contract validation in the CI pipeline protect against 'structural drift'?",
+      "options": [
+        "By encrypting the source code files in git",
+        "By parsing the layout of files and imports to ensure they strictly follow the Stalwart architecture definitions",
+        "By backing up the codebase daily to a secondary repository",
+        "By blocking developer commits that are over 400 lines of code"
+      ],
+      "correct": 1,
+      "explanation": "A contract checker parses PR files to confirm that directories, file names, and dependency directions adhere to the component contracts."
+    },
+    {
+      "id": "m155",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In an AI-augmented team, what is the risk of having a single human reviewer approve 50 complex generated PRs a day?",
+      "options": [
+        "It will cause Cloud Manager to lock the environment",
+        "Reviewer fatigue leading to rubber-stamping, which lets structural drift and bugs pass into production",
+        "The client will be billed for excessive server capacity",
+        "The git repository will grow too large"
+      ],
+      "correct": 1,
+      "explanation": "Fatigue causes reviewers to overlook violations. Architects mitigate this by using automated CI contract checks to filter out flawed code."
+    },
+    {
+      "id": "m156",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Under the DEPT® AI Governance model, how should security scanning (SAST/SCA) be integrated?",
+      "options": [
+        "Executed manually by developers before major milestones",
+        "Run automatically in CI on every PR to scan AI-generated code for vulnerabilities and unvetted licenses",
+        "Outsourced to an external auditing team after deployment",
+        "Configured to run inside client-side browser sessions"
+      ],
+      "correct": 1,
+      "explanation": "AI-generated code is prone to repeating common security flaws or importing vulnerable dependencies. Scanning must be automated in CI."
+    },
+    {
+      "id": "m157",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What does a 'governance review gate' ensure before a branch can be promoted in Cloud Manager?",
+      "options": [
+        "That the storefront loads in under 1 second",
+        "That all automated checks (lint, test, contract, security) have passed and a designated human has approved the release",
+        "That the database has been replicated to all nodes",
+        "That the client has signed off on the project budget"
+      ],
+      "correct": 1,
+      "explanation": "Gates merge validation and authorization: checking that all static and dynamic tests are green, and that a responsible human authorises promotion."
+    },
+    {
+      "id": "m158",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Why is it important to audit the prompt templates used by code generation agents?",
+      "options": [
+        "To check if they contain syntax errors that fail JSON schemas",
+        "To confirm they do not contain security leaks (e.g. system keys) and that they enforce compliance guidelines",
+        "To measure the speed of model response times",
+        "To verify that they are written in Python"
+      ],
+      "correct": 1,
+      "explanation": "Prompts carry instructions and context. Auditing ensures they carry the correct security rules, contracts, and do not leak internal credentials."
+    },
+    {
+      "id": "m159",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "How does the role of a QA developer shift under an AI Governance model?",
+      "options": [
+        "They write the baseline component code instead of the AI",
+        "They focus on testing edge cases, boundary failures, and building automated validation suites, rather than basic manual path checking",
+        "They manage the budget of the AI generation tools",
+        "QA is eliminated entirely from the team"
+      ],
+      "correct": 1,
+      "explanation": "Since basic code is generated, QA shifts focus to high-value testing: validating boundary conditions, security, and integration failures."
+    },
+    {
+      "id": "m160",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "In an AI Governance framework, how is the 'attribution ledger' implemented in practice?",
+      "options": [
+        "As a local Excel sheet on the PM's computer",
+        "Via standard git commit history, using custom tags or linking commits directly to prompt IDs and ADRs",
+        "By compiling code inside the AEM Publisher console",
+        "Attribution is not tracked in git"
+      ],
+      "correct": 1,
+      "explanation": "Git commits act as the ledger: linking commits directly to their prompting instructions and ADRs makes code generation legible."
+    },
+    {
+      "id": "m161",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the primary risk of allowing AI agents to choose their own third-party dependency libraries?",
+      "options": [
+        "Slow local compilation speeds",
+        "Introducing licensing violations (e.g. GPL instead of MIT) or vulnerable/malicious packages into the codebase",
+        "Increased cloud server storage size",
+        "The database refusing connection requests"
+      ],
+      "correct": 1,
+      "explanation": "AI agents lack legal and safety context: they will import packages that resolve compile tasks but violate security or compliance rules."
+    },
+    {
+      "id": "m162",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Under what condition should a human engineer overwrite AI-generated code manually?",
+      "options": [
+        "Whenever they want to change the variable names to match personal preferences",
+        "When the AI is unable to resolve an edge case or performance bug, documenting the exception and updating the contract",
+        "Manually editing code is always forbidden",
+        "To speed up the local git commit process"
+      ],
+      "correct": 1,
+      "explanation": "Engineers bypass the AI loop only for complex edge cases, documenting the deviation to keep the architecture records accurate."
+    },
+    {
+      "id": "m163",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the role of an 'Architectural Rule Linter' in AI Governance?",
+      "options": [
+        "To verify spelling inside documentation files",
+        "To validate that file paths, import structures, and dependencies do not violate the defined component boundary lines",
+        "To check that the server is responding to HTTP queries",
+        "To monitor database query speeds"
+      ],
+      "correct": 1,
+      "explanation": "Linters check that the files are structured correctly (e.g. confirming that render.js does not import API utilities), preventing boundary breaks."
+    },
+    {
+      "id": "m164",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Why is 'Governance Debt' more dangerous than standard technical debt?",
+      "options": [
+        "It requires rewriting the database schema",
+        "It accumulates rapidly with high-volume AI code, leading to an unmanageable codebase that no human understands or controls",
+        "It prevents the storefront from caching static files",
+        "It increases billing fees for Google Cloud accounts"
+      ],
+      "correct": 1,
+      "explanation": "Because AI can generate code in seconds, a team without governance will merge massive volumes of un-reviewed code, losing complete control."
+    },
+    {
+      "id": "m165",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the recommended approach to handle AI-generated test suites?",
+      "options": [
+        "Trust the tests completely and skip human review",
+        "Validate that the AI-generated tests cover real boundary cases and execute successfully, using mutation testing to verify test quality",
+        "Discard the tests and write them all by hand",
+        "Run the tests only in the local developer workspace"
+      ],
+      "correct": 1,
+      "explanation": "AI-generated tests can contain logical flaws or mock away real behaviors. Human review and quality metrics (like mutation score) are essential."
+    },
+    {
+      "id": "m166",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "Under Indian DPDP regulations, how does AI Governance impact data residency decisions?",
+      "options": [
+        "AI models decide where to host the database tables at runtime",
+        "The architect defines strict residency boundaries in the architecture, and CI gates block any code configuration routing data outside India",
+        "Data residency is handled automatically by the CDN",
+        "Data residency rules are ignored for AI-native codebases"
+      ],
+      "correct": 1,
+      "explanation": "Compliance is a human responsibility. The architect configures constraints, and validation checks ensure data routing rules are preserved."
+    },
+    {
+      "id": "m167",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What does a 'security audit trail' verify in an AI-governed development workflow?",
+      "options": [
+        "The number of commits made per developer",
+        "That every line of merged code was either human-authored or generated via an approved prompt and scanned for vulnerabilities",
+        "The database execution speed under heavy load",
+        "The list of user search keywords"
+      ],
+      "correct": 1,
+      "explanation": "An audit trail confirms that all deployed code is trace-compliant, showing that generation followed approved templates and passed security scans."
+    },
+    {
+      "id": "m168",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "intermediate",
+      "type": "mcq",
+      "question": "What is the role of human SRE (Site Reliability Engineering) teams under AI Governance?",
+      "options": [
+        "To write boilerplate HTML layouts",
+        "To monitor system behavior, define SLOs/SLA alerts, and manage the safety overrides and rollout gates",
+        "To review code spelling manually",
+        "To update user roles inside the login templates"
+      ],
+      "correct": 1,
+      "explanation": "SRE focuses on stability: governing operational parameters, monitoring SLIs, and maintaining safety overrides during outages."
+    },
+    {
+      "id": "a149",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "An AI agent proposes an architectural change that optimizes database queries but violates the modular encapsulation defined in ADR-002. What is the correct response?",
+      "options": [
+        "Accept the changes because database performance is the highest priority",
+        "Reject the PR because AI must not autonomously alter architectural boundaries; changes require a new proposed ADR and human review",
+        "Allow the AI to merge the changes directly to save schedule time",
+        "Configure the linter to ignore Modular Encapsulation errors"
+      ],
+      "correct": 1,
+      "explanation": "Boundary rules are non-negotiable for AI. Bypassing design rules to secure local optimization introduces severe structural debt that breaks maintainability."
+    },
+    {
+      "id": "a150",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the primary danger of giving an AI agent write permissions directly to the production database or deployment triggers?",
+      "options": [
+        "It will consume additional cloud CPU resources",
+        "It creates a severe security and SRE risk, as an agent acting on a misaligned brief or malformed input can cause catastrophic outages or data leaks",
+        "The storefront will load slowly in older browsers",
+        "The development team will stop using git"
+      ],
+      "correct": 1,
+      "explanation": "Deployment requires judgement and accountability. AI agents lack contextual awareness and legal responsibility, making autonomous write access highly dangerous."
+    },
+    {
+      "id": "a151",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In a regulated BFSI project using AI-generated components, how does the architect verify that the code conforms to data security policies?",
+      "options": [
+        "Rely on the AI model's safety settings",
+        "Implement static security analysis (SAST) and custom regex compliance checks in the CI pipeline to scan generated payloads for PII leaks",
+        "Run manual browser testing after release",
+        "Encrypt the git repository with database keys"
+      ],
+      "correct": 1,
+      "explanation": "Compliance requires automated scans. Custom checks must scan generated code for PII patterns, insecure storage models, or unencrypted endpoints in the pipeline."
+    },
+    {
+      "id": "a152",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should a development team handle a situation where an AI model update (e.g. from Sonnet 4.6 to 4.7) begins generating code that fails contract checks?",
+      "options": [
+        "Disable the contract checks in CI to allow deployments to continue",
+        "Freeze the model version in prompt configurations, debug the prompt templates to accommodate the model's new behavior, and validate in staging",
+        "Ask developers to rewrite the generated code manually in production",
+        "Revert the entire codebase to the initial commit"
+      ],
+      "correct": 1,
+      "explanation": "Model updates change behaviors. Teams must pin model versions, test prompt template compatibility in isolation, and verify outputs before updates."
+    },
+    {
+      "id": "a153",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the role of an 'Architectural Override' in AI Governance?",
+      "options": [
+        "A database command used to reset passwords",
+        "A documented process where a senior engineer manually signs off on a contract deviation, capturing the rationale in the ADR log",
+        "An automated AI script that bypasses security checks",
+        "A stylesheet that overrides layout branding rules"
+      ],
+      "correct": 1,
+      "explanation": "Overrides are exceptions. They must be explicitly signed off by a human architect and recorded in the ADR history to prevent silent, ungoverned drift."
+    },
+    {
+      "id": "a154",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How do you mitigate 'hallucinated dependency' risks in AI-generated deployments?",
+      "options": [
+        "Increase the timeout limit of the API calls",
+        "Configure the package registry to validate imports against a curated allowlist, and block PRs that attempt to fetch unvetted libraries",
+        "Rely on the AI to correct its own imports at runtime",
+        "Commit all package files to git binary storage"
+      ],
+      "correct": 1,
+      "explanation": "Hallucinated packages are security threats. Restricting dependencies to a curated allowlist prevents AI from importing malicious or non-existent packages."
+    },
+    {
+      "id": "a155",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In the context of AI Governance, what is a 'prompt injection attack' in code generation?",
+      "options": [
+        "A system error that causes the AI to stop responding",
+        "Malicious input embedded in briefs or database records designed to trick the generation model into writing backdoor scripts or exposing keys",
+        "A method of injecting SQL commands into the storefront search bar",
+        "An AEM dispatcher caching failure"
+      ],
+      "correct": 1,
+      "explanation": "Injection targets the generator. If the AI consumes untrusted input during prompt assembly, it can be manipulated into writing insecure code."
+    },
+    {
+      "id": "a156",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the primary trade-off of introducing automated contract linters inside the CI/CD pipeline?",
+      "options": [
+        "It increases the CPU consumption of storefront databases",
+        "It slows down build validation times slightly but guarantees architectural consistency and prevents ungoverned structural drift",
+        "It limits developers to only write code in plain text formats",
+        "It disables Google OAuth authentication routes"
+      ],
+      "correct": 1,
+      "explanation": "Validation adds slight pipeline latency, but this trade-off is necessary to prevent high-volume, automated code from degrading structural integrity."
+    },
+    {
+      "id": "a157",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should an architect design the boundary line for AI-generated tests?",
+      "options": [
+        "AI generates the test execution code, but humans define the success assertions and contract parameters",
+        "AI writes the assertions and humans write the mock data structures",
+        "AI is prohibited from writing test code of any kind",
+        "Tests are generated dynamically at runtime in the browser"
+      ],
+      "correct": 0,
+      "explanation": "Assertions must be human-defined. If the AI generates both the code and the assertions in isolation, it will assert the correctness of its own bugs."
+    },
+    {
+      "id": "a158",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the purpose of run-time validation in an AI Governance model?",
+      "options": [
+        "To monitor developer session logout times",
+        "To catch payload schema violations or illegal data mutations at runtime that escaped static compile-time gates",
+        "To automate code generation inside the browser",
+        "To check that the CDN is active"
+      ],
+      "correct": 1,
+      "explanation": "Runtime checks (such as schema validation on API borders) act as defense-in-depth, catching mismatches that slipped through static analysis."
+    },
+    {
+      "id": "a159",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How do you prevent 'complacency bias' where developers assume AI-generated code is always secure?",
+      "options": [
+        "By locking their local git commits",
+        "By enforcing mandatory peer reviews, running mutation testing, and rotating code ownership across features",
+        "By banning the use of AI tools on corporate machines",
+        "By sending weekly security reports to developers"
+      ],
+      "correct": 1,
+      "explanation": "Enforcing code ownership, peer reviews, and using mutation metrics ensures developers inspect and verify generated code as if they wrote it."
+    },
+    {
+      "id": "a160",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "In a team utilizing agentic code generators, how is the 'Code Ownership' principle maintained?",
+      "options": [
+        "The AI agent owns the codebase under copyright rules",
+        "A human engineer takes explicit ownership of each component, remaining responsible for its maintenance and defect resolution",
+        "Ownership is shared equally among all client stakeholders",
+        "Ownership is transferred to the cloud hosting provider"
+      ],
+      "correct": 1,
+      "explanation": "Accountability requires owners. A human engineer must own each component, ensuring defects are resolved by a person with context."
+    },
+    {
+      "id": "a161",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How do you secure secrets and sensitive API endpoints inside prompts sent to public cloud AI models?",
+      "options": [
+        "Encrypt the secrets before adding them to the prompt text",
+        "Use placeholders in prompt templates and inject the actual credentials only at execution runtime inside the secure corporate cloud perimeter",
+        "Public AI models do not require credentials security",
+        "Hardcode credentials inside the prompt text to speed up response times"
+      ],
+      "correct": 1,
+      "explanation": "Public model calls are security risks. Prompts must use placeholders, keeping actual keys inside the local runtime variables."
+    },
+    {
+      "id": "a162",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the recommended approach to handle legacy code modifications in an AI-governed team?",
+      "options": [
+        "Let the AI rewrite the entire system from scratch on every change request",
+        "Define the modifications as a delta contract, and use the prompt to instruct the AI to alter only the scoped boundaries, verifying changes in git diff",
+        "Bypass the AI and write all legacy updates manually",
+        "Re-host the legacy code on external public servers"
+      ],
+      "correct": 1,
+      "explanation": "AI updates to legacy code must be bounded. Specifying change zones and verifying the git diff keeps the rest of the legacy system stable."
+    },
+    {
+      "id": "a163",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "What is the trade-off of running mutation testing on AI-generated test files?",
+      "options": [
+        "It breaks database transaction integrity",
+        "It requires significant test suite execution time but guarantees that the tests are actually checking logic and not just passing blindly",
+        "It limits testing to only verify client-side CSS rules",
+        "It requires developers to rewrite all tests in Node.js"
+      ],
+      "correct": 1,
+      "explanation": "Mutation testing is compute-heavy, but it is the only way to verify that tests are high-quality and fail when logic is altered."
+    },
+    {
+      "id": "a164",
+      "topic": "ai-governance",
+      "section": "ai.gov",
+      "difficulty": "advanced",
+      "type": "mcq",
+      "question": "How should an architect evaluate the efficiency of the AI Governance model?",
+      "options": [
+        "By tracking the total number of lines of generated code",
+        "By monitoring defect density, build failure rate, PR lead times, and the frequency of ungoverned codebase overrides",
+        "By calculating the financial budget saved on creative designers",
+        "By checking developer logins on Google SSO portals"
+      ],
+      "correct": 1,
+      "explanation": "Efficiency metrics look at quality and velocity: low defect density and rapid PR lead times prove that governance balances safety and speed."
     }
   ]
 }

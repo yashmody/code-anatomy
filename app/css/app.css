@@ -63,6 +63,27 @@
 .loading, .placeholder { max-width: 860px; margin: 60px auto; color: var(--ink-faint); font-family: var(--mono); font-size: 13px; }
 .placeholder h2 { font-family: var(--serif); color: var(--ink); font-size: 30px; margin-bottom: 8px; }
 
+/* ---- Part-banner: centred block, text centred within it ---- */
+.part-head {
+  text-align: center;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.part-head p { margin-left: auto; margin-right: auto; text-align: center; }
+
+/* ---- Justified body prose in the reading column ---- */
+/* Scope to .sub so headings, callout labels, mono chips etc. are untouched */
+.sub p,
+.sub ul.notes li,
+.sub-title + p,
+.nb-body p,
+.callout p {
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+}
+
 /* ---- NEW: drop-cap (field on chapter-open; the monolith has none) ---- */
 .lead.chapter-open .drop {
   float: left; font-family: var(--serif); font-weight: 800; font-size: 66px; line-height: .76;

@@ -6,6 +6,20 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8754"],
       "port": 8754
+    },
+    {
+      "name": "quiz",
+      "runtimeExecutable": "/Users/yashmody/work/CODE-CODER/dept-deploy/quiz-certification/.venv/bin/uvicorn",
+      "runtimeArgs": ["app.main:app", "--host", "127.0.0.1", "--port", "8000"],
+      "cwd": "quiz-certification",
+      "port": 8000
+    },
+    {
+      "name": "deploy-host",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8090"],
+      "cwd": "content-system",
+      "port": 8090
     }
   ]
 }

@@ -3,12 +3,16 @@
 In DEV_MODE, any @ALLOWED_DOMAIN email is accepted on a simple form.
 In production, Google OAuth via Authlib, with the same domain check applied
 to the returned profile.
+
+Includes lightweight RBAC dependencies checking Postgres dynamically.
 """
-from typing import Optional
+from typing import Optional, List
 from urllib.parse import urlencode
 import secrets
+from fastapi import Request, HTTPException
 
 from . import config
+from . import storage
 
 
 def is_allowed_email(email: str) -> bool:
@@ -96,3 +100,37 @@ def exchange_code_for_user(code: str) -> Optional[dict]:
 
 def make_state() -> str:
     return secrets.token_urlsafe(24)
+
+
+# --- RBAC Dependency ---
+
+def require_role(allowed_roles: List[str]):
+    """Dynamic role checker extracting user from session and verifying role in DB."""
+    def dependency(request: Request) -> dict:
+        user = request.session.get("user")
+        if not user:
+            # For JSON/API requests, return a JSON 401 instead of redirecting
+            if request.url.path.startswith("/api/") or "application/json" in request.headers.get("accept", ""):
+                raise HTTPException(status_code=401, detail="Authentication required")
+            raise HTTPException(status_code=302, headers={"Location": "/login"})
+            
+        email = user.get("email")
+        if not email:
+            raise HTTPException(status_code=401, detail="Invalid session")
+            
+        # Dynamic Postgres lookup
+        db_user = storage.get_user(email)
+        if not db_user:
+            raise HTTPException(status_code=403, detail="User account not found")
+            
+        user_role = db_user.get("role") or "User"
+        
+        # Admin / QuizManager bypasses all role checks
+        if user_role == "QuizManager":
+            return db_user
+            
+        if user_role not in allowed_roles:
+            raise HTTPException(status_code=403, detail="Operation forbidden: Insufficient permissions")
+            
+        return db_user
+    return dependency

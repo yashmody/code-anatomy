@@ -39,7 +39,7 @@ CERTIFICATES_DIR = Path(os.getenv("CERTIFICATES_DIR", BASE_DIR / "certificates")
 OUTBOX_DIR = Path(os.getenv("OUTBOX_DIR", BASE_DIR / "outbox"))
 QUESTION_BANK = BASE_DIR / "data" / "question_bank.json"
 
-# DB — SQLite for local, set DATABASE_URL=postgresql://... for production
+# DB — Postgres required for production. Falls back to sqlite locally if not configured, but features like large objects require Postgres.
 DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{BASE_DIR / 'q0.db'}")
 
 COOLDOWN_DAYS = int(os.getenv("COOLDOWN_DAYS", "7"))
@@ -49,6 +49,14 @@ QUESTIONS_PER_QUIZ = int(os.getenv("QUESTIONS_PER_QUIZ", "30"))
 # Pass mark — absolute number of correct answers required to pass.
 # Default: 25 of 30. This is the single source of truth for passing.
 PASS_MARK_CORRECT = int(os.getenv("PASS_MARK_CORRECT", "25"))
+
+# Encryption key for API responses (network tab protection) - must be 32 bytes (base64 encoded or raw string)
+APP_PAYLOAD_SECRET = os.getenv("APP_PAYLOAD_SECRET", "dev-payload-secret-32bytes-long!")
+
+# Media limits
+MAX_VIDEO_SIZE_MB = 30
+MAX_IMAGE_SIZE_MB = 2.5
+MAX_VIDEO_DURATION_SEC = 60
 
 # Derived percentage, used only for display (e.g. "Pass mark 83%").
 PASS_THRESHOLD = (

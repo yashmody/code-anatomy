@@ -1,20 +1,7 @@
 """Storage layer — SQLAlchemy-backed.
 
-Same surface area as the old JSON-file implementation:
-  save_attempt(record)               → persists and returns the test_code
-  attempts_for(email)                → list of attempt dicts, newest first
-  last_attempt(email)                → most recent attempt dict or None
-  cooldown_remaining_days(email)     → int days still in cool-down
-  has_passed(email)                  → True if any passing attempt
-  all_attempts()                     → every attempt across users (admin)
-
-User-specific helpers added for the role onboarding flow:
-  upsert_user(email, name, picture, provider)
-  set_user_role(email, role)
-  get_user(email)
-
-Records returned from attempt-reading helpers are plain dicts (the same shape
-as before) so templates and review.py keep working without changes.
+Same surface area as the old JSON-file implementation, with additional
+methods for questions, feed items, and media assets in PostgreSQL.
 """
 import hashlib
 import hmac
@@ -26,7 +13,7 @@ from sqlalchemy import select
 
 from . import config
 from .db import get_session, init_db  # noqa: F401 — re-export init_db
-from .models import Attempt, User
+from .models import Attempt, User, Question, FeedItem, MediaAsset
 
 
 # ── Certificate signature (anti-tamper) ───────────────────────────────────────
@@ -73,7 +60,6 @@ def generate_test_code() -> str:
             code = f"AOC-{date_part}-{rand}"
             if s.scalar(select(Attempt).where(Attempt.test_code == code)) is None:
                 return code
-    # Falling out of the loop would be astronomical — fail loudly if it ever does
     raise RuntimeError("Could not generate a unique test code after 8 tries")
 
 
@@ -121,24 +107,18 @@ def _user_to_dict(u: User) -> Dict:
         "picture": u.picture,
         "role": u.role,
         "provider": u.provider,
+        "preferences": u.preferences or {},
     }
 
 
 # ---------- attempt save + read ----------
 
 def save_attempt(record: Dict) -> str:
-    """Persist a graded attempt. `record` carries the legacy dict shape used
-    by main.py — user, quiz_id, difficulty, score, etc. plus questions and
-    user_answers in the payload. Returns the test_code.
-
-    If the record already has a test_code (re-save with cert path), update
-    the existing row instead of inserting a duplicate.
-    """
+    """Persist a graded attempt."""
     email = record["user"]["email"].lower()
     existing_code = record.get("test_code")
 
     with get_session() as s:
-        # Ensure user exists (in case save_attempt is hit without a prior upsert)
         if s.get(User, email) is None:
             s.add(User(
                 email=email,
@@ -177,13 +157,12 @@ def save_attempt(record: Dict) -> str:
                     "user_answers": record.get("user_answers", {}),
                     "grading": record.get("grading", {}),
                 },
+                metadata=record.get("metadata", {})
             )
             s.add(att)
         else:
-            # Update mutable fields (cert path on second save after PDF generation)
             att.cert_id = record.get("cert_id") or att.cert_id
             att.certificate_path = record.get("certificate_path") or att.certificate_path
-            # Back-fill signature if missing
             if not att.signature and att.cert_id:
                 att.signature = sign_attempt(
                     att.cert_id, email, att.score, att.submitted_at.isoformat() + "Z"
@@ -252,10 +231,7 @@ def attempt_by_cert_id(cert_id: str) -> Optional[Dict]:
         return _attempt_to_dict(a) if a else None
 
 
-# ---------- helpers ----------
-
 def _attempt_to_dict(a: Attempt) -> Dict:
-    """Render an Attempt row in the shape main.py + templates expect."""
     payload = a.payload or {}
     return {
         "test_code": a.test_code,
@@ -274,15 +250,150 @@ def _attempt_to_dict(a: Attempt) -> Dict:
         "questions": payload.get("questions", []),
         "user_answers": payload.get("user_answers", {}),
         "grading": payload.get("grading", {}),
+        "metadata": a.metadata or {}
     }
 
 
 def attempt_by_cert_id_public(cert_id: str) -> Optional[Dict]:
-    """Public lookup by cert_id — no user session check. Used by /verify."""
     with get_session() as s:
         a = s.scalar(select(Attempt).where(Attempt.cert_id == cert_id))
         return _attempt_to_dict(a) if a else None
 
+
+# ---------- question bank CRUD ----------
+
+def save_question(q_data: Dict) -> str:
+    """Insert or update (version) a question in the bank."""
+    qid = q_data["id"]
+    with get_session() as s:
+        existing = s.get(Question, qid)
+        if existing:
+            # Check version and increment
+            new_version = (existing.version or 1) + 1
+            # Archive old question by setting status to 'archived'
+            existing.status = "archived"
+            
+            # Create new question version under a versioned ID to keep attempts working
+            # Past attempts link to the specific question ID, so we keep the base ID for attempts,
+            # but create a copy of the question with version incremented.
+            # Wait, in relational DB, to keep old attempts pointing to the exact same text,
+            # we should either copy the question content into attempts.payload (which we already do!)
+            # since attempts.payload contains full_questions containing explanation, text, etc.
+            # Because full_questions are already copied inline into attempts.payload, we don't need
+            # to worry about attempts breaking when editing questions! This is brilliant!
+            # Therefore, we can just update the existing question row directly, or increment its version.
+            existing.topic = q_data.get("topic", existing.topic)
+            existing.difficulty = q_data.get("difficulty", existing.difficulty)
+            existing.question = q_data.get("question", existing.question)
+            existing.options = q_data.get("options", existing.options)
+            existing.correct_index = q_data.get("correct_index", existing.correct_index)
+            existing.explanation = q_data.get("explanation", existing.explanation)
+            existing.status = q_data.get("status", "published")
+            existing.version = new_version
+            existing.author_id = q_data.get("author_id", existing.author_id)
+        else:
+            new_q = Question(
+                id=qid,
+                topic=q_data["topic"],
+                difficulty=q_data["difficulty"],
+                question=q_data["question"],
+                options=q_data["options"],
+                correct_index=q_data["correct_index"],
+                explanation=q_data.get("explanation", ""),
+                status=q_data.get("status", "published"),
+                version=1,
+                author_id=q_data.get("author_id"),
+                is_user_submitted=q_data.get("is_user_submitted", False)
+            )
+            s.add(new_q)
+        s.commit()
+        return qid
+
+
+def get_questions_queue() -> List[Dict]:
+    """Retrieve all user-submitted questions pending moderation."""
+    with get_session() as s:
+        rows = s.scalars(
+            select(Question).where(Question.status.in_(["pending_review", "draft"]))
+                           .order_by(Question.created_at.desc())
+        ).all()
+        return [_question_to_dict(q) for q in rows]
+
+
+def _question_to_dict(q: Question) -> Dict:
+    return {
+        "id": q.id,
+        "topic": q.topic,
+        "difficulty": q.difficulty,
+        "question": q.question,
+        "options": q.options,
+        "correct_index": q.correct_index,
+        "explanation": q.explanation,
+        "status": q.status,
+        "version": q.version,
+        "author_id": q.author_id,
+        "is_user_submitted": q.is_user_submitted
+    }
+
+
+# ---------- feed CRUD ----------
+
+def save_feed_item(item: Dict) -> str:
+    fid = item["id"]
+    with get_session() as s:
+        existing = s.get(FeedItem, fid)
+        author_id = item.get("author", {}).get("userId")
+        if author_id and "@" not in author_id:
+            author_id = f"{author_id}@deptagency.com"
+            
+        if existing:
+            existing.status = item.get("status", existing.status)
+            existing.data = item
+        else:
+            new_item = FeedItem(
+                id=fid,
+                type=item["type"],
+                status=item.get("status", "published"),
+                author_id=author_id.lower() if author_id else None,
+                framework_ref=item.get("frameworkRef"),
+                topics=item.get("topics", []),
+                data=item
+            )
+            s.add(new_item)
+        s.commit()
+        return fid
+
+
+def get_feed_items() -> List[Dict]:
+    with get_session() as s:
+        rows = s.scalars(
+            select(FeedItem).where(FeedItem.status == "published")
+                            .order_by(FeedItem.created_at.desc())
+        ).all()
+        return [r.data for r in rows]
+
+
+def get_moderation_queue() -> Dict[str, List[Dict]]:
+    """Retrieve all flagged or pending moderation items."""
+    with get_session() as s:
+        # Feed items
+        feed_rows = s.scalars(
+            select(FeedItem).where(FeedItem.status.in_(["pending_review", "flagged"]))
+                            .order_by(FeedItem.created_at.desc())
+        ).all()
+        # Questions
+        question_rows = s.scalars(
+            select(Question).where(Question.status.in_(["pending_review", "draft"]))
+                           .order_by(Question.created_at.desc())
+        ).all()
+        
+        return {
+            "feed_items": [r.data for r in feed_rows],
+            "questions": [_question_to_dict(q) for q in question_rows]
+        }
+
+
+# ---------- helpers ----------
 
 def _parse_iso(s: str) -> datetime:
     """Tolerant ISO-8601 → datetime."""
