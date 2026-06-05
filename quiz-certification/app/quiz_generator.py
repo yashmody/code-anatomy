@@ -118,8 +118,14 @@ def generate(difficulty: str, count: int = None) -> Dict:
     }
 
 
-def grade(server_answers: Dict[str, int], user_answers: Dict[str, int]) -> Dict:
-    """Grade a submission against server-stored answers."""
+def grade(server_answers: Dict[str, int], user_answers: Dict[str, int],
+          pass_mark: int = None) -> Dict:
+    """Grade a submission against server-stored answers.
+
+    pass_mark overrides config.PASS_MARK_CORRECT when provided (used by the
+    dev fast-quiz shim; leave as None for all production quizzes).
+    """
+    effective_pass_mark = pass_mark if pass_mark is not None else config.PASS_MARK_CORRECT
     total = len(server_answers)
     correct = 0
     per_question = {}
@@ -138,7 +144,7 @@ def grade(server_answers: Dict[str, int], user_answers: Dict[str, int]) -> Dict:
         "total": total,
         "correct": correct,
         "score": score,
-        "pass_mark": config.PASS_MARK_CORRECT,
-        "passed": correct >= config.PASS_MARK_CORRECT,
+        "pass_mark": effective_pass_mark,
+        "passed": correct >= effective_pass_mark,
         "per_question": per_question,
     }

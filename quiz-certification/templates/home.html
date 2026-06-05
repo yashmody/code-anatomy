@@ -83,6 +83,15 @@
   </button>
 </div>
 
+{% if dev_mode %}
+<!-- DEV ONLY — remove with dev_quiz.py -->
+<div class="dev-mode-bar">
+  <span class="dev-label">DEV</span>
+  <span class="dev-hint">Fast quiz — 2 questions · pass 1 of 2 · generates a real certificate</span>
+  <button class="btn dev-fast-btn" id="devFastQuizBtn">⚡ Fast Quiz</button>
+</div>
+{% endif %}
+
 <div class="masthead" style="margin-top:48px">
   <h2 style="font-size:24px">Topics covered</h2>
   <p class="muted">As the course adds topics, the quiz adds them automatically.</p>
@@ -124,6 +133,14 @@
   .level-card--intermediate .level-stat span:last-child{color:#0ea5e9}
   .level-card--intermediate.recommended{border-color:#0ea5e9;box-shadow:inset 0 0 0 1px #0ea5e9}
   .level-card--intermediate.recommended .level-rec{background:#0ea5e9}
+  /* DEV ONLY — remove with dev_quiz.py */
+  .dev-mode-bar{display:flex;align-items:center;gap:14px;margin-top:36px;padding:12px 18px;
+    background:repeating-linear-gradient(45deg,#ff490012,#ff490012 2px,transparent 2px,transparent 12px);
+    border:1px dashed var(--ochre)}
+  .dev-label{background:var(--ochre);color:#fff;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:3px 8px;font-family:var(--mono,'JetBrains Mono');font-size:10px}
+  .dev-hint{color:var(--ink-faint);font-family:var(--mono,'JetBrains Mono');font-size:12px;flex:1}
+  .dev-fast-btn{font-size:12px;padding:6px 14px}
 </style>
 {% endblock %}
 
@@ -136,5 +153,17 @@
       window.location.href = '/quiz/take';
     });
   });
+
+  {% if dev_mode %}
+  /* DEV ONLY — remove with dev_quiz.py */
+  const _devBtn = document.getElementById('devFastQuizBtn');
+  if (_devBtn) {
+    _devBtn.addEventListener('click', () => {
+      sessionStorage.setItem('q0-difficulty', 'beginner');
+      sessionStorage.setItem('q0-dev-quiz', 'true');
+      window.location.href = '/quiz/take';
+    });
+  }
+  {% endif %}
 </script>
 {% endblock %}

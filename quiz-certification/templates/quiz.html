@@ -28,11 +28,24 @@
   .review-row-edit:hover{border-color:var(--ochre);color:var(--ochre)}
 
   .review-controls{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:16px;border-top:1px solid var(--rule)}
+  /* DEV ONLY — remove with dev_quiz.py */
+  .dev-mode-bar{display:flex;align-items:center;gap:14px;padding:12px 18px;
+    background:repeating-linear-gradient(45deg,#ff490012,#ff490012 2px,transparent 2px,transparent 12px);
+    border:1px dashed var(--ochre)}
+  .dev-label{background:var(--ochre);color:#fff;font-weight:700;letter-spacing:.06em;
+    text-transform:uppercase;padding:3px 8px;font-family:var(--mono,'JetBrains Mono');font-size:10px}
+  .dev-hint{color:var(--ink-faint);font-family:var(--mono,'JetBrains Mono');font-size:12px;flex:1}
 </style>
 {% endblock %}
 
 {% block content %}
 <div id="quizContainer">
+  <!-- DEV ONLY — remove with dev_quiz.py -->
+  <div id="devQuizBanner" class="dev-mode-bar" style="margin-bottom:16px" hidden>
+    <span class="dev-label">DEV</span>
+    <span class="dev-hint">2-question fast quiz · pass 1 of 2 · certificate will be generated normally</span>
+  </div>
+
   <!-- Loading -->
   <div id="quizLoading" class="centered">
     <div class="loader">
@@ -108,11 +121,14 @@
   // ── start ──────────────────────────────────────────────────────────────
   async function startQuiz() {
     const difficulty = sessionStorage.getItem('q0-difficulty') || 'beginner';
+    // DEV ONLY — read and immediately clear so the flag doesn't survive a reload
+    const isDevQuiz = sessionStorage.getItem('q0-dev-quiz') === 'true';
+    sessionStorage.removeItem('q0-dev-quiz');
     try {
       const r = await fetch('/quiz/start', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({difficulty})
+        body: JSON.stringify({difficulty, ...(isDevQuiz ? {dev_quiz: true} : {})})
       });
       if (r.status === 429) {
         const data = await r.json();
@@ -123,10 +139,15 @@
         return showError(data.detail || data.error || 'Could not start quiz.');
       }
       quiz = await r.json();
+      // DEV ONLY — show banner when server confirms this is a dev fast-quiz
+      if (quiz.dev_mode) {
+        const banner = document.getElementById('devQuizBanner');
+        if (banner) banner.hidden = false;
+      }
       document.getElementById('qDifficulty').textContent = quiz.difficulty;
       document.getElementById('rDifficulty').textContent = quiz.difficulty;
       setState('active');
-      deadlineMs = Date.now() + DURATION_MIN * 60 * 1000;
+      deadlineMs = Date.now() + (quiz.duration_minutes || DURATION_MIN) * 60 * 1000;
       startTimer();
       renderQuestion();
     } catch (e) {

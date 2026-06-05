@@ -33,7 +33,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import auth, certificate, config, email_service, quiz_generator, roles, storage
+from . import auth, certificate, config, dev_quiz, email_service, quiz_generator, roles, storage
 
 app = FastAPI(title="Q0 · The Anatomy of Code · Quiz Module")
 app.add_middleware(SessionMiddleware, secret_key=config.SECRET_KEY)
@@ -237,6 +237,7 @@ async def profile_role_save(request: Request, role: str = Form(...)):
 
 class StartQuizPayload(BaseModel):
     difficulty: str
+    dev_quiz: bool = False          # DEV ONLY — ignored when DEV_MODE=false
 
 
 @app.post("/quiz/start")
@@ -254,26 +255,38 @@ async def quiz_start(request: Request, payload: StartQuizPayload):
             status_code=429,
         )
 
+    # DEV ONLY — fast-quiz shim; remove this block with dev_quiz.py ──────────
+    _dev_pass_mark = None
+    _dev_duration  = config.QUIZ_DURATION_MIN
+    _dev_count     = None
+    if payload.dev_quiz and config.DEV_MODE:
+        _dev_count     = dev_quiz.DEV_QUIZ_COUNT
+        _dev_pass_mark = dev_quiz.DEV_QUIZ_PASS_MARK
+        _dev_duration  = dev_quiz.DEV_QUIZ_DURATION_MIN
+    # ─────────────────────────────────────────────────────────────────────────
+
     try:
-        quiz = quiz_generator.generate(payload.difficulty)
+        quiz = quiz_generator.generate(payload.difficulty, count=_dev_count)
     except ValueError as e:
         return JSONResponse({"error": "generation_failed", "detail": str(e)}, status_code=400)
 
     _active_quizzes[quiz["quiz_id"]] = {
-        "user_email": user["email"],
-        "started_at": quiz["started_at"],
-        "difficulty": quiz["difficulty"],
+        "user_email":     user["email"],
+        "started_at":     quiz["started_at"],
+        "difficulty":     quiz["difficulty"],
         "server_answers": quiz["server_answers"],
         "full_questions": quiz["full_questions"],
+        **( {"dev_pass_mark": _dev_pass_mark} if _dev_pass_mark is not None else {} ),
     }
 
     return JSONResponse(
         {
-            "quiz_id": quiz["quiz_id"],
-            "started_at": quiz["started_at"],
-            "difficulty": quiz["difficulty"],
-            "duration_minutes": quiz["duration_minutes"],
-            "questions": quiz["questions"],
+            "quiz_id":          quiz["quiz_id"],
+            "started_at":       quiz["started_at"],
+            "difficulty":       quiz["difficulty"],
+            "duration_minutes": _dev_duration,
+            "questions":        quiz["questions"],
+            **( {"dev_mode": True} if _dev_pass_mark is not None else {} ),
         }
     )
 
@@ -296,7 +309,11 @@ async def quiz_submit(request: Request, payload: SubmitPayload):
     if active["user_email"] != user["email"]:
         return JSONResponse({"error": "forbidden"}, status_code=403)
 
-    grading = quiz_generator.grade(active["server_answers"], payload.answers)
+    dev_pass_mark = active.get("dev_pass_mark")    # DEV ONLY — None on all production quizzes
+    grading = quiz_generator.grade(
+        active["server_answers"], payload.answers,
+        pass_mark=dev_pass_mark,
+    )
 
     cert_id = None
     if grading["passed"]:
