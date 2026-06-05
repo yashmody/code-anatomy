@@ -47,6 +47,13 @@ DB_NAME="${DB_NAME:-codecoder}"
 DB_USER="${DB_USER:-codecoder}"
 DB_PASS="${DB_PASS:-}"
 
+# PostgreSQL superuser password (the password for the 'postgres' PG role).
+# When set, all admin psql calls run as root with PGPASSWORD and -U postgres,
+# so the script never depends on peer/ident auth or pg_hba.conf changes.
+# Supply it on the command line:
+#   sudo POSTGRES_SUPERUSER_PASSWORD='yourpw' ./deploy.sh
+POSTGRES_SUPERUSER_PASSWORD="${POSTGRES_SUPERUSER_PASSWORD:-${PGPASSWORD:-}}"
+
 # TLS — override if your certs live elsewhere.
 # Defaults are set after OS detection below.
 CERT_FILE="${CERT_FILE:-}"
@@ -133,16 +140,32 @@ else
 fi
 
 # ── pg_exec helper ───────────────────────────────────────────────────────────
-# Run a command as the postgres OS user. Tries runuser first (RHEL standard,
-# bypasses PAM su restrictions), then su -. Always wrapped in `timeout` so a
-# misconfigured socket / TCP fallback cannot hang the script.
-# Inherits PGCONNECT_TIMEOUT and PGHOST from the parent environment.
+# Run a psql command as the PostgreSQL superuser.
+#
+#   • If POSTGRES_SUPERUSER_PASSWORD is set: run psql directly as root with
+#     PGPASSWORD + `-U postgres`. No need for peer/ident auth or pg_hba edits.
+#   • Otherwise: fall back to `runuser -l postgres` (peer auth path), wrapped
+#     in `timeout` so any hang surfaces within 10 seconds.
+#
+# The caller passes the psql command string (e.g. "psql -c 'SELECT 1'").
+# This helper transparently adds -U postgres and -h $PGHOST when using a password.
 pg_exec() {
-  local cmd="PGCONNECT_TIMEOUT=${PGCONNECT_TIMEOUT:-3} ${PGHOST:+PGHOST=$PGHOST} $*"
-  if command -v runuser &>/dev/null; then
-    timeout 10 runuser -l postgres -c "$cmd"
+  local raw_cmd="$*"
+  if [[ -n "$POSTGRES_SUPERUSER_PASSWORD" ]]; then
+    # Insert -U postgres -h $PGHOST after the leading "psql" token so callers
+    # don't have to remember to add them. e.g. "psql -c '...'" becomes
+    # "psql -U postgres -h /var/run/postgresql -c '...'".
+    local injected="${raw_cmd/#psql/psql -U postgres -h ${PGHOST:-/var/run/postgresql}}"
+    PGPASSWORD="$POSTGRES_SUPERUSER_PASSWORD" \
+    PGCONNECT_TIMEOUT="${PGCONNECT_TIMEOUT:-3}" \
+      timeout 10 bash -c "$injected"
   else
-    timeout 10 su - postgres -c "$cmd"
+    local cmd="PGCONNECT_TIMEOUT=${PGCONNECT_TIMEOUT:-3} ${PGHOST:+PGHOST=$PGHOST} $raw_cmd"
+    if command -v runuser &>/dev/null; then
+      timeout 10 runuser -l postgres -c "$cmd"
+    else
+      timeout 10 su - postgres -c "$cmd"
+    fi
   fi
 }
 
@@ -320,28 +343,38 @@ if ! $UPDATE_ONLY; then
     die "Cannot locate the Postgres socket. The server is running but unreachable. Check: journalctl -u $PG_SVC -n 30"
   fi
   ok "Socket dir  : $PG_SOCK"
-
-  # Locate pg_hba.conf and ensure peer auth is enabled for the postgres
-  # OS user. Without this, RHEL PGDG defaults prompt for a password,
-  # which we have no way to supply non-interactively.
-  PG_HBA_PATH="$(pg_hba_path || echo '')"
-  if [[ -n "$PG_HBA_PATH" ]]; then
-    ok "pg_hba.conf : $PG_HBA_PATH"
-    ensure_postgres_peer_auth "$PG_HBA_PATH" "$PG_SVC"
-  else
-    warn "Could not locate pg_hba.conf — relying on existing auth config"
-  fi
-
-  # Run a trivial query with explicit socket path + connect timeout.
-  # PGHOST forces psql to use the socket (no silent TCP fallback).
   export PGHOST="$PG_SOCK"
   export PGCONNECT_TIMEOUT=3
+
+  # Two auth paths:
+  #   1. POSTGRES_SUPERUSER_PASSWORD supplied → use it directly (no pg_hba edits).
+  #   2. No password → fall back to peer auth, adding the rule to pg_hba.conf
+  #      if it's missing.
+  if [[ -n "$POSTGRES_SUPERUSER_PASSWORD" ]]; then
+    ok "Auth mode   : password (POSTGRES_SUPERUSER_PASSWORD env var)"
+  else
+    PG_HBA_PATH="$(pg_hba_path || echo '')"
+    if [[ -n "$PG_HBA_PATH" ]]; then
+      ok "pg_hba.conf : $PG_HBA_PATH"
+      ensure_postgres_peer_auth "$PG_HBA_PATH" "$PG_SVC"
+      ok "Auth mode   : peer (postgres OS user → postgres PG role)"
+    else
+      warn "Could not locate pg_hba.conf — no auth fallback available"
+      die  "Set POSTGRES_SUPERUSER_PASSWORD and re-run: sudo POSTGRES_SUPERUSER_PASSWORD='...' ./deploy.sh"
+    fi
+  fi
+
+  # Trial connection
   if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
     ok "PostgreSQL  : reachable via socket ($PG_SOCK)"
   else
-    info "Trying to capture the actual psql error:"
+    info "Captured psql error:"
     pg_exec "psql -c 'SELECT 1'" 2>&1 | head -5 | while read -r l; do warn "  $l"; done
-    die "psql failed even with explicit socket path. Check $PG_SOCK permissions or $PG_HBA_PATH auth rules."
+    if [[ -n "$POSTGRES_SUPERUSER_PASSWORD" ]]; then
+      die "psql rejected the supplied POSTGRES_SUPERUSER_PASSWORD — check the password is correct."
+    else
+      die "psql failed. Either set POSTGRES_SUPERUSER_PASSWORD=... or fix $PG_HBA_PATH auth."
+    fi
   fi
 
   ok "All pre-flight checks passed"
