@@ -224,17 +224,24 @@ if ! $UPDATE_ONLY; then
     || die "psql not found. Install the PostgreSQL client package."
   ok "psql        : $(psql --version)"
 
-  # PostgreSQL connectivity
+  # PostgreSQL connectivity — check via the local socket (always works
+  # when Postgres is up). TCP/127.0.0.1 is enabled in step 6 if needed,
+  # so we don't depend on it here. pg_isready -h 127.0.0.1 was removed:
+  # it hangs for the full TCP timeout when Postgres listens only on the
+  # Unix socket (common default on RHEL).
   PG_SVC="$(pg_service_name || echo 'postgresql-14')"
   info "PG service  : $PG_SVC"
-  if command -v pg_isready &>/dev/null; then
-    pg_isready -h 127.0.0.1 -q \
-      || die "PostgreSQL not accepting connections. Check: systemctl status ${PG_SVC}"
-    ok "PostgreSQL  : $(pg_isready -h 127.0.0.1 2>&1)"
+
+  if ! systemctl is-active --quiet "$PG_SVC"; then
+    die "$PG_SVC is not running. Start it: systemctl start $PG_SVC"
+  fi
+  ok "PG service  : active"
+
+  # Query via local socket (runuser, no -h flag → uses /var/run/postgresql)
+  if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
+    ok "PostgreSQL  : reachable via local socket"
   else
-    pg_exec "psql -h 127.0.0.1 -c 'SELECT 1'" >/dev/null 2>&1 \
-      || die "Cannot connect to PostgreSQL. Check: systemctl status ${PG_SVC}"
-    ok "PostgreSQL  : accepting connections"
+    die "Cannot query PostgreSQL via local socket. Check: journalctl -u $PG_SVC -n 20"
   fi
 
   ok "All pre-flight checks passed"
@@ -375,19 +382,45 @@ if ! systemctl is-active --quiet "$PG_SVC"; then
     || die "Could not start $PG_SVC. Run: systemctl status $PG_SVC"
 fi
 
-# Wait for TCP readiness (up to 20 s)
+# Wait for socket readiness (up to 20 s). Uses the local socket via runuser
+# instead of pg_isready -h 127.0.0.1 (which hangs for the full TCP timeout
+# when Postgres isn't listening on TCP yet — common on first start).
 info "Waiting for PostgreSQL to accept connections "
 for i in {1..20}; do
-  if command -v pg_isready &>/dev/null; then
-    pg_isready -h 127.0.0.1 -q 2>/dev/null && break
-  else
-    pg_exec "psql -h 127.0.0.1 -c 'SELECT 1'" >/dev/null 2>&1 && break
+  if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
+    echo; ok "PostgreSQL is up and accepting connections"; break
   fi
   wait_dot; sleep 1
   [[ $i -eq 20 ]] && { echo; die "PostgreSQL did not become ready after 20 s."; }
 done
-echo  # newline after dots
-ok "PostgreSQL is up and accepting connections"
+
+# Now ensure Postgres is also listening on TCP/127.0.0.1 so the FastAPI app
+# (which uses psycopg2's TCP driver via DATABASE_URL) can connect.
+# Check by parsing postgresql.conf's listen_addresses setting.
+PG_CONF="$(pg_exec "psql -tAc 'SHOW config_file'" 2>/dev/null | tr -d '[:space:]')"
+info "postgresql.conf      : $PG_CONF"
+if [[ -n "$PG_CONF" && -f "$PG_CONF" ]]; then
+  LISTEN_NOW="$(pg_exec "psql -tAc 'SHOW listen_addresses'" 2>/dev/null | tr -d '[:space:]')"
+  if [[ "$LISTEN_NOW" != "*" && "$LISTEN_NOW" != *"localhost"* && "$LISTEN_NOW" != *"127.0.0.1"* ]]; then
+    info "listen_addresses = '$LISTEN_NOW' — enabling localhost…"
+    # Replace existing line or append
+    if grep -qE "^\s*#?\s*listen_addresses" "$PG_CONF"; then
+      sed -i "s|^\s*#\?\s*listen_addresses.*|listen_addresses = 'localhost'|" "$PG_CONF"
+    else
+      echo "listen_addresses = 'localhost'" >> "$PG_CONF"
+    fi
+    info "Restarting $PG_SVC to apply listen_addresses…"
+    systemctl restart "$PG_SVC"
+    # Wait again briefly for it to come back
+    for i in {1..15}; do
+      pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1 && break
+      sleep 1
+    done
+    ok "PostgreSQL now listens on localhost (TCP)"
+  else
+    ok "PostgreSQL already listens on TCP (listen_addresses='$LISTEN_NOW')"
+  fi
+fi
 
 # Role
 if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" \
