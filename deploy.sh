@@ -121,7 +121,12 @@ mkdir -p "$QUIZ_DIR"/{quiz_results,certificates,outbox}
 # ----------------------------------------------------------------------------
 # 4. Python venv + dependencies
 # ----------------------------------------------------------------------------
-log "Setting up Python virtualenv (using $(${PYBIN} --version 2>&1))…"
+log "Setting up Python virtualenv..."
+# Install Python dependencies on first deploy (global) before creating venv
+if ! $UPDATE_ONLY && [[ ! -d "$QUIZ_DIR/.venv" ]]; then
+  "$PYBIN" -m pip install --upgrade pip
+  "$PYBIN" -m pip install -r "$QUIZ_DIR/requirements.txt"
+fi
 if [[ ! -d "$QUIZ_DIR/.venv" ]]; then
   "$PYBIN" -m venv "$QUIZ_DIR/.venv"
 fi
@@ -240,7 +245,7 @@ User=${APP_USER}
 Group=${APP_USER}
 WorkingDirectory=${QUIZ_DIR}
 EnvironmentFile=${QUIZ_DIR}/.env
-ExecStart=${QUIZ_DIR}/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port ${QUIZ_PORT} --workers ${QUIZ_WORKERS}
+ExecStart=${QUIZ_DIR}/.venv/bin/uvicorn[standard]main:app --host 127.0.0.1 --port ${QUIZ_PORT} --workers ${QUIZ_WORKERS}
 Restart=on-failure
 RestartSec=3
 # Hardening
