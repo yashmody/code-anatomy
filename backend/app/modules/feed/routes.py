@@ -16,7 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 
 from app.core.db import get_session
 from app.core.models import FeedItem, Question
-from app.core.deps import require_role
+from app.core.deps import require_permission
 from app.modules.feed import storage as feed_storage
 from app.modules.feed.schemas import FlagFeedPayload, ModActionPayload
 from app.modules.quiz import storage as quiz_storage
@@ -36,7 +36,7 @@ async def get_feed(request: Request):
 @router.post("/feed/flag")
 async def flag_feed_item(
     payload: FlagFeedPayload,
-    user=Depends(require_role(["User", "FeedCreator", "Moderator", "QuizManager"])),
+    user=Depends(require_permission("feed.flag")),
 ):
     """Flag a feed item by incrementing its flag count. Marks as flagged if it reaches threshold."""
     with get_session() as s:
@@ -66,7 +66,7 @@ async def flag_feed_item(
 async def post_feed(
     request: Request,
     item: dict,
-    user=Depends(require_role(["FeedCreator"])),
+    user=Depends(require_permission("feed.create")),
 ):
     """Create a new feed item. If type is 'scenario', registers it as a pending quiz question."""
     if "id" not in item:
@@ -100,7 +100,7 @@ async def post_feed(
 # ── Moderation ───────────────────────────────────────────────────────────────
 
 @router.get("/moderate/queue")
-async def get_moderation_queue(user=Depends(require_role(["Moderator"]))):
+async def get_moderation_queue(user=Depends(require_permission("moderate.view"))):
     """View all items pending review or flagged for removal."""
     return feed_storage.get_moderation_queue()
 
@@ -108,7 +108,7 @@ async def get_moderation_queue(user=Depends(require_role(["Moderator"]))):
 @router.post("/moderate/action")
 async def moderate_action(
     payload: ModActionPayload,
-    user=Depends(require_role(["Moderator"])),
+    user=Depends(require_permission("moderate.action")),
 ):
     """Approve or reject/flag content."""
     action = payload.action.lower()

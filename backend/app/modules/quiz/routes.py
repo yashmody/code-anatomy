@@ -22,9 +22,9 @@ from app.core.deps import (
     decrypt_request_payload,
     encrypt_response_payload,
     refresh_session_user,
-    require_role,
+    require_permission,
     require_user,
-    require_user_with_role,
+    require_user_with_persona,
 )
 from app.modules.quiz import certificate, email as email_service, service as quiz_generator
 from app.modules.quiz import storage as quiz_storage
@@ -63,14 +63,14 @@ async def home(request: Request):
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/login")
-    if not user.get("role"):
+    if not user.get("persona"):
         return RedirectResponse("/onboarding/role")
 
     cooldown = quiz_storage.cooldown_remaining_days(user["email"])
     last = quiz_storage.last_attempt(user["email"])
     passed_ever = quiz_storage.has_passed(user["email"])
     topics = quiz_generator.topic_summary()
-    recommended = roles.recommended_level(user["role"])
+    recommended = roles.recommended_level(user["persona"])
 
     return _template(
         request,
@@ -80,7 +80,7 @@ async def home(request: Request):
         passed_ever=passed_ever,
         topics=topics,
         recommended=recommended,
-        role_label=roles.label_for(user["role"]),
+        role_label=roles.label_for(user["persona"]),
         questions_per_quiz=config.QUESTIONS_PER_QUIZ,
         pass_threshold=int(round(config.PASS_THRESHOLD * 100)),
         pass_mark_correct=config.PASS_MARK_CORRECT,
@@ -95,27 +95,30 @@ async def onboarding_role_page(request: Request):
     return _template(
         request,
         "onboarding_role.html",
-        current_role=user.get("role"),
+        current_role=user.get("persona"),
         is_change=False,
     )
 
 
 @router.post("/onboarding/role")
 async def onboarding_role_save(request: Request, role: str = Form(...)):
+    """Save the user's persona (job family). NB: the form field is still
+    `role` for buildless-FE / template parity; the *storage* target is
+    `users.persona`. Capability roles are never set here.
+    """
     user = require_user(request)
-    role = role.strip().lower()
-    if not roles.is_valid(role):
+    persona = role.strip().lower()
+    if not roles.is_valid(persona):
         return _template(
             request,
             "onboarding_role.html",
-            current_role=user.get("role"),
+            current_role=user.get("persona"),
             error="Pick one of the roles below.",
             is_change=False,
         )
-    # Lazy import to keep the route file free of direct user-helper coupling
-    # (users live in core/users.py; only auth + admin pages need to set roles).
+    # Lazy import to keep the route file free of direct user-helper coupling.
     from app.core import users as core_users
-    core_users.set_user_role(user["email"], role)
+    core_users.set_user_persona(user["email"], persona)
     refresh_session_user(request, user["email"])
     return RedirectResponse("/", status_code=302)
 
@@ -126,7 +129,7 @@ async def profile_role_page(request: Request):
     return _template(
         request,
         "onboarding_role.html",
-        current_role=user.get("role"),
+        current_role=user.get("persona"),
         is_change=True,
     )
 
@@ -143,7 +146,7 @@ async def quiz_start(request: Request, payload: StartQuizPayload):
     user = request.session.get("user")
     if not user:
         return JSONResponse({"error": "unauthorized"}, status_code=401)
-    if not user.get("role"):
+    if not user.get("persona"):
         return JSONResponse({"error": "role_required"}, status_code=412)
 
     cooldown = quiz_storage.cooldown_remaining_days(user["email"])
@@ -279,7 +282,7 @@ async def quiz_take(request: Request):
     user = request.session.get("user")
     if not user:
         return RedirectResponse("/login")
-    if not user.get("role"):
+    if not user.get("persona"):
         return RedirectResponse("/onboarding/role")
     return _template(
         request,
@@ -308,9 +311,9 @@ async def serve_certificate(request: Request, cert_id: str):
 
 @router.get("/history", response_class=HTMLResponse)
 async def history(request: Request):
-    user = require_user_with_role(request)
+    user = require_user_with_persona(request)
     attempts = quiz_storage.attempts_for(user["email"])
-    return _template(request, "history.html", attempts=attempts, role_label=roles.label_for(user["role"]))
+    return _template(request, "history.html", attempts=attempts, role_label=roles.label_for(user["persona"]))
 
 
 # ── Public verification ──────────────────────────────────────────────────────
@@ -342,12 +345,12 @@ async def verify_direct(request: Request, cert_id: str):
 # ── Admin (RBAC restricted) ──────────────────────────────────────────────────
 
 @router.get("/admin/attempts", response_class=HTMLResponse)
-async def admin_attempts(request: Request, user=Depends(require_role(["QuizManager"]))):
+async def admin_attempts(request: Request, user=Depends(require_permission("attempts.view_all"))):
     return _template(request, "admin.html", attempts=quiz_storage.all_attempts())
 
 
 @router.post("/api/admin/questions")
-async def admin_save_question(payload: QuestionPayload, user=Depends(require_role(["QuizManager"]))):
+async def admin_save_question(payload: QuestionPayload, user=Depends(require_permission("question.write"))):
     """Add or update a question in the bank, auto-versioning under the hood."""
     q_dict = payload.dict()
     q_dict["author_id"] = user["email"]
