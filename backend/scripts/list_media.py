@@ -20,9 +20,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from sqlalchemy import select
 
-from app import config
-from app.db import get_session, init_db
-from app.models import MediaAsset
+from app.core import config
+from app.core.db import get_session, init_db
+from app.core.models import MediaAsset
 
 
 def url_for(base: str, asset) -> str:

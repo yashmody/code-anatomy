@@ -11,8 +11,8 @@ from urllib.parse import urlencode
 import secrets
 from fastapi import Request, HTTPException
 
-from . import config
-from . import storage
+from app.core import config
+from app.core import users
 
 
 def is_allowed_email(email: str) -> bool:
@@ -119,7 +119,7 @@ def require_role(allowed_roles: List[str]):
             raise HTTPException(status_code=401, detail="Invalid session")
             
         # Dynamic Postgres lookup
-        db_user = storage.get_user(email)
+        db_user = users.get_user(email)
         if not db_user:
             raise HTTPException(status_code=403, detail="User account not found")
             

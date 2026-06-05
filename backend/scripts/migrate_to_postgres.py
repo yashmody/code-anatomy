@@ -17,9 +17,9 @@ from sqlalchemy.orm import Session
 # Setup path to import app modules
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app import config
-from app.db import init_db, get_session
-from app.models import Question, User, Attempt, FeedItem, MediaAsset, CourseChapter, Framework
+from app.core import config
+from app.core.db import init_db, get_session
+from app.core.models import Question, User, Attempt, FeedItem, MediaAsset, CourseChapter, Framework
 
 # Constants
 BASE_DIR = config.BASE_DIR
@@ -258,7 +258,7 @@ def migrate_course_content(pg_session: Session):
     if FRAMEWORK_PATH.exists():
         with open(FRAMEWORK_PATH, "r") as f:
             fw_data = json.load(f)
-        from app.storage import save_framework
+        from app.modules.content.storage import save_framework
         save_framework(fw_data)
         print("[ETL] Ingested framework hierarchy.")
     else:
@@ -269,14 +269,14 @@ def migrate_course_content(pg_session: Session):
     if FRAMEWORK_EXPLAINER_PATH.exists():
         with open(FRAMEWORK_EXPLAINER_PATH, "r", encoding="utf-8") as f:
             expl_data = json.load(f)
-        from app.storage import save_framework_explainer
+        from app.modules.content.storage import save_framework_explainer
         save_framework_explainer(expl_data)
         print(f"[ETL] Ingested framework-explainer ({len(json.dumps(expl_data))} bytes).")
     else:
         print(f"[Warn] Framework-explainer JSON not found at {FRAMEWORK_EXPLAINER_PATH}")
         
     if SECTIONS_DIR.exists():
-        from app.storage import save_chapter
+        from app.modules.content.storage import save_chapter
         count = 0
         for filename in os.listdir(SECTIONS_DIR):
             if filename.endswith(".json"):

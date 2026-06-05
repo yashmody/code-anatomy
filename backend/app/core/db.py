@@ -8,7 +8,7 @@ Same SQL works on both. Schema lives in models.py.
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 
-from . import config
+from app.core import config
 
 _engine_kwargs = {}
 if config.DATABASE_URL.startswith("sqlite"):
@@ -22,7 +22,7 @@ Base = declarative_base()
 
 def init_db() -> None:
     """Create tables if missing. Called on app startup."""
-    from . import models  # noqa: F401 — register models with Base
+    from app.core import models  # noqa: F401 — register models with Base
     if "postgresql" in str(engine.url):
         from sqlalchemy import text
         with engine.connect() as conn:

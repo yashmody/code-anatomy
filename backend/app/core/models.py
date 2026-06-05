@@ -14,8 +14,8 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import relationship
 
-from . import config
-from .db import Base
+from app.core import config
+from app.core.db import Base
 
 # Dynamic type fallback for SQLite vs PostgreSQL compatibility
 if "postgresql" in config.DATABASE_URL:

@@ -11,9 +11,9 @@ from typing import Dict, List
 
 from sqlalchemy import select
 
-from . import config
-from .db import get_session
-from .models import Question, Attempt
+from app.core import config
+from app.core.db import get_session
+from app.core.models import Question, Attempt
 
 
 def topic_summary() -> Dict:

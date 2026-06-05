@@ -9,7 +9,11 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+# This file moved from app/config.py → app/core/config.py in v2 Phase 1.
+# Walking up three parents (config.py → core/ → app/ → backend/) lands on the
+# backend root, so all BASE_DIR-derived paths (data/, certificates/, .env)
+# stay correct.
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Load environment variables from .env if it exists
 load_dotenv(BASE_DIR / ".env")
@@ -67,6 +71,14 @@ MAX_VIDEO_DURATION_SEC = 60
 PASS_THRESHOLD = (
     PASS_MARK_CORRECT / QUESTIONS_PER_QUIZ if QUESTIONS_PER_QUIZ else 0.0
 )
+
+# Static + templates — pointed at by main.py's StaticFiles / Jinja2Templates
+# mounts. Kept at the backend root (not under app/) to match the legacy
+# layout — moving them would silently change `url_for('static', ...)`
+# resolution in the Jinja templates. Phase 2 (if it wants to relocate
+# them under app/) does so as a deliberate move with template updates.
+STATIC_DIR = BASE_DIR / "static"
+TEMPLATES_DIR = BASE_DIR / "templates"
 
 # Ensure dirs exist
 for d in (QUIZ_RESULTS_DIR, CERTIFICATES_DIR, OUTBOX_DIR):

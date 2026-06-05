@@ -11,7 +11,7 @@ from typing import Dict, Union
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from . import config
+from app.core import config
 
 # Derive static key from config secret
 _raw_secret = config.APP_PAYLOAD_SECRET.encode('utf-8')

@@ -17,9 +17,9 @@ from PIL import Image
 import ffmpeg
 from sqlalchemy import select
 
-from . import config
-from .db import get_session, engine
-from .models import MediaAsset, User
+from app.core import config
+from app.core.db import get_session, engine
+from app.core.models import MediaAsset, User
 
 # Supported signatures (magic numbers)
 _SIGNATURES = {

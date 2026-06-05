@@ -1,22 +1,25 @@
-"""Storage layer — SQLAlchemy-backed.
+"""Quiz storage — attempts, certificate signing, test codes, question bank.
 
-Same surface area as the old JSON-file implementation, with additional
-methods for questions, feed items, and media assets in PostgreSQL.
+Split out of the legacy monolithic app/storage.py during v2 Phase 1. The
+question helpers stay alongside the attempt helpers because both belong
+to the same domain (an attempt is graded against a question); the feed
+moderation queue *reads* questions but does so by importing
+`_question_to_dict` from here rather than fragmenting the table.
 """
 import hashlib
 import hmac
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from sqlalchemy import select
 
-from . import config
-from .db import get_session, init_db  # noqa: F401 — re-export init_db
-from .models import Attempt, User, Question, FeedItem, MediaAsset, CourseChapter, Framework
+from app.core import config
+from app.core.db import get_session
+from app.core.models import Attempt, Question, User
 
 
-# ── Certificate signature (anti-tamper) ───────────────────────────────────────
+# ── Certificate signature (anti-tamper) ──────────────────────────────────────
 
 def _sign_payload(cert_id: str, email: str, score: float, submitted_at: str) -> str:
     """HMAC-SHA256 over pipe-delimited fields using SECRET_KEY."""
@@ -45,11 +48,12 @@ def verify_signature(attempt: Dict) -> bool:
     )
     return hmac.compare_digest(expected, stored)
 
+
 # Confusable-free alphabet for human-readable test codes (no 0/O/1/I)
 _CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 
-# ---------- test code ----------
+# ── Test code ────────────────────────────────────────────────────────────────
 
 def generate_test_code() -> str:
     """Format: AOC-YYYYMMDD-XXXXXX. Loop until unique (collisions vanishingly rare)."""
@@ -63,58 +67,18 @@ def generate_test_code() -> str:
     raise RuntimeError("Could not generate a unique test code after 8 tries")
 
 
-# ---------- user helpers ----------
-
-def upsert_user(email: str, name: Optional[str] = None, picture: Optional[str] = None,
-                provider: Optional[str] = None) -> Dict:
-    email = email.strip().lower()
-    with get_session() as s:
-        u = s.get(User, email)
-        if u is None:
-            role = "QuizManager" if config.DEV_MODE else None
-            u = User(email=email, name=name, picture=picture, provider=provider, role=role)
-            s.add(u)
-        else:
-            if name is not None:
-                u.name = name
-            if picture is not None:
-                u.picture = picture
-            if provider is not None:
-                u.provider = provider
-            if config.DEV_MODE and not u.role:
-                u.role = "QuizManager"
-        s.commit()
-        s.refresh(u)
-        return _user_to_dict(u)
+def _generate_unique_code(session) -> str:
+    """In-session version of generate_test_code that reuses an open session."""
+    date_part = datetime.utcnow().strftime("%Y%m%d")
+    for _ in range(8):
+        rand = "".join(secrets.choice(_CODE_ALPHABET) for _ in range(6))
+        code = f"AOC-{date_part}-{rand}"
+        if session.scalar(select(Attempt).where(Attempt.test_code == code)) is None:
+            return code
+    raise RuntimeError("Could not generate a unique test code after 8 tries")
 
 
-def set_user_role(email: str, role: str) -> None:
-    with get_session() as s:
-        u = s.get(User, email.lower())
-        if u is None:
-            raise ValueError(f"No user for {email}")
-        u.role = role
-        s.commit()
-
-
-def get_user(email: str) -> Optional[Dict]:
-    with get_session() as s:
-        u = s.get(User, email.lower())
-        return _user_to_dict(u) if u else None
-
-
-def _user_to_dict(u: User) -> Dict:
-    return {
-        "email": u.email,
-        "name": u.name,
-        "picture": u.picture,
-        "role": u.role,
-        "provider": u.provider,
-        "preferences": u.preferences or {},
-    }
-
-
-# ---------- attempt save + read ----------
+# ── Attempts ─────────────────────────────────────────────────────────────────
 
 def save_attempt(record: Dict) -> str:
     """Persist a graded attempt."""
@@ -160,7 +124,7 @@ def save_attempt(record: Dict) -> str:
                     "user_answers": record.get("user_answers", {}),
                     "grading": record.get("grading", {}),
                 },
-                metadata=record.get("metadata", {})
+                attempt_metadata=record.get("metadata", {}),
             )
             s.add(att)
         else:
@@ -173,17 +137,6 @@ def save_attempt(record: Dict) -> str:
 
         s.commit()
         return att.test_code
-
-
-def _generate_unique_code(session) -> str:
-    """In-session version of generate_test_code that reuses an open session."""
-    date_part = datetime.utcnow().strftime("%Y%m%d")
-    for _ in range(8):
-        rand = "".join(secrets.choice(_CODE_ALPHABET) for _ in range(6))
-        code = f"AOC-{date_part}-{rand}"
-        if session.scalar(select(Attempt).where(Attempt.test_code == code)) is None:
-            return code
-    raise RuntimeError("Could not generate a unique test code after 8 tries")
 
 
 def attempts_for(email: str) -> List[Dict]:
@@ -234,6 +187,12 @@ def attempt_by_cert_id(cert_id: str) -> Optional[Dict]:
         return _attempt_to_dict(a) if a else None
 
 
+def attempt_by_cert_id_public(cert_id: str) -> Optional[Dict]:
+    with get_session() as s:
+        a = s.scalar(select(Attempt).where(Attempt.cert_id == cert_id))
+        return _attempt_to_dict(a) if a else None
+
+
 def _attempt_to_dict(a: Attempt) -> Dict:
     payload = a.payload or {}
     return {
@@ -253,17 +212,14 @@ def _attempt_to_dict(a: Attempt) -> Dict:
         "questions": payload.get("questions", []),
         "user_answers": payload.get("user_answers", {}),
         "grading": payload.get("grading", {}),
-        "metadata": a.metadata or {}
+        # Model column is named "metadata" in SQL but exposed as the
+        # Python attribute `attempt_metadata` to avoid clashing with the
+        # `metadata` reserved on DeclarativeBase.
+        "metadata": a.attempt_metadata or {}
     }
 
 
-def attempt_by_cert_id_public(cert_id: str) -> Optional[Dict]:
-    with get_session() as s:
-        a = s.scalar(select(Attempt).where(Attempt.cert_id == cert_id))
-        return _attempt_to_dict(a) if a else None
-
-
-# ---------- question bank CRUD ----------
+# ── Question bank ────────────────────────────────────────────────────────────
 
 def save_question(q_data: Dict) -> str:
     """Insert or update (version) a question in the bank."""
@@ -275,16 +231,17 @@ def save_question(q_data: Dict) -> str:
             new_version = (existing.version or 1) + 1
             # Archive old question by setting status to 'archived'
             existing.status = "archived"
-            
-            # Create new question version under a versioned ID to keep attempts working
-            # Past attempts link to the specific question ID, so we keep the base ID for attempts,
-            # but create a copy of the question with version incremented.
-            # Wait, in relational DB, to keep old attempts pointing to the exact same text,
-            # we should either copy the question content into attempts.payload (which we already do!)
-            # since attempts.payload contains full_questions containing explanation, text, etc.
-            # Because full_questions are already copied inline into attempts.payload, we don't need
-            # to worry about attempts breaking when editing questions! This is brilliant!
-            # Therefore, we can just update the existing question row directly, or increment its version.
+
+            # Create new question version under a versioned ID to keep attempts working.
+            # Past attempts link to the specific question ID, so we keep the base ID for
+            # attempts but create a copy of the question with version incremented.
+            # In relational DB, to keep old attempts pointing to the exact same text,
+            # we should either copy the question content into attempts.payload (which
+            # we already do!) since attempts.payload contains full_questions containing
+            # explanation, text, etc.
+            # Because full_questions are already copied inline into attempts.payload, we
+            # don't need to worry about attempts breaking when editing questions — we
+            # can update the existing question row directly and increment its version.
             existing.topic = q_data.get("topic", existing.topic)
             existing.difficulty = q_data.get("difficulty", existing.difficulty)
             existing.question = q_data.get("question", existing.question)
@@ -320,10 +277,11 @@ def get_questions_queue() -> List[Dict]:
             select(Question).where(Question.status.in_(["pending_review", "draft"]))
                            .order_by(Question.created_at.desc())
         ).all()
-        return [_question_to_dict(q) for q in rows]
+        return [question_to_dict(q) for q in rows]
 
 
-def _question_to_dict(q: Question) -> Dict:
+def question_to_dict(q: Question) -> Dict:
+    """Public — feed.moderation imports this to shape the moderation queue."""
     return {
         "id": q.id,
         "topic": q.topic,
@@ -339,149 +297,10 @@ def _question_to_dict(q: Question) -> Dict:
     }
 
 
-# ---------- feed CRUD ----------
-
-def save_feed_item(item: Dict) -> str:
-    fid = item["id"]
-    with get_session() as s:
-        existing = s.get(FeedItem, fid)
-        author_id = item.get("author", {}).get("userId")
-        if author_id and "@" not in author_id:
-            author_id = f"{author_id}@deptagency.com"
-            
-        if existing:
-            existing.status = item.get("status", existing.status)
-            existing.data = item
-        else:
-            new_item = FeedItem(
-                id=fid,
-                type=item["type"],
-                status=item.get("status", "published"),
-                author_id=author_id.lower() if author_id else None,
-                framework_ref=item.get("frameworkRef"),
-                topics=item.get("topics", []),
-                data=item
-            )
-            s.add(new_item)
-        s.commit()
-        return fid
-
-
-def get_feed_items() -> List[Dict]:
-    with get_session() as s:
-        rows = s.scalars(
-            select(FeedItem).where(FeedItem.status.in_(["published", "flagged"]))
-                            .order_by(FeedItem.created_at.desc())
-        ).all()
-        return [r.data for r in rows]
-
-
-def get_moderation_queue() -> Dict[str, List[Dict]]:
-    """Retrieve all flagged or pending moderation items."""
-    with get_session() as s:
-        # Feed items
-        feed_rows = s.scalars(
-            select(FeedItem).where(FeedItem.status.in_(["pending_review", "flagged"]))
-                            .order_by(FeedItem.created_at.desc())
-        ).all()
-        # Questions
-        question_rows = s.scalars(
-            select(Question).where(Question.status.in_(["pending_review", "draft"]))
-                           .order_by(Question.created_at.desc())
-        ).all()
-        
-        return {
-            "feed_items": [r.data for r in feed_rows],
-            "questions": [_question_to_dict(q) for q in question_rows]
-        }
-
-
-# ---------- helpers ----------
+# ── Helpers ──────────────────────────────────────────────────────────────────
 
 def _parse_iso(s: str) -> datetime:
     """Tolerant ISO-8601 → datetime."""
     if isinstance(s, datetime):
         return s
     return datetime.fromisoformat(str(s).replace("Z", ""))
-
-
-# ---------- course content & framework CRUD ----------
-
-def save_chapter(filename: str, ring: str, title: str, content: Dict) -> None:
-    with get_session() as s:
-        chapter = s.get(CourseChapter, filename)
-        if chapter:
-            chapter.ring = ring
-            chapter.title = title
-            chapter.content = content
-        else:
-            chapter = CourseChapter(filename=filename, ring=ring, title=title, content=content)
-            s.add(chapter)
-        s.commit()
-
-
-def get_chapter(filename: str) -> Optional[Dict]:
-    with get_session() as s:
-        chapter = s.get(CourseChapter, filename)
-        if chapter:
-            return {
-                "filename": chapter.filename,
-                "ring": chapter.ring,
-                "title": chapter.title,
-                "content": chapter.content
-            }
-        return None
-
-
-def get_all_chapters() -> List[Dict]:
-    with get_session() as s:
-        chapters = s.scalars(select(CourseChapter)).all()
-        return [
-            {
-                "filename": c.filename,
-                "ring": c.ring,
-                "title": c.title,
-                "content": c.content
-            }
-            for c in chapters
-        ]
-
-
-def save_framework(data: Dict) -> None:
-    with get_session() as s:
-        fw = s.get(Framework, "framework")
-        if fw:
-            fw.data = data
-        else:
-            fw = Framework(id="framework", data=data)
-            s.add(fw)
-        s.commit()
-
-
-def get_framework() -> Optional[Dict]:
-    with get_session() as s:
-        fw = s.get(Framework, "framework")
-        return fw.data if fw else None
-
-
-# Framework-explainer — the static framing JSON (masthead, Part banners,
-# CODE/CODER outer/inner wrappers, node-blocks, #nest, Review, Watch).
-# Stored in the same `frameworks` table with id='explainer' so we get
-# one canonical place for all framework-shaped JSON without a new table.
-
-def save_framework_explainer(data: Dict) -> None:
-    with get_session() as s:
-        fw = s.get(Framework, "explainer")
-        if fw:
-            fw.data = data
-        else:
-            fw = Framework(id="explainer", data=data)
-            s.add(fw)
-        s.commit()
-
-
-def get_framework_explainer() -> Optional[Dict]:
-    with get_session() as s:
-        fw = s.get(Framework, "explainer")
-        return fw.data if fw else None
-

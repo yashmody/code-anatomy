@@ -14,7 +14,7 @@ from email.mime.text import MIMEText
 from pathlib import Path
 from typing import Dict
 
-from . import config
+from app.core import config
 
 
 def _build_message(to_email: str, to_name: str, record: Dict, cert_path: Path) -> MIMEMultipart:
