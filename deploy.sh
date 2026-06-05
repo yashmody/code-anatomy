@@ -94,6 +94,18 @@ else
   log "Detected OS family: RHEL / CentOS"
 fi
 
+# ── pg_exec helper ───────────────────────────────────────────────────────────
+# Run a command as the postgres OS user.
+# Tries `runuser` first (RHEL standard, works even when su is PAM-restricted),
+# then falls back to `su -`.
+pg_exec() {
+  if command -v runuser &>/dev/null; then
+    runuser -l postgres -c "$*"
+  else
+    su - postgres -c "$*"
+  fi
+}
+
 # SELinux is only relevant on RHEL-family VMs
 SELINUX_ON=false
 if [[ "$OS_FAMILY" == "rhel" ]] \
@@ -147,9 +159,16 @@ if ! $UPDATE_ONLY; then
   command -v psql &>/dev/null \
     || die "psql not found. Install the PostgreSQL client package."
 
-  # Verify PostgreSQL is reachable
-  if ! su - postgres -c "psql -c 'SELECT 1'" >/dev/null 2>&1; then
-    die "Cannot connect to PostgreSQL as the postgres superuser. Ensure the service is running."
+  # Verify PostgreSQL is accepting connections.
+  # pg_isready does not require superuser access and is immune to PAM / shell
+  # restrictions on the postgres OS account.
+  if command -v pg_isready &>/dev/null; then
+    pg_isready -q \
+      || die "PostgreSQL is not accepting connections. Check: systemctl status postgresql"
+  else
+    # Fallback: attempt a trivial query via runuser/su
+    pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1 \
+      || die "Cannot connect to PostgreSQL. Check: systemctl status postgresql"
   fi
 
   log "  All pre-flight checks passed."
@@ -261,17 +280,17 @@ systemctl is-active --quiet postgresql \
 
 # Wait until accepting connections (up to 15 s)
 for i in {1..15}; do
-  su - postgres -c "psql -c 'SELECT 1'" >/dev/null 2>&1 && break
+  pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1 && break
   sleep 1
   [[ $i -eq 15 ]] && die "PostgreSQL did not become ready in time."
 done
 log "  PostgreSQL is up."
 
 # Create role (idempotent)
-if ! su - postgres -c "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" | grep -q 1; then
+if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" | grep -q 1; then
   [[ -z "$DB_PASS" ]] && \
     DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
-  su - postgres -c "psql -c \"CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\""
+  pg_exec "psql -c \"CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\""
   # Persist generated password into .env
   sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}|" \
     "$QUIZ_DIR/.env"
@@ -281,19 +300,19 @@ else
 fi
 
 # Create database (idempotent)
-if ! su - postgres -c "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" | grep -q 1; then
-  su - postgres -c "psql -c \"CREATE DATABASE ${DB_NAME} OWNER ${DB_USER}\""
+if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" | grep -q 1; then
+  pg_exec "psql -c \"CREATE DATABASE ${DB_NAME} OWNER ${DB_USER}\""
   log "  Database '${DB_NAME}' created."
 else
   log "  Database '${DB_NAME}' already exists."
 fi
 
 # Grant privileges (idempotent — GRANT is safe to re-run)
-su - postgres -c "psql -d ${DB_NAME} -c \"GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER}\""
+pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER}\""
 
 # ── pg_hba.conf — add md5 entry for the app user if missing ─────────────────
 # Resolve hba_file dynamically — works on Ubuntu (/etc/postgresql/…) and RHEL (/var/lib/pgsql/…)
-PG_HBA="$(su - postgres -c "psql -tAc 'SHOW hba_file'")"
+PG_HBA="$(pg_exec "psql -tAc 'SHOW hba_file'")"
 log "  pg_hba.conf: $PG_HBA"
 
 if [[ -n "$PG_HBA" && -f "$PG_HBA" ]]; then
@@ -329,7 +348,7 @@ if [[ -n "$DB_PASS" ]]; then
 else
   # Peer auth fallback (DB_USER matches an OS user with pg_ident)
   su - "$APP_USER" -c "psql -d ${DB_NAME} -f ${QUIZ_DIR}/deploy_schema.sql" 2>/dev/null \
-    || su - postgres -c "psql -d ${DB_NAME} -f ${QUIZ_DIR}/deploy_schema.sql"
+    || pg_exec "psql -d ${DB_NAME} -f ${QUIZ_DIR}/deploy_schema.sql"
 fi
 log "  Schema applied."
 
