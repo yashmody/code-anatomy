@@ -584,17 +584,26 @@ if [[ -n "$PG_CONF" && -f "$PG_CONF" ]]; then
 fi
 
 # Role
+# Always pull the .env password and ALTER ROLE to match — this prevents the
+# "password in .env" ↔ "password the role was created with" desync that
+# happens after re-runs with regenerated passwords or partial failures.
+if [[ -z "$DB_PASS" ]]; then
+  DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
+fi
+
 if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" \
     2>/dev/null | grep -q 1; then
-  [[ -z "$DB_PASS" ]] && \
-    DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
   pg_exec "psql -c \"CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\""
-  sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}|" \
-    "$QUIZ_DIR/.env"
   ok "Role '${DB_USER}' created"
 else
-  ok "Role '${DB_USER}' already exists"
+  # Role exists — sync the password to what's in .env so the app/ETL can connect
+  pg_exec "psql -c \"ALTER ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\"" >/dev/null
+  ok "Role '${DB_USER}' exists — password synced to .env"
 fi
+
+# Persist the (possibly newly generated) password into .env
+sed -i "s|^DATABASE_URL=.*|DATABASE_URL=postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}|" \
+  "$QUIZ_DIR/.env"
 
 # Database
 if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" \
@@ -633,23 +642,43 @@ if [[ -n "$PG_HBA" && -f "$PG_HBA" ]]; then
 fi
 
 # Schema (DDL)
-if [[ -z "$DB_PASS" ]]; then
-  DB_PASS="$(grep '^DATABASE_URL=' "$QUIZ_DIR/.env" \
-             | sed -E 's|.*://[^:]+:([^@]+)@.*|\1|')" || DB_PASS=""
-fi
-
+# Apply as the postgres superuser via pg_exec (auth path we already verified).
+# This is more robust than connecting as codecoder over TCP — no password
+# mismatch is possible, and pgcrypto/hstore extensions require superuser.
 info "Applying deploy_schema.sql …"
-if [[ -n "$DB_PASS" ]]; then
-  PGPASSWORD="$DB_PASS" psql -U "$DB_USER" -d "$DB_NAME" -h 127.0.0.1 \
-    -f "$QUIZ_DIR/deploy_schema.sql" \
-    2>&1 | grep -v '^$' | while read -r line; do info "  pg: $line"; done
-else
-  su - "$APP_USER" -c "psql -d ${DB_NAME} -f ${QUIZ_DIR}/deploy_schema.sql" 2>/dev/null \
-    | while read -r line; do info "  pg: $line"; done \
-  || pg_exec "psql -d ${DB_NAME} -f ${QUIZ_DIR}/deploy_schema.sql" \
-    | while read -r line; do info "  pg: $line"; done
-fi
+SCHEMA_TMP="/tmp/deploy_schema_$$.sql"
+# Copy schema to a path the postgres user can read (runuser drops privs)
+cp "$QUIZ_DIR/deploy_schema.sql" "$SCHEMA_TMP"
+chmod 644 "$SCHEMA_TMP"
+pg_exec "psql -d ${DB_NAME} -f ${SCHEMA_TMP}" \
+  2>&1 | grep -v '^$' | while read -r line; do info "  pg: $line"; done
+rm -f "$SCHEMA_TMP"
+
+# Grant table privileges to the application role so the app can read/write
+# everything created by the postgres superuser.
+pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO ${DB_USER}\"" \
+  >/dev/null 2>&1
+pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO ${DB_USER}\"" \
+  >/dev/null 2>&1
+pg_exec "psql -d ${DB_NAME} -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${DB_USER}\"" \
+  >/dev/null 2>&1
 ok "Schema applied (tables/indexes created or already exist)"
+ok "Table & sequence privileges granted to '${DB_USER}'"
+
+# Verify the app role can connect over TCP using the password in .env.
+# This is the same connection the ETL and FastAPI app will use, so catching
+# auth failures here is much clearer than failing mid-migration.
+info "Verifying app role can connect over TCP with .env password …"
+if PGPASSWORD="$DB_PASS" PGCONNECT_TIMEOUT=3 \
+   timeout 5 psql -U "$DB_USER" -d "$DB_NAME" -h 127.0.0.1 -c 'SELECT 1' >/dev/null 2>&1; then
+  ok "App role '${DB_USER}' authenticates over TCP"
+else
+  warn "App role TCP auth failed. Capturing error:"
+  PGPASSWORD="$DB_PASS" PGCONNECT_TIMEOUT=3 \
+    timeout 5 psql -U "$DB_USER" -d "$DB_NAME" -h 127.0.0.1 -c 'SELECT 1' 2>&1 \
+    | head -5 | while read -r l; do warn "  $l"; done
+  die "App role cannot connect. Check pg_hba.conf has an md5 host rule for ${DB_USER}."
+fi
 
 # ETL seed
 # Note: we do NOT `source .env` here. app/config.py uses python-dotenv to
