@@ -20,7 +20,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
 # Prefer the project venv if present so the script always has fastapi/uvicorn.
-VENV_PY="${REPO_ROOT}/quiz-certification/.venv/bin/python"
+# v2 path: backend/.venv (was quiz-certification/.venv).
+VENV_PY="${REPO_ROOT}/backend/.venv/bin/python"
 if [[ -x "${VENV_PY}" ]]; then
   PY="${VENV_PY}"
 else

@@ -5,10 +5,15 @@
 # Emits one line per content file:  <sha256>  <relative/path>  <bytecount>
 # Sorted by path so the output is stable and diffable across phase gates.
 #
-# Scope (the three content surfaces that must survive the v2 restructure):
-#   - content-architecture/**/*.json   (git-JSON source of truth)
-#   - content-system/**/*.html         (frozen HTML monoliths)
-#   - app/resources/**/*.html          (front-end resource pages: runbook, checklist, faqs)
+# Scope (v2 paths — see docs/architecture/v2/01-blueprint.md §7):
+#   - content/source/**/*.json   (git-JSON source of truth; was content-architecture/)
+#   - content/frozen/**/*.html   (frozen HTML monolith + resource pages; was
+#                                 content-system/ plus app/resources/, which
+#                                 phase-1/C dedup'd into content/frozen/)
+#
+# Slice F (Phase 1) regenerates this manifest and asserts that the *sha256s*
+# for every file match the pre-restructure baseline — paths change, content
+# does not. The script ignores untracked files anywhere outside content/.
 #
 # Usage (run from anywhere; paths are resolved relative to the repo root):
 #   bash tests/baseline/make-manifest.sh                 # print to stdout
@@ -46,10 +51,7 @@ bytecount() { wc -c < "$1" | tr -d '[:space:]'; }
 
 # Collect the in-scope files. -print0 + sort -z keeps paths with spaces safe
 # and gives deterministic ordering.
-find \
-  content-architecture -name '*.json' -type f -print0 \
-  -o -path 'content-system/*' -name '*.html' -type f -print0 \
-  -o -path 'app/resources/*' -name '*.html' -type f -print0 2>/dev/null \
+find content -type f \( -name '*.json' -o -name '*.html' \) -print0 2>/dev/null \
 | sort -z \
 | while IFS= read -r -d '' f; do
     printf '%s  %s  %s\n' "$(HASH_CMD "$f")" "$f" "$(bytecount "$f")"

@@ -5,6 +5,10 @@ __pycache__/
 .venv/
 venv/
 .pytest_cache/
+# v2 explicit (any .venv anywhere is already covered, but list the canonical
+# locations so it's obvious nothing under backend/ leaks into a commit):
+backend/.venv/
+backend/.pytest_cache/
 
 # --- Secrets / local config ---
 .env
@@ -40,8 +44,14 @@ Thumbs.db
 .vscode/
 *.swp
 
-# content-architecture python venv (do not commit)
+# Legacy v1 paths — kept for safety on cross-branch checkouts. v2 layout
+# moves content-architecture/ → content/source/ and quiz-certification/ →
+# backend/, but anyone still on a pre-v2 branch should not commit these.
 content-architecture/venv/
+quiz-certification/.venv/
+quiz-certification/quiz_results/
+quiz-certification/certificates/
+quiz-certification/outbox/
 
 # --- Media (large binaries — keep out of git; serve locally / from a CDN) ---
 media/

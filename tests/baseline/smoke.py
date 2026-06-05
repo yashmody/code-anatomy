@@ -8,9 +8,9 @@ Run from anywhere:
 
     python3 tests/baseline/smoke.py
 
-Or via the quiz-certification venv (recommended — uses the project's deps):
+Or via the backend venv (recommended — uses the project's deps):
 
-    cd quiz-certification && .venv/bin/python ../tests/baseline/smoke.py
+    cd backend && .venv/bin/python ../tests/baseline/smoke.py
 
 Modes
 -----
@@ -26,9 +26,9 @@ server on $QUIZ_BASE_URL (default http://127.0.0.1:8765).
 Pre-requisites
 --------------
 - Python 3.11+ on PATH.
-- For spawn mode: a working `quiz-certification/.venv` (FastAPI, uvicorn,
-  SQLAlchemy already installed via `requirements.txt`).
-- For spawn mode: `quiz-certification/q0.db` exists (it does on the v2 branch).
+- For spawn mode: a working `backend/.venv` (FastAPI, uvicorn, SQLAlchemy
+  already installed via `requirements.txt`).
+- For spawn mode: `backend/q0.db` exists (it does on the v2 branch).
 
 Fixtures
 --------
@@ -91,7 +91,8 @@ from pathlib import Path
 from typing import Callable, Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
-BACKEND = REPO_ROOT / "quiz-certification"
+# v2: backend/ (was quiz-certification/) — see docs/architecture/v2/01-blueprint.md §7
+BACKEND = REPO_ROOT / "backend"
 VENV_PY = BACKEND / ".venv" / "bin" / "python"
 FIXTURE_DIR = Path(__file__).resolve().parent / "fixtures"
 DEFAULT_PORT = 8765
@@ -219,7 +220,7 @@ def spawn_uvicorn(port: int) -> subprocess.Popen:
     if not VENV_PY.exists():
         print(
             f"ERROR: venv python not found at {VENV_PY}. "
-            "Create it via `cd quiz-certification && python3 -m venv .venv "
+            "Create it via `cd backend && python3 -m venv .venv "
             "&& .venv/bin/pip install -r requirements.txt` first.",
             file=sys.stderr,
         )

@@ -49,11 +49,11 @@ You can use any folder — the upload script takes the path as an argument.
 
 ### Step 2 · Run the upload script
 
-The script is in the quiz-certification venv. Always run it as the `cca`
+The script is in the backend venv. Always run it as the `cca`
 service user so file permissions stay clean:
 
 ```bash
-cd /opt/dept-anatomy/quiz-certification
+cd /opt/dept-anatomy/backend
 sudo -u cca .venv/bin/python -m scripts.upload_media /opt/dept-anatomy/media
 ```
 
@@ -72,7 +72,7 @@ You'll see one line per file:
 ### Step 3 · Verify and get the URLs
 
 ```bash
-cd /opt/dept-anatomy/quiz-certification
+cd /opt/dept-anatomy/backend
 sudo -u cca .venv/bin/python -m scripts.list_media \
   --base https://internal.in.deptagency.com
 ```
@@ -184,7 +184,7 @@ Any other file in the folder is silently ignored — safe to put `README.md`,
 
 Once you have a stable `asset_id`, point the front-end at the streaming
 URL. Example — the manual explainer video lives in
-`app/js/modes/scroll.js`:
+`frontend/modules/course/manual.js`:
 
 ```js
 // Before
@@ -211,7 +211,7 @@ need this.
 The script saw a SQLite URL in the env. Confirm your `.env`:
 
 ```bash
-grep DATABASE_URL /opt/dept-anatomy/quiz-certification/.env
+grep DATABASE_URL /opt/dept-anatomy/backend/.env
 # Expect: DATABASE_URL=postgresql://codecoder:…@localhost:5432/codecoder
 ```
 
@@ -284,12 +284,13 @@ sudo -u postgres vacuumlo codecoder
 ## Files in this pipeline
 
 ```
-quiz-certification/
+backend/
 ├── deploy_schema.sql                 ← creates media_assets table
 ├── app/
-│   ├── media_service.py              ← chunked Range streaming (1 MB chunks)
-│   ├── main.py                       ← /media/video/{id}, /media/image/{id}
-│   └── models.py                     ← MediaAsset SQLAlchemy model
+│   ├── modules/media/                ← chunked Range streaming (1 MB chunks)
+│   │                                   + /media/video/{id}, /media/image/{id} routes
+│   ├── main.py                       ← composes the FastAPI app from modules/
+│   └── core/models.py                ← MediaAsset SQLAlchemy model
 └── scripts/
     ├── upload_media.py               ← THIS DOC — bulk-ingest a folder
     ├── list_media.py                 ← THIS DOC — print URLs

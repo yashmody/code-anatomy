@@ -69,8 +69,9 @@ Do not introduce a fifth block type without a reason.
 
 Four subagents in this project:
 
-- **c0** · Content builder. Edits content-system/ HTML files and
-  sample apps. Plans before building. Always.
+- **c0** · Content builder. Edits content/source/ JSON files (the source of
+  truth) and the rendered HTML in content/frozen/ when a re-render is
+  needed. Also touches sample apps. Plans before building. Always.
 - **content-quality** · Read-only reviewer. MUST be invoked after every
   c0 completion to verify brand, voice, structural integrity,
   accessibility, and AI-tell discipline.

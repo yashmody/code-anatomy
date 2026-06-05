@@ -19,10 +19,11 @@
 #   • Writes an Apache vhost config (HTTP → HTTPS redirect + reverse proxy)
 #   • Opens ports 80 and 443 in the firewall
 #
-# Layout produced on the VM:
+# Layout produced on the VM (v2 paths — see docs/architecture/v2/01-blueprint.md §7):
 #   https://<vm>/             → quiz + certification app (FastAPI, via proxy)
-#   https://<vm>/app/         → static SPA (Feed / Manual / Read)
-#   https://<vm>/anatomy/     → static content-system (course, checklist, runbooks, FAQs)
+#   https://<vm>/app/         → static SPA (Feed / Manual / Read) — served from frontend/
+#   https://<vm>/anatomy/     → frozen content monolith (course, checklist, runbooks, FAQs)
+#                               served from content/frozen/
 #
 # Usage:
 #   sudo ./deploy.sh                    # full first-time install
@@ -39,7 +40,10 @@ set -euo pipefail
 APP_USER="${APP_USER:-cca}"
 APP_HOME="${APP_HOME:-/opt/dept-anatomy}"
 QUIZ_PORT="${QUIZ_PORT:-8000}"
-QUIZ_WORKERS="${QUIZ_WORKERS:-2}"
+# C-12 mitigation — quiz_sessions persistence lands in Phase 2a; until then keep
+# workers=1 so the in-memory session map stays consistent across requests. See
+# docs/architecture/v2/01-blueprint.md "Open issues / C-12".
+QUIZ_WORKERS="${QUIZ_WORKERS:-1}"
 DOMAIN="${DOMAIN:-internal.in.deptagency.com}"
 SERVER_NAME="${SERVER_NAME:-$DOMAIN}"
 
@@ -458,7 +462,7 @@ if ! $UPDATE_ONLY; then
 
   ok "All pre-flight checks passed"
 else
-  PYBIN="$APP_HOME/quiz-certification/.venv/bin/python"
+  PYBIN="$APP_HOME/backend/.venv/bin/python"
   PG_SVC="$(pg_service_name || echo 'postgresql-14')"
   info "Update mode — skipping pre-flight checks"
   info "Using venv  : $PYBIN"
@@ -480,20 +484,23 @@ step "Sync bundle → $APP_HOME"
 mkdir -p "$APP_HOME"
 info "Running rsync from $SRC_DIR …"
 
+# v2 path layout (see docs/architecture/v2/01-blueprint.md §7):
+#   $APP_HOME/backend/         (was quiz-certification/)
+#   $APP_HOME/frontend/        (was app/)
+#   $APP_HOME/content/source/  (was content-architecture/)
+#   $APP_HOME/content/frozen/  (was content-system/)
 RSYNC_OUT="$(rsync -a --delete --stats \
   --exclude '.venv/' \
-  --exclude 'quiz-certification/quiz_results/' \
-  --exclude 'quiz-certification/certificates/' \
-  --exclude 'quiz-certification/outbox/' \
-  --exclude 'quiz-certification/.env' \
-  --exclude 'content-architecture/venv/' \
+  --exclude 'backend/quiz_results/' \
+  --exclude 'backend/certificates/' \
+  --exclude 'backend/outbox/' \
+  --exclude 'backend/.env' \
   --exclude '__pycache__/' \
   --exclude '*.pyc' \
   --exclude '.DS_Store' \
-  "$SRC_DIR/content-system" \
-  "$SRC_DIR/quiz-certification" \
-  "$SRC_DIR/app" \
-  "$SRC_DIR/content-architecture" \
+  "$SRC_DIR/backend" \
+  "$SRC_DIR/frontend" \
+  "$SRC_DIR/content" \
   "$APP_HOME/" 2>&1)"
 
 # Print key rsync stats
@@ -501,7 +508,7 @@ echo "$RSYNC_OUT" | grep -E 'Number of files:|transferred|speedup' | while read 
   info "$line"
 done
 
-QUIZ_DIR="$APP_HOME/quiz-certification"
+QUIZ_DIR="$APP_HOME/backend"
 mkdir -p "$QUIZ_DIR"/{quiz_results,certificates,outbox}
 ok "Bundle synced to $APP_HOME"
 
@@ -543,8 +550,16 @@ if [[ ! -f "$QUIZ_DIR/.env" ]]; then
   fi
   DB_URL="postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}"
 
-  env_set "$QUIZ_DIR/.env" GOOGLE_REDIRECT_URI "https://${DOMAIN}/auth/google/callback"
-  ok "OAuth redirect URI   → https://${DOMAIN}/auth/google/callback"
+  # Q-14: GOOGLE_REDIRECT_URI is set on first create only — never overwritten on
+  # subsequent deploys. Operators who customise this (e.g. /oauth/google/callback
+  # for a non-default OAuth flow, or a CDN-fronted host) keep their value across
+  # `./deploy.sh --update` runs. See docs/architecture/v2/01-blueprint.md Q-14.
+  if ! grep -qE '^GOOGLE_REDIRECT_URI=' "$QUIZ_DIR/.env"; then
+    env_set "$QUIZ_DIR/.env" GOOGLE_REDIRECT_URI "https://${DOMAIN}/auth/google/callback"
+    ok "OAuth redirect URI   → https://${DOMAIN}/auth/google/callback (Q-14: set only if missing)"
+  else
+    ok "OAuth redirect URI   → preserved from existing .env (Q-14)"
+  fi
 
   env_set "$QUIZ_DIR/.env" DATABASE_URL "$DB_URL"
   ok "DATABASE_URL         → postgresql://${DB_USER}:***@localhost:5432/${DB_NAME}"
@@ -801,11 +816,11 @@ if $SELINUX_ON && ! $UPDATE_ONLY; then
   ok "httpd_can_network_connect = on"
 
   info "Labelling content directories …"
-  semanage fcontext -a -t httpd_sys_content_t "${APP_HOME}/content-system(/.*)?" 2>/dev/null \
-    || semanage fcontext -m -t httpd_sys_content_t "${APP_HOME}/content-system(/.*)?"
-  semanage fcontext -a -t httpd_sys_content_t "${APP_HOME}/app(/.*)?" 2>/dev/null \
-    || semanage fcontext -m -t httpd_sys_content_t "${APP_HOME}/app(/.*)?"
-  restorecon -Rv "${APP_HOME}/content-system" "${APP_HOME}/app" >/dev/null
+  semanage fcontext -a -t httpd_sys_content_t "${APP_HOME}/content/frozen(/.*)?" 2>/dev/null \
+    || semanage fcontext -m -t httpd_sys_content_t "${APP_HOME}/content/frozen(/.*)?"
+  semanage fcontext -a -t httpd_sys_content_t "${APP_HOME}/frontend(/.*)?" 2>/dev/null \
+    || semanage fcontext -m -t httpd_sys_content_t "${APP_HOME}/frontend(/.*)?"
+  restorecon -Rv "${APP_HOME}/content/frozen" "${APP_HOME}/frontend" >/dev/null
   ok "SELinux file contexts applied"
 else
   # Don't consume a step number when SELinux is skipped
@@ -849,20 +864,24 @@ if ! $UPDATE_ONLY; then
     HTTP_BLOCK="<VirtualHost *:80>
     ServerName ${SERVER_NAME}
 
-    Alias /anatomy \"${APP_HOME}/content-system\"
-    <Directory \"${APP_HOME}/content-system\">
+    # v2 paths — see docs/architecture/v2/01-blueprint.md §7
+    Alias /anatomy \"${APP_HOME}/content/frozen\"
+    <Directory \"${APP_HOME}/content/frozen\">
         Require all granted
         DirectoryIndex anatomy-of-code-course.html
         Options -Indexes +FollowSymLinks
     </Directory>
 
-    Alias /app \"${APP_HOME}/app\"
-    <Directory \"${APP_HOME}/app\">
+    Alias /app \"${APP_HOME}/frontend\"
+    <Directory \"${APP_HOME}/frontend\">
         Require all granted
         DirectoryIndex index.html
         Options -Indexes +FollowSymLinks
         FallbackResource /app/index.html
     </Directory>
+
+    # Q-13: NO 'Alias /static/' — FastAPI mounts /static/ itself; let it fall
+    # through to ProxyPass so the app's CSS/JS bundles ship from uvicorn.
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"http\"
@@ -892,20 +911,24 @@ ${CHAIN_LINE}
     SSLHonorCipherOrder   on
     Header always set Strict-Transport-Security \"max-age=31536000; includeSubDomains\"
 
-    Alias /anatomy \"${APP_HOME}/content-system\"
-    <Directory \"${APP_HOME}/content-system\">
+    # v2 paths — see docs/architecture/v2/01-blueprint.md §7
+    Alias /anatomy \"${APP_HOME}/content/frozen\"
+    <Directory \"${APP_HOME}/content/frozen\">
         Require all granted
         DirectoryIndex anatomy-of-code-course.html
         Options -Indexes +FollowSymLinks
     </Directory>
 
-    Alias /app \"${APP_HOME}/app\"
-    <Directory \"${APP_HOME}/app\">
+    Alias /app \"${APP_HOME}/frontend\"
+    <Directory \"${APP_HOME}/frontend\">
         Require all granted
         DirectoryIndex index.html
         Options -Indexes +FollowSymLinks
         FallbackResource /app/index.html
     </Directory>
+
+    # Q-13: NO 'Alias /static/' — FastAPI mounts /static/ itself; let it fall
+    # through to ProxyPass so the app's CSS/JS bundles ship from uvicorn.
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"https\"

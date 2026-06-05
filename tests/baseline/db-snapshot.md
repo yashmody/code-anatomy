@@ -1,11 +1,11 @@
 # Baseline DB snapshot — v2 parity safety net
 
-> Source DB: `quiz-certification/q0.db` (sqlite, used by local dev when
-> `DATABASE_URL` is unset — `quiz-certification/app/config.py:46`).
+> Source DB: `backend/q0.db` (sqlite, used by local dev when
+> `DATABASE_URL` is unset — `backend/app/core/config.py`).
 > Snapshot taken at Phase 0 freeze using the project's own venv:
 >
 > ```
-> cd quiz-certification && .venv/bin/python -c "
+> cd backend && .venv/bin/python -c "
 >   import sqlite3; cur = sqlite3.connect('q0.db').cursor()
 >   ..."
 > ```
@@ -13,7 +13,7 @@
 > Cross-references:
 > - Target schema + Alembic adoption plan: [`docs/architecture/v2/03-data-model.md` §2-3](../../docs/architecture/v2/03-data-model.md)
 > - Role overload analysis (`users.role` column): [`docs/architecture/v2/04-authz-model.md` §5](../../docs/architecture/v2/04-authz-model.md)
-> - ORM definitions: `quiz-certification/app/models.py:53-168`
+> - ORM definitions: `backend/app/core/models.py` (was `quiz-certification/app/models.py:53-168` pre-restructure).
 
 ## What this file proves
 
@@ -29,7 +29,7 @@ COUNT(*)`; the local snapshot uses sqlite as a proxy.
 |-----------------------|-----------------------------------------------------------------------------|
 | Engine (local)        | SQLite 3 (file mode)                                                        |
 | Engine (production)   | PostgreSQL (DSN provided via `DATABASE_URL` env)                            |
-| File path (local)     | `quiz-certification/q0.db`                                                  |
+| File path (local)     | `backend/q0.db`                                                             |
 | File size (bytes)     | 446 464                                                                     |
 | Tables                | 7 — `attempts`, `course_chapters`, `feed_items`, `frameworks`, `media_assets`, `questions`, `users` |
 | Indexes               | 5 named (all on `attempts`) + 6 auto (sqlite primary-key indexes)           |
@@ -223,7 +223,7 @@ CREATE TABLE course_chapters (
 
 Empty locally → `/api/course/chapters` returns `{"chapters": []}`
 (verified, see `fixtures/api-course-chapters.json`). In production the ETL
-seeds **41 rows** (one per `content-architecture/course/sections/*.json` —
+seeds **41 rows** (one per `content/source/course/sections/*.json` —
 count from `tests/baseline/content-manifest.txt`). Production parity check:
 `COUNT(*) FROM course_chapters >= 41`.
 
@@ -298,7 +298,7 @@ Each phase gate runs the three commands above and asserts:
 To re-take this snapshot at any later gate (idempotent, read-only):
 
 ```bash
-cd quiz-certification
+cd backend
 .venv/bin/python <<'PY'
 import sqlite3, json
 conn = sqlite3.connect('q0.db')

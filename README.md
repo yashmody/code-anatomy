@@ -4,10 +4,19 @@ Three things to ship, each independent. Pick the ones you need, deploy in any or
 
 ```
 dept-anatomy-of-code/
-├── content-system/    · static HTML field manual (course, checklist, runbook, FAQ collection)
-├── prompt-library/    · B0 agent outputs — prompt sequences + worked samples (starting with AEM → React Native)
-└── quiz-certification/ · FastAPI quiz module (Claude Certified Architect Foundations)
+├── content/
+│   ├── frozen/        · static HTML field manual (course, checklist, runbook, FAQ collection)
+│   └── source/        · JSON source of truth — course chapters, framework, feed items
+├── frontend/          · buildless ES-module SPA (feed, manual reader, quiz UI)
+├── backend/           · FastAPI quiz + content API (Claude Certified Architect Foundations)
+└── prompt-library/    · B0 agent outputs — prompt sequences + worked samples (starting with AEM → React Native)
 ```
+
+> Phase 1 of v2 renamed the top-level folders. Migration map:
+> `quiz-certification/ → backend/`, `app/ → frontend/`,
+> `content-architecture/ → content/source/`,
+> `content-system/ (+ app/resources/) → content/frozen/`.
+> Full detail in `docs/architecture/v2/01-blueprint.md §7`.
 
 ---
 
@@ -32,15 +41,13 @@ The per-component options below (Netlify, S3, Docker, etc.) are alternatives for
 
 ---
 
-## 1 · content-system/
+## 1 · content/frozen/
 
 Self-contained HTML. No build step, no server-side code, no JS framework. Drop on any static host.
 
 ```
-content-system/
-└── anatomy-of-code-course.html   · main field manual · ~6,700 lines · CODE–CODER deep-dives + Part II
-
-app/resources/
+content/frozen/
+├── anatomy-of-code-course.html   · main field manual · ~6,700 lines · CODE–CODER deep-dives + Part II
 ├── code-coder-checklist.html     · discovery checklist · 216 questions across 9 nodes
 ├── architect-runbook.html        · greenfield + brownfield engagement playbooks
 └── faqs/                         · architect FAQ collection (vertical & platform-specific)
@@ -50,22 +57,25 @@ app/resources/
 
 ### Cross-links inside the files
 
-The resource files (`app/resources/`) reference each other by relative path. The course (`content-system/anatomy-of-code-course.html`) links to resources via `../app/resources/`.
+In v1 the resource files lived under `app/resources/` and the course linked
+to them via `../app/resources/`. v2 consolidates everything under
+`content/frozen/`; the deploy script aliases `/anatomy/` → `content/frozen/`
+and the SELinux + Apache config matches.
 
 ### Deploy options
 
 **Easiest — any static host:**
 ```
-# Netlify drop · drag the content-system/ folder onto app.netlify.com/drop
+# Netlify drop · drag the content/frozen/ folder onto app.netlify.com/drop
 
 # Or Vercel
-vercel deploy content-system/
+vercel deploy content/frozen/
 
 # Or Cloudflare Pages
-wrangler pages deploy content-system/
+wrangler pages deploy content/frozen/
 
 # Or S3 + CloudFront (the agency classic)
-aws s3 sync content-system/ s3://your-bucket/ --acl public-read
+aws s3 sync content/frozen/ s3://your-bucket/ --acl public-read
 ```
 
 **On AEM as static assets:**
@@ -142,19 +152,23 @@ The point isn't to run them as-is — it's to see the structure that lets each p
 
 ---
 
-## 3 · quiz-certification/
+## 3 · backend/
 
 A FastAPI app that delivers the Claude Certified Architect — Foundations (CCA-F) quiz. Google OAuth restricted to `@deptagency.com`, 300-question bank (100 each across beginner / intermediate / advanced), 7-day cooldown on fail, PDF certificate via reportlab, admin review tool.
 
 ```
-quiz-certification/
+backend/
 ├── README.md            · full setup, deployment, ops guide
 ├── requirements.txt
 ├── .env.example         · all required environment variables
-├── app/                 · FastAPI source · 9 modules
+├── app/                 · FastAPI source, split into core/ + modules/ per v2 blueprint
+│   ├── main.py          · composition-only entry point
+│   ├── core/            · settings, db, storage, security
+│   └── modules/         · auth/, quiz/, content/, feed/, media/, cms/
 ├── templates/           · Jinja2 templates · 6 pages
 ├── static/              · CSS
 ├── data/                · question bank JSON
+├── migrations/          · Alembic root (Phase 2a) + legacy/reference.sql
 ├── quiz_results/        · JSON dumps of every attempt (runtime · empty in bundle)
 ├── outbox/              · dev-mode email outbox (runtime · empty in bundle)
 └── certificates/        · generated PDFs (runtime · empty in bundle)
@@ -163,7 +177,7 @@ quiz-certification/
 ### Local run
 
 ```bash
-cd quiz-certification
+cd backend
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env  # then fill in OAuth credentials + SMTP
@@ -173,6 +187,10 @@ APP_ENV=dev uvicorn app.main:app --reload --port 8000
 
 # Visit http://localhost:8000
 ```
+
+Or use the top-level `start_local.sh`, which boots the backend on port 8000
+and a static server on port 8080 so the SPA + frozen monolith work end to
+end.
 
 ### Production deploy
 
@@ -207,7 +225,7 @@ python -m app.review --user user@deptagency.com  # filter by user
 python -m app.review --regenerate-cert attempt_id  # regenerate a lost cert
 ```
 
-Full ops detail in `quiz-certification/README.md`.
+Full ops detail in `backend/README.md`.
 
 ---
 
@@ -215,15 +233,15 @@ Full ops detail in `quiz-certification/README.md`.
 
 If shipping the whole bundle to a single host (e.g. the agency intranet):
 
-1. **content-system/** first — static, cheap, visible. Goes live in minutes; gives the team something to read while the rest deploys.
-2. **quiz-certification/** second — needs OAuth credentials and SMTP set up. Plan a quiet 2-hour window for the first deploy.
+1. **content/frozen/** first — static, cheap, visible. Goes live in minutes; gives the team something to read while the rest deploys.
+2. **backend/ + frontend/ + content/source/** second — needs OAuth credentials and SMTP set up. Plan a quiet 2-hour window for the first deploy.
 3. **prompt-library/** third — usually consumed as a code resource (Git, internal package registry), not "deployed" as a service.
 
 A typical deploy layout:
 
 ```
-docs.deptagency.com/anatomy/        ← content-system/
-quiz.deptagency.com/                ← quiz-certification/
+docs.deptagency.com/anatomy/        ← content/frozen/
+quiz.deptagency.com/                ← backend/ + frontend/
 github.com/dept/aem-rn-sample       ← sample (as a repo, not a service)
 ```
 

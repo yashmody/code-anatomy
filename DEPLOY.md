@@ -5,6 +5,35 @@ No prior knowledge of the app is needed — just follow the steps in order.
 
 **Time required:** ~20 minutes for a first deploy (including database setup).
 
+> **v2 transition**
+>
+> Phase 1 of the v2 restructure renamed the top-level folders. The script,
+> the Apache vhost, and the systemd unit have all been updated; everything
+> below describes the new layout. The migration map is in
+> `docs/architecture/v2/01-blueprint.md §7`.
+>
+> | v1 path | v2 path |
+> |---|---|
+> | `quiz-certification/` | `backend/` |
+> | `app/` | `frontend/` |
+> | `content-architecture/` | `content/source/` |
+> | `content-system/` (+ `app/resources/`) | `content/frozen/` |
+>
+> Acceptance constraints for the cutover (still in force):
+> - **No content loss** — every JSON file under `content/source/` and every
+>   HTML file under `content/frozen/` has the same sha256 as its pre-v2
+>   counterpart. The fingerprint is in `tests/baseline/content-manifest.txt`.
+> - **Already-issued certificates keep verifying** — every `cert_id` ever
+>   signed on the production HMAC key must still return `valid=true` on
+>   `GET /verify/{cert_id}`. The canary cert is asserted in
+>   `tests/baseline/smoke.py` and recorded in
+>   `docs/architecture/v2/02-parity-method.md`.
+> - **Visual parity** — the frozen monolith renders byte-identically; the
+>   SPA looks pixel-identical to the v1 baseline.
+> - **C-12 (quiz_sessions persistence)** — `deploy.sh` now pins
+>   `QUIZ_WORKERS=1`. Phase 2a moves the session map into Postgres; once
+>   that ships, this script will raise the default.
+
 ---
 
 ## 1. What you're deploying
@@ -13,10 +42,10 @@ The bundle has five parts. The script deploys four of them:
 
 | Part | What it is | How it's served |
 |------|-----------|-----------------|
-| `quiz-certification/` | A FastAPI web app (the certification quiz + API backend) | Runs as a background service; Apache proxies to it |
-| `app/` | Static SPA (course reader, feed, manual) | Served by FastAPI at `/app` |
-| `content-system/` | 4 static HTML files (course, checklist, FAQ, runbook) | Apache serves them directly |
-| `content-architecture/` | Course chapters, framework hierarchy, feed JSON | Ingested into PostgreSQL by the migration script |
+| `backend/` | A FastAPI web app (the certification quiz + API backend) | Runs as a background service; Apache proxies to it |
+| `frontend/` | Static SPA (course reader, feed, manual) | Apache serves it directly at `/app/`; FastAPI also exposes the same files |
+| `content/frozen/` | Frozen HTML — course, checklist, FAQ, runbooks | Apache serves them directly at `/anatomy/` |
+| `content/source/` | Course chapters, framework hierarchy, feed JSON | Ingested into PostgreSQL by the migration script |
 | `prompt-library/` | B0 prompt sequences + worked samples | **Not deployed** (consumed as a code resource) |
 
 After deploy, the VM answers on one domain:
@@ -133,9 +162,9 @@ You'll **still** need to add SMTP settings (step 6) — production mode sends re
 
 1. **Pre-flight checks** — verifies Python 3, httpd, and psql are available; validates TLS cert/key paths.
 2. Creates a locked-down service user `cca`.
-3. Copies the bundle to `/opt/dept-anatomy` (including `app/` and `content-architecture/`).
-4. Builds a Python virtualenv and installs the app's dependencies.
-5. Creates the app's config file (`.env`) with a random session key and **DATABASE_URL**.
+3. Copies the bundle to `/opt/dept-anatomy` (`backend/`, `frontend/`, `content/source/`, `content/frozen/`).
+4. Builds a Python virtualenv at `backend/.venv` and installs the app's dependencies.
+5. Creates the app's config file (`backend/.env`) with a random session key and **DATABASE_URL**.
 6. **PostgreSQL first-time setup:**
    - Initialises the cluster (`postgresql-setup --initdb`) if needed.
    - Starts and enables the `postgresql` service.
@@ -144,8 +173,8 @@ You'll **still** need to add SMTP settings (step 6) — production mode sends re
    - Configures `pg_hba.conf` for password-based local auth.
    - Applies `deploy_schema.sql` (extensions, all tables, indexes).
    - Runs the ETL migration script to seed questions, course chapters, framework, and feed items.
-7. Installs and starts a systemd service `cca-quiz` (this runs the app).
-8. Configures **SELinux** (lets Apache talk to the app + read the static files).
+7. Installs and starts a systemd service `cca-quiz` (this runs `app.main:app` from `backend/`).
+8. Configures **SELinux** (lets Apache talk to the app + read `frontend/` and `content/frozen/`).
 9. Writes the Apache HTTPS config and reloads Apache.
 10. Opens ports 80 and 443 in the firewall.
 
@@ -165,7 +194,7 @@ systemctl status cca-quiz          # should say "active (running)"
 systemctl status postgresql        # should say "active (running)"
 
 # 3. Is the database populated?
-sudo -u cca PGPASSWORD="$(grep DATABASE_URL /opt/dept-anatomy/quiz-certification/.env | sed 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/')" \
+sudo -u cca PGPASSWORD="$(grep DATABASE_URL /opt/dept-anatomy/backend/.env | sed 's/.*:\/\/[^:]*:\([^@]*\)@.*/\1/')" \
   psql -U codecoder -d codecoder -h 127.0.0.1 \
   -c "SELECT 'questions', count(*) FROM questions
       UNION ALL SELECT 'course_chapters', count(*) FROM course_chapters
@@ -204,7 +233,7 @@ This means the database tables exist but are **empty** — the migration script 
 or didn't find the content files. Fix:
 
 ```bash
-cd /opt/dept-anatomy/quiz-certification
+cd /opt/dept-anatomy/backend
 sudo -u cca .venv/bin/python -m scripts.migrate_to_postgres
 sudo systemctl restart cca-quiz
 ```
@@ -213,11 +242,11 @@ sudo systemctl restart cca-quiz
 
 ## 6. Switching to / configuring production
 
-The app's settings live in **`/opt/dept-anatomy/quiz-certification/.env`**.
+The app's settings live in **`/opt/dept-anatomy/backend/.env`**.
 Edit it as root:
 
 ```bash
-sudo nano /opt/dept-anatomy/quiz-certification/.env
+sudo nano /opt/dept-anatomy/backend/.env
 ```
 
 Set these for production:
@@ -261,7 +290,7 @@ generated certificates, and quiz results. It skips the package/firewall/SELinux 
 If a new version includes updated course chapters, framework, or additional quiz questions:
 
 ```bash
-cd /opt/dept-anatomy/quiz-certification
+cd /opt/dept-anatomy/backend
 sudo -u cca .venv/bin/python -m scripts.migrate_to_postgres
 sudo systemctl restart cca-quiz
 ```
@@ -290,17 +319,17 @@ sudo systemctl reload httpd
 sudo -u postgres psql -d codecoder -c "SELECT count(*) FROM questions;"
 ```
 
-**Where things live:**
+**Where things live (v2 layout):**
 
 | Thing | Path |
 |-------|------|
-| App code & venv | `/opt/dept-anatomy/quiz-certification/` |
-| App config | `/opt/dept-anatomy/quiz-certification/.env` |
-| SPA frontend | `/opt/dept-anatomy/app/` |
-| Static HTML | `/opt/dept-anatomy/content-system/` |
-| Content architecture (source JSONs) | `/opt/dept-anatomy/content-architecture/` |
-| Quiz attempt records | `/opt/dept-anatomy/quiz-certification/quiz_results/` |
-| Generated certificates (PDFs) | `/opt/dept-anatomy/quiz-certification/certificates/` |
+| App code & venv | `/opt/dept-anatomy/backend/` |
+| App config | `/opt/dept-anatomy/backend/.env` |
+| SPA frontend | `/opt/dept-anatomy/frontend/` |
+| Frozen HTML monolith | `/opt/dept-anatomy/content/frozen/` |
+| Content source (JSON) | `/opt/dept-anatomy/content/source/` |
+| Quiz attempt records | `/opt/dept-anatomy/backend/quiz_results/` |
+| Generated certificates (PDFs) | `/opt/dept-anatomy/backend/certificates/` |
 | PostgreSQL data | `/var/lib/pgsql/data/` |
 | systemd service | `/etc/systemd/system/cca-quiz.service` |
 | Apache site config | `/etc/httpd/conf.d/cca-quiz.conf` |
@@ -344,13 +373,17 @@ sudo -u postgres psql -d codecoder < /tmp/codecoder_backup_YYYYMMDD.sql
 
 ### Schema file
 
-The canonical schema is at `quiz-certification/deploy_schema.sql`. It uses
+The canonical schema is at `backend/deploy_schema.sql`. It uses
 `CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS`, so it is safe to re-apply:
 
 ```bash
 PGPASSWORD=<password> psql -U codecoder -d codecoder -h 127.0.0.1 \
-  -f /opt/dept-anatomy/quiz-certification/deploy_schema.sql
+  -f /opt/dept-anatomy/backend/deploy_schema.sql
 ```
+
+Phase 2a replaces this hand-rolled DDL with Alembic migrations under
+`backend/migrations/`. Until then the legacy schema is kept as a reference at
+`backend/migrations/legacy/reference.sql`.
 
 ---
 
@@ -358,10 +391,10 @@ PGPASSWORD=<password> psql -U codecoder -d codecoder -h 127.0.0.1 \
 
 **"404 — /api/course/framework" on first load**
 The database tables are empty. The migration script either didn't run or
-`content-architecture/` wasn't synced to the VM. Fix:
+`content/source/` wasn't synced to the VM. Fix:
 ```bash
-ls /opt/dept-anatomy/content-architecture/course/framework.json  # should exist
-cd /opt/dept-anatomy/quiz-certification
+ls /opt/dept-anatomy/content/source/course/framework.json  # should exist
+cd /opt/dept-anatomy/backend
 sudo -u cca .venv/bin/python -m scripts.migrate_to_postgres
 sudo systemctl restart cca-quiz
 ```
@@ -396,7 +429,7 @@ The app service is probably down. Check `systemctl status cca-quiz` and
 
 **`/anatomy/` pages give "403 Forbidden"**
 SELinux hasn't labeled the files. Re-run the full deploy (`sudo ./deploy.sh`), or manually:
-`sudo restorecon -Rv /opt/dept-anatomy/content-system`.
+`sudo restorecon -Rv /opt/dept-anatomy/content/frozen /opt/dept-anatomy/frontend`.
 
 **Apache won't start after my edit**
 Run `sudo httpd -t` — it tells you the file and line of the problem.
@@ -413,4 +446,4 @@ file, re-run with `CHAIN_FILE=/path/to/chain.pem`.
 - **TLS certificate / DNS** → whoever manages the internal CA / network.
 - **SMTP credentials** → email/IT team.
 - **Database issues** → check `journalctl -u postgresql` and `/var/lib/pgsql/data/log/`.
-- **App behaviour, question bank, admin tools** → see `quiz-certification/README.md`.
+- **App behaviour, question bank, admin tools** → see `backend/README.md`.

@@ -6,7 +6,7 @@ step 3). Idempotent and read-only.
 
 Run from anywhere:
 
-    cd quiz-certification && .venv/bin/python \
+    cd backend && .venv/bin/python \
         ../tests/baseline/scripts/db-inventory.py
 
 Output (deterministic, diffable):
@@ -26,18 +26,18 @@ from pathlib import Path
 
 def find_db() -> Path:
     """Resolve q0.db whether we were invoked from the repo root or from
-    quiz-certification/."""
+    backend/ (v2 path; was quiz-certification/ in v1)."""
     candidates = [
         Path.cwd() / "q0.db",
-        Path.cwd() / "quiz-certification" / "q0.db",
+        Path.cwd() / "backend" / "q0.db",
         Path(__file__).resolve().parent.parent.parent.parent
-        / "quiz-certification"
+        / "backend"
         / "q0.db",
     ]
     for c in candidates:
         if c.is_file():
             return c
-    print("ERROR: could not find quiz-certification/q0.db", file=sys.stderr)
+    print("ERROR: could not find backend/q0.db", file=sys.stderr)
     sys.exit(2)
 
 
