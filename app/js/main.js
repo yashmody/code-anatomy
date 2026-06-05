@@ -5,10 +5,14 @@ import { renderFeed } from './modes/feed.js';
 import { initAuthUI } from './auth-ui.js';
 import { initializeAuth } from './feed/auth.js';
 
-// EDIT HERE → the Quiz is a separate FastAPI server (run: `uvicorn app.main:app`,
-// default http://localhost:8000). Repoint this one constant when it moves; the
-// Resources → Quiz link reads it on load. The other three resources are static pages.
-const QUIZ_URL = 'http://localhost:8000';
+// Quiz URL — in production the FastAPI quiz app is reverse-proxied at the
+// same origin as this SPA (Apache routes /app/* to the static SPA and
+// everything else to FastAPI). In local dev (file:// or python -m
+// http.server on a different port), fall back to localhost:8000 where the
+// quiz typically runs.
+const QUIZ_URL = (location.protocol === 'http:' || location.protocol === 'https:')
+  ? `${location.origin}/`
+  : 'http://localhost:8000/';
 
 const BASE = '../content-architecture';            // app/ reads from its sibling data package
 const SECTION_FILES = [   // extracted chapters (Manual orders them by framework, not by this list)

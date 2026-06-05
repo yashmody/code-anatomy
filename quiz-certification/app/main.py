@@ -29,6 +29,7 @@ New API routes:
   GET  /media/video/{asset_id} Chunked video streaming from Postgres using range headers
   GET  /media/image/{asset_id} Image rendering from Postgres large object
 """
+import json
 import uuid
 import secrets
 import tempfile
@@ -570,6 +571,28 @@ async def get_course_chapter(filename: str):
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
     return chapter["content"]
+
+
+@app.get("/api/course/framework-explainer")
+async def get_framework_explainer():
+    """Serve the static framing JSON (masthead + Part banners + CODE/CODER wrappers).
+
+    This file is verbatim copy used by the SPA's Manual mode to render the
+    framing around the dynamic section content. It is NOT ingested into
+    PostgreSQL — it's a static framing artefact maintained alongside the
+    course HTML in content-architecture/course/framework-explainer.json.
+    """
+    explainer_path = config.BASE_DIR.parent / "content-architecture" / "course" / "framework-explainer.json"
+    if not explainer_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail=f"framework-explainer.json not found at {explainer_path}",
+        )
+    try:
+        with open(explainer_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read framework-explainer.json: {e}")
 
 
 # ---------- Feed APIs ----------
