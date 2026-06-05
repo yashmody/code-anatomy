@@ -69,6 +69,26 @@ SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_START=$SECONDS
 STEP_NUM=0
 
+# ── Auto-load deploy.env if present ─────────────────────────────────────────
+# Optional file next to this script. Any of the tunables above can be set
+# here so you don't have to pass them on the command line every run.
+# Example deploy.env:
+#   POSTGRES_SUPERUSER_PASSWORD='your-postgres-password'
+#   GOOGLE_CLIENT_ID='...'
+#   GOOGLE_CLIENT_SECRET='...'
+#   DOMAIN='internal.in.deptagency.com'
+# This file is gitignored — see .gitignore.
+if [[ -f "$SRC_DIR/deploy.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$SRC_DIR/deploy.env"
+  set +a
+  # Re-resolve the env-var-backed tunables in case deploy.env set them
+  POSTGRES_SUPERUSER_PASSWORD="${POSTGRES_SUPERUSER_PASSWORD:-${PGPASSWORD:-}}"
+  DOMAIN="${DOMAIN:-internal.in.deptagency.com}"
+  SERVER_NAME="${SERVER_NAME:-$DOMAIN}"
+fi
+
 # ── Console helpers ──────────────────────────────────────────────────────────
 # Colours
 C_CYAN='\033[1;36m'
@@ -113,6 +133,8 @@ printf '║   DEPT®  ·  Anatomy of Code  ·  Deployment Script       ║\n'
 printf '║   Domain : %-46s║\n' "$DOMAIN"
 printf '║   Target : %-46s║\n' "$APP_HOME"
 printf '║   Mode   : %-46s║\n' "$( $UPDATE_ONLY && echo '--update (code + restart only)' || echo 'full install')"
+[[ -f "$SRC_DIR/deploy.env" ]] && \
+printf '║   Config : %-46s║\n' "deploy.env loaded ✓"
 printf '╚══════════════════════════════════════════════════════════╝\n'
 printf '%b\n' "$C_RESET"
 

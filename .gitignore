@@ -10,6 +10,7 @@ venv/
 .env
 .env.local
 .claude/settings.local.json
+deploy.env
 
 # --- Dev-only shims (never ship to prod) ---
 quiz-certification/app/dev_quiz.py
