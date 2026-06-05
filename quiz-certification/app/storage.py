@@ -13,7 +13,7 @@ from sqlalchemy import select
 
 from . import config
 from .db import get_session, init_db  # noqa: F401 — re-export init_db
-from .models import Attempt, User, Question, FeedItem, MediaAsset
+from .models import Attempt, User, Question, FeedItem, MediaAsset, CourseChapter, Framework
 
 
 # ── Certificate signature (anti-tamper) ───────────────────────────────────────
@@ -367,7 +367,7 @@ def save_feed_item(item: Dict) -> str:
 def get_feed_items() -> List[Dict]:
     with get_session() as s:
         rows = s.scalars(
-            select(FeedItem).where(FeedItem.status == "published")
+            select(FeedItem).where(FeedItem.status.in_(["published", "flagged"]))
                             .order_by(FeedItem.created_at.desc())
         ).all()
         return [r.data for r in rows]
@@ -400,3 +400,63 @@ def _parse_iso(s: str) -> datetime:
     if isinstance(s, datetime):
         return s
     return datetime.fromisoformat(str(s).replace("Z", ""))
+
+
+# ---------- course content & framework CRUD ----------
+
+def save_chapter(filename: str, ring: str, title: str, content: Dict) -> None:
+    with get_session() as s:
+        chapter = s.get(CourseChapter, filename)
+        if chapter:
+            chapter.ring = ring
+            chapter.title = title
+            chapter.content = content
+        else:
+            chapter = CourseChapter(filename=filename, ring=ring, title=title, content=content)
+            s.add(chapter)
+        s.commit()
+
+
+def get_chapter(filename: str) -> Optional[Dict]:
+    with get_session() as s:
+        chapter = s.get(CourseChapter, filename)
+        if chapter:
+            return {
+                "filename": chapter.filename,
+                "ring": chapter.ring,
+                "title": chapter.title,
+                "content": chapter.content
+            }
+        return None
+
+
+def get_all_chapters() -> List[Dict]:
+    with get_session() as s:
+        chapters = s.scalars(select(CourseChapter)).all()
+        return [
+            {
+                "filename": c.filename,
+                "ring": c.ring,
+                "title": c.title,
+                "content": c.content
+            }
+            for c in chapters
+        ]
+
+
+def save_framework(data: Dict) -> None:
+    with get_session() as s:
+        fw = s.get(Framework, "framework")
+        if fw:
+            fw.data = data
+        else:
+            fw = Framework(id="framework", data=data)
+            s.add(fw)
+        s.commit()
+
+
+def get_framework() -> Optional[Dict]:
+    with get_session() as s:
+        fw = s.get(Framework, "framework")
+        return fw.data if fw else None
+

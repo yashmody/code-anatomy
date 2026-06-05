@@ -38,7 +38,9 @@ Self-contained HTML. No build step, no server-side code, no JS framework. Drop o
 
 ```
 content-system/
-├── anatomy-of-code-course.html   · main field manual · ~6,700 lines · CODE–CODER deep-dives + Part II
+└── anatomy-of-code-course.html   · main field manual · ~6,700 lines · CODE–CODER deep-dives + Part II
+
+app/resources/
 ├── code-coder-checklist.html     · discovery checklist · 216 questions across 9 nodes
 ├── architect-runbook.html        · greenfield + brownfield engagement playbooks
 └── faqs/                         · architect FAQ collection (vertical & platform-specific)
@@ -48,7 +50,7 @@ content-system/
 
 ### Cross-links inside the files
 
-The files reference each other by relative filename (`href="code-coder-checklist.html"` etc.). Keep them in the same directory or the same web root.
+The resource files (`app/resources/`) reference each other by relative path. The course (`content-system/anatomy-of-code-course.html`) links to resources via `../app/resources/`.
 
 ### Deploy options
 

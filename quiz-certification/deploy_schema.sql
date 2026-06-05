@@ -82,3 +82,21 @@ CREATE TABLE IF NOT EXISTS media_assets (
     uploaded_by VARCHAR(255) REFERENCES users(email) ON DELETE SET NULL,
     uploaded_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
+
+-- 6. Course Chapters Table
+CREATE TABLE IF NOT EXISTS course_chapters (
+    filename VARCHAR(128) PRIMARY KEY,
+    ring VARCHAR(32) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content JSONB NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 7. Framework Table
+CREATE TABLE IF NOT EXISTS frameworks (
+    id VARCHAR(32) PRIMARY KEY DEFAULT 'framework',
+    data JSONB NOT NULL,
+    updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+

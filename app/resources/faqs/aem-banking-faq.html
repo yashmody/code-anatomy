@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AEM × Banking — Architect's FAQ · DEPT®</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#ffffff;--paper-2:#f6f5f1;--ink:#0a0a0a;--ink-soft:#3f3f3f;--ink-faint:#6f6f6f;
+    --rule:#e6e3dc;--card:#ffffff;--ochre:#FF4900;--ochre-deep:#cc3a00;--ochre-soft:#FFA279;
+    --serif:'Syne',serif;--sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  }
+  html[data-theme="dark"]{
+    --paper:#080808;--paper-2:#131211;--ink:#ffffff;--ink-soft:#cfcdc8;--ink-faint:#8a8780;
+    --rule:#2a2825;--card:#0e0d0c;--ochre:#FF4900;--ochre-deep:#FFA279;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:88px}
+  body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.55;font-size:15px;min-height:100vh;transition:background .3s,color .3s}
+  .grain{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.5;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  html[data-theme="dark"] .grain{mix-blend-mode:screen;opacity:.4}
+  a{color:var(--ink);text-decoration:none}
+
+  /* Brand bar */
+  .brand-bar{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:18px;padding:14px 32px;backdrop-filter:saturate(180%) blur(8px)}
+  .brand-bar .back{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--rule);padding:7px 12px;transition:.15s}
+  .brand-bar .back:hover{border-color:var(--ochre);color:var(--ochre)}
+  .brand-bar img.dept-svg-logo{height:36px;width:auto;display:block;transition:filter .3s}
+  html[data-theme="dark"] .brand-bar img.dept-svg-logo{filter:invert(1)}
+  .brand-bar .tagline{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:700}
+  .brand-bar .spacer{flex:1}
+  .theme-toggle{background:transparent;border:1px solid var(--rule);padding:7px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s}
+  .theme-toggle:hover{border-color:var(--ochre);color:var(--ochre)}
+
+  main{max-width:980px;margin:0 auto;padding:48px 32px 80px;position:relative;z-index:2}
+
+  /* Hero */
+  .hero{margin-bottom:36px}
+  .breadcrumb{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px;font-weight:700}
+  .breadcrumb b{color:var(--ochre)}
+  .breadcrumb .sep{margin:0 8px;color:var(--rule)}
+  h1{font-family:var(--serif);font-weight:800;font-size:56px;line-height:1;letter-spacing:-.02em;margin-bottom:18px}
+  h1 .x{color:var(--ochre)}
+  .lede{font-size:17px;color:var(--ink-soft);max-width:680px;line-height:1.55;margin-bottom:24px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:24px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);padding-top:18px;border-top:1px solid var(--rule)}
+  .meta-row b{color:var(--ochre);font-weight:700;margin-right:6px}
+
+  /* Controls — sticky */
+  .controls{position:sticky;top:60px;z-index:40;background:var(--paper);padding:18px 0 14px;margin:24px 0 16px;border-bottom:1px solid var(--rule)}
+  .search-wrap{position:relative;margin-bottom:14px}
+  .search-wrap::before{content:'';position:absolute;left:14px;top:50%;transform:translateY(-50%);width:14px;height:14px;background:no-repeat center/contain;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23999' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E")}
+  html[data-theme="dark"] .search-wrap::before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='M21 21l-4.35-4.35'/%3E%3C/svg%3E")}
+  input[type="search"]{width:100%;padding:14px 18px 14px 40px;border:1px solid var(--rule);background:var(--card);color:var(--ink);font-family:var(--sans);font-size:15px;transition:border .15s}
+  input[type="search"]:focus{outline:none;border-color:var(--ochre)}
+  input[type="search"]::placeholder{color:var(--ink-faint)}
+  .count{position:absolute;right:14px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:11px;color:var(--ink-faint);letter-spacing:.04em}
+
+  .tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .tag-pill{background:transparent;border:1px solid var(--rule);color:var(--ink-soft);padding:6px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:.15s}
+  .tag-pill:hover{border-color:var(--ochre);color:var(--ochre)}
+  .tag-pill.active{background:var(--ochre);border-color:var(--ochre);color:#fff}
+  .tag-pill.active:hover{background:var(--ochre-deep);border-color:var(--ochre-deep);color:#fff}
+  .clear-btn{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);background:transparent;border:none;cursor:pointer;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:6px 0}
+  .clear-btn:hover{color:var(--ochre)}
+
+  /* FAQ items */
+  .faq-list{margin-top:8px}
+  details.faq{background:var(--card);border:1px solid var(--rule);margin-bottom:10px;scroll-margin-top:200px;transition:border-color .2s,box-shadow .2s}
+  details.faq[open]{border-color:var(--ochre)}
+  details.faq summary{list-style:none;cursor:pointer;padding:18px 22px;display:flex;align-items:flex-start;gap:16px;user-select:none;transition:background .15s}
+  details.faq summary::-webkit-details-marker{display:none}
+  details.faq summary:hover{background:var(--paper-2)}
+  details.faq[open] summary{border-bottom:1px solid var(--rule)}
+  .q-num{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;color:var(--ochre);min-width:32px;flex-shrink:0;padding-top:3px;line-height:1}
+  .q-text{flex:1;font-family:var(--sans);font-weight:500;font-size:15.5px;line-height:1.45;color:var(--ink)}
+  .q-icon{font-family:var(--mono);font-weight:700;color:var(--ochre);font-size:22px;line-height:1;flex-shrink:0;padding-top:2px}
+  details.faq[open] .q-icon::after{content:'−'}
+  details.faq:not([open]) .q-icon::after{content:'+'}
+  .answer{padding:6px 22px 26px 70px}
+  .answer p{margin-bottom:12px;line-height:1.6;color:var(--ink-soft);font-size:14.5px}
+  .answer p:last-child{margin-bottom:0}
+  .answer strong{color:var(--ink);font-weight:700}
+  .answer em{font-style:italic;color:var(--ink)}
+  .answer code{font-family:var(--mono);font-size:13px;background:var(--paper-2);padding:1.5px 6px;border:1px solid var(--rule);color:var(--ochre)}
+  .answer h5{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--rule)}
+  .answer ul{margin:8px 0 12px;padding-left:0;list-style:none}
+  .answer ul li{position:relative;padding-left:18px;margin-bottom:8px;font-size:14px;line-height:1.55;color:var(--ink-soft)}
+  .answer ul li::before{content:'';position:absolute;left:0;top:9px;width:6px;height:6px;background:var(--ochre)}
+  .answer ul li b{color:var(--ink);font-weight:700}
+  .arch-note{margin:14px 0;padding:12px 16px;background:var(--paper-2);border-left:3px solid var(--ochre);font-size:13.5px;color:var(--ink-soft);line-height:1.5}
+  .arch-note b{color:var(--ochre);font-weight:700;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:4px}
+  .q-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:14px;padding-left:70px;padding-bottom:0}
+  .tag-chip{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--rule);color:var(--ink-faint);padding:3px 8px}
+
+  .empty{text-align:center;padding:60px 20px;color:var(--ink-faint);font-size:14px}
+  .empty b{color:var(--ink);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;display:block;margin-bottom:8px}
+
+  footer{max-width:980px;margin:48px auto 0;padding:32px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-faint);line-height:1.6;position:relative;z-index:2}
+  footer b{color:var(--ink);font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;display:inline-block;margin-right:6px}
+
+  /* Highlight matched text */
+  mark{background:rgba(255,73,0,.18);color:inherit;padding:1px 2px;border-radius:0}
+  html[data-theme="dark"] mark{background:rgba(255,162,121,.22)}
+
+  /* Print */
+  @media print{
+    .brand-bar,.controls,footer,.q-icon{display:none}
+    details.faq{break-inside:avoid;border:1px solid #000;margin-bottom:12px}
+    details.faq summary{padding:12px}
+    .answer{padding:0 12px 12px 12px}
+    details.faq:not([open])>:not(summary){display:block}
+    body{color:#000;background:#fff}
+  }
+
+  @media (max-width:680px){
+    main{padding:32px 18px 60px}
+    h1{font-size:38px}
+    .brand-bar{padding:12px 16px;gap:10px;flex-wrap:wrap}
+    .brand-bar img.dept-svg-logo{height:28px}
+    .brand-bar .tagline{font-size:9px}
+    details.faq summary{padding:14px 16px;gap:10px}
+    .answer{padding:6px 16px 20px 16px}
+    .q-tags{padding-left:16px}
+    .q-num{min-width:26px;font-size:10px}
+    .q-text{font-size:14.5px}
+    .meta-row{flex-direction:column;gap:8px}
+  }
+</style>
+</head>
+<body>
+<div class="grain"></div>
+
+<header class="brand-bar">
+  <a href="index.html" class="back">← All FAQs</a>
+  <img src="https://www.deptagency.com/wp-content/uploads/2025/10/logo-dept.svg" class="dept-svg-logo" alt="DEPT®" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" />
+  <span style="display:none;font-family:var(--serif);font-weight:800;font-size:18px;color:var(--ink)">DEPT®</span>
+  <div class="tagline">Architect's FAQ</div>
+  <div class="spacer"></div>
+  <button class="theme-toggle" id="themeToggle">
+    <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    <span id="themeLabel">Dark Mode</span>
+  </button>
+</header>
+
+<main>
+  <div class="hero">
+    <div class="breadcrumb">FAQ <span class="sep">›</span> AEM <span class="sep">›</span> <b>Banking</b></div>
+    <h1>AEM <span class="x">×</span> Banking</h1>
+    <p class="lede">Architect-level answers to the questions that come up in every regulated-industry AEM implementation. Written for architects, with security teams as the secondary audience. Search the questions, filter by tag, or browse all thirteen.</p>
+    <div class="meta-row">
+      <span><b>Audience</b> Architects · Security · Cloud Ops</span>
+      <span><b>Reviewed</b> June 2026</span>
+      <span><b>Source</b> Adobe AMS docs + DEPT® field experience</span>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <input type="search" id="search" placeholder="Search questions and answers — try 'encryption', 'Splunk', 'BYOK'..." />
+      <div class="count" id="count">13 of 13</div>
+    </div>
+    <div class="tags" id="tagBar">
+      <button class="tag-pill active" data-tag="all">All</button>
+      <button class="tag-pill" data-tag="Network">Network</button>
+      <button class="tag-pill" data-tag="Security">Security</button>
+      <button class="tag-pill" data-tag="Architecture">Architecture</button>
+      <button class="tag-pill" data-tag="Compliance">Compliance</button>
+      <button class="tag-pill" data-tag="Performance">Performance</button>
+      <button class="tag-pill" data-tag="Observability">Observability</button>
+      <button class="tag-pill" data-tag="Integration">Integration</button>
+      <button class="tag-pill" data-tag="AI">AI</button>
+      <button class="clear-btn" id="clearBtn" style="display:none">Clear ×</button>
+    </div>
+  </div>
+
+  <div class="faq-list" id="faqList">
+
+    <!-- Q1 -->
+    <details class="faq" id="q1" data-tags="Network,Security">
+      <summary>
+        <span class="q-num">01</span>
+        <span class="q-text">Traffic from the Bank's Akamai CDN to Adobe-managed DNS must use a dedicated, whitelisted route, not the public internet. Is this the case?</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p><strong>The short answer: no, not in the strict private-peering sense.</strong> Adobe Managed Services does not provide dedicated private circuits (such as ExpressRoute or Direct Connect) between a customer's CDN provider (Akamai) and AMS infrastructure.</p>
+        <h5>The standard pattern</h5>
+        <p>Traffic flows over the public internet using HTTPS (TLS 1.2+), secured by two complementary controls:</p>
+        <ul>
+          <li><b>IP allow-listing</b> — Adobe MS ingress firewall is configured to accept traffic only from Akamai's published egress IP ranges. These ranges update periodically; track them as an operational dependency.</li>
+          <li><b>Origin authentication</b> — Akamai signs requests with shared secrets (origin cloaking via signed headers), or mTLS where contractually supported.</li>
+        </ul>
+        <h5>For higher assurance</h5>
+        <p>mTLS between Akamai and Adobe origins can be negotiated as a contract addition. Some banking customers also deploy a reverse proxy in their own DMZ between Akamai and AMS to add a tenant-controlled inspection point.</p>
+        <div class="arch-note"><b>For the architect</b>The defensible answer to cyber security is: TLS-over-internet, IP-restricted on both ends, origin-authenticated, optionally mTLS. Document the Akamai IP allowlist owner and the renewal cadence — this is the most common operational gap.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Network</span><span class="tag-chip">Security</span></div>
+      </div>
+    </details>
+
+    <!-- Q2 -->
+    <details class="faq" id="q2" data-tags="Architecture,Security">
+      <summary>
+        <span class="q-num">02</span>
+        <span class="q-text">The architecture diagram must explicitly show Adobe's own WAF/CDN layer in addition to the Bank's Akamai layer. The cyber-security team needs visibility into the full defense-in-depth chain.</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p>The defense-in-depth chain for AEM AMS behind Akamai has <strong>six labelled layers</strong>. Every architecture diagram for a banking review should show all of them with vendor, role, owner, and the security control each enforces.</p>
+        <h5>The chain, in order</h5>
+        <ul>
+          <li><b>1 · Akamai</b> (Bank-owned) — first-tier CDN + WAF. Absorbs DDoS, edge caches, bot protection, IP reputation filtering.</li>
+          <li><b>2 · Adobe ingress LB</b> — TLS termination at the AMS edge for traffic from Akamai.</li>
+          <li><b>3 · Adobe WAF</b> — AMS includes a managed WAF (AWS WAF or equivalent depending on tenant). Rule sets are jointly managed with Adobe and tunable per environment.</li>
+          <li><b>4 · AEM Dispatcher</b> — application-layer cache and URL filter. The AEM-native control for path, method, and parameter-based denials.</li>
+          <li><b>5 · AEM Publishers</b> — read-only customer-facing instances, segmented behind the dispatcher.</li>
+          <li><b>6 · AEM Author</b> — content authoring, never internet-facing. Accessed via VPN or bastion only.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>Cyber security teams want a kill-chain mapping — which layer stops which attack class (volumetric DDoS at Akamai, application-layer at Adobe WAF, path-based at Dispatcher). Build the diagram with these annotations and a column showing "owned by Bank" vs "owned by Adobe" for each layer.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Architecture</span><span class="tag-chip">Security</span></div>
+      </div>
+    </details>
+
+    <!-- Q3 -->
+    <details class="faq" id="q3" data-tags="Architecture,Compliance">
+      <summary>
+        <span class="q-num">03</span>
+        <span class="q-text">How is the AEM MS physically and logically separated from other tenants on the same Adobe Managed Services infrastructure?</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p><strong>AEM Managed Services is not shared-tenancy SaaS</strong> — it is a managed dedicated infrastructure model. Each customer runs on isolated cloud infrastructure provisioned and operated by Adobe.</p>
+        <h5>Isolation guarantees</h5>
+        <ul>
+          <li><b>Dedicated VPC</b> per customer on the underlying cloud (AWS or Azure depending on tenant).</li>
+          <li><b>Dedicated compute</b> — Author, Publisher, and Dispatcher VMs are not shared across customers.</li>
+          <li><b>Dedicated network</b> — subnets, security groups, route tables, NSGs are tenant-specific.</li>
+          <li><b>Dedicated storage</b> — disk volumes, snapshots, and object storage (S3 or Blob) are tenant-scoped with KMS encryption.</li>
+          <li><b>Shared services</b> — only the Adobe Cloud Manager control plane and Adobe IMS identity backbone are shared infrastructure; these are orchestration/identity layers, not data planes.</li>
+        </ul>
+        <h5>Applicable compliance certifications</h5>
+        <p>SOC 2 Type II · ISO 27001 · PCI DSS · HIPAA (tier-dependent). Banking customers should request the most recent attestation reports and the AMS tenant-isolation architecture document.</p>
+        <div class="arch-note"><b>For the architect</b>Get the tenant-isolation documentation specific to your contract from Adobe — particularly the VPC/subnet topology, KMS key boundaries, and the list of Adobe operators with access (usually time-bounded and just-in-time).</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Architecture</span><span class="tag-chip">Compliance</span></div>
+      </div>
+    </details>
+
+    <!-- Q4 -->
+    <details class="faq" id="q4" data-tags="Performance,Architecture">
+      <summary>
+        <span class="q-num">04</span>
+        <span class="q-text">The target throughput is 500 TPS. The team was asked to elaborate on the auto-scaling mechanism and to derive a capacity view for performance testing.</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p>AMS supports horizontal scaling of Publisher and Dispatcher tiers. Author is typically a single primary with a hot standby. Auto-scaling is not as elastic as cloud-native services — scale events are managed by Adobe operations.</p>
+        <h5>Capacity model at 500 TPS</h5>
+        <ul>
+          <li><b>Cache hit ratio is the lever</b> — at 90% dispatcher cache hit, only 50 TPS reaches Publishers. At 50%, 250 TPS hits Publishers. Plan against the worst plausible cache miss scenario (campaign launch + cold cache + cache invalidation event).</li>
+          <li><b>Per-Publisher throughput</b> — rule of thumb is 50–80 RPS sustained at moderate page complexity. Always validate with synthetic load tests; never assume.</li>
+          <li><b>Auto-scaling reality</b> — AMS pre-provisions peak capacity based on agreed SLA. Adding instances mid-campaign typically requires a ticket and lead time. Plan for peak, not for elasticity.</li>
+        </ul>
+        <h5>Defensible starting capacity for 500 TPS</h5>
+        <ul>
+          <li>4–6 active Publishers (page mix dependent)</li>
+          <li>2 Dispatchers in active-active with shared cache strategy</li>
+          <li>Author + hot standby</li>
+          <li>Reserved headroom of 30% for unplanned bursts</li>
+        </ul>
+        <h5>Mandatory pre-go-live tests</h5>
+        <ul>
+          <li>Synthetic load at <code>1.5×</code> target TPS — so 750 TPS sustained.</li>
+          <li>Burn-in test at 500 TPS for at least 2 hours.</li>
+          <li>Cold cache scenarios at 500 TPS.</li>
+          <li>Cache invalidation storm test.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>The capacity number Adobe quotes is not the number you should plan against. Build your capacity view from cache hit ratio, page mix, and realistic peak modelling — then validate with load tests, twice, before production cutover.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Performance</span><span class="tag-chip">Architecture</span></div>
+      </div>
+    </details>
+
+    <!-- Q5 -->
+    <details class="faq" id="q5" data-tags="Architecture,Compliance">
+      <summary>
+        <span class="q-num">05</span>
+        <span class="q-text">Where exactly is Adobe Cloud Manager hosted, and does its operation stay within the tenant boundary assigned to the client?</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p>Adobe Cloud Manager is <strong>Adobe's CI/CD orchestration platform, hosted as multi-tenant SaaS on Adobe's own cloud infrastructure</strong>. It is operationally separate from the customer's AMS tenant but acts on it.</p>
+        <h5>What sits where</h5>
+        <ul>
+          <li><b>Cloud Manager UI, API, pipelines, metadata</b> — hosted by Adobe globally (multi-tenant).</li>
+          <li><b>Source code repository</b> — Adobe-hosted Git, with optional mirroring to the customer's own Git.</li>
+          <li><b>Deployment targets</b> (your AEM Author, Publishers, Dispatchers) — your dedicated AMS tenant.</li>
+          <li><b>Authentication</b> — Adobe IMS, federated to your IdP (Azure AD / Entra) for Single Sign-On.</li>
+          <li><b>Deployment execution</b> — Cloud Manager initiates actions in your tenant via secure Adobe-managed control-plane connections.</li>
+        </ul>
+        <h5>Implications for a regulated environment</h5>
+        <ul>
+          <li>Confirm with Adobe which region(s) host Cloud Manager metadata for your tenant.</li>
+          <li>Verify Cloud Manager audit logs are exportable to your SIEM (Splunk).</li>
+          <li>Federate Cloud Manager users to the Bank's IdP via Adobe IMS — no local accounts.</li>
+          <li>Code does not "leave" the Adobe boundary; IMS controls who can trigger deployments.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>The control plane is shared, the data plane is not. For most banking compliance reviews, this distinction is acceptable provided IMS federation and audit log export are in place. Document both.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Architecture</span><span class="tag-chip">Compliance</span></div>
+      </div>
+    </details>
+
+    <!-- Q6 -->
+    <details class="faq" id="q6" data-tags="Security,Compliance">
+      <summary>
+        <span class="q-num">06</span>
+        <span class="q-text">What encryption is applied to data at rest? How are encryption keys managed? Is Bring Your Own Key (BYOK) supported?</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p>Default AMS encryption posture is strong on the basics and conservative on BYOK. Banking requirements often hit the BYOK question hard — surface this early.</p>
+        <h5>Default encryption</h5>
+        <ul>
+          <li><b>Data at rest</b> — all disk volumes encrypted using the underlying cloud's native KMS (AWS KMS for AWS-hosted, Azure Key Vault for Azure-hosted).</li>
+          <li><b>Data in transit</b> — TLS 1.2+ between all components, internal and external.</li>
+          <li><b>AEM JCR data</b> — encrypted at the disk level (not field-level).</li>
+          <li><b>Backups</b> — encrypted with the same KMS keys; snapshots inherit volume encryption.</li>
+        </ul>
+        <h5>Key management — default</h5>
+        <ul>
+          <li><b>Adobe-managed keys</b> — Adobe controls KMS for your tenant by default.</li>
+          <li><b>Key rotation</b> per Adobe's standard policy.</li>
+          <li><b>Key access</b> restricted to Adobe operators with just-in-time access.</li>
+        </ul>
+        <h5>BYOK status</h5>
+        <ul>
+          <li><b>AMS has had limited or no BYOK</b> historically — needs explicit contract confirmation.</li>
+          <li>Recent AMS configurations support customer-managed keys via cross-account KMS arrangements in some cases; contract-specific.</li>
+          <li><b>AEM as a Cloud Service</b> has broader BYOK support than AMS — worth comparing if you're choosing between deployment models.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>Get BYOK status in writing from Adobe before signing. If BYOK is a hard compliance ask and AMS doesn't support it for your contract, the compensating controls are: data classification, tenant isolation, KMS audit logging, and time-bounded operator access. Document these explicitly.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Security</span><span class="tag-chip">Compliance</span></div>
+      </div>
+    </details>
+
+    <!-- Q7 -->
+    <details class="faq" id="q7" data-tags="Compliance,Architecture">
+      <summary>
+        <span class="q-num">07</span>
+        <span class="q-text">What is the backup and archival strategy? Where are backups stored? How does this align with the Bank's RTO/RPO targets?</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p>AMS's standard backup model is daily snapshots with 30-day retention. Banking RTO/RPO targets often exceed the standard tier — escalate before contract signature.</p>
+        <h5>Standard backup model</h5>
+        <ul>
+          <li><b>Daily snapshots</b> of all production VMs and storage (Author, Publishers, Dispatchers).</li>
+          <li><b>Default retention</b> — 30 days. Extended retention (90 days, 1 year) is contract-configurable.</li>
+          <li><b>Cross-region replication</b> — optional, tier-dependent.</li>
+          <li><b>Storage</b> — Adobe-managed encrypted storage in the same cloud region (and replica region if DR is enabled).</li>
+        </ul>
+        <h5>Standard RTO / RPO by tier</h5>
+        <ul>
+          <li><b>Standard tier</b> — RPO 24h · RTO 8h+</li>
+          <li><b>Gold tier</b> — RPO 24h (configurable down to ~1h with transaction log shipping) · RTO ~4h</li>
+          <li><b>Platinum tier</b> — RPO ~1h · RTO ~1h</li>
+        </ul>
+        <h5>Banking-specific considerations</h5>
+        <ul>
+          <li>If your RTO is 1h and RPO is 15min, standard AMS configurations <strong>will not suffice</strong> — discuss DR architecture with Adobe in detail.</li>
+          <li>Document cold-DR vs warm-DR cost trade-off explicitly with finance.</li>
+          <li>Backup restoration testing should be a contract clause — twice yearly minimum, with a written test report.</li>
+          <li>For regulated data (transaction records), consider WORM archival outside AMS.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>The RTO/RPO numbers Adobe quotes are the platform's; your business may have stricter targets for specific data domains. Map each data domain to its acceptable RTO/RPO and validate the tier purchased actually meets the strictest of these. This is a frequent miss in contract review.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Compliance</span><span class="tag-chip">Architecture</span></div>
+      </div>
+    </details>
+
+    <!-- Q8 -->
+    <details class="faq" id="q8" data-tags="Observability,Integration">
+      <summary>
+        <span class="q-num">08</span>
+        <span class="q-text">Is Splunk part of the client's tenant? If yes, it should be shown in the architecture diagram with the data flow clearly depicted.</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p><strong>Splunk lives in the Bank's tenant, not in Adobe's.</strong> AMS does not include Splunk; integration is via log shipping.</p>
+        <h5>Integration patterns</h5>
+        <ul>
+          <li><b>Splunk HEC (HTTP Event Collector)</b> — most common. AMS forwards logs over HTTPS to your Splunk endpoint with token authentication.</li>
+          <li><b>Syslog forwarder</b> — push to a syslog collector that feeds Splunk.</li>
+          <li><b>API pull</b> — Splunk pulls from Adobe's log export endpoint; less common, more brittle.</li>
+        </ul>
+        <h5>Logs typically available from AMS</h5>
+        <ul>
+          <li>AEM application logs (error.log, request.log, access.log)</li>
+          <li>Dispatcher logs</li>
+          <li>Web server access logs</li>
+          <li>OS-level logs (limited; Adobe controls VM access)</li>
+        </ul>
+        <h5>Architecture diagram should show</h5>
+        <ul>
+          <li>AMS log sources (Author, Publishers, Dispatchers) →</li>
+          <li>Adobe log aggregation tier →</li>
+          <li>HTTPS forwarder over allowlisted egress →</li>
+          <li>Bank's Splunk HEC endpoint (in Bank's tenant) →</li>
+          <li>Splunk indexers, search heads, and dashboards.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>Splunk HEC tokens should be rotated quarterly and stored in the Bank's secrets vault, not in AMS configs. Estimate ingestion volume early — a busy AEM site can produce 5–20 GB/day of access logs. Confirm with Adobe which operator-action logs are exportable vs withheld; this is often a compliance discussion point.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Observability</span><span class="tag-chip">Integration</span></div>
+      </div>
+    </details>
+
+    <!-- Q9 -->
+    <details class="faq" id="q9" data-tags="Observability,Integration">
+      <summary>
+        <span class="q-num">09</span>
+        <span class="q-text">Bank has Dynatrace. Is integration with Dynatrace with AEM MS feasible?</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p><strong>Yes, integration is feasible and commonly done.</strong> Three integration paths exist; the right choice depends on what depth of visibility the Bank needs.</p>
+        <h5>Integration options</h5>
+        <ul>
+          <li><b>Dynatrace OneAgent installation on AMS VMs</b> — gold standard. Requires Adobe approval and is treated as a managed software install. Adobe handles deployment and updates per release cycles. Provides full-stack APM: JVM metrics, GC, database calls, transaction tracing.</li>
+          <li><b>Dynatrace synthetic monitoring</b> — Bank-side, no Adobe involvement. External probes hit AEM endpoints on a schedule. Good for availability and synthetic transaction monitoring.</li>
+          <li><b>Dynatrace API integration</b> — pull metrics via Adobe-exposed APIs into Dynatrace as a data source. Less rich than OneAgent.</li>
+        </ul>
+        <h5>Practical notes</h5>
+        <ul>
+          <li>OneAgent install is contract-dependent — confirm scope with Adobe before assuming it's available.</li>
+          <li>Once installed, the Bank's Dynatrace tenant ingests data directly from AMS instances; Adobe ops do not see your Dynatrace data.</li>
+          <li>Performance overhead is minimal — typically 1–3% CPU.</li>
+          <li>Dynatrace OneAgent licensing is the Bank's responsibility, not Adobe's.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>If the Bank already runs Dynatrace as its enterprise APM, push for OneAgent installation on AMS — it gives the same visibility you get on your own infrastructure. If Adobe resists, ask for the specific contractual or operational reason; the answer is usually "not in current scope" rather than a hard no.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Observability</span><span class="tag-chip">Integration</span></div>
+      </div>
+    </details>
+
+    <!-- Q10 -->
+    <details class="faq" id="q10" data-tags="Integration,Security">
+      <summary>
+        <span class="q-num">10</span>
+        <span class="q-text">The Publisher-to-VBCS (Oracle Cloud) integration needs elaboration. API calls must not be anonymous and should be authenticated, authorized, and auditable.</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p>AEM Publisher calling Oracle VBCS (Visual Builder Cloud Service) APIs must use authenticated, authorised, and audited channels. <strong>Anonymous calls are not acceptable for a banking integration</strong>.</p>
+        <h5>Recommended pattern</h5>
+        <ul>
+          <li><b>OAuth 2.0 with IDCS</b> (Oracle Identity Cloud Service) — IDCS issues access tokens to AEM via the client credentials grant. AEM presents tokens to VBCS APIs.</li>
+          <li><b>Token caching</b> — AEM caches tokens for their lifetime (typically 1 hour) to avoid token-acquisition round-trips on every request.</li>
+          <li><b>mTLS</b> (recommended for banking) — additional certificate-based authentication on top of OAuth.</li>
+          <li><b>JWT assertions</b> as an alternative grant type for service-to-service.</li>
+        </ul>
+        <h5>What must be in place</h5>
+        <ul>
+          <li>A dedicated <b>service account in IDCS</b> for AEM → VBCS calls (not a user account).</li>
+          <li><b>API audit logging</b> on both sides — VBCS records every authenticated request; AEM logs outbound calls with correlation IDs.</li>
+          <li><b>Rate limiting</b> in VBCS per service account.</li>
+          <li><b>Secret rotation</b> — service account credentials rotated quarterly minimum; tracked in your secrets vault.</li>
+          <li><b>Network controls</b> — outbound traffic from AEM Publishers to VBCS traverses the Bank's network controls (proxy, allowlist).</li>
+        </ul>
+        <h5>What must be documented</h5>
+        <ul>
+          <li>Full request flow including token acquisition, refresh logic, and failure modes.</li>
+          <li>Graceful degradation when VBCS is unreachable — no error pages to end users.</li>
+          <li>Retry policy with exponential backoff and circuit breaker.</li>
+          <li>End-to-end trace correlation between AEM and VBCS for incident response.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>The integration spec should be a separate document signed off by both AEM and Oracle teams before development starts. Include sample code for token acquisition, a deployment runbook for credential rotation, and a test plan covering token expiry, rate limiting, and VBCS unavailability.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Integration</span><span class="tag-chip">Security</span></div>
+      </div>
+    </details>
+
+    <!-- Q11 -->
+    <details class="faq" id="q11" data-tags="Network,Architecture">
+      <summary>
+        <span class="q-num">11</span>
+        <span class="q-text">Segment the Application Gateway, Dispatcher, and Publisher into distinct network zones.</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p>Standard AMS network architecture <strong>already segments tiers into separate subnets</strong>. The architect's job is to verify the segmentation matches the Bank's reference architecture and to audit the firewall rules.</p>
+        <h5>Recommended segmentation</h5>
+        <ul>
+          <li><b>DMZ subnet</b> — Application Gateway / Load Balancer. Internet-facing (behind Akamai).</li>
+          <li><b>Web tier subnet</b> — Dispatchers. Receive traffic from AppGW only; outbound to Publishers only.</li>
+          <li><b>App tier subnet</b> — Publishers. Receive traffic from Dispatchers only.</li>
+          <li><b>Secure tier subnet</b> — Author. Receives traffic from VPN or bastion only; pushes content to Publishers via replication.</li>
+          <li><b>Data tier subnet</b> — object stores and backup volumes. Accessed via IAM-controlled paths only.</li>
+        </ul>
+        <h5>Required controls</h5>
+        <ul>
+          <li>Network Security Groups (NSGs) / Security Groups deny-all by default; explicit allow rules per port and source.</li>
+          <li>East-west traffic restricted between tiers — no Publisher-to-Publisher direct calls, no skip-tier paths.</li>
+          <li>No direct internet egress from Publisher or Author tiers, except whitelisted destinations (VBCS, Azure OpenAI, etc.).</li>
+          <li>All inter-tier traffic logged and exported to SIEM.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>Request the AMS network architecture diagram from Adobe. Verify NSG rules against the Bank's reference architecture line-by-line. Audit egress allowlists — these are the most commonly-missed control and the most exploitable. Each whitelisted destination should have a documented owner and a quarterly review.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Network</span><span class="tag-chip">Architecture</span></div>
+      </div>
+    </details>
+
+    <!-- Q12 -->
+    <details class="faq" id="q12" data-tags="Compliance,Architecture">
+      <summary>
+        <span class="q-num">12</span>
+        <span class="q-text">How will Digital Personal Data Protection (DPDP) Act opt-outs will get handled?</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p>India's DPDP Act 2023 mandates clear opt-out and erasure mechanisms for personal data processing. For an AEM implementation, the architecture must support consent capture, propagation, suppression, and audit — across <strong>every</strong> system that touches user data.</p>
+        <h5>Required architectural capabilities</h5>
+        <ul>
+          <li><b>Consent capture at point of collection</b> — every form, cookie banner, and user touchpoint records consent state with timestamp and version.</li>
+          <li><b>Centralised consent store</b> — single source of truth per user, typically a Consent Management Platform (OneTrust, TrustArc) or the Bank's identity service.</li>
+          <li><b>Propagation</b> — opt-out signals must reach AEM, Adobe Analytics, Adobe Target, CDP, CRM, email systems, and ad platforms within a defined latency budget (minutes, not days).</li>
+          <li><b>Suppression in AEM</b> — personalization rules in AEM Sites / Target must check consent state before activating.</li>
+          <li><b>Right to erasure</b> — when a user requests deletion, every system purges identifiable data; AEM content fragments referencing user data must be regenerated.</li>
+          <li><b>Audit trail</b> — every consent change, opt-out, and erasure logged with timestamps and operator.</li>
+        </ul>
+        <h5>Latency and reliability</h5>
+        <ul>
+          <li>Define a <b>consent propagation SLA</b> — for example, "all systems reflect opt-out within 15 minutes of capture."</li>
+          <li>Monitor the propagation pipeline; alarm on lag.</li>
+          <li>Build a <b>consent kill switch</b> — an emergency mechanism to suspend personalization globally if the consent system fails.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>Map every data collection point in the Bank's digital estate to its consent capture mechanism and downstream propagation path. Gaps in the map are gaps in DPDP compliance. The CMP is not enough on its own — the propagation pipeline and downstream enforcement need equal architectural rigour.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">Compliance</span><span class="tag-chip">Architecture</span></div>
+      </div>
+    </details>
+
+    <!-- Q13 -->
+    <details class="faq" id="q13" data-tags="AI,Security">
+      <summary>
+        <span class="q-num">13</span>
+        <span class="q-text">AI-enabled search capabilities via Azure OpenAI integration were discussed. Concerns were raised around rate limiting, request management, and cost governance to prevent unexpected usage spikes.</span>
+        <span class="q-icon"></span>
+      </summary>
+      <div class="answer">
+        <p>Azure OpenAI in a banking AEM context requires governance at <strong>three layers</strong>: Azure service limits, application-level controls, and cost management. Treat AI cost like cloud cost — without governance, it grows without bound.</p>
+        <h5>1 · Service-level limits (Azure side)</h5>
+        <ul>
+          <li>Azure OpenAI deployments have <b>TPM (tokens per minute) and RPM (requests per minute) quotas</b> configured per model deployment.</li>
+          <li>For production, request <b>Provisioned Throughput Units (PTU)</b> instead of pay-as-you-go to avoid surprise throttling and get predictable cost.</li>
+          <li>Configure quota alerts at 70% and 90% utilisation.</li>
+        </ul>
+        <h5>2 · Application-level controls (between AEM and Azure OpenAI)</h5>
+        <ul>
+          <li><b>API Gateway</b> in front of Azure OpenAI calls — adds a controlled enforcement point for rate limiting per user, per session, per IP.</li>
+          <li><b>Per-user token budgets</b> — cap how many tokens an individual session can consume.</li>
+          <li><b>Prompt length caps</b> — reject prompts above N tokens before they hit Azure.</li>
+          <li><b>Semantic cache</b> — cache common queries using embeddings to avoid repeat costs (often 30–50% cost reduction for FAQ-style queries).</li>
+          <li><b>Fallback patterns</b> — degrade gracefully to keyword search or static content when AI is unavailable or rate-limited.</li>
+        </ul>
+        <h5>3 · Cost governance</h5>
+        <ul>
+          <li><b>Budgets and alerts</b> in Azure Cost Management — daily, weekly, monthly thresholds with email and Slack alerts at 50%, 80%, 100%.</li>
+          <li><b>Per-prompt cost logging</b> — log every request's token count and cost for chargeback.</li>
+          <li><b>Dashboard</b> showing real-time spend, projected monthly spend, top users and queries by cost.</li>
+          <li><b>Auto-disable kill switch</b> — automated suspension if daily spend exceeds threshold, requiring manual re-enable.</li>
+        </ul>
+        <h5>Banking-specific guardrails</h5>
+        <ul>
+          <li><b>PII detection</b> on prompts — block requests containing customer-identifying data before they leave the Bank's perimeter.</li>
+          <li><b>Output filtering</b> — block responses that might leak training data, internal information, or hallucinated financial advice.</li>
+          <li><b>Audit logging</b> — every request: who, what prompt, what response, when. Retain per DPDP and Banking record-keeping rules.</li>
+          <li><b>Disclosure</b> — be explicit to users that responses are AI-generated.</li>
+        </ul>
+        <div class="arch-note"><b>For the architect</b>The biggest risk with Azure OpenAI in production is not technical — it's cost. A single misconfigured loop, scraper, or runaway script can burn six figures in a weekend. Treat the API Gateway, per-user budgets, and kill switch as non-negotiable, not as future enhancements.</div>
+        <div class="q-tags" style="padding:0;margin-top:14px"><span class="tag-chip">AI</span><span class="tag-chip">Security</span></div>
+      </div>
+    </details>
+
+    <div class="empty" id="emptyState" style="display:none">
+      <b>No matching questions</b>
+      Try a different search term or clear the filters.
+    </div>
+  </div>
+</main>
+
+<footer>
+  <p><b>Architect's FAQ</b> Answers reflect Adobe AMS public documentation and DEPT® field experience; contract-specific terms may vary. For implementation guidance, refer to your Adobe technical contacts and your DEPT® architect team.</p>
+  <p style="margin-top:10px"><b>Maintained by</b> DEPT® AEM Practice · Last reviewed June 2026 · <a href="index.html" style="color:var(--ochre);font-family:var(--mono);font-size:11px;letter-spacing:.06em;margin-right:10px">← All FAQs</a> <a href="../anatomy-of-code-course.html" style="color:var(--ochre);font-family:var(--mono);font-size:11px;letter-spacing:.06em">← Anatomy of Code</a></p>
+</footer>
+
+<script>
+  // Theme toggle
+  const root = document.documentElement;
+  const themeBtn = document.getElementById('themeToggle');
+  const themeLabel = document.getElementById('themeLabel');
+  const themeIcon = document.getElementById('themeIcon');
+  const moonIcon = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  const sunIcon = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+  function applyTheme(t){
+    root.setAttribute('data-theme', t);
+    if(t === 'dark'){ themeIcon.innerHTML = moonIcon; themeLabel.textContent = 'Light Mode'; }
+    else { themeIcon.innerHTML = sunIcon; themeLabel.textContent = 'Dark Mode'; }
+  }
+  themeBtn.addEventListener('click', () => {
+    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+  });
+
+  // Search + tag filter
+  const searchInput = document.getElementById('search');
+  const countEl = document.getElementById('count');
+  const tagBar = document.getElementById('tagBar');
+  const clearBtn = document.getElementById('clearBtn');
+  const items = Array.from(document.querySelectorAll('details.faq'));
+  const emptyState = document.getElementById('emptyState');
+
+  let activeTag = 'all';
+  let searchTerm = '';
+
+  function normalize(s){ return (s || '').toLowerCase(); }
+
+  function highlight(el, term){
+    // Remove old highlights
+    el.querySelectorAll('mark').forEach(m => {
+      const p = m.parentNode;
+      p.replaceChild(document.createTextNode(m.textContent), m);
+      p.normalize();
+    });
+    if(!term) return;
+    const re = new RegExp('(' + term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + ')', 'gi');
+    function walk(node){
+      if(node.nodeType === 3){
+        const txt = node.nodeValue;
+        if(re.test(txt)){
+          const span = document.createElement('span');
+          span.innerHTML = txt.replace(re, '<mark>$1</mark>');
+          node.parentNode.replaceChild(span, node);
+        }
+      } else if(node.nodeType === 1 && !['MARK','SCRIPT','STYLE'].includes(node.tagName)){
+        Array.from(node.childNodes).forEach(walk);
+      }
+    }
+    walk(el);
+  }
+
+  function filter(){
+    let visible = 0;
+    items.forEach(item => {
+      const tags = (item.dataset.tags || '').split(',');
+      const tagMatch = activeTag === 'all' || tags.includes(activeTag);
+      const text = normalize(item.textContent);
+      const searchMatch = !searchTerm || text.includes(searchTerm);
+      const show = tagMatch && searchMatch;
+      item.style.display = show ? '' : 'none';
+      if(show){
+        visible++;
+        highlight(item.querySelector('.q-text'), searchTerm);
+        // Auto-open results when actively searching
+        if(searchTerm && searchTerm.length >= 2){
+          item.open = true;
+          highlight(item.querySelector('.answer'), searchTerm);
+        }
+      } else {
+        // Clear highlights from hidden items
+        highlight(item.querySelector('.q-text'), '');
+        highlight(item.querySelector('.answer'), '');
+      }
+    });
+    countEl.textContent = visible + ' of ' + items.length;
+    emptyState.style.display = visible === 0 ? 'block' : 'none';
+    clearBtn.style.display = (activeTag !== 'all' || searchTerm) ? 'inline-block' : 'none';
+  }
+
+  let searchTimer;
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      searchTerm = normalize(e.target.value.trim());
+      filter();
+    }, 150);
+  });
+
+  tagBar.addEventListener('click', (e) => {
+    const pill = e.target.closest('.tag-pill');
+    if(!pill) return;
+    activeTag = pill.dataset.tag;
+    tagBar.querySelectorAll('.tag-pill').forEach(p => p.classList.toggle('active', p === pill));
+    filter();
+  });
+
+  clearBtn.addEventListener('click', () => {
+    activeTag = 'all';
+    searchTerm = '';
+    searchInput.value = '';
+    tagBar.querySelectorAll('.tag-pill').forEach(p => p.classList.toggle('active', p.dataset.tag === 'all'));
+    filter();
+  });
+
+  // Open on hash
+  function openHash(){
+    if(!location.hash) return;
+    const el = document.querySelector(location.hash);
+    if(el && el.tagName === 'DETAILS'){
+      el.open = true;
+      setTimeout(() => el.scrollIntoView({behavior:'smooth', block:'start'}), 60);
+    }
+  }
+  window.addEventListener('load', openHash);
+  window.addEventListener('hashchange', openHash);
+</script>
+</body>
+</html>

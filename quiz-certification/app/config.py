@@ -7,8 +7,13 @@ For production, set DEV_MODE=false and provide all credentials.
 """
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env if it exists
+load_dotenv(BASE_DIR / ".env")
+
 
 # Mode
 DEV_MODE = os.getenv("QUIZ_DEV_MODE", "true").lower() == "true"

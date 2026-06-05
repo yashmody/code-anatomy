@@ -19,7 +19,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app import config
 from app.db import init_db, get_session
-from app.models import Question, User, Attempt, FeedItem, MediaAsset
+from app.models import Question, User, Attempt, FeedItem, MediaAsset, CourseChapter, Framework
 
 # Constants
 BASE_DIR = config.BASE_DIR
@@ -27,6 +27,9 @@ QUESTION_BANK_PATH = config.QUESTION_BANK
 SQLITE_DB_PATH = BASE_DIR / "q0.db"
 FEED_JSON_PATH = BASE_DIR.parent / "content-architecture" / "feed" / "feed.json"
 VIDEO_PATH = BASE_DIR.parent / "media" / "Anatomy of Code.mp4"
+FRAMEWORK_PATH = BASE_DIR.parent / "content-architecture" / "course" / "framework.json"
+SECTIONS_DIR = BASE_DIR.parent / "content-architecture" / "course" / "sections"
+
 
 def migrate_questions(pg_session: Session):
     print("[ETL] Migrating questions...")
@@ -248,6 +251,48 @@ def migrate_media(pg_session: Session):
     finally:
         raw_conn.close()
 
+def migrate_course_content(pg_session: Session):
+    print("[ETL] Migrating course content and framework...")
+    
+    if FRAMEWORK_PATH.exists():
+        with open(FRAMEWORK_PATH, "r") as f:
+            fw_data = json.load(f)
+        from app.storage import save_framework
+        save_framework(fw_data)
+        print("[ETL] Ingested framework hierarchy.")
+    else:
+        print(f"[Warn] Framework JSON not found at {FRAMEWORK_PATH}")
+        
+    if SECTIONS_DIR.exists():
+        from app.storage import save_chapter
+        count = 0
+        for filename in os.listdir(SECTIONS_DIR):
+            if filename.endswith(".json"):
+                filepath = SECTIONS_DIR / filename
+                with open(filepath, "r") as f:
+                    chapter_data = json.load(f)
+                
+                # Determine ring from filename prefix or metadata
+                ring = "other"
+                if filename.startswith("code-"):
+                    ring = "code"
+                elif filename.startswith("coder-"):
+                    ring = "coder"
+                elif filename.startswith("anatomy-"):
+                    ring = "anatomy"
+                elif filename.startswith("adobe-"):
+                    ring = "adobe"
+                elif filename.startswith("ai-"):
+                    ring = "ai"
+                
+                title = chapter_data.get("title", filename)
+                save_chapter(filename=filename, ring=ring, title=title, content=chapter_data)
+                count += 1
+        print(f"[ETL] Ingested {count} course chapters.")
+    else:
+        print(f"[Warn] Sections directory not found at {SECTIONS_DIR}")
+
+
 def main():
     # Verify we can connect to the target database and initialize schema
     print(f"[ETL] Connecting to database: {config.DATABASE_URL}")
@@ -263,8 +308,10 @@ def main():
         migrate_sqlite_data(pg_session)
         migrate_feed(pg_session)
         migrate_media(pg_session)
+        migrate_course_content(pg_session)
         
     print("[ETL] Migration completed successfully.")
 
 if __name__ == "__main__":
     main()
+

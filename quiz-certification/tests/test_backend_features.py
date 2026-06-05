@@ -140,12 +140,12 @@ def test_quiz_repeat_exclusion_and_fallback(monkeypatch):
             q_str = str(query).lower()
             if "attempts" in q_str:
                 return type('Result', (), {'all': lambda *args: mock_attempts})()
-            elif "not_in" in q_str:
-                # Unseen pool (b3 only, since b1 and b2 are excluded)
-                return type('Result', (), {'all': lambda *args: [mock_questions[2]]})()
-            elif "in_" in q_str:
+            elif "questions.id in" in q_str:
                 # Wrong answers fallback pool (b2)
                 return type('Result', (), {'all': lambda *args: [mock_questions[1]]})()
+            elif "not in" in q_str:
+                # Unseen pool (b3 only, since b1 and b2 are excluded)
+                return type('Result', (), {'all': lambda *args: [mock_questions[2]]})()
             else:
                 # All pool
                 return type('Result', (), {'all': lambda *args: mock_questions})()
@@ -170,3 +170,51 @@ def test_quiz_repeat_exclusion_and_fallback(monkeypatch):
     ids = [q["id"] for q in quiz_with_fallback["questions"]]
     assert "b3" in ids
     assert "b2" in ids  # pulled wrong answer
+
+
+# ---------- Course Content & Session Status Endpoint Tests ----------
+
+def test_course_endpoints(monkeypatch):
+    """Test that course endpoints and user profile endpoints return expected data."""
+    mock_framework_data = {"rings": [{"id": "code", "name": "code letters", "letters": [{"id": "code.c", "letter": "C"}]}]}
+    mock_chapter_data = {"filename": "code-c.json", "ring": "code", "title": "C · Content", "content": {"title": "C · Content", "sections": []}}
+    
+    # Mock storage methods
+    monkeypatch.setattr(storage, "get_framework", lambda: mock_framework_data)
+    monkeypatch.setattr(storage, "get_all_chapters", lambda: [mock_chapter_data])
+    monkeypatch.setattr(storage, "get_chapter", lambda filename: mock_chapter_data if filename == "code-c.json" else None)
+    monkeypatch.setattr(storage, "get_user", lambda email: {
+        "email": "test@deptagency.com", "name": "Test User", "picture": "", "role": "FeedCreator", "provider": "dev", "preferences": {}
+    } if email == "test@deptagency.com" else None)
+    
+    # 1. Course Framework API
+    res_fw = client.get("/api/course/framework")
+    assert res_fw.status_code == 200
+    assert res_fw.json() == mock_framework_data
+    
+    # 2. Course Chapters List API
+    res_chaps = client.get("/api/course/chapters")
+    assert res_chaps.status_code == 200
+    assert len(res_chaps.json()["chapters"]) == 1
+    assert res_chaps.json()["chapters"][0]["filename"] == "code-c.json"
+    
+    # 3. Course Chapter Detail API
+    res_chap = client.get("/api/course/chapters/code-c.json")
+    assert res_chap.status_code == 200
+    assert res_chap.json() == mock_chapter_data["content"]
+    
+    # 4. Auth me (Not Authenticated)
+    res_me_unauth = client.get("/auth/me")
+    assert res_me_unauth.status_code == 401
+    
+    # 5. Auth me (Authenticated)
+    # Perform dev login first to establish session cookie in TestClient
+    client.post("/login/dev", data={"email": "test@deptagency.com"})
+    res_me_auth = client.get("/auth/me")
+    assert res_me_auth.status_code == 200
+    me_data = res_me_auth.json()
+    assert me_data["email"] == "test@deptagency.com"
+    assert me_data["role"] == "FeedCreator"
+    assert me_data["initials"] == "TU"
+
+

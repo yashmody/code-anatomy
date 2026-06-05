@@ -118,6 +118,89 @@
   // State: 'loading' | 'active' | 'review' | 'result'
   let state = 'loading';
 
+  // ── Cryptography Helper Functions (AES-GCM) ──────────────────────────
+  let sessionCryptoKey = null;
+
+  async function getCryptoKey() {
+    if (sessionCryptoKey) return sessionCryptoKey;
+    
+    // 1. Retrieve the transient session key from the server
+    const r = await fetch('/auth/session-key');
+    if (!r.ok) throw new Error('Could not negotiate secure payload key');
+    const { session_key } = await r.json();
+    
+    // 2. Derive 32-byte AES key by hashing the session key with SHA-256 (matching server get_key_bytes)
+    const encoder = new TextEncoder();
+    const keyData = encoder.encode(session_key);
+    const hash = await window.crypto.subtle.digest('SHA-256', keyData);
+    
+    // 3. Import raw key into Web Crypto
+    sessionCryptoKey = await window.crypto.subtle.importKey(
+      'raw',
+      hash,
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt', 'decrypt']
+    );
+    return sessionCryptoKey;
+  }
+
+  function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  }
+
+  function base64ToArrayBuffer(base64) {
+    const binaryString = window.atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  }
+
+  async function encryptPayload(data) {
+    const key = await getCryptoKey();
+    const encoder = new TextEncoder();
+    const plaintext = encoder.encode(JSON.stringify(data));
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    
+    const ciphertext = await window.crypto.subtle.encrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      plaintext
+    );
+    
+    return {
+      nonce: arrayBufferToBase64(iv),
+      ciphertext: arrayBufferToBase64(ciphertext)
+    };
+  }
+
+  async function decryptPayload(payload) {
+    if (!payload.nonce || !payload.ciphertext) {
+      return payload;
+    }
+    const key = await getCryptoKey();
+    const iv = new Uint8Array(base64ToArrayBuffer(payload.nonce));
+    const ciphertext = base64ToArrayBuffer(payload.ciphertext);
+    
+    const plaintext = await window.crypto.subtle.decrypt(
+      { name: 'AES-GCM', iv },
+      key,
+      ciphertext
+    );
+    
+    const decoder = new TextDecoder();
+    return JSON.parse(decoder.decode(plaintext));
+  }
+
   // ── start ──────────────────────────────────────────────────────────────
   async function startQuiz() {
     const difficulty = sessionStorage.getItem('q0-difficulty') || 'beginner';
@@ -127,7 +210,10 @@
     try {
       const r = await fetch('/quiz/start', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Encrypt-Payload': 'true'
+        },
         body: JSON.stringify({difficulty, ...(isDevQuiz ? {dev_quiz: true} : {})})
       });
       if (r.status === 429) {
@@ -138,7 +224,10 @@
         const data = await r.json().catch(() => ({}));
         return showError(data.detail || data.error || 'Could not start quiz.');
       }
-      quiz = await r.json();
+      
+      const rawResponse = await r.json();
+      quiz = await decryptPayload(rawResponse);
+      
       // DEV ONLY — show banner when server confirms this is a dev fast-quiz
       if (quiz.dev_mode) {
         const banner = document.getElementById('devQuizBanner');
@@ -295,19 +384,27 @@
   document.getElementById('rBack').addEventListener('click', exitReview);
   document.getElementById('rSubmit').addEventListener('click', submitQuiz);
 
-  // ── submit ─────────────────────────────────────────────────────────────
   async function submitQuiz() {
     clearInterval(timerInterval);
     setState('loading');
     document.querySelector('.loader-eyebrow') && (document.querySelector('.loader-eyebrow').textContent = 'Grading…');
 
     try {
+      const payload = {quiz_id: quiz.quiz_id, answers};
+      const encryptedBody = await encryptPayload(payload);
+      
       const r = await fetch('/quiz/submit', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({quiz_id: quiz.quiz_id, answers})
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Encrypt-Payload': 'true'
+        },
+        body: JSON.stringify(encryptedBody)
       });
-      const data = await r.json();
+      
+      const rawResponse = await r.json();
+      const data = await decryptPayload(rawResponse);
+      
       setState('result');
       renderResult(data);
     } catch (e) {

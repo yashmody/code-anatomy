@@ -146,3 +146,23 @@ class MediaAsset(Base):
     uploader = relationship("User", back_populates="media_assets")
     
     uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+
+class CourseChapter(Base):
+    __tablename__ = "course_chapters"
+
+    filename = Column(String(128), primary_key=True)  # e.g., 'code-c.json'
+    ring = Column(String(32), nullable=False)          # e.g., 'code', 'coder'
+    title = Column(String(255), nullable=False)
+    content = Column(JSONB_TYPE, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Framework(Base):
+    __tablename__ = "frameworks"
+
+    id = Column(String(32), primary_key=True, default="framework")
+    data = Column(JSONB_TYPE, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+

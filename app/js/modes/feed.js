@@ -386,9 +386,14 @@ export async function renderFeed(mount, base) {
   // the card picks up its flagged treatment → announce via the existing aria-live toast.
   // CLIENT-SIDE ONLY: this lands in feedStore.flags in THIS browser; cross-user flagging
   // and real deletion need the backend pass.
-  function confirmFlag(id) {
+  async function confirmFlag(id) {
     openConfirm = null;                 // the row goes away with the repaint; drop the ref
-    flagPost(id);                       // → store.js; at/above FLAG_THRESHOLD it sets status:'flagged'
+    try {
+      await flagPost(id);               // → store.js; at/above FLAG_THRESHOLD it sets status:'flagged'
+    } catch (e) {
+      showToast(e.message, 'error');
+      return;
+    }
     // Transform case: the Flag button is being replaced by a non-interactive "Flagged ·
     // Pending" indicator. Land focus on the flagged card's article (tabindex="-1") so the
     // keyboard never falls to <body>. If the card dropped from view (e.g. Hide-flagged),

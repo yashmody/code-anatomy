@@ -43,13 +43,26 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from starlette.middleware.sessions import SessionMiddleware
 
+from fastapi.middleware.cors import CORSMiddleware
 from . import auth, certificate, config, email_service, quiz_generator, roles, storage, encryption, media_service
 from .models import MediaAsset
 
 app = FastAPI(title="Q0 · The Anatomy of Code · Quiz Module")
+
+# CORS middleware for local frontend compatibility (port 8080)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.add_middleware(SessionMiddleware, secret_key=config.SECRET_KEY)
+
 app.mount("/static", StaticFiles(directory=str(config.BASE_DIR / "static")), name="static")
+app.mount("/app", StaticFiles(directory=str(config.BASE_DIR.parent / "app"), html=True), name="app")
 templates = Jinja2Templates(directory=str(config.BASE_DIR / "templates"))
+
 
 # In-memory active quizzes: quiz_id -> dict
 _active_quizzes: Dict[str, Dict] = {}
@@ -502,12 +515,101 @@ async def admin_attempts(request: Request, user=Depends(auth.require_role(["Quiz
     return _template(request, "admin.html", attempts=storage.all_attempts())
 
 
-# ---------- RBAC Feed APIs ----------
+# ---------- Authentication & Session APIs ----------
+
+@app.get("/auth/me")
+async def get_current_user_profile(request: Request):
+    """Retrieve details of the currently authenticated session user."""
+    user = request.session.get("user")
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    # Refresh user from database to ensure up-to-date role/preferences
+    db_user = storage.get_user(user["email"])
+    if not db_user:
+        raise HTTPException(status_code=401, detail="User not found in database")
+    
+    # Calculate initials
+    name = db_user.get("name") or db_user.get("email")
+    initials = "".join(w[0] for w in name.split()[:2]).upper() if name else "??"
+    userId = f"u.{db_user['email'].split('@')[0]}"
+    
+    return {
+        "userId": userId,
+        "email": db_user["email"],
+        "name": db_user["name"],
+        "picture": db_user["picture"],
+        "role": db_user["role"],
+        "provider": db_user["provider"],
+        "preferences": db_user["preferences"],
+        "initials": initials
+    }
+
+
+# ---------- Course Content APIs ----------
+
+@app.get("/api/course/framework")
+async def get_course_framework():
+    """Retrieve the overall framework hierarchy from PostgreSQL."""
+    fw = storage.get_framework()
+    if not fw:
+        raise HTTPException(status_code=404, detail="Framework not found")
+    return fw
+
+
+@app.get("/api/course/chapters")
+async def get_course_chapters():
+    """Retrieve list of all course chapters from PostgreSQL."""
+    chapters = storage.get_all_chapters()
+    return {"chapters": [{"filename": c["filename"], "ring": c["ring"], "title": c["title"]} for c in chapters]}
+
+
+@app.get("/api/course/chapters/{filename}")
+async def get_course_chapter(filename: str):
+    """Retrieve content of a specific course chapter by filename from PostgreSQL."""
+    chapter = storage.get_chapter(filename)
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    return chapter["content"]
+
+
+# ---------- Feed APIs ----------
+
+class FlagFeedPayload(BaseModel):
+    item_id: str
+
 
 @app.get("/api/feed")
-async def get_feed(request: Request, user=Depends(auth.require_role(["User", "FeedCreator", "Moderator"]))):
+async def get_feed(request: Request):
     """Retrieve all published feed items."""
     return {"feed": storage.get_feed_items()}
+
+
+@app.post("/api/feed/flag")
+async def flag_feed_item(payload: FlagFeedPayload, user=Depends(auth.require_role(["User", "FeedCreator", "Moderator", "QuizManager"]))):
+    """Flag a feed item by incrementing its flag count. Marks as flagged if it reaches threshold."""
+    with storage.get_session() as s:
+        item = s.get(storage.FeedItem, payload.item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Feed item not found")
+        
+        item_data = dict(item.data)
+        moderation = item_data.get("moderation", {})
+        flag_count = moderation.get("flagCount", 0) + 1
+        
+        moderation["flagCount"] = flag_count
+        item_data["moderation"] = moderation
+        
+        # Auto flag if threshold is reached
+        if flag_count >= 1:
+            item.status = "flagged"
+            item_data["status"] = "flagged"
+            
+        item.data = item_data
+        s.commit()
+        
+    return {"status": "success", "flagCount": flag_count, "itemStatus": item.status}
+
+
 
 
 @app.post("/api/feed")

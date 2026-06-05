@@ -82,11 +82,11 @@ function openModal(trigger) {
   overlay.querySelector('.auth-modal-close').onclick = close;
   document.addEventListener('keydown', onKey, true);
 
-  form.addEventListener('submit', (e) => {
+  form.addEventListener('submit', async (e) => {
     e.preventDefault();
     errEl.hidden = true;
     try {
-      signInWithEmail(input.value);
+      await signInWithEmail(input.value);
       close();
       renderSlot();
       if (_onChange) _onChange();

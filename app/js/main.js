@@ -3,6 +3,7 @@ import { renderScroll } from './modes/scroll.js';
 import { renderRead } from './modes/read.js';
 import { renderFeed } from './modes/feed.js';
 import { initAuthUI } from './auth-ui.js';
+import { initializeAuth } from './feed/auth.js';
 
 // EDIT HERE → the Quiz is a separate FastAPI server (run: `uvicorn app.main:app`,
 // default http://localhost:8000). Repoint this one constant when it moves; the
@@ -106,7 +107,14 @@ async function route() {
   }
 }
 
-initTheme();
-initChrome();
-window.addEventListener('hashchange', route);
-route();
+(async () => {
+  try {
+    await initializeAuth();
+  } catch (e) {
+    console.warn('Failed to initialize auth', e);
+  }
+  initTheme();
+  initChrome();
+  window.addEventListener('hashchange', route);
+  route();
+})();
