@@ -245,7 +245,7 @@ User=${APP_USER}
 Group=${APP_USER}
 WorkingDirectory=${QUIZ_DIR}
 EnvironmentFile=${QUIZ_DIR}/.env
-ExecStart=${QUIZ_DIR}/.venv/bin/uvicorn[standard]main:app --host 127.0.0.1 --port ${QUIZ_PORT} --workers ${QUIZ_WORKERS}
+ExecStart=${QUIZ_DIR}/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port ${QUIZ_PORT} --workers ${QUIZ_WORKERS}
 Restart=on-failure
 RestartSec=3
 # Hardening
