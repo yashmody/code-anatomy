@@ -28,6 +28,17 @@ backend/quiz_results/*.json
 backend/outbox/*.eml
 backend/certificates/*.pdf
 
+# --- Directus CMS (Phase 4a) — runtime-only, never committed ---
+# node_modules/ is already covered by the broad rule below, but list the
+# canonical cms locations so it is obvious nothing under cms/ leaks into a
+# commit. The .env.example IS tracked (template); the real .env is not.
+cms/node_modules/
+cms/.env
+cms/uploads/
+cms/database/
+cms/.directus/
+cms/extensions/node_modules/
+
 # --- Node / Expo (sample app) ---
 node_modules/
 .expo/
