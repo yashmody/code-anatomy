@@ -37,7 +37,7 @@ def _is_loopback(host: Optional[str]) -> bool:
     return host in _LOOPBACK_HOSTS
 
 
-@router.post("/api/cms/webhook")
+@router.post("/webhook")
 async def cms_webhook(request: Request) -> dict:
     """Receive a Directus content/config change event and invalidate caches.
 
@@ -111,7 +111,7 @@ async def cms_webhook(request: Request) -> dict:
     }
 
 
-@router.get("/api/cms/health")
+@router.get("/health")
 async def cms_health() -> dict:
     """Trivial health endpoint for the CMS seam.
 

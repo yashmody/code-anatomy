@@ -54,5 +54,8 @@ quiz-certification/certificates/
 quiz-certification/outbox/
 
 # --- Media (large binaries — keep out of git; serve locally / from a CDN) ---
-media/
+# Root-anchored: the broad `media/` pattern (pre-v2) swallowed
+# backend/app/modules/media/*.py too, breaking fresh clones. Narrow to the
+# repo-root media/ folder only.
+/media/
 assets/*.mp4
