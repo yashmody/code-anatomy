@@ -1,0 +1,13 @@
+{
+  "label": "Deployment",
+  "position": 5,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "deployment/intro"
+  },
+  "customProps": {
+    "description": "deploy.sh walkthrough, Apache vhost, systemd + uvicorn, env & secrets, upgrade & rollback."
+  }
+}

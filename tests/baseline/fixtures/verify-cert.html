@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verify Certificate · DEPT® Academy</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+  
+<style>
+  .verify-wrap{max-width:640px;margin:0 auto;padding:48px 24px 80px}
+  .verify-hero{margin-bottom:36px}
+  .verify-hero h1{font-family:var(--serif,'Syne');font-weight:800;font-size:40px;line-height:1.05;letter-spacing:-.02em;margin-bottom:10px}
+  .verify-hero p{color:var(--ink-soft);font-size:15px;line-height:1.55}
+
+  .verify-form{display:flex;gap:10px;flex-wrap:wrap;margin:24px 0}
+  .verify-input{flex:1;min-width:220px;padding:14px 16px;border:1px solid var(--rule);background:var(--card);color:var(--ink);font-family:var(--mono,'JetBrains Mono');font-size:14px;letter-spacing:.04em;text-transform:uppercase;transition:border .15s;outline:none}
+  .verify-input:focus{border-color:var(--ochre)}
+  .verify-input::placeholder{text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:14px;color:var(--ink-faint)}
+  .verify-btn{padding:14px 24px;background:var(--ochre);color:#fff;border:none;font-family:var(--mono,'JetBrains Mono');font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:.15s;white-space:nowrap}
+  .verify-btn:hover{background:var(--ochre-deep,#cc3a00)}
+
+  /* Result cards */
+  .verify-result{border:1px solid var(--rule);padding:28px 24px;margin-top:12px}
+  .verify-result.valid{border-color:#22c55e}
+  .verify-result.invalid{border-color:#ef4444}
+  .verify-result.legacy{border-color:#f59e0b}
+
+  .result-badge{display:inline-flex;align-items:center;gap:10px;padding:10px 18px;margin-bottom:20px;font-family:var(--mono,'JetBrains Mono');font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+  .result-badge.ok{background:#dcfce7;color:#15803d}
+  html[data-theme="dark"] .result-badge.ok{background:#14532d;color:#86efac}
+  .result-badge.warn{background:#fef9c3;color:#a16207}
+  html[data-theme="dark"] .result-badge.warn{background:#422006;color:#fde68a}
+  .result-badge.err{background:#fee2e2;color:#b91c1c}
+  html[data-theme="dark"] .result-badge.err{background:#450a0a;color:#fca5a5}
+  .result-badge svg{width:18px;height:18px;flex-shrink:0}
+
+  .result-grid{display:grid;grid-template-columns:auto 1fr;gap:8px 20px;font-size:14px;line-height:1.6}
+  .result-label{font-family:var(--mono,'JetBrains Mono');font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);padding-top:2px}
+  .result-val{color:var(--ink)}
+  .result-val.score{color:var(--ochre);font-weight:700;font-family:var(--mono,'JetBrains Mono')}
+  .result-val code{font-family:var(--mono,'JetBrains Mono');font-size:12.5px;letter-spacing:.04em}
+  .result-sig{margin-top:16px;padding:10px 14px;background:var(--paper-2,#f6f5f1);border-left:3px solid #22c55e;font-size:12.5px;color:var(--ink-soft)}
+  html[data-theme="dark"] .result-sig{background:var(--paper-2,#131211)}
+  .result-sig.no-sig{border-color:#f59e0b}
+
+  /* QR */
+  .qr-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--rule);display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap}
+  .qr-box{width:100px;height:100px;flex-shrink:0}
+  .qr-info{font-size:13px;color:var(--ink-soft);line-height:1.55}
+  .qr-info b{color:var(--ink);display:block;margin-bottom:4px;font-family:var(--mono,'JetBrains Mono');font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  .qr-url{font-family:var(--mono,'JetBrains Mono');font-size:11px;color:var(--ochre);word-break:break-all}
+
+  .verify-hint{margin-top:28px;font-size:13px;color:var(--ink-faint);line-height:1.55;border-top:1px solid var(--rule);padding-top:16px}
+</style>
+
+</head>
+<body>
+  <div class="grain"></div>
+
+  <header class="brand-bar">
+    <a href="/" class="brand-left">
+      <img src="https://www.deptagency.com/wp-content/uploads/2025/10/logo-dept.svg"
+           alt="DEPT®" class="dept-svg-logo"
+           onerror="this.style.display='none';this.nextElementSibling.style.display='inline-block'" />
+      <span style="display:none;font-family:'Syne';font-weight:800;font-size:24px;color:var(--ink)">DEPT<span style="color:var(--ochre);font-size:.55em;vertical-align:super">®</span></span>
+      <span class="brand-tagline">Academy · CCA-F Quiz</span>
+    </a>
+    <nav class="brand-right">
+      <a href="/verify" class="nav-link">Verify</a>
+      
+      <button class="theme-toggle" id="themeToggle" type="button">
+        <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        <span id="themeLabel">Dark Mode</span>
+      </button>
+    </nav>
+  </header>
+
+  <main>
+<div class="verify-wrap">
+  <div class="verify-hero">
+    <div class="eyebrow">DEPT® Academy · Certificate Verification</div>
+    <h1>Verify a Certificate</h1>
+    <p>Enter a CCA-F certificate ID to confirm it is genuine. All certificates are cryptographically signed at issue time. Anyone can verify — no login required.</p>
+  </div>
+
+  <form method="get" action="/verify" class="verify-form">
+    <input
+      class="verify-input"
+      type="text"
+      name="cert_id"
+      value="NONEXISTENT-CCA-CERT"
+      placeholder="e.g. CCA-F-20260603-A1B2C3D4"
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <button type="submit" class="verify-btn">Verify →</button>
+  </form>
+
+  
+    
+      <div class="verify-result invalid">
+        <div class="result-badge err">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Invalid Certificate
+        </div>
+        <p style="font-size:14px;color:var(--ink-soft);margin:0">
+          No passing certificate with ID <code style="font-family:var(--mono,'JetBrains Mono');font-size:13px">NONEXISTENT-CCA-CERT</code> was found in our records.
+          Check the ID on the certificate and try again. If you believe this is an error, contact <strong>academy@deptagency.com</strong>.
+        </p>
+      </div>
+    
+  
+
+  <div class="verify-hint">
+    Certificate IDs follow the format <code style="font-family:var(--mono,'JetBrains Mono');font-size:12px">CCA-F-YYYYMMDD-XXXXXXXX</code> and appear on the certificate PDF and on the candidate's history page. Test codes (AOC-...) are separate and not verifiable here.
+  </div>
+</div>
+</main>
+
+  <footer>
+    <p><b>Q0</b> The Quiz Module · The Anatomy of Code · DEPT® Academy<br>
+    Questions are pulled live from the course content. As the course grows, the quiz grows with it.</p>
+  </footer>
+
+  <script>
+    // Theme toggle
+    const root = document.documentElement;
+    const themeBtn = document.getElementById('themeToggle');
+    const themeLabel = document.getElementById('themeLabel');
+    const themeIcon = document.getElementById('themeIcon');
+    const moonIcon = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+    const sunIcon = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
+    function applyTheme(t){
+      root.setAttribute('data-theme', t);
+      themeIcon.innerHTML = t === 'dark' ? moonIcon : sunIcon;
+      themeLabel.textContent = t === 'dark' ? 'Light Mode' : 'Dark Mode';
+      try { localStorage.setItem('q0-theme', t); } catch(e){}
+    }
+    try {
+      const saved = localStorage.getItem('q0-theme');
+      if (saved) applyTheme(saved);
+    } catch(e){}
+    themeBtn.addEventListener('click', () => {
+      applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+    });
+  </script>
+  
+
+
+</body>
+</html>

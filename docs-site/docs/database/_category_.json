@@ -1,0 +1,13 @@
+{
+  "label": "Database",
+  "position": 4,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "database/intro"
+  },
+  "customProps": {
+    "description": "Postgres schema, Alembic migrations, ER diagram, large-object media, backup/restore."
+  }
+}

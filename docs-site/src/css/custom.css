@@ -1,0 +1,157 @@
+/* DEPT® brand tokens for the v2 docs site.
+ *
+ * Visual sympathy with the main app (frontend/styles/monolith.css). Do not
+ * introduce a fifth callout colour or a competing accent — ochre #FF4900 is
+ * the only accent, ink/paper/rule the only surfaces. Fonts mirror CLAUDE.md:
+ * Syne (display), DM Sans (body), JetBrains Mono (labels).
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+/* ---------- brand tokens ---------- */
+:root {
+  /* DEPT brand */
+  --dept-ochre: #FF4900;
+  --dept-ochre-soft: #FFE3D6;
+  --dept-ink: #1A1A1A;
+  --dept-ink-soft: #4A4A4A;
+  --dept-paper: #FFFFFF;
+  --dept-paper-warm: #FAF7F2;
+  --dept-rule: #E6E1D9;
+
+  /* fonts */
+  --font-display: 'Syne', system-ui, -apple-system, sans-serif;
+  --font-body: 'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Docusaurus Infima variable bridge — light mode */
+  --ifm-color-primary: var(--dept-ochre);
+  --ifm-color-primary-dark: #E54100;
+  --ifm-color-primary-darker: #D83D00;
+  --ifm-color-primary-darkest: #B23200;
+  --ifm-color-primary-light: #FF5C1A;
+  --ifm-color-primary-lighter: #FF6B30;
+  --ifm-color-primary-lightest: #FF8959;
+
+  --ifm-background-color: var(--dept-paper);
+  --ifm-background-surface-color: var(--dept-paper-warm);
+  --ifm-font-color-base: var(--dept-ink);
+  --ifm-font-family-base: var(--font-body);
+  --ifm-heading-font-family: var(--font-display);
+  --ifm-font-family-monospace: var(--font-mono);
+
+  --ifm-code-font-size: 92%;
+  --ifm-code-background: var(--dept-paper-warm);
+  --ifm-code-border-radius: 4px;
+
+  --ifm-toc-border-color: var(--dept-rule);
+  --ifm-hr-border-color: var(--dept-rule);
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 73, 0, 0.10);
+}
+
+/* ---------- dark mode ---------- */
+[data-theme='dark'] {
+  --ifm-color-primary: #FF6B30;
+  --ifm-color-primary-dark: #FF5C1A;
+  --ifm-color-primary-darker: #FF4F0A;
+  --ifm-color-primary-darkest: #E54100;
+  --ifm-color-primary-light: #FF8959;
+  --ifm-color-primary-lighter: #FF9670;
+  --ifm-color-primary-lightest: #FFB291;
+
+  --ifm-background-color: #15110E;
+  --ifm-background-surface-color: #1E1A16;
+  --ifm-font-color-base: #F4F0E8;
+  --ifm-code-background: #221C16;
+  --ifm-toc-border-color: #3A3329;
+  --ifm-hr-border-color: #3A3329;
+
+  --docusaurus-highlighted-code-line-bg: rgba(255, 107, 48, 0.18);
+}
+
+/* ---------- typography ---------- */
+h1, h2, h3, h4, h5, h6,
+.navbar__title {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+
+h1 { font-weight: 800; }
+
+code, kbd, pre,
+.menu__link--active,
+.badge {
+  font-family: var(--font-mono);
+}
+
+.markdown > h2 {
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  padding-bottom: 0.3em;
+  margin-top: 2em;
+}
+
+/* ---------- navbar accent ---------- */
+.navbar {
+  border-bottom: 1px solid var(--ifm-toc-border-color);
+  box-shadow: none;
+}
+
+.navbar__brand .navbar__logo img {
+  height: 22px;
+}
+
+/* ---------- callout block sympathy with main app ----------
+ * Reuse the four CLAUDE.md block types via Docusaurus admonitions:
+ *   :::tip "Why This Matters"   — the architect-level stake
+ *   :::note "Agency Tip"        — practical agency-context guidance
+ *   :::warning "Common Pitfall" — what teams actually get wrong
+ *   :::info "Before / After"    — concrete example pairs
+ * Authors use those exact titles; ochre underlines tie them to the app's
+ * .arch-review block.
+ */
+.alert {
+  border-left: 4px solid var(--dept-ochre);
+  border-radius: 4px;
+  background: var(--dept-paper-warm);
+}
+[data-theme='dark'] .alert {
+  background: #1E1A16;
+}
+
+/* ---------- prose width — closer to the app's "reader" altitude ---------- */
+.markdown {
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+article p {
+  max-width: 72ch;
+}
+
+/* ---------- table sympathy with .arch-diagram look ---------- */
+.markdown table {
+  font-family: var(--font-body);
+  font-size: 0.92rem;
+}
+
+.markdown thead {
+  background: var(--dept-paper-warm);
+}
+
+.markdown th {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+/* ---------- Mermaid sympathy ---------- */
+.docusaurus-mermaid-container {
+  background: var(--dept-paper-warm);
+  border: 1px solid var(--ifm-toc-border-color);
+  border-radius: 6px;
+  padding: 0.75rem;
+}

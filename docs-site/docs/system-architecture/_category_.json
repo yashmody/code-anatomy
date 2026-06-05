@@ -1,0 +1,13 @@
+{
+  "label": "System architecture",
+  "position": 7,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "system-architecture/intro"
+  },
+  "customProps": {
+    "description": "Modular monolith, Directus topology, two auth planes, caching, security baseline, observability."
+  }
+}

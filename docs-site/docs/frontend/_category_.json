@@ -1,0 +1,13 @@
+{
+  "label": "Front-end",
+  "position": 2,
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "doc",
+    "id": "frontend/intro"
+  },
+  "customProps": {
+    "description": "Buildless ES-module SPA — core, shared, modules, styles. Visual parity with the frozen monolith."
+  }
+}

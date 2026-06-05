@@ -1,0 +1,13 @@
+{
+  "label": "Content architecture",
+  "position": 3,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "content-architecture/intro"
+  },
+  "customProps": {
+    "description": "Consolidated content tree, Postgres-as-source-of-truth, schemas, frozen monolith, LAYER pattern."
+  }
+}
