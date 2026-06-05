@@ -146,6 +146,14 @@ class Settings(BaseSettings):
     cache_ttl_feed: int = 30
     cache_ttl_app_config: int = 60
 
+    # ── Cache backend (Phase 3 / 06 §4.2 — pluggable backing store) ──────────
+    # `memory` is the default per the 2-worker topology decision (06 §4.2 /
+    # gate §10 #1). `redis` swaps the backing store behind the same AppCache
+    # interface for 4+ workers or multi-VM; it degrades gracefully back to
+    # `memory` if the redis client is absent or the server is unreachable.
+    cache_backend: Literal["memory", "redis"] = "memory"
+    redis_url: str = "redis://localhost:6379/0"
+
     # ── LLM seam (no provider clients in 2d) ────────────────────────────────
     llm_provider: Literal["none", "anthropic", "openai"] = "none"
     llm_api_key: SecretStr = SecretStr("")

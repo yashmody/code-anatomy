@@ -33,6 +33,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core import config
+from app.core.observability import RequestIdMiddleware
 
 
 # ---------------------------------------------------------------------------
@@ -150,3 +151,11 @@ def install_middleware(app: FastAPI) -> None:
 
     # 3. Security headers — F-HDR-01 (HSTS + CSP owned by Apache, Phase 3c)
     app.add_middleware(SecurityHeadersMiddleware)
+
+    # 4. Request-id — Phase 3 observability. Added LAST so it is the OUTERMOST
+    #    middleware: it binds the request-id contextvar before any inner
+    #    middleware or handler runs (so their logs carry the id) and stamps
+    #    X-Request-ID on the way out regardless of what the inner stack did.
+    #    Logging *configuration* (the structured formatter) is wired separately
+    #    via observability.configure_logging() at lifespan start.
+    app.add_middleware(RequestIdMiddleware)

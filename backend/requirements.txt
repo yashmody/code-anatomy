@@ -14,3 +14,4 @@ cryptography==43.0.1
 pillow==10.4.0
 ffmpeg-python==0.2.0
 google-auth>=2.30
+redis>=5

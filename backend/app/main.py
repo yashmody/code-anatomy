@@ -22,11 +22,15 @@ keep verifying, the buildless SPA keeps fetching the same paths):
 """
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlalchemy import text
 
-from app.core import config, db, security, users as core_users
+from app.core import config, db, observability, security, users as core_users
+from app.core.cache import cache as app_cache
+from app.modules.admin import routes as admin_routes
 from app.modules.auth import routes as auth_routes
 from app.modules.cms import routes as cms_routes
 from app.modules.content import routes as content_routes
@@ -37,6 +41,9 @@ from app.modules.quiz import routes as quiz_routes
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Structured logging + request-id correlation must be configured before any
+    # other startup log line so they all carry the (startup) request_id="-".
+    observability.configure_logging(config.settings.log_level)
     # Phase 2a will replace this with an Alembic-migrated startup check.
     db.init_db()
     # Phase 2b owns the real ensure_first_admin() — call defensively so 2e
@@ -54,10 +61,75 @@ async def lifespan(app: FastAPI):
     yield
 
 
+# ---------------------------------------------------------------------------
+# Health / readiness probes (Phase 3 observability).
+#
+# Both are UNAUTHENTICATED and must never 307/302 to /login — they are
+# liveness/readiness probes for systemd, Apache, and uptime checks. They live
+# inline (no module) so they have zero dependency on any auth surface and can
+# answer even if a module fails to import in a future change.
+#   GET /healthz  → 200 {status, version, env}                (liveness)
+#   GET /readyz   → 200 if DB reachable (+ redis if selected); 503 otherwise
+# ---------------------------------------------------------------------------
+health_router = APIRouter()
+
+_APP_VERSION = "v2"
+
+
+@health_router.get("/healthz")
+async def healthz():
+    """Liveness: the process is up and serving. No dependency checks."""
+    return {
+        "status": "ok",
+        "version": _APP_VERSION,
+        "env": config.settings.app_env,
+    }
+
+
+@health_router.get("/readyz")
+async def readyz():
+    """Readiness: dependencies are reachable.
+
+    - DB: `SELECT 1` must succeed.
+    - Cache: only checked when CACHE_BACKEND=redis — the active backend must be
+      redis (i.e. it didn't silently degrade to memory). In the default memory
+      configuration the cache is always ready.
+
+    Returns 200 with per-check detail when ready, 503 otherwise.
+    """
+    checks: dict[str, str] = {}
+    ready = True
+
+    # DB check
+    try:
+        with db.get_session() as session:
+            session.execute(text("SELECT 1"))
+        checks["db"] = "ok"
+    except Exception as exc:  # noqa: BLE001 — readiness reports, never raises
+        checks["db"] = f"error: {exc.__class__.__name__}"
+        ready = False
+
+    # Cache check — only meaningful when redis was requested.
+    if config.settings.cache_backend == "redis":
+        if app_cache.backend_name == "redis":
+            checks["cache"] = "ok"
+        else:
+            # Redis was requested but the cache degraded to memory — not ready.
+            checks["cache"] = "error: redis requested but backend is memory"
+            ready = False
+    else:
+        checks["cache"] = "skip (memory backend)"
+
+    body = {"status": "ok" if ready else "not_ready", "checks": checks}
+    return JSONResponse(body, status_code=200 if ready else 503)
+
+
 app = FastAPI(title="DEPT® Anatomy of Code · Backend", lifespan=lifespan)
 
 # --- middleware (order matters: outermost first) ---
 # Phase 2e/3c harden this with CSP/HSTS + a real CORS allowlist.
+# install_middleware also wires the request-id middleware (observability) as
+# the outermost layer; configure_logging() runs at lifespan start.
 security.install_middleware(app)
 
 # --- static + templates ---
@@ -75,9 +147,14 @@ quiz_routes.bind_templates(templates)
 auth_routes.bind_templates(templates)
 
 # --- routers ---
+# Health probes first — unauthenticated, no prefix (so /healthz, /readyz).
+app.include_router(health_router, tags=["health"])
 app.include_router(auth_routes.router, tags=["auth"])
 app.include_router(quiz_routes.router, tags=["quiz"])
 app.include_router(content_routes.router, prefix="/api/course", tags=["content"])
 app.include_router(feed_routes.router, prefix="/api", tags=["feed"])
 app.include_router(media_routes.router, tags=["media"])
 app.include_router(cms_routes.router, prefix="/api/cms", tags=["cms"])
+# Admin role-assignment REST (04 §7.2). Decorators are "/roles"; the prefix
+# carries "/api/admin" → /api/admin/roles. All endpoints require role.assign.
+app.include_router(admin_routes.router, prefix="/api/admin", tags=["admin"])
