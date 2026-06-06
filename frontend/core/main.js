@@ -5,7 +5,7 @@
 import { renderScroll } from '../modules/course/manual.js';
 import { renderRead } from '../modules/course/read.js';
 import { renderFeed } from '../modules/feed/feed.js';
-import { initAuthUI } from './auth-ui.js';
+import { initAuthUI, hasPermission } from './auth-ui.js';
 import { initializeAuth } from '../modules/feed/auth.js';
 import { QUIZ_URL, SECTION_FILES } from './config.js';
 import { initTheme, toggleTheme } from './theme.js';
@@ -78,6 +78,20 @@ async function route() {
       await renderRead(view, BASE, addr, file, SECTION_FILES);
     } else if (mode === 'feed') {
       await renderFeed(view, BASE);
+    } else if (mode === 'moderate') {
+      // Role-gated. The nav entry is hidden for non-moderators, but a direct
+      // #/moderate visit still lands here — show a friendly "not authorised"
+      // placeholder rather than fetching (the API would 403 anyway). The lazy
+      // import keeps the moderator bundle out of the boot path for everyone else.
+      if (!hasPermission('moderate.view')) {
+        view.innerHTML =
+          '<div class="placeholder"><h2>Not authorised</h2>' +
+          '<p>Moderation is restricted to moderators. If you believe you should ' +
+          'have access, sign in with a moderator account.</p></div>';
+      } else {
+        const { renderModerate } = await import('../modules/moderate/moderate.js');
+        await renderModerate(view);
+      }
     } else {
       view.innerHTML = '<div class="placeholder"><h2>Not found</h2></div>';
     }

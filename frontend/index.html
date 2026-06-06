@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="styles/app.css">
 <link rel="stylesheet" href="styles/read.css">
 <link rel="stylesheet" href="styles/feed.css">
+<link rel="stylesheet" href="styles/moderate.css">
 </head>
 <body>
   <header class="app-bar">
@@ -20,18 +21,25 @@
       <a class="mode-tab" data-mode="manual" href="#/manual">Manual</a>
       <a class="mode-tab" data-mode="read" href="#/read">Read</a>
       <a class="mode-tab" data-mode="feed" href="#/feed">Feed</a>
+      <!-- Moderation: in-SPA route, HIDDEN by default. core/auth-ui.js unhides it
+           only when /auth/me permissions include "moderate.view". The API enforces
+           the gate server-side regardless of this nav entry. -->
+      <a class="mode-tab" data-mode="moderate" id="navModerate" href="#/moderate" hidden>Moderation</a>
       <div class="res-menu" id="resMenu">
         <button class="mode-tab res-toggle" type="button" id="resToggle"
                 aria-haspopup="true" aria-expanded="false" aria-controls="resDropdown">Resources ▾</button>
         <div class="res-dropdown" id="resDropdown" role="menu" aria-label="Resources" hidden>
-          <!-- Quiz href set from QUIZ_URL (core/config.js) by core/main.js. Resources served via Apache Alias /anatomy/ → content/frozen/. -->
+          <!-- Quiz href set from QUIZ_URL (core/config.js) by core/main.js — Quiz is a
+               separate page set, so it keeps target=_blank. The /anatomy/ resources are
+               SAME-TAB (4b: shared back-header takes the reader back to the SPA);
+               served via Apache Alias /anatomy/ → content/frozen/. -->
           <a class="res-item" role="menuitem" id="resQuiz" target="_blank" rel="noopener" href="/">
             <span class="res-name">Quiz</span><span class="res-meta">Certification · CCA-F</span></a>
-          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="/anatomy/faqs/aem-banking-faq.html">
+          <a class="res-item" role="menuitem" href="/anatomy/faqs/aem-banking-faq.html">
             <span class="res-name">FAQs</span><span class="res-meta">AEM × Banking</span></a>
-          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="/anatomy/code-coder-checklist.html">
+          <a class="res-item" role="menuitem" href="/anatomy/code-coder-checklist.html">
             <span class="res-name">Checklist</span><span class="res-meta">Discovery</span></a>
-          <a class="res-item" role="menuitem" target="_blank" rel="noopener" href="/anatomy/architect-runbook.html">
+          <a class="res-item" role="menuitem" href="/anatomy/architect-runbook.html">
             <span class="res-name">Runbooks</span><span class="res-meta">Architect's</span></a>
         </div>
       </div>

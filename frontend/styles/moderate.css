@@ -1,0 +1,178 @@
+@charset "UTF-8";
+/* MODERATE mode — the moderator review surface (Phase 4b, slice C).
+   Loaded AFTER monolith.css / app.css / feed.css, so it inherits every design
+   token (--ochre, --ink, --paper, --card, --rule, the three font vars) and the
+   .card chrome from feed.css. Nothing here redefines a token; dark mode flips
+   automatically. Does NOT touch monolith.css (frozen tokens). */
+
+/* ---- nav entry: the Moderation tab styles itself as a mode-tab (markup in
+        index.html), but it carries a tiny ochre dot so a moderator can tell it
+        apart from the content tabs at a glance. Hidden state is the [hidden]
+        attribute (set by core/auth-ui.js) — no extra CSS needed for that. */
+#navModerate.active { color: var(--ochre); border-color: var(--ochre); }
+#navModerate::before {
+  content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 6px;
+  border-radius: 50%; background: var(--ochre); vertical-align: middle;
+}
+
+/* ---- page frame ---- */
+.mod-wrap { max-width: 860px; margin: 0 auto; padding: 36px 0 120px; }
+.mod-head { margin-bottom: 28px; }
+.mod-title {
+  font-family: var(--serif); font-weight: 800; font-size: 38px; line-height: 1.05;
+  letter-spacing: -.01em; color: var(--ink); margin: 0 0 8px;
+}
+.mod-sub {
+  font-family: var(--body); font-size: 15px; line-height: 1.5; color: var(--ink-soft);
+  margin: 0; max-width: 620px;
+}
+
+/* ---- toast (small action confirmation) ---- */
+.mod-toast {
+  position: sticky; top: 70px; z-index: 40; margin: 0 0 18px;
+  font-family: var(--mono); font-size: 12px; letter-spacing: .03em;
+  color: #fff; background: var(--ochre); border: 1px solid var(--ochre);
+  border-radius: 10px; padding: 10px 14px;
+  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, .5);
+}
+.mod-toast[hidden] { display: none; }
+.mod-toast--error { background: #b3261e; border-color: #b3261e; }
+
+/* ---- sections ---- */
+.mod-section { margin-bottom: 40px; }
+.mod-section-h {
+  display: flex; align-items: baseline; gap: 10px;
+  font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ochre-deep); font-weight: 700; margin: 0 0 16px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--rule);
+}
+.mod-count {
+  font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  color: #fff; background: var(--ochre); border-radius: 20px; padding: 2px 9px;
+}
+.mod-list { display: flex; flex-direction: column; gap: 18px; }
+
+/* ---- moderation card: builds on feed.css .card; add the toolbar shelf ---- */
+.mod-card { position: relative; }
+.mod-card:focus-visible { outline: 2px solid var(--ochre); outline-offset: 3px; }
+.mod-card-top {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* status chip — text-carried (never colour alone), like the feed flag badge */
+.mod-status {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 700; color: var(--ink-soft);
+  border: 1px solid var(--rule); border-radius: 16px; padding: 3px 9px;
+}
+.mod-status--flagged { color: var(--ochre-deep); border-color: var(--ochre); }
+.mod-status--pending_review,
+.mod-status--pending-review,
+.mod-status--draft { color: var(--ochre-deep); border-color: var(--ochre); }
+/* feed cards: float the status to the top-right corner of the card */
+.mod-card > .mod-status { position: absolute; top: 14px; right: 14px; }
+
+/* ---- question review card ---- */
+.mod-card--question .mq-kind {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; text-transform: uppercase;
+  color: var(--ink-faint); font-weight: 700;
+}
+.mq-prompt {
+  font-family: var(--serif); font-weight: 700; font-size: 20px; line-height: 1.2;
+  color: var(--ink); margin: 0 0 14px; letter-spacing: -.01em;
+}
+.mq-options { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.mq-option {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  font-family: var(--body); font-size: 14px; color: var(--ink-soft);
+  border: 1px solid var(--rule); border-radius: 8px; padding: 8px 12px;
+}
+.mq-option--correct {
+  color: var(--ink); border-color: var(--ochre);
+  background: var(--ochre-tint);
+}
+.mq-correct-tag {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em;
+  text-transform: uppercase; font-weight: 700; color: var(--ochre-deep);
+}
+.mq-explain {
+  font-family: var(--body); font-size: 13.5px; line-height: 1.5; color: var(--ink-soft);
+  margin: 0 0 12px;
+}
+.mq-explain-tag {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  font-weight: 700; color: var(--ochre-deep); margin-right: 6px;
+}
+.mq-meta {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+}
+.mq-ugc {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase;
+  font-weight: 700; color: var(--ochre-deep); border: 1px solid var(--ochre);
+  border-radius: 12px; padding: 1px 8px;
+}
+
+/* ---- moderation toolbar (shared by feed + question cards) ---- */
+.mod-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--rule);
+}
+.mod-act {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 700; cursor: pointer; padding: 8px 14px; border-radius: 18px;
+  border: 1px solid var(--rule); background: transparent; color: var(--ink-soft);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.mod-act:hover { border-color: var(--ink); color: var(--ink); }
+.mod-act:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+.mod-act-approve { color: #fff; background: var(--ochre); border-color: var(--ochre); }
+.mod-act-approve:hover { background: var(--ochre-deep); border-color: var(--ochre-deep); color: #fff; }
+.mod-act-flag:hover { border-color: var(--ochre); color: var(--ochre-deep); }
+.mod-act-remove:hover { border-color: #b3261e; color: #b3261e; }
+
+/* ---- inline Remove confirm (modelled on the feed flag-confirm) ---- */
+.mod-confirm {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  width: 100%; margin-top: 4px; padding: 10px 12px;
+  background: var(--card); border: 1px dashed var(--ochre); border-radius: 10px;
+}
+.mod-confirm-q {
+  font-family: var(--body); font-size: 13px; color: var(--ink); flex: 1 1 220px;
+}
+.mod-confirm-acts { display: flex; gap: 8px; }
+.mod-confirm-yes {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 700; color: #fff; background: #b3261e; border: 1px solid #b3261e;
+  border-radius: 16px; padding: 7px 14px; cursor: pointer;
+}
+.mod-confirm-yes:hover { background: #8f1e18; border-color: #8f1e18; }
+.mod-confirm-yes:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+.mod-confirm-no {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  font-weight: 700; color: var(--ink-soft); background: transparent; border: 1px solid var(--rule);
+  border-radius: 16px; padding: 7px 14px; cursor: pointer;
+}
+.mod-confirm-no:hover { border-color: var(--ink); color: var(--ink); }
+.mod-confirm-no:focus-visible { outline: 2px solid var(--ochre); outline-offset: 2px; }
+
+/* ---- empty state ---- */
+.mod-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  text-align: center; padding: 64px 24px;
+  border: 1px solid var(--rule); border-radius: 16px; background: var(--card);
+}
+.mod-empty-glyph {
+  width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: var(--ochre-tint); color: var(--ochre-deep);
+  font-family: var(--serif); font-weight: 800; font-size: 24px;
+}
+.mod-empty-text {
+  font-family: var(--mono); font-size: 13px; letter-spacing: .04em; color: var(--ink-soft); margin: 0;
+}
+
+@media (min-width: 720px) {
+  .mod-title { font-size: 44px; }
+}

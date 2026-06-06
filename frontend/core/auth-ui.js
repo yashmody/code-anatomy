@@ -17,10 +17,35 @@ let _onChange = null;
 export function initAuthUI(onChange) {
   _onChange = typeof onChange === 'function' ? onChange : null;
   renderSlot();
+  syncModerationNav();
 }
 
 function firstName(s) {
   return String(s || '').trim().split(/\s+/)[0] || 'there';
+}
+
+// ── capability helpers (4b: role-gated UI) ──────────────────────────────────────
+// 4b-A adds `permissions` (array of permission strings) to the /auth/me JSON.
+// getCurrentSession() returns that raw object, so the permissions ride along on
+// the session. These are CONVENIENCE checks for showing/hiding UI only — the API
+// re-checks every permission server-side, so a tampered client gains nothing.
+export function getPermissions() {
+  const s = getCurrentSession();
+  const p = s && s.permissions;
+  return Array.isArray(p) ? p : [];
+}
+
+export function hasPermission(perm) {
+  return getPermissions().includes(perm);
+}
+
+// Show the Moderation nav entry only for sessions that can view the queue.
+// Called on boot and after every sign-in / sign-out so it appears and disappears
+// with the session. Defensive: a missing element (older shell) is a no-op.
+export function syncModerationNav() {
+  const nav = document.getElementById('navModerate');
+  if (!nav) return;
+  nav.hidden = !hasPermission('moderate.view');
 }
 
 // ── the app-bar slot: a Sign-in button, or the signed-in identity + Sign out ──────
@@ -36,7 +61,7 @@ function renderSlot() {
       `</span>` +
       `<button class="app-signout" type="button" id="appSignOut">Sign out</button>`;
     const out = document.getElementById('appSignOut');
-    if (out) out.onclick = () => { signOut(); renderSlot(); if (_onChange) _onChange(); };
+    if (out) out.onclick = () => { signOut(); renderSlot(); syncModerationNav(); if (_onChange) _onChange(); };
   } else {
     el.innerHTML = `<button class="app-signin" type="button" id="appSignIn">Sign in</button>`;
     const btn = document.getElementById('appSignIn');
@@ -89,6 +114,7 @@ function openModal(trigger) {
       await signInWithEmail(input.value);
       close();
       renderSlot();
+      syncModerationNav();
       if (_onChange) _onChange();
     } catch (err) {
       errEl.textContent = err.message;
