@@ -21,7 +21,7 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Request
 
-from app.core import cache, cms_client
+from app.core import cache, cms_client, users
 
 router = APIRouter()
 
@@ -109,6 +109,46 @@ async def cms_webhook(request: Request) -> dict:
         "keys_seen": len(raw_keys),
         "invalidated": invalidated,
     }
+
+
+@router.post("/roles-sync")
+async def roles_sync(request: Request) -> dict:
+    """Reconcile a user's staff roles from a Directus role change (04 §7.2).
+
+    Loopback-only — same "network reachability is the authentication" model as
+    `/webhook` (§7.3). The Directus `roles-sync` hook POSTs:
+
+        { "email": "person@deptagency.com", "role": "content_author" | null }
+
+    `role` is the user's *current* Directus staff role (one of
+    `content_author` / `quiz_admin` / `feed_moderator` / `platform_admin`), or
+    `null` when they hold a non-staff / no role or are deactivated. The
+    reconcile is one-way and bounded to the staff roles — `learner` and
+    `feed_contributor` are never touched.
+    """
+    if request.client is None or not _is_loopback(request.client.host):
+        # 403 over 401 — rejection is policy, not credentials (matches /webhook).
+        raise HTTPException(status_code=403, detail="loopback only")
+
+    try:
+        event = await request.json()
+    except Exception as exc:  # noqa: BLE001 — accept any JSON parse failure
+        raise HTTPException(status_code=400, detail=f"invalid json: {exc}")
+
+    email = (event.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="missing email")
+
+    role = event.get("role")  # staff role key, or null
+    if role is not None and not isinstance(role, str):
+        raise HTTPException(status_code=400, detail="role must be a string or null")
+
+    try:
+        roles = users.sync_staff_roles(email, role or None, actor="directus:roles-sync")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+    return {"ok": True, "email": email, "roles": sorted(roles)}
 
 
 @router.get("/health")

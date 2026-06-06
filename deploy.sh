@@ -1781,6 +1781,14 @@ ${CHAIN_LINE}
         Require ip 127.0.0.1 ::1
     </Location>
 
+    # ── CMS role-mirror loopback-only (04 §7.2) ─────────────────────────────
+    # Same model as the webhook above: the Directus roles-sync hook POSTs staff
+    # role changes to FastAPI over loopback only; the app also rejects
+    # non-loopback callers. Co-resident by design.
+    <Location \"/api/cms/roles-sync\">
+        Require ip 127.0.0.1 ::1
+    </Location>
+
 ${CMS_LOCATION_BLOCK}
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"https\"

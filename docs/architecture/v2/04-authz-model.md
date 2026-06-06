@@ -687,6 +687,19 @@ which becomes persona-only per §5):
   therefore does not mirror. This rule prevents dual-write drift: any conflict
   between the two stores is resolved by re-reading Directus and overwriting
   the local copy, never the reverse.
+
+  **Implemented (Phase 4c).** The mirror is the `directus-extension-roles-sync`
+  **hook** (`cms/extensions/`): on `users.create`/`users.update`/`users.delete`
+  it re-reads the user's current Directus role name + status and POSTs
+  `{email, role}` (staff role key, or `null` when deactivated / non-staff) to
+  the loopback-only `POST /api/cms/roles-sync`
+  ([backend/app/modules/cms/routes.py](../../backend/app/modules/cms/routes.py)),
+  which calls `core.users.sync_staff_roles` — an authoritative, staff-roles-only
+  reconcile that grants/revokes the four staff keys and never touches `learner`
+  / `feed_contributor`. Loopback is the auth (same model as the cache webhook);
+  the hook uses native `fetch`, so the `IMPORT_IP_DENY_LIST` guard does not
+  apply. Coupling note: it matches roles by **name**, so renaming a staff role
+  in Directus breaks the map.
 - **`learner → feed_contributor`**: a small **app admin screen** in the FastAPI app
   (Platform-Admin-only), since feed contributors are learner-plane users who never log
   into Directus. Backed by a new endpoint, e.g.
@@ -881,7 +894,10 @@ is a thin client of FastAPI `POST /api/media/upload` — **no bytes touch Direct
 storage** (see `content-architecture/config-and-media`). It reuses the
 learner-plane session + `media.upload`, so a staff user must *also* hold a
 FastAPI grant of `content_author`/`feed_contributor` — the cross-plane coupling
-of §4.3.
+of §4.3. That coupling is now closed by the second extension,
+`directus-extension-roles-sync` (a hook), which mirrors staff-role changes from
+the Directus Users UI into FastAPI `user_roles` (§7.2) — so assigning the role
+in Directus is enough; no separate FastAPI grant step.
 
 ### 9.4 Read-access policy (product-confirmed, 2026-06-06)
 

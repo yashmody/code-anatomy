@@ -1,6 +1,8 @@
 // feed/auth.js — the Feed sign-in GATE.
 // Upgraded to connect directly to the FastAPI PostgreSQL backend.
 
+import { API_BASE } from '../../core/config.js';
+
 export const GOOGLE_CLIENT_ID = '';
 export const ALLOWED_DOMAIN = 'deptagency.com';
 export const DEV_MOCK = true;
@@ -30,7 +32,7 @@ export function loadGis() {
 // Global initialization function to fetch current session on startup
 export async function initializeAuth() {
   try {
-    const res = await fetch('/auth/me');
+    const res = await fetch(`${API_BASE}/auth/me`);
     if (res.ok) {
       activeSession = await res.json();
     } else {
@@ -44,7 +46,7 @@ export async function initializeAuth() {
 
 export function signInWithGoogle(container) {
   // Single-origin redirection to Google Auth endpoint
-  window.location.href = '/auth/google';
+  window.location.href = `${API_BASE}/auth/google`;
   return new Promise(() => {}); // Never resolves as page redirects
 }
 
@@ -58,7 +60,7 @@ export async function signInWithEmail(email) {
   const formData = new URLSearchParams();
   formData.append('email', value);
 
-  const res = await fetch('/login/dev', {
+  const res = await fetch(`${API_BASE}/login/dev`, {
     method: 'POST',
     body: formData,
     headers: {
@@ -82,7 +84,7 @@ export async function signInDevMock() {
 export async function signOut() {
   activeSession = null;
   try {
-    await fetch('/logout');
+    await fetch(`${API_BASE}/logout`);
   } catch (e) {
     console.warn('Signout request failed', e);
   }

@@ -12,7 +12,11 @@
 // production default. Override at runtime via window.__API_BASE for
 // experiments without rebuilding.
 export const API_BASE =
-  (typeof window !== 'undefined' && window.__API_BASE) || '';
+  (typeof window !== 'undefined' && window.__API_BASE) ||
+  // Local dev: static server on :8080 can't proxy /api/ — route to FastAPI on :8000.
+  (typeof location !== 'undefined' && location.port === '8080'
+    ? 'http://127.0.0.1:8000'
+    : '');
 
 // QUIZ_URL — in production the FastAPI quiz app is reverse-proxied at the
 // same origin as this SPA. In local dev (file:// or python -m http.server
@@ -48,6 +52,15 @@ export const SECTION_FILES = [
   'adobe-csc.json', 'adobe-ab.json',
   'ai-bmad.json', 'ai-gov.json'
 ];
+
+// CONTENT_BASE — base path for frozen content pages (FAQs, Checklist, Runbooks).
+// Apache aliases /anatomy/ → content/frozen/ in production (same origin).
+// In local dev (port 8080, Python static server from repo root) there is no
+// /anatomy/ alias — the files sit at /content/frozen/ instead.
+export const CONTENT_BASE =
+  (typeof location !== 'undefined' && location.port === '8080')
+    ? '/content/frozen'
+    : '/anatomy';
 
 // localStorage keys. One file owns these so renames don't drop a user's
 // theme on the floor.

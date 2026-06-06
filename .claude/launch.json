@@ -20,6 +20,13 @@
       "runtimeArgs": ["-m", "http.server", "8090"],
       "cwd": "content-system",
       "port": 8090
+    },
+    {
+      "name": "cms-directus",
+      "runtimeExecutable": "/usr/local/opt/node@22/bin/node",
+      "runtimeArgs": ["node_modules/.bin/directus", "start"],
+      "cwd": "cms",
+      "port": 8055
     }
   ]
 }

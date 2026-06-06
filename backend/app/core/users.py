@@ -228,6 +228,52 @@ def revoke_role(email: str, role_key: str, revoked_by: Optional[str] = None) -> 
         return True
 
 
+# Staff roles owned by the Directus plane and reconciled by the role mirror
+# (04 §7.2). `learner` (the floor) and `feed_contributor` (learner-plane,
+# app-owned via /api/admin/roles) are NEVER added or removed by the mirror.
+STAFF_ROLE_KEYS = {
+    "content_author", "quiz_admin", "feed_moderator", "platform_admin",
+}
+
+
+def sync_staff_roles(
+    email: str, role_key: Optional[str], actor: str = "directus:roles-sync",
+) -> Set[str]:
+    """Reconcile a user's *staff* roles to a single authoritative Directus role.
+
+    The Directus -> FastAPI mirror (04 §7.2). Directus owns the four staff
+    roles; `role_key` is the user's current Directus staff role, or None when
+    they hold a non-staff / no role or are deactivated.
+
+    One-way + authoritative + bounded to staff: grant `role_key` when it is a
+    staff key, and revoke any OTHER staff role the user still holds. `learner`
+    and `feed_contributor` are never touched. Idempotent.
+
+    A staff member may never have logged into the app, so there is no `users`
+    row for the `user_roles` FK — we create one (provider `directus-mirror`)
+    before granting. Returns the user's full role-key set after reconciliation.
+    """
+    email = (email or "").strip().lower()
+    if not email:
+        raise ValueError("email is required")
+
+    # Only a staff key is a valid target; None/learner/feed_contributor/unknown
+    # all mean "this user holds no staff role".
+    target = role_key if role_key in STAFF_ROLE_KEYS else None
+
+    # Ensure the FK target exists (grant_role raises "No user for …" otherwise).
+    if get_user(email) is None:
+        upsert_user(email, provider="directus-mirror")
+
+    held_staff = roles_for(email) & STAFF_ROLE_KEYS
+    for stale in held_staff - ({target} if target else set()):
+        revoke_role(email, stale, revoked_by=actor)
+    if target and target not in held_staff:
+        grant_role(email, target, granted_by=actor)
+
+    return roles_for(email)
+
+
 def ensure_first_admin() -> List[str]:
     """Seed `platform_admin` for every email in the `ADMIN_EMAILS` env var.
 

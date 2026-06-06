@@ -2,6 +2,7 @@
 // Upgraded to connect directly to the FastAPI PostgreSQL backend.
 
 import { validateFeedItem } from './validate.js';
+import { API_BASE } from '../../core/config.js';
 
 export const FLAG_THRESHOLD = 1;
 
@@ -29,7 +30,7 @@ const CATEGORY_RINGS = ['code', 'coder'];
 async function buildCategories() {
   if (!_categoriesPromise) {
     _categoriesPromise = (async () => {
-      const res = await fetch('/api/course/framework');
+      const res = await fetch(`${API_BASE}/api/course/framework`);
       if (!res.ok) throw new Error('Failed to fetch framework from server');
       const fw = await res.json();
       const cats = [];
@@ -60,7 +61,7 @@ function engagementScore(post) {
 export async function listPosts(filter = {}) {
   const { categories, tags, since, includeFlagged = true } = filter || {};
   
-  const res = await fetch('/api/feed');
+  const res = await fetch(`${API_BASE}/api/feed`);
   if (!res.ok) throw new Error('Failed to fetch feed from server');
   const data = await res.json();
   const allPosts = data.feed || [];
@@ -109,7 +110,7 @@ export async function listPosts(filter = {}) {
 }
 
 export async function getPost(id) {
-  const res = await fetch('/api/feed');
+  const res = await fetch(`${API_BASE}/api/feed`);
   if (!res.ok) return null;
   const data = await res.json();
   const allPosts = data.feed || [];
@@ -120,7 +121,7 @@ export async function createPost(item) {
   const v = await validateFeedItem(item);
   if (!v.ok) throw new Error('Invalid feed item: ' + v.errors.map((e) => e.message).join('; '));
 
-  const res = await fetch('/api/feed', {
+  const res = await fetch(`${API_BASE}/api/feed`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -137,7 +138,7 @@ export async function createPost(item) {
 }
 
 export async function flagPost(id) {
-  const res = await fetch('/api/feed/flag', {
+  const res = await fetch(`${API_BASE}/api/feed/flag`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'

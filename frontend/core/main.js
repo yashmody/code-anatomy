@@ -7,7 +7,7 @@ import { renderRead } from '../modules/course/read.js';
 import { renderFeed } from '../modules/feed/feed.js';
 import { initAuthUI, hasPermission } from './auth-ui.js';
 import { initializeAuth } from '../modules/feed/auth.js';
-import { QUIZ_URL, SECTION_FILES } from './config.js';
+import { QUIZ_URL, SECTION_FILES, CONTENT_BASE } from './config.js';
 import { initTheme, toggleTheme } from './theme.js';
 
 // BASE was the on-disk relative root the old api-client used to derive
@@ -28,6 +28,17 @@ function initChrome() {
   // Quiz link → the (separately served) quiz app. One constant to repoint (QUIZ_URL in config.js).
   const quiz = document.getElementById('resQuiz');
   if (quiz) quiz.href = QUIZ_URL;
+
+  // Content resource links — Apache aliases /anatomy/ in prod; local dev uses /content/frozen/.
+  const resLinks = {
+    resFaqs:      `${CONTENT_BASE}/faqs/aem-banking-faq.html`,
+    resChecklist: `${CONTENT_BASE}/code-coder-checklist.html`,
+    resRunbook:   `${CONTENT_BASE}/architect-runbook.html`,
+  };
+  for (const [id, href] of Object.entries(resLinks)) {
+    const el = document.getElementById(id);
+    if (el) el.href = href;
+  }
 
   // Resources dropdown — click to toggle; close on outside-click, ESC, or item pick.
   const menu = document.getElementById('resMenu');

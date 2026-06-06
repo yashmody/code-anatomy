@@ -160,7 +160,8 @@ footer a{color:var(--ochre)}
     <span class="brand-tagline">Architect's Runbook</span>
   </a>
   <div class="brand-right">
-    <a href="/app/" class="back-link">← Anatomy of Code</a>
+    <a href="/app/" class="back-link" id="backToApp">← App</a>
+    <a href="anatomy-of-code-course.html" class="back-link">← Back to Course</a>
     <a href="code-coder-checklist.html" class="back-link">Checklist</a>
     <a href="faqs/index.html" class="back-link">FAQs</a>
     <button class="theme-toggle" id="themeToggle" onclick="toggleAppTheme()">
@@ -169,6 +170,7 @@ footer a{color:var(--ochre)}
     </button>
   </div>
 </div>
+<script>(function(){var a=document.getElementById('backToApp');if(a&&location.port==='8080')a.href='/frontend/index.html';})();</script>
 
 <header class="masthead">
   <div class="crumbs">

@@ -137,9 +137,10 @@
 <div class="grain"></div>
 
 <header class="brand-bar">
-  <!-- Prod: /app/ (same origin). Local dev SPA is on a separate port. -->
-  <a href="/app/" class="back">← Anatomy of Code</a>
+  <!-- Back to App: /app/ in prod (Apache); /frontend/index.html in local dev (:8080). -->
+  <a href="/app/" class="back" id="backToApp">← App</a>
   <a href="index.html" class="back">All FAQs</a>
+  <a href="../anatomy-of-code-course.html" class="back">← Back to Course</a>
   <img src="https://www.deptagency.com/wp-content/uploads/2025/10/logo-dept.svg" class="dept-svg-logo" alt="DEPT®" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" />
   <span style="display:none;font-family:var(--serif);font-weight:800;font-size:18px;color:var(--ink)">DEPT®</span>
   <div class="tagline">Architect's FAQ</div>
@@ -149,6 +150,10 @@
     <span id="themeLabel">Dark Mode</span>
   </button>
 </header>
+<script>
+  // Fix "← App" href for local dev where the SPA runs on :8080 (Python static server).
+  (function(){var a=document.getElementById('backToApp');if(a&&location.port==='8080')a.href='/frontend/index.html';})();
+</script>
 
 <main>
   <div class="hero">

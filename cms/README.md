@@ -229,6 +229,32 @@ allowed. This is required for the seam to work.
 
 ---
 
+## Staff-role mirror (Phase 4c — the second loopback seam)
+
+`extensions/directus-extension-roles-sync` is a **hook** that keeps FastAPI's
+capability roles in step with the Directus Users UI. On any
+`users.create`/`update`/`delete` it re-reads the user's current Directus role
+name + status and POSTs `{ email, role }` to the FastAPI loopback receiver:
+
+```
+POST http://127.0.0.1:8000/api/cms/roles-sync     # FASTAPI_ROLES_SYNC_URL
+{ "email": "person@deptagency.com", "role": "content_author" | null }
+```
+
+FastAPI's `core.users.sync_staff_roles` then reconciles `user_roles` — an
+**authoritative, staff-roles-only** sync of the four staff keys
+(`content_author`, `quiz_admin`, `feed_moderator`, `platform_admin`); it never
+touches `learner` or `feed_contributor` (learner-plane, granted via the FastAPI
+`/api/admin/roles` API). This closes the cross-plane coupling: **assigning a
+staff role in the Directus UI is enough** — no separate FastAPI grant step. See
+`docs/architecture/v2/04-authz-model.md §7.2`.
+
+Unlike the cache-invalidation Flow, the hook uses Node's native `fetch`, so the
+`IMPORT_IP_DENY_LIST` SSRF guard does **not** apply — loopback works regardless.
+Loopback reachability is the authentication (Apache `Require ip 127.0.0.1` on
+`/api/cms/roles-sync`; the app also rejects non-loopback). The hook ships a
+committed `dist/` like the media-upload module; build it under node@22.
+
 ## Deferred (NOT in Phase 4a)
 
 - **Media off large objects — CANCELLED.** Media stays in Postgres large objects
