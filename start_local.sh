@@ -20,9 +20,11 @@
 # REMOTE dev database (2026-06 cutover):
 #   Local development now connects to the REMOTE shared instance's dev database
 #   (codecoder_dev) over TLS — there is NO local Postgres any more (it took too
-#   much disk). The DATABASE_URL lives in backend/.env.development.example
-#   (sslmode=require). Seed backend/.env from it (the script does this on first
-#   run) and fill in REMOTE_DB_HOST + the app_dev password from the secret store.
+#   much disk). On FIRST run (no backend/.env yet, development env, interactive
+#   terminal) the script PROMPTS for the DB connection — paste the DATABASE_URL
+#   the maintainer emailed, or type host/port/db/user/password and it assembles
+#   + URL-encodes the connection string into backend/.env (mode 600). A non-TTY
+#   run, or leaving the host blank, keeps the .env.development.example placeholder.
 #   --db (start a local Postgres) is now a LEGACY escape hatch — you do NOT need
 #   it for normal dev. The OFFLINE smoke harness (scripts/smoke.sh) is separate:
 #   it forces sqlite and never touches the network, so it stays self-contained.
@@ -101,6 +103,52 @@ BACKEND_DIR="$ROOT_DIR/backend"
 VENV_PYTHON="$BACKEND_DIR/.venv/bin/python"
 VENV_UVICORN="$BACKEND_DIR/.venv/bin/uvicorn"
 
+# First-run DB bootstrap: prompt for the connection and write DATABASE_URL into a
+# freshly-seeded backend/.env. The maintainer emails the creds; the dev pastes
+# them here once instead of hand-editing the template. Interactive TTY only —
+# a non-interactive shell (CI) keeps the template placeholder untouched. The
+# password is read WITHOUT echo and URL-encoded before it enters the connection
+# string (real passwords carry @ # ! * which would otherwise break the URL).
+prompt_db_into_env() {
+    local env_file="$1"
+    if [ ! -t 0 ]; then
+        echo "   (non-interactive shell — left DATABASE_URL as the template placeholder; edit $env_file)"
+        return 0
+    fi
+    echo ""
+    echo "🔑 First run: configure the database connection (creds from the maintainer)."
+    echo "   Paste the full DATABASE_URL if you were emailed one, or press Enter to type the parts."
+    local full url=""
+    read -r -p "   DATABASE_URL (blank = enter parts): " full
+    if [ -n "$full" ]; then
+        url="$full"
+    else
+        local host port db user pass ssl enc
+        read -r -p "   DB host (e.g. 20.228.243.225): " host
+        if [ -z "$host" ]; then
+            echo "   ↪ Skipped — left the template placeholder. Edit $env_file before first run."
+            return 0
+        fi
+        read -r -p "   DB port [5432]: " port;            port="${port:-5432}"
+        read -r -p "   DB name [codecoder_dev]: " db;     db="${db:-codecoder_dev}"
+        read -r -p "   DB username: " user
+        read -r -s -p "   DB password (hidden): " pass;   echo ""
+        read -r -p "   SSL mode [require]: " ssl;         ssl="${ssl:-require}"
+        # URL-encode the password via stdin so it never appears in the process list.
+        enc="$(printf '%s' "$pass" | python3 -c 'import sys,urllib.parse; print(urllib.parse.quote(sys.stdin.read(), safe=""))')"
+        url="postgresql://${user}:${enc}@${host}:${port}/${db}?sslmode=${ssl}"
+    fi
+    # Replace any existing DATABASE_URL line, then append the new one. Done via
+    # grep+append (not sed) to avoid escaping % & / in the connection string.
+    grep -v '^DATABASE_URL=' "$env_file" > "$env_file.tmp" && mv "$env_file.tmp" "$env_file"
+    printf 'DATABASE_URL=%s\n' "$url" >> "$env_file"
+    chmod 600 "$env_file" 2>/dev/null || true
+    # Masked confirmation — never print the password.
+    local masked
+    masked="$(printf '%s' "$url" | sed -E 's#://([^:]+):[^@]*@#://\1:****@#')"
+    echo "   ✅ Wrote DATABASE_URL=$masked to $env_file (mode 600)."
+}
+
 # 0a. Environment selection (05 §5 · environment management).
 #     --env picks which backend/.env.<env>.example seeds backend/.env when no
 #     .env exists yet. An existing backend/.env is NEVER overwritten — your
@@ -114,11 +162,12 @@ if [ -f "$ENV_FILE" ]; then
 elif [ -f "$ENV_EXAMPLE" ]; then
     cp "$ENV_EXAMPLE" "$ENV_FILE"
     echo "🌱 Env: no .env found — seeded from $ENV_EXAMPLE"
-    echo "   Edit $ENV_FILE before any non-development run (secrets are placeholders)."
     if [ "$APP_ENV_SEL" = "development" ]; then
-        echo "   NOTE: development points DATABASE_URL at the REMOTE dev database"
-        echo "         (codecoder_dev) over TLS. Replace REMOTE_DB_HOST + the app_dev"
-        echo "         password in $ENV_FILE with the real values before first run."
+        # First run: ask for the DB connection and write it into the new .env.
+        prompt_db_into_env "$ENV_FILE"
+    else
+        echo "   Edit $ENV_FILE before any non-development run (secrets are placeholders;"
+        echo "   staging/production DATABASE_URL is filled from the secret store, not here)."
     fi
 else
     echo "⚠️  Env: neither $ENV_FILE nor $ENV_EXAMPLE exists — booting with process env only."

@@ -81,11 +81,17 @@ Sign in with any email — dev mode stubs Google OAuth, and "sent" mail lands in
 
 ## Tier 2b — full run against Postgres (optional)
 
-`./start_local.sh` is wired to the **remote shared dev DB** (TLS, credentials
-from the secret store), which you will not have access to. So either:
+`./start_local.sh` connects to the **remote shared dev DB**. On the **first run**
+(no `backend/.env` yet) it **prompts you for the database connection** — paste the
+`DATABASE_URL` the maintainer emailed you, or type host / port / db / user /
+password and it assembles + URL-encodes the connection string into `backend/.env`
+(written `chmod 600`; the password is read hidden, never echoed). An existing
+`backend/.env` is never touched; a non-interactive shell keeps the template
+placeholder. So either:
 
-- ask the maintainer for the dev-DB credentials, or
-- spin up a throwaway local Postgres with `./start_local.sh --db`.
+- run `./start_local.sh` and paste the dev-DB credentials at the prompt, or
+- spin up a throwaway local Postgres with `./start_local.sh --db` (then enter
+  `localhost` and your local role at the prompt).
 
 For build verification, Tier 1 + Tier 2a is sufficient.
 
