@@ -19,6 +19,10 @@ deploy.env
 # --- Local dev symlinks (created by start_local.sh or manually; not committed) ---
 resources
 
+# --- Graphify AST cache (regenerated automatically; too large for git) ---
+graphify-out/cache/
+backend/graphify-out/
+
 # --- Dev-only shims (never ship to prod) ---
 # Phase 1 (v2): quiz-certification/ renamed to backend/; dev_quiz.py removed.
 backend/app/dev_quiz.py
