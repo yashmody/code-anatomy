@@ -6,71 +6,89 @@ sidebar_position: 1
 
 # Quiz management
 
-> **Phase 0 stub.** Phase 5a expands this into the page set listed below.
+The quiz is one module of the v2 backend — `backend/app/modules/quiz/`. It
+owns the certification exam end to end: question sampling, server-side
+grading, the pass mark, the signed PDF certificate, the public verifier, and
+the admin surfaces that staff use to curate the bank. This section is the
+operator's manual for all of it.
 
 ## Scan box
 
-- The quiz is one module of the v2 backend
-  (`backend/app/modules/quiz/`). It owns generation, grading,
-  certificate signing, certificate PDF rendering, email delivery and the
-  admin question CRUD.
-- **Real and dev certificates are visually distinguishable** in v2 — the
-  current build issues identical PDFs from dev sessions, which is a
-  governance bug. Phase 2c adds an `attempts.environment` column, a
-  visible "DEV / NOT FOR ISSUANCE" watermark, and a separate signing key.
-- **Already-issued real certificates keep verifying.** The HMAC input
-  (`cert_id|email|score|submitted_at`) is unchanged; existing rows
-  default to `environment='production'`.
-- The question bank lives in Postgres (`questions`), seeded from
-  `backend/data/question_bank.json`. UGC questions added through the feed
-  carry `q.ugc.<feedid>` IDs.
-- Quiz Admin and Platform Admin roles (staff-plane, via Directus) are the
-  only writers of `questions` after launch. Learners never see admin
-  surfaces.
+- **The quiz is the certification gate.** A learner starts an exam, the
+  server samples 30 questions, grades the submission server-side, and a pass
+  (25 of 30 correct) mints a signed certificate. The client never sees a
+  correct answer until it submits.
+- **Grading and answer custody are server-only.** Correct indices live in the
+  server's quiz state, never in the payload the browser holds. The browser
+  posts back only the learner's chosen indices. This is the whole anti-cheat
+  story.
+- **Certificates are HMAC-sealed per environment.** Each certificate carries
+  an HMAC over `cert_id|email|score|submitted_at`, signed with the
+  environment's key from the `signing_keys` table. A development certificate
+  cannot verify against the production key, and vice versa.
+- **Real certificates never break.** The HMAC formula is unchanged from v1, so
+  every certificate ever issued in production keeps verifying. The canary
+  `CCA-F-20260605-E79E74AB` is asserted `valid=true` in the smoke suite on
+  every run.
+- **The bank is Postgres, and only staff write to it.** Questions live in the
+  `questions` table. Learners can *propose* questions through a feed scenario,
+  but those land as `pending_review` and a moderator must approve them before
+  they reach the quiz pool.
 
 ## What lives here
 
-This section is the quiz operator's manual: how to author and review
-questions, what the quiz lifecycle looks like end-to-end, how
-certificates are signed and verified, how dev mode now differs visibly
-from real, and which admin flows live where.
+The quiz module is small in line count and dense in consequence. It is the
+one place in the platform where a learner earns a credential that DEPT® puts
+its name on, so the rules around scoring, signing, and verification are
+deliberately tight. The module also carries one piece of legacy state — an
+in-process dictionary of active quizzes — that pins the application to a
+single worker until it is moved into Postgres.
 
-Source contracts:
-- `docs/architecture/v2/04-authz-model.md` — quiz admin permissions.
-- Phase 2c (certificate dev-mode) in `v2-plan.md`.
-- `docs/architecture/v2/07-security-baseline.md` — signing-key rotation
-  via the new `signing_keys` table.
+This section walks the module in the order a learner experiences it, then
+turns to the staff side. Read the lifecycle page first; everything else
+(the bank, the certificate, the verifier, the admin surfaces) hangs off the
+two moments in that lifecycle where the server takes custody of an answer.
 
-## Planned pages (Phase 5a)
+## Section map
 
-1. **Question bank** — schema, authoring, versioning, the UGC sub-tree.
-2. **Quiz lifecycle** — start → take → submit → grade → cert → email,
-   with a Mermaid sequence diagram.
-3. **Certificates** — signing, PDF render, verification URL,
-   signing-key rotation.
-4. **Dev mode vs real** — visible watermark, separate key, the
-   `attempts.environment` column.
-5. **Verification** — `/verify/{cert_id}` flow; what a stranger sees.
-6. **Admin flows** — Quiz Admin and Platform Admin actions in Directus
-   and via the FastAPI admin endpoints.
+import DocCardList from '@theme/DocCardList';
 
-:::info Before / After
+<DocCardList />
 
-**Before (current):** a developer running `DEV_MODE=true` locally issues
-a certificate that is byte-identical to a real one — same PDF, same
-signature surface.
+The pages, in reading order:
 
-**After (v2, Phase 2c):** the same flow issues a PDF stamped
-*"DEVELOPMENT — NOT FOR ISSUANCE"*, signed by a separate dev key, with
-`attempts.environment='development'`. The verify page tells the visitor
-the certificate is a dev artefact.
+1. **Quiz lifecycle** — start → server-side generation (no-repeat) → take →
+   submit → server-side grading → pass mark → certificate. The spine of the
+   module, with the full request sequence.
+2. **The question bank** — the `questions` schema, authoring through the
+   admin endpoint, in-place versioning, and the user-generated-content path
+   where a feed scenario becomes a `pending_review` question.
+3. **Certificates** — the ReportLab PDF, HMAC signing via `signing_keys`,
+   the `CCA-F-` / `DEV-` / `STG-` cert-ID prefixes, the development
+   watermark, and the no-data-loss guarantee.
+4. **Verification** — the public `/verify/{cert_id}` flow, the structured
+   verifier result, key rotation and expiry, and exactly what a stranger
+   sees.
+5. **RBAC and admin** — the quiz admin's permissions, the moderation queue
+   for user-submitted questions, the admin endpoints, and the cooldown and
+   multi-worker caveats an operator must know.
 
-:::
+## Source contracts
 
-## Cross-references
+Everything in this section is grounded in the shipped v2 code and the design
+contracts that produced it:
 
-- `docs/architecture/v2/03-data-model.md` §2 — `attempts`,
-  `signing_keys`, `quiz_sessions` tables.
-- `docs/architecture/v2/04-authz-model.md` — Quiz Admin role permissions.
-- `docs/architecture/v2/07-security-baseline.md` — certificate signing
-  posture.
+- `backend/app/modules/quiz/` — `service.py` (generation + grading),
+  `routes.py` (the runtime endpoints), `storage.py` (persistence + the
+  signing wrappers), `verification.py` (HMAC sign/verify + rotation),
+  `certificate.py` (the PDF), `email.py` (delivery).
+- `backend/app/core/deps.py` — the locked permission matrix that authorises
+  every admin route.
+- `docs/architecture/v2/02-parity-method.md` — the no-loss method and the
+  real-cert canary.
+- `docs/architecture/v2/03-data-model.md` — the `attempts`, `questions`,
+  `signing_keys` and `quiz_sessions` tables.
+- `docs/architecture/v2/04-authz-model.md` — the quiz admin role and its
+  permissions.
+- `docs/architecture/v2/07-security-baseline.md` §8 — the certificate
+  dev-mode design.

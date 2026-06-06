@@ -8,6 +8,6 @@
     "id": "quiz-management/intro"
   },
   "customProps": {
-    "description": "Question bank, quiz lifecycle, real-vs-dev certificates, verification, admin flows."
+    "description": "The certification quiz module: lifecycle, the question bank and UGC, signed certificates, public verification, and the RBAC + admin surfaces."
   }
 }
