@@ -308,6 +308,27 @@ class AppConfig(Base):
     )
 
 
+class SuperAdmin(Base):
+    """Break-glass superadmin account — local username/password + TOTP 2FA.
+
+    Completely separate from the learner-plane `users` table and Google OAuth.
+    One account maximum. Credentials never come from git — seeded via
+    scripts/create_superadmin.py. Not visible to Directus (REVOKE in 0009).
+
+    Auth state machine:
+      totp_enabled=False → password verified → redirect to first-time TOTP setup
+      totp_enabled=True  → password + TOTP both required to create a session
+    """
+    __tablename__ = "superadmin"
+
+    email          = Column(String(255), primary_key=True)
+    password_hash  = Column(String(255), nullable=False)   # bcrypt hash
+    totp_secret    = Column(String(64),  nullable=True)    # base32; NULL until setup
+    totp_enabled   = Column(Boolean,     nullable=False, default=False)
+    created_at     = Column(DateTime,    default=datetime.utcnow)
+    last_login_at  = Column(DateTime,    nullable=True)
+
+
 class AuthAudit(Base):
     """Append-only authn/authz event log. FastAPI writes; Directus has no SELECT."""
     __tablename__ = "auth_audit"

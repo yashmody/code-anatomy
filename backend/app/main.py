@@ -37,6 +37,7 @@ from app.modules.content import routes as content_routes
 from app.modules.feed import routes as feed_routes
 from app.modules.media import routes as media_routes
 from app.modules.quiz import routes as quiz_routes
+from app.modules.superadmin import routes as superadmin_routes
 
 
 @asynccontextmanager
@@ -176,6 +177,7 @@ app.include_router(content_routes.router, prefix="/api/course", tags=["content"]
 app.include_router(feed_routes.router, prefix="/api", tags=["feed"])
 app.include_router(media_routes.router, tags=["media"])
 app.include_router(cms_routes.router, prefix="/api/cms", tags=["cms"])
+app.include_router(superadmin_routes.router, tags=["superadmin"])
 # Admin role-assignment REST (04 §7.2). Decorators are "/roles"; the prefix
 # carries "/api/admin" → /api/admin/roles. All endpoints require role.assign.
 app.include_router(admin_routes.router, prefix="/api/admin", tags=["admin"])

@@ -64,7 +64,25 @@ _LEGACY_ROLE_TO_PERMISSION = {
 
 
 def _session_user_or_401(request: Request) -> Dict:
-    """Pull session user; raise 401 (JSON) or 302→/login (HTML)."""
+    """Pull session user; raise 401 (JSON) or 302→/login (HTML).
+
+    Break-glass path: if session["superadmin"]["authenticated"] is True, return
+    a synthetic user dict with _superadmin=True. This is completely independent
+    of the Google OAuth learner plane and bypasses the users table lookup.
+    require_permission() treats _superadmin as an unconditional platform_admin.
+    """
+    # ── Break-glass superadmin path ───────────────────────────────────────────
+    sa_session = request.session.get("superadmin")
+    if sa_session and sa_session.get("authenticated"):
+        return {
+            "email":      sa_session["email"],
+            "name":       "Superadmin",
+            "persona":    None,
+            "provider":   "superadmin",
+            "_superadmin": True,
+        }
+
+    # ── Normal Google OAuth / dev-login path ──────────────────────────────────
     user = request.session.get("user")
     if not user:
         if request.url.path.startswith("/api/") or \
@@ -98,6 +116,10 @@ def require_permission(perm: str):
 
     def dependency(request: Request) -> Dict:
         db_user = _session_user_or_401(request)
+        # Break-glass superadmin bypasses all permission checks — equivalent to
+        # platform_admin without needing a users/user_roles row.
+        if db_user.get("_superadmin"):
+            return db_user
         held = users.roles_for(db_user["email"])
         if "platform_admin" in held:
             return db_user
@@ -129,6 +151,8 @@ def require_role(allowed_roles: List[str]):
 
     def dependency(request: Request) -> Dict:
         db_user = _session_user_or_401(request)
+        if db_user.get("_superadmin"):
+            return db_user
         held = users.roles_for(db_user["email"])
         if "platform_admin" in held:
             return db_user
