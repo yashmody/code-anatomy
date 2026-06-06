@@ -8,6 +8,6 @@
     "id": "database/intro"
   },
   "customProps": {
-    "description": "Postgres schema, Alembic migrations, ER diagram, large-object media, backup/restore."
+    "description": "One Postgres, two writers: the thirteen-table schema, the 0001-0008 Alembic chain, the scoped directus_app role, and large-object media."
   }
 }
