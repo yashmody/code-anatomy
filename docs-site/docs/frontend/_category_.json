@@ -8,6 +8,6 @@
     "id": "frontend/intro"
   },
   "customProps": {
-    "description": "Buildless ES-module SPA — core, shared, modules, styles. Visual parity with the frozen monolith."
+    "description": "The buildless ES-module SPA: app shell and hash router, the block + feed renderer registry, the four modes (Manual / Read / Feed / role-gated Moderation), the cache-backed read path through FastAPI, and the unified theme. Visual parity with the frozen monolith is the gate."
   }
 }
