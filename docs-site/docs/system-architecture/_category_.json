@@ -8,6 +8,6 @@
     "id": "system-architecture/intro"
   },
   "customProps": {
-    "description": "Modular monolith, Directus topology, two auth planes, caching, security baseline, observability."
+    "description": "The capstone overview: the two-plane model (FastAPI learner plane + Directus staff plane) over one Postgres, the modular monolith, the cache-backed read path, the auth model, the security baseline, and observability."
   }
 }
