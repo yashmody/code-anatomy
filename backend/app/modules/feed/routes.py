@@ -21,6 +21,7 @@ from app.core.deps import require_permission
 from app.modules.feed import storage as feed_storage
 from app.modules.feed.schemas import FlagFeedPayload, ModActionPayload
 from app.modules.quiz import storage as quiz_storage
+from app.modules.auth.storage import write_audit
 
 
 router = APIRouter()
@@ -113,18 +114,22 @@ async def moderate_action(
 ):
     """Approve or reject/flag content."""
     action = payload.action.lower()
+    actor = user.get("email") if isinstance(user, dict) else None
+    before_status = after_status = None
 
     if payload.item_type == "feed":
         with get_session() as s:
             item = s.get(FeedItem, payload.item_id)
             if not item:
                 raise HTTPException(status_code=404, detail="Feed item not found")
+            before_status = item.status
             if action == "approve":
                 item.status = "published"
             elif action == "flag":
                 item.status = "flagged"
             elif action == "remove":
                 item.status = "removed"
+            after_status = item.status
             s.commit()
         # The status flip changes what the feed list / moderation queue return.
         # This write lands in the FastAPI plane, bypassing the Directus
@@ -137,15 +142,32 @@ async def moderate_action(
             q = s.get(Question, payload.item_id)
             if not q:
                 raise HTTPException(status_code=404, detail="Question not found")
+            before_status = q.status
             if action == "approve":
                 q.status = "published"
             elif action == "flag":
                 q.status = "draft"
             elif action == "remove":
                 q.status = "archived"
+            after_status = q.status
             s.commit()
         # Same rationale as feed above — invalidate the `questions:` prefix so
         # the quiz pool / moderation queue see the new status immediately.
         cache.invalidate_prefix("questions:")
+
+    # Audit the moderation decision (V2-F-05). Best-effort: the status change is
+    # the primary effect, so an audit hiccup must never 500 the action. Role
+    # grants + logins are already audited; this closes the moderation gap.
+    try:
+        write_audit(
+            actor=actor,
+            action=f"moderate.{payload.item_type}.{action}",
+            target=payload.item_id,
+            before={"status": before_status},
+            after={"status": after_status},
+        )
+    except Exception as exc:  # noqa: BLE001 — audit is secondary to the action
+        import logging
+        logging.getLogger("app.moderate").warning("audit write failed: %s", exc)
 
     return {"status": "success"}

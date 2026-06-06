@@ -22,8 +22,8 @@ keep verifying, the buildless SPA keeps fetching the same paths):
 """
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.responses import JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import text
@@ -122,6 +122,27 @@ async def readyz():
 
     body = {"status": "ok" if ready else "not_ready", "checks": checks}
     return JSONResponse(body, status_code=200 if ready else 503)
+
+
+@health_router.post("/csp/report")
+async def csp_report(request: Request):
+    """Sink for CSP violation reports — the Report-To `csp-endpoint` target.
+
+    Unauthenticated by design: browsers POST CSP reports with no credentials
+    and must never be redirected. Accepts any content-type
+    (application/csp-report or application/reports+json), logs a compact line so
+    the CSP Report-Only soak (deploy.sh) has somewhere to land, and returns 204.
+    No DB, no auth, no redirect — it lives on the inline health_router for
+    exactly that reason. Closes V2-F-02 (the Report-To header previously
+    dangled at a 404).
+    """
+    import logging
+    try:
+        raw = (await request.body()).decode("utf-8", "replace")[:2000]
+    except Exception:  # noqa: BLE001 — a report sink must never error
+        raw = "<unreadable>"
+    logging.getLogger("app.csp").warning("csp-report %s", raw)
+    return Response(status_code=204)
 
 
 app = FastAPI(title="DEPT® Anatomy of Code · Backend", lifespan=lifespan)

@@ -1139,7 +1139,7 @@ ExecStart=${QUIZ_DIR}/.venv/bin/uvicorn app.main:app \\
     --port ${QUIZ_PORT} \\
     --workers ${QUIZ_WORKERS} \\
     --proxy-headers \\
-    --forwarded-allow-ips='*'
+    --forwarded-allow-ips='127.0.0.1'
 Restart=on-failure
 RestartSec=5
 # ── Security hardening (07 §9, softened per C-64) ───────────────────────────
