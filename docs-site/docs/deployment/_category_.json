@@ -8,6 +8,6 @@
     "id": "deployment/intro"
   },
   "customProps": {
-    "description": "deploy.sh walkthrough, Apache vhost, systemd + uvicorn, env & secrets, upgrade & rollback."
+    "description": "Single-VM topology, deploy.sh, the Apache vhost (TLS/CSP/cache), environments and secrets, the Directus stand-up, and day-two operations."
   }
 }
