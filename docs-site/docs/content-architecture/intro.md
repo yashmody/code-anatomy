@@ -6,63 +6,69 @@ sidebar_position: 1
 
 # Content architecture
 
-> **Phase 0 stub.** Phase 5a expands this into the page set listed below.
-
 ## Scan box
 
-- v2 collapses today's triplicated content (`content-architecture/` + the
-  frozen `content-system/` HTML + Postgres) into a single `content/` tree
-  with a clear hierarchy: `source/` (git seed), `schemas/`, `frozen/`,
-  `resources/`.
-- **Postgres is the runtime source of truth** for course chapters, the
-  framework, and the framework-explainer. `content/source/*.json` is the
-  version-controlled seed and the diff-able record. ADR 0001 (filesystem
-  as source) is superseded.
-- The 578 KB `content/frozen/anatomy-of-code-course.html` is **not** a
-  source — it is a frozen visual-parity reference and the artefact Apache
-  serves at `/anatomy/`.
-- Resources (runbook, checklist, FAQs) are de-duplicated. `content/resources/`
-  is the single home; the SPA's three duplicate copies are deleted.
-- All authored prose follows the **LAYER pattern**: Scan Box (3–5 bullets,
-  ~30-second read) at the top, opinionated prose underneath, diagrams and
-  callouts woven through.
+- The platform carries **four kinds of content**, and each has exactly one home:
+  authored course prose and the feed both live in Postgres tables, media lives in
+  Postgres large objects, and configuration lives in the `app_config` table.
+  Nothing is duplicated across stores.
+- **Postgres is the editable source of truth.** The JSON files under
+  `content/source/` are a version-controlled seed and a diff-able export — not the
+  runtime read path. This is a deliberate shift away from the older
+  "files are canonical" stance once a real CMS arrived.
+- **Two planes, one database.** Directus 11 (`cms/`) is the editorial *write*
+  surface; the FastAPI app (`backend/`) is the runtime *read* surface. Both read
+  and write the same Postgres rows. Directus is never on the request path —
+  the SPA and the quiz read content through FastAPI `/api/*`, cache-backed.
+- The seam that keeps the cache honest is a single loopback webhook: Directus
+  publishes, fires `POST /api/cms/webhook`, and FastAPI invalidates the one cache
+  key that changed. No shared secret, no remote dependency at read time.
+- **Media is final: Postgres large objects, streamed by FastAPI with HTTP Range.**
+  No S3, no object store, no filesystem media store. Directus holds media
+  *metadata* only and never the bytes.
 
-## What lives here
+## What this section covers
 
-This section explains the content tree, how editors will use Directus to
-write into Postgres, how the git-JSON seed round-trips, the JSON schemas,
-and the voice and language discipline (Indian English, LAYER pattern, four
-callout types) from `CLAUDE.md`.
+This is the map of where content lives, who may write it, and how it reaches a
+reader. It is written for an architect who has to reason about a content change
+end to end — from an editor's keystroke in Directus to the byte a learner's
+browser renders.
 
-Source contracts:
-- `docs/architecture/v2/01-blueprint.md` §5 — content consolidation map.
-- `docs/architecture/v2/03-data-model.md` — `course_chapters`, `frameworks`
-  tables and the Postgres-as-source decision.
-- `docs/architecture/v2/05-config-cms.md` — Directus collection map.
+The grounding documents are the v2 design contracts and the code that implements
+them:
 
-## Planned pages (Phase 5a)
+- `docs/architecture/v2/03-data-model.md` — the Postgres schema: `course_chapters`,
+  `frameworks`, `feed_items`, `questions`, `media_assets`, `app_config`, and the
+  Directus coexistence rules.
+- `docs/architecture/v2/05-config-cms.md` — the three-tier secret/config/content
+  separation, the Directus collection map, and the webhook seam.
+- `content/source/` — the JSON seed, the schemas (`schemas/*.json`), `validate.py`,
+  and `SCHEMA.md` (the authored block-model contract).
+- `cms/` — Directus-as-code: the pinned version, the collection snapshot, and the
+  scoped DB role.
 
-1. **Source of truth** — Postgres editable; git-JSON as seed/export.
-2. **Schemas** — `content/schemas/{course,feed}.schema.json`, validate.py.
-3. **Seed and export** — the ETL (`modules/content/etl.py`), how Directus
-   exports back into `content/source/`.
-4. **The frozen monolith** — what it is, what it is not, parity rules.
-5. **Resources** — runbook, checklist, FAQs; the single source of truth.
-6. **Voice and the LAYER pattern** — Indian English spelling, the four
-   callout types, scan-box discipline.
+## Section map
 
-:::warning Common Pitfall
+| Page | What it answers |
+|---|---|
+| [The four content types](./four-content-types) | What content exists, and which store owns each kind |
+| [The content tree and JSON schemas](./content-tree-and-schemas) | `content/{source,frozen}` layout, `schemas/`, `validate.py` |
+| [The course block model](./course-block-model) | chapters → sections → blocks, every block type, the framework spine |
+| [Directus: the editorial write plane](./directus-write-plane) | Directus over Postgres, read stays FastAPI, the cache-invalidation seam |
+| [Config-as-content and media](./config-and-media) | `app_config` vs env secrets; media as Postgres large objects (final) |
 
-Treating the frozen monolith as a content source. It is a **reference**.
-Regenerating it from JSON would couple parity to a transformation — that
-is exactly the coupling v2 is breaking.
+:::caution[Common Pitfall]
+
+Treating `content/frozen/anatomy-of-code-course.html` as a content source. It is
+a frozen **visual-parity reference** — the artefact Apache serves at `/anatomy/`,
+kept to prove a re-render hasn't drifted. It is never read by the runtime and
+never edited as a source. Regenerating it from JSON would couple parity to a
+transformation, which is exactly the coupling v2 broke.
 
 :::
 
-## Cross-references
+## A one-line statement of the model
 
-- `content/SCHEMA.md` — the JSON schema authored contract.
-- `content/MIGRATION-GAP.md` — known gaps between the JSON seed and the
-  frozen monolith.
-- `docs/architecture/v2/03-data-model.md` §2 — `course_chapters` and
-  `frameworks` tables.
+Editors write through Directus into Postgres; Postgres is the truth; FastAPI reads
+Postgres (cached) and serves it; the git-JSON under `content/source/` is the
+seed-and-export record; media is Postgres large objects all the way down.
