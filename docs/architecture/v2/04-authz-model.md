@@ -32,7 +32,9 @@ the quiz module — see `docs/architecture/v2-plan.md:8`). Phase 1 renames it to
 - **Target = two planes.** Learner-plane (FastAPI + Google SSO): `Learner`,
   `Feed Contributor`. Staff-plane (Directus): `Content Author`, `Quiz Admin`,
   `Feed Moderator`, `Platform Admin`. Personas move to a non-authorising
-  `persona` profile attribute that only drives quiz-difficulty recommendation.
+  `persona` profile attribute that produces a single *displayed* level
+  recommendation — it never gates the quiz: every authenticated user takes the
+  full quiz set and freely chooses the level.
 - **SSO needs hardening.** No PKCE, no `id_token`/`nonce` verification, domain
   enforced only by the Google `hd` *hint* plus `is_allowed_email`, and the session
   cookie sets **no** `Secure`/`HttpOnly`/`SameSite` flags (`main.py:61`).
@@ -444,8 +446,12 @@ To avoid two systems each thinking they own a decision:
 ### 5.1 What changes
 
 The nine persona keys (`roles.py:9-19`) stop being authorisation roles and become a
-**profile attribute** whose *only* job is driving quiz-difficulty recommendation
-(`recommended_level`, `roles.py:28`). Concretely:
+**profile attribute** whose *only* job is to produce a quiz-difficulty
+*recommendation* (`recommended_level`, `roles.py:28`). The recommendation is
+**advisory display only**: the quiz level is the user's free choice at request
+time (the implemented `/quiz/start` reads `payload.difficulty`, never the
+persona), so **every authenticated user may take every quiz and every level
+regardless of persona or role** — the certification path is uniform. Concretely:
 
 - Add a `persona` field to the user profile, separate from capability roles.
   Coordinate exact shape with `v2/03-data-model.md` — **recommended:** a
@@ -811,3 +817,84 @@ the Secure-cookie/PKCE/JWT items also feed the security checklist in
 `v2/07-security-baseline.md`. The default taxonomy (§2.1), the unified-RBAC flip
 (§2.3), and the anonymous-access micro-decisions (matrix rows 6, 12, 13, 16) are the
 **Phase 0 gate decisions** for this doc.
+
+---
+
+## 9. Module inventory (as built) — Phase 4c addendum
+
+> Added Phase 4c (2026-06-06), after the Phase 0 design above shipped as
+> `backend/app/modules/` (the Phase-1 rename of `quiz-certification/`) plus the
+> Directus editorial plane (`cms/`). This section is a **map of the actual
+> screens/modules** and the role that reaches each. The cell-level rules remain
+> §3.1's matrix (referenced by row #); where the as-built read policy differs
+> from a §3.1 *recommended default*, the **product-confirmed** decision is
+> called out and supersedes that default.
+
+### 9.1 Roles at a glance
+
+| Plane | Role | One-line purpose |
+|---|---|---|
+| Learner | `anonymous` | Not signed in — read-only public surfaces. |
+| Learner | `learner` | The floor: every signed-in user. Take the quiz, flag, manage own profile. |
+| Learner | `feed_contributor` | Learner **+** post to the feed and upload media. Admin-granted (§7.2). |
+| Staff | `content_author` | Author course chapters/frameworks in Directus; upload course media. |
+| Staff | `quiz_admin` | Create/edit questions, approve UGC questions, view all attempts. |
+| Staff | `feed_moderator` | Moderate feed items and question UGC. |
+| Staff | `platform_admin` | Superuser across both planes — the single bypass. |
+
+Persona (`architect`/`pm`/…) is deliberately **absent** here: it authorises
+nothing (§5).
+
+### 9.2 Front-end modules (learner plane, FastAPI)
+
+| Module | Entry points | Access | §3.1 row |
+|---|---|---|---|
+| Course / field manual | `/anatomy`, `/app` course, `/api/course/*` | **Public** | 13 |
+| Media stream | `/media/{image,video}/{id}` | **Public** | 16 |
+| Feed — read | `GET /api/feed` | **Public** (open decision, §9.4) | 6 |
+| Feed — flag | `POST /api/feed/flag` | `learner`+ | 8 |
+| Feed — post | `POST /api/feed` | `feed_contributor` | 7 |
+| Quiz & certificate | `/quiz/*`, `/verify`, `/certificate/{id}` | `learner`+ (login + persona) | 1–5, 20 |
+| Profile | `/auth/me`, `/profile/role`, `/history` | `learner`+ | 22 |
+| Moderation console | `/app` moderate, `/api/moderate/*` | `feed_moderator` | 9–10 |
+| Auth / login | `/login`, `/auth/google` | Public entry | — |
+
+**Profile:** a user may *view* their roles/permissions (read-only, via
+`/auth/me`) and *edit only their persona* (`/profile/role`) — never their own
+capability roles, which are admin-granted (§7). Attempt history and own
+certificates live under `/history`.
+
+### 9.3 Admin modules (staff plane — Directus `/cms`)
+
+| Module / collection | Manages | Access |
+|---|---|---|
+| Content (`course_chapters`, `frameworks`) | Course authoring | `content_author` (CRU); others read |
+| `questions` | Quiz bank + UGC | `quiz_admin` (CRU); `feed_moderator` updates `status` |
+| `feed_items` | Moderation surface | `feed_moderator` (update `status`); others read |
+| **Media Upload** (custom module) + `media_assets` | Upload bytes via FastAPI; browse metadata | upload: `feed_contributor` / `content_author`; browse: all staff |
+| `app_config` | Runtime tunables | `platform_admin` only |
+| Users / Roles / `user_roles` | Staff accounts + grants | `platform_admin` (grants via §7) |
+| Directus Files / Settings / Insights | Internal files, project + RBAC | `platform_admin` (`admin_access`) |
+
+The **Media Upload** module (Phase 4c, `cms/extensions/directus-extension-media-upload`)
+is a thin client of FastAPI `POST /api/media/upload` — **no bytes touch Directus
+storage** (see `content-architecture/config-and-media`). It reuses the
+learner-plane session + `media.upload`, so a staff user must *also* hold a
+FastAPI grant of `content_author`/`feed_contributor` — the cross-plane coupling
+of §4.3.
+
+### 9.4 Read-access policy (product-confirmed, 2026-06-06)
+
+The §3.1 *recommended defaults* tightened content/feed/media reads to ≥ `learner`
+(rows 6, 13, 16, marked GATE). The product decision resolves them as:
+
+- **Content / course + media stream → PUBLIC (open to anyone).** Supersedes the
+  §3.1 row 13/16 default — the field manual and discovery are intentionally open.
+- **Quiz → login + persona** (unchanged; §3.1 rows 1–4). Registration required;
+  the *level* is advisory only and **every user takes every quiz** (§5).
+- **Feed contribution → authorised** (`feed_contributor` to post, `learner` to
+  flag; rows 7–8). **Feed *read* is public as built (row 6) — still an open
+  decision:** keep public (content-like) or require ≥ `learner` (a one-line
+  `require_user` guard on `GET /api/feed`).
+- **All management — content, quiz, config, role assignment → authorised** to the
+  matching staff role / `platform_admin` (rows 9–21).
