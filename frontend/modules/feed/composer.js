@@ -22,7 +22,7 @@ import { esc } from '../../shared/dom.js';
 import { requireSession } from './auth.js';
 import { getAllCategories, createPost } from './store.js';
 import { validateFeedItem } from './validate.js';
-import { renderDiagram, runMermaid } from '../render/diagram.js';
+import { renderDiagram, runMermaid } from '../../shared/render/diagram.js';
 
 const TYPES = [
   { id: 'post', label: 'Post' },

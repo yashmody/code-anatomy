@@ -2,7 +2,7 @@
 // image  -> <img> with mandatory alt
 // diagram -> the SAME renderDiagram helper the course `diagram` block uses (no second impl)
 import { esc } from '../../shared/dom.js';
-import { renderDiagram } from '../render/diagram.js';
+import { renderDiagram } from '../../shared/render/diagram.js';
 
 export function renderMedia(media) {
   if (!media || !media.length) return '';

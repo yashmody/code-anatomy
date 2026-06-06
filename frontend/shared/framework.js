@@ -1,6 +1,6 @@
 // framework.json is the navigation source of truth (order, nesting, telescoping).
 // Scroll orders sections by it; Read paginates within a chapter and telescopes via opensInto.
-import { loadJSON } from './load.js';
+import { loadJSON } from '../core/api-client.js';
 
 export async function loadFramework(base) {
   return loadJSON(`${base}/course/framework.json`);
