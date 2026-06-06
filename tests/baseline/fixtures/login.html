@@ -22,6 +22,8 @@
       <span class="brand-tagline">Academy · CCA-F Quiz</span>
     </a>
     <nav class="brand-right">
+      <!-- Back to the SPA. Prod: /app/ (same origin, session cookie carries). -->
+      <a href="/app/" class="nav-link">← Anatomy of Code</a>
       <a href="/verify" class="nav-link">Verify</a>
       
       <button class="theme-toggle" id="themeToggle" type="button">
@@ -63,7 +65,12 @@
   </footer>
 
   <script>
-    // Theme toggle
+    // Theme toggle — unified on anatomy-app-theme so the quiz shares the SPA
+    // and resource-island setting (all same-origin in prod). On first load
+    // after the upgrade, adopt the legacy q0-theme value if the unified key is
+    // absent, then persist under the unified key (one-way migration).
+    const THEME_KEY = 'anatomy-app-theme';
+    const LEGACY_THEME_KEY = 'q0-theme';
     const root = document.documentElement;
     const themeBtn = document.getElementById('themeToggle');
     const themeLabel = document.getElementById('themeLabel');
@@ -74,12 +81,22 @@
       root.setAttribute('data-theme', t);
       themeIcon.innerHTML = t === 'dark' ? moonIcon : sunIcon;
       themeLabel.textContent = t === 'dark' ? 'Light Mode' : 'Dark Mode';
-      try { localStorage.setItem('q0-theme', t); } catch(e){}
+      try { localStorage.setItem(THEME_KEY, t); } catch(e){}
     }
-    try {
-      const saved = localStorage.getItem('q0-theme');
-      if (saved) applyTheme(saved);
-    } catch(e){}
+    function resolveTheme(){
+      try {
+        const current = localStorage.getItem(THEME_KEY);
+        if (current === 'dark' || current === 'light') return current;
+        const legacy = localStorage.getItem(LEGACY_THEME_KEY);
+        if (legacy === 'dark' || legacy === 'light') {
+          try { localStorage.setItem(THEME_KEY, legacy); } catch(e){}
+          return legacy;
+        }
+      } catch(e){}
+      return null;
+    }
+    const boot = resolveTheme();
+    if (boot) applyTheme(boot);
     themeBtn.addEventListener('click', () => {
       applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
     });
