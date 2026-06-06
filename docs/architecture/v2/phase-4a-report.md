@@ -77,7 +77,7 @@ cms/
 ├── bootstrap.sh              idempotent operator script (source of truth)
 ├── register-collections.mjs  the Directus-API work bootstrap.sh drives
 ├── snapshot.yaml             captured data model (9 collections, 61 fields)
-└── README.md                 local/VM standup, SSO, S3 flip, Node-22 note
+└── README.md                 local/VM standup, SSO, media=Postgres-LO, Node-22
 ```
 
 Directus is pinned to **11.17.4** in `package.json`, the lockfile, and the
@@ -188,13 +188,18 @@ content via FastAPI `/api/*`, never from Directus directly. Directus reaches
 the DB only through the scoped `directus_app` role; the two planes share one
 schema but hold disjoint, GRANT-enforced table footprints.
 
-**Phase 0 decision C revisit note (media).** Phase 0 chose to keep media in
-Postgres large objects. That decision is unchanged by 4a. Phase 4a only
-*enables* the future move: `media_assets` is bound metadata-only and Directus's
-storage-adapter seam (local now, S3-flip documented in `cms/README.md` and
-`.env.example`) is wired but not exercised. The actual migration of media off
-Postgres large objects onto a Directus storage adapter is a **later gated
-slice (4a.2)** — see §7. 4a touched no large object.
+**Media — FINAL (2026-06-06): Postgres large objects, permanently.** The owner
+confirmed: the only database is Postgres and **all media streams from it**. There
+is **no S3, no object store, and no filesystem media store, ever.** Phase 0
+decision C stands as written and is now permanent — there is **no media
+migration** (the earlier "move media to a Directus storage adapter / S3-flip"
+idea is **cancelled**). Media bytes live in `media_assets.large_object_oid` +
+`pg_largeobject`; FastAPI owns upload (`/api/media/upload`) and Range-streaming
+(`/media/{video,image}/{asset_id}`). Directus binds `media_assets` as **read-only
+metadata** only (editors reference assets by id); app-media uploads into Directus
+Files are disabled by permission so nothing app-facing lands on disk. The
+`cms/` artifacts and `cms/.env.example`/`README.md` have been updated to remove
+the S3 seam.
 
 ---
 
@@ -314,11 +319,11 @@ not merely advisory. Worth flagging to the owner.
 
 **Deferred gated slices (each its own gate, none started in 4a):**
 
-- **4a.2 — Media migration off Postgres large objects.** Move media from PG
-  large objects onto a Directus storage adapter (local → S3-flip). 4a only
-  *enabled* the capability (metadata binding + documented adapter seam). This
-  is the revisit of Phase 0 decision C. Gated: it actually moves bytes and
-  changes how the runtime serves `/media`.
+- **~~4a.2 — Media migration off Postgres large objects~~ — CANCELLED
+  (2026-06-06).** The owner finalised: Postgres is the only database and all
+  media streams from it. Media stays in `pg_largeobject` permanently, served by
+  FastAPI `/media/*` with Range. No S3, no object store, no filesystem media
+  store. There is nothing to migrate. (Phase 0 decision C, kept.)
 - **4b — Nav/theme unify + moderator UI + resources integration.** Unify
   navigation and theme across the SPA and Directus surfaces, build the
   moderator UI, integrate resources. The SSO reconciliation (open item 2) folds
@@ -332,25 +337,19 @@ not merely advisory. Worth flagging to the owner.
 
 ## 8. What unlocks the next slice
 
-The 4a gate is **GO**, so the next slice is unblocked. The locked dependency
-order is:
+The 4a gate is **GO**, so the next slice is unblocked. With media settled
+(Postgres-LO, permanent — the 4a.2 slice is cancelled), the order is:
 
-- **4a → (4a.2 or 4b)** in parallel-safe order. Both build on the sealed
+- **4b — Nav/theme unify + moderator UI** is the next slice. It needs: the 4
+  staff roles + policies from 4a (present), the moderator-scoped permissions
+  (present), and the SSO reconciliation (open item 2). It builds on the sealed
   Directus plane, the `directus_app` role, and the cache-invalidation seam.
-- **4a.2 (media)** needs: a chosen storage adapter target (local vs S3), a
-  cutover plan for `/media` runtime serving, and a reversible migration of the
-  large objects. It does not depend on 4b.
-- **4b (nav/moderator UI)** needs: the 4 staff roles and policies from 4a
-  (present), the moderator-scoped permissions (present), and the SSO
-  reconciliation. It does not depend on 4a.2.
-- **4c (live authoring + relational decomposition)** is gated behind both 4b
-  (so authors have a usable surface) and a deliberate decision to change the
+- **4c (live authoring + relational decomposition)** is gated behind 4b (so
+  authors have a usable surface) and a deliberate decision to change the
   `course_chapters` schema. It is strictly last because it is the only slice
   that mutates the application data model.
 
-**Recommendation for the owner:** pick the next slice — **4a.2 (media
-migration off Postgres large objects)** if the priority is closing the Phase 0
-decision-C revisit and getting media onto a real storage adapter, or **4b
-(nav/theme unify + moderator UI)** if the priority is putting a usable
-editorial surface in front of staff. Both are unblocked; neither blocks the
+**Next: 4b (nav/theme unify + moderator UI).** Media is finalised on Postgres
+large objects (FastAPI-streamed), so there is no separate media slice. Both 4b
+and 4c are unblocked in that order; neither blocks the
 other. 4c waits until 4b lands.

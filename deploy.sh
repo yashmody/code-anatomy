@@ -1032,8 +1032,11 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
       env_set "$CMS_DIR/.env" HOST        "127.0.0.1"
       env_set "$CMS_DIR/.env" PORT        "$CMS_PORT"
       env_set "$CMS_DIR/.env" PUBLIC_URL  "https://${DOMAIN}/cms"
-      # Local storage adapter — uploads live under cms/uploads (a ReadWritePath
-      # on the unit). Flip to S3 for volume per RUNBOOK §7.5.
+      # Directus-INTERNAL files only (e.g. avatars) under cms/uploads. App media
+      # is NEVER stored here: all media bytes live in Postgres large objects and
+      # are streamed by FastAPI /media/* (no S3, no object store, no filesystem
+      # media store — Postgres is the only database). App-media uploads into
+      # Directus Files are disabled by permission. Do not configure S3.
       env_set "$CMS_DIR/.env" STORAGE_LOCATIONS "local"
       env_set "$CMS_DIR/.env" STORAGE_LOCAL_DRIVER "local"
       env_set "$CMS_DIR/.env" STORAGE_LOCAL_ROOT   "${CMS_DIR}/uploads"

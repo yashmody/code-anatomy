@@ -860,7 +860,7 @@ same superuser role the migrations run as.
 | `signing_keys` | infra/migration | no | key metadata; Platform Admin only |
 | `questions` | yes (UGC + admin, `main.py:740`) | **yes (official authoring)** | shared; status field is the seam |
 | `feed_items` | yes (post/flag, `main.py:649,621`) | **yes (moderation)** | shared; moderation via status |
-| `media_assets` | **yes (bytes + metadata)** | metadata read; assets via `directus_files`? | see media decision below |
+| `media_assets` | **yes (bytes + metadata)** | metadata read ONLY (no bytes) | media = Postgres LO, FastAPI-streamed (see below) |
 | `course_chapters` | read-only at runtime | **yes (authoring)** | Postgres-as-source (§6) |
 | `frameworks` | read-only at runtime | **yes (authoring)** | 2 rows |
 | `app_config` | read (cached) | **yes (config UI)** | item 11 |
@@ -869,14 +869,18 @@ The detailed Directus collection map (field types, interfaces, which collections
 are exposed) is owned by **`05-config-cms.md`**; this section fixes only the
 DB-level coexistence and write-authority.
 
-**Media decision (open decision 3, `v2-plan.md:114`):** keep the
-**Postgres-large-object pipeline for runtime range-streaming**
-(`media_service.py` — `/media/video` range support is the reason); use
-**Directus for asset management/metadata**. Concretely: app-uploaded streaming
-media stays in `media_assets` + `pg_largeobject`; editor-managed images for
-course/feed content may live in `directus_files`. `05-config-cms.md` decides
-whether the two converge. The schema supports both: `media_assets` is untouched
-by Directus.
+**Media decision — FINAL (2026-06-06, owner-confirmed):** **ALL media lives in
+Postgres large objects and is streamed from there. No S3, no object store, no
+filesystem media store — Postgres is the only database.** The
+Postgres-large-object pipeline (`media_service.py` — `/media/{video,image}`
+Range support) is the permanent and only media path: bytes in
+`media_assets.large_object_oid` + `pg_largeobject`, uploaded via FastAPI
+`/api/media/upload`, streamed via FastAPI `/media/*`. **Directus does NOT store
+app media** — it binds `media_assets` as read-only metadata so editors can
+reference assets by id; app-media uploads into `directus_files` are disabled by
+permission. `directus_files` is used only for incidental Directus-internal files
+(e.g. avatars). There is no media migration; the earlier storage-adapter/S3 idea
+is cancelled.
 
 **Directus DB-role GRANT table.** Directus connects as a dedicated Postgres
 role (`directus_app`, created in Phase 2a infra). The role must reach exactly

@@ -1185,11 +1185,14 @@ Flag these explicitly for the Phase 0 user gate. Each carries a default.
    prod with a banner). **Tradeoff:** staging adds one Postgres + one VM + a
    second Google OAuth client; if budget is tight, defer to Phase 5b.
 
-4. **`media_assets` — Directus collection or FastAPI-only?**
-   **Default: Directus reads metadata, FastAPI owns the bytes** (03 §5
-   media decision). Editors browse asset metadata in Directus but upload
-   through the FastAPI path. Alternative: full Directus asset management via
-   `directus_files` — clean editor UX but a second media pipeline.
+4. **`media_assets` — Directus collection or FastAPI-only? FINAL (2026-06-06):**
+   **Directus reads metadata; FastAPI owns the bytes — ALL media in Postgres
+   large objects, streamed by FastAPI, no S3/object/filesystem store, ever**
+   (03 §5 media decision, owner-confirmed). Editors browse asset metadata in
+   Directus and reference assets by id, but upload through the FastAPI
+   `/api/media/upload` path. The `directus_files` alternative is **rejected**
+   (it would be a second media pipeline on disk); app-media uploads into
+   `directus_files` are disabled by permission.
 
 5. **`user_roles` editable in Directus, or read-only?**
    **Default: read-only in Directus; grants via a FastAPI admin endpoint**

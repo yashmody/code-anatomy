@@ -42,10 +42,11 @@ services:
     env_file:
       - ./.env
     volumes:
-      # Named volume for Directus local-filesystem storage (editor uploads).
-      # Phase 4a only enables the Files capability; existing media stays in
-      # Postgres large objects. Flip STORAGE_LOCATIONS=s3 in .env for prod
-      # volume per the locked decision — then this volume is unused.
+      # Tiny named volume for Directus-INTERNAL files only (e.g. avatars).
+      # App media is NEVER stored here: all media bytes live in Postgres large
+      # objects and are streamed by FastAPI /media/* (no S3, no object store,
+      # no filesystem media store). App-media uploads into Directus Files are
+      # disabled by permission. This volume stays small.
       - directus_uploads:/directus/uploads
       # Extensions (Hooks/Flows custom ops) if added in 4c. Empty in 4a.
       - directus_extensions:/directus/extensions

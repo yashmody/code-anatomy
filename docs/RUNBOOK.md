@@ -314,18 +314,20 @@ number of times. Output is logged to `/var/log/dept-anatomy/vacuumlo.log`. The
 
 ## 7 · Directus CMS (editorial write plane)
 
-Directus is the **content + media + config write plane** — a separate Node
-service that runs over the *same* `codecoder` Postgres the FastAPI app uses, and
-is reverse-proxied under `/cms/` on the existing HTTPS vhost. It is the editorial
-console only: the SPA and quiz still read all content through FastAPI `/api/*`
-(cache-backed), **never** through Directus. This section is the day-two runbook
-for it. The design contract is `05-config-cms.md` (§5.5 coexistence, §8.2 4a
-checklist); the as-code lives in `cms/`.
+Directus is the **content + config write plane** (media *metadata* only) — a
+separate Node service that runs over the *same* `codecoder` Postgres the FastAPI
+app uses, and is reverse-proxied under `/cms/` on the existing HTTPS vhost. It is
+the editorial console only: the SPA and quiz still read all content through
+FastAPI `/api/*` (cache-backed), **never** through Directus. This section is the
+day-two runbook for it. The design contract is `05-config-cms.md` (§5.5
+coexistence, §8.2 4a checklist); the as-code lives in `cms/`.
 
 > **Phase 4a is additive and reversible.** Directus introspects the existing
-> tables — it does not move content, does not decompose `course_chapters`, and
-> does not migrate media off Postgres large objects. Those are later *gated*
-> slices (see §7.7). To run a box with no CMS at all, set `DEPLOY_DIRECTUS=false`
+> tables — it does not move content and does not decompose `course_chapters`
+> (a later *gated* slice). **Media is final: all media lives in Postgres large
+> objects and is streamed by FastAPI `/media/*` — no S3, no object store, no
+> filesystem media store, ever. Directus never stores app media.** To run a box
+> with no CMS at all, set `DEPLOY_DIRECTUS=false`
 > in `deploy.env`; nothing else changes.
 
 ### 7.1 Stand-up — systemd + npm (default) vs Docker Compose
@@ -457,28 +459,22 @@ The dependency order is strict:
 `deploy.sh` runs steps 2–4 for you; step 1 is part of the backend migration
 chain. Re-running any of 2–4 is idempotent.
 
-### 7.5 Storage-adapter flip to S3 (for media volume)
+### 7.5 Media storage — Postgres large objects only (no S3, no disk)
 
-The default storage adapter is **local** — uploads land in `cms/uploads/`
-(a `ReadWritePath` on the unit, backed up per §7.6). This is correct for the
-single-VM launch. When upload volume outgrows the VM disk, flip Directus's
-storage to S3 (or any S3-compatible bucket) by editing `cms/.env`:
+**There is no storage-adapter flip. By owner decision (2026-06-06) all media
+lives in Postgres large objects and is streamed from there — there is no S3, no
+object store, and no filesystem media store, ever.** Postgres is the only
+database and the only place media bytes live.
 
-```ini
-STORAGE_LOCATIONS=s3
-STORAGE_S3_DRIVER=s3
-STORAGE_S3_KEY=<access-key>
-STORAGE_S3_SECRET=<secret-key>
-STORAGE_S3_BUCKET=<bucket>
-STORAGE_S3_REGION=<region>
-STORAGE_S3_ENDPOINT=<https://s3.… or compatible>
-```
+- Bytes: `media_assets.large_object_oid` + `pg_largeobject`.
+- Upload: FastAPI `POST /api/media/upload` (validate + ingest into a large object).
+- Stream: FastAPI `GET /media/{video,image}/{asset_id}` with HTTP Range (206).
+- Cleanup: the `lo_unlink` `BEFORE DELETE` trigger + nightly `vacuumlo` (see §below).
 
-then `sudo systemctl restart cms-directus`. Migrate existing files with
-`npx directus files import` / a bucket sync of `cms/uploads/` before cutting
-over. **This is independent of the FastAPI media path** — the runtime media the
-SPA serves still lives in Postgres large objects via `/api/media/...`; the
-storage adapter here only governs files an editor uploads *through Directus*.
+Directus does **not** store app media. `media_assets` is bound read-only metadata
+so editors can reference assets by id; **app-media uploads into Directus Files are
+disabled by permission**, and `cms/uploads/` holds only incidental Directus-
+internal files (e.g. avatars). Do not configure `STORAGE_S3_*`.
 
 ### 7.6 Backup — BOTH halves
 

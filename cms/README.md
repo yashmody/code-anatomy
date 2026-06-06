@@ -1,10 +1,12 @@
 # cms/ — Directus editorial plane (Phase 4a)
 
-Directus is the **content + media + config WRITE plane** for DEPT Anatomy of
-Code. It stands up *additively* over the **existing** `codecoder` Postgres by
-introspecting the tables already there. It does **not** move content, decompose
-`course_chapters`, or migrate media off Postgres large objects — those are
-later, separately gated slices.
+Directus is the **content + config WRITE plane** for DEPT Anatomy of Code (it
+manages media *metadata* only — media bytes are Postgres large objects served by
+FastAPI; see "Media storage" below). It stands up *additively* over the
+**existing** `codecoder` Postgres by introspecting the tables already there. It
+does **not** move content or decompose `course_chapters` — that is a later,
+separately gated slice. There is **no** media migration: media stays in Postgres
+large objects, permanently.
 
 The runtime read path is unchanged: the SPA and quiz read content through
 **FastAPI `/api/*`** (cache-backed), never through Directus. Directus only
@@ -177,18 +179,23 @@ fallback if SSO breaks.
 
 ---
 
-## Storage adapter — local now, S3 flip for prod
+## Media storage — Postgres large objects, permanently (no S3, no disk)
 
-Default storage is the local filesystem (`cms/uploads`, gitignored). To move
-Directus Files to S3 for volume (per the locked decision), uncomment the S3
-block in `.env` and set `STORAGE_LOCATIONS=s3` with the
-`STORAGE_S3_KEY/SECRET/BUCKET/REGION/ENDPOINT` vars.
+**FINAL DECISION (2026-06-06): all app media lives in Postgres large objects and
+is streamed from there. There is no S3, no object store, and no filesystem media
+store.** Postgres is the only database and the only place media bytes live.
 
-> **Phase 4a only ENABLES the Directus Files capability.** It does **not**
-> migrate the existing media. Existing media stays in Postgres large objects
-> (`media_assets.large_object_oid` + `pg_largeobject`); FastAPI still owns the
-> streaming `/api/media/upload` path. Migrating media off large objects is a
-> **later, gated slice**.
+- App media bytes: `media_assets.large_object_oid` + `pg_largeobject`.
+- Upload: FastAPI `POST /api/media/upload` (validates, ingests into a large object).
+- Serve/stream: FastAPI `GET /media/{video,image}/{asset_id}` with HTTP Range (206).
+- **Directus does NOT store app media.** `media_assets` is bound read-only
+  metadata so editors can reference assets by id. Directus Files is used only for
+  incidental Directus-internal assets (e.g. avatars) on the tiny local
+  `cms/uploads` dir; **app-media uploads into Directus Files must be disabled by
+  permission** so nothing app-facing lands on disk. Do not configure S3.
+
+This is Phase 0 decision C, kept. There is no media migration — the earlier
+"move media to a storage adapter / S3" idea is cancelled.
 
 ---
 
@@ -224,7 +231,9 @@ allowed. This is required for the seam to work.
 
 ## Deferred (NOT in Phase 4a)
 
-- **Media off large objects.** Enabled-but-not-migrated. Later gated slice.
+- **Media off large objects — CANCELLED.** Media stays in Postgres large objects
+  permanently, streamed by FastAPI. No S3, no object store, no filesystem media
+  store. (Phase 0 decision C, kept.)
 - **Course relational decomposition.** `course_chapters.content` stays a single
   JSONB column; no decomposition into related collections in 4a.
 - **`user_roles` grant UI.** Composite PK → Directus ignores it; grants are
