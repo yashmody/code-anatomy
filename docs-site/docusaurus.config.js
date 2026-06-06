@@ -9,19 +9,20 @@ const { themes } = require('prism-react-renderer');
 const config = {
   title: 'DEPT® Anatomy of Code — Docs',
   tagline: 'Architect-grade documentation for the CODE-CODER framework and v2 platform.',
-  favicon: 'img/favicon.ico',
+  favicon: 'img/favicon.png',
 
-  // Placeholders — Phase 5a sets these to the real deploy target.
-  // Default recommendation (see docs/architecture/v2/08-docs-plan.md §Deployment):
-  // serve under https://internal.in.deptagency.com/docs/ via an Apache Alias.
+  // Deploy target (see docs/architecture/v2/08-docs-plan.md §Deployment):
+  // served under https://internal.in.deptagency.com/docs/ via an Apache Alias.
   url: 'https://internal.in.deptagency.com',
   baseUrl: '/docs/',
 
   organizationName: 'deptagency',
   projectName: 'dept-anatomy-of-code',
 
-  onBrokenLinks: 'warn',          // Phase 5a CI flips this to 'throw'.
-  onBrokenMarkdownLinks: 'warn',
+  // Fail the build on a broken internal link — the sidebar and cross-refs
+  // must stay sound. Markdown-link checks stay at 'warn' so an anchor typo
+  // does not block a docs ship.
+  onBrokenLinks: 'throw',
 
   i18n: {
     defaultLocale: 'en',
@@ -30,6 +31,12 @@ const config = {
 
   markdown: {
     mermaid: true,
+    // Docusaurus 3.10 moved the markdown-link policy under markdown.hooks.
+    // Keep markdown-link checks at 'warn' so an anchor typo does not block a
+    // docs ship, while internal route links stay strict via onBrokenLinks.
+    hooks: {
+      onBrokenMarkdownLinks: 'warn',
+    },
   },
 
   themes: [
@@ -74,6 +81,9 @@ const config = {
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
       image: 'img/social-card.png',
+      metadata: [
+        { name: 'keywords', content: 'DEPT, CODE-CODER, Adobe Experience Cloud, architecture, documentation' },
+      ],
       colorMode: {
         defaultMode: 'light',
         disableSwitch: false,
@@ -82,17 +92,21 @@ const config = {
       navbar: {
         title: 'Anatomy of Code',
         logo: {
-          alt: 'DEPT logo',
+          alt: 'DEPT® logo',
           src: 'img/logo-dept.svg',
-          srcDark: 'img/logo-dept.svg',
+          srcDark: 'img/logo-dept-dark.svg',
         },
         items: [
-          { to: '/frontend/', label: 'Front-end', position: 'left' },
-          { to: '/content-architecture/', label: 'Content', position: 'left' },
-          { to: '/database/', label: 'Database', position: 'left' },
-          { to: '/deployment/', label: 'Deployment', position: 'left' },
-          { to: '/quiz-management/', label: 'Quiz', position: 'left' },
-          { to: '/system-architecture/', label: 'System', position: 'left' },
+          // Each section's landing is its intro doc. With routeBasePath '/'
+          // and a doc-link category, `/section/` is not a route — the section
+          // root IS `/section/intro`. Link there directly so onBrokenLinks can
+          // stay 'throw'.
+          { to: '/system-architecture/intro', label: 'System', position: 'left' },
+          { to: '/frontend/intro', label: 'Front-end', position: 'left' },
+          { to: '/content-architecture/intro', label: 'Content', position: 'left' },
+          { to: '/database/intro', label: 'Database', position: 'left' },
+          { to: '/quiz-management/intro', label: 'Quiz', position: 'left' },
+          { to: '/deployment/intro', label: 'Deployment', position: 'left' },
         ],
       },
       footer: {

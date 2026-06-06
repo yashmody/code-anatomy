@@ -7,78 +7,138 @@ slug: /
 
 # DEPT® Anatomy of Code — v2 documentation
 
-> **Status:** scaffold only. Phase 5a fills every section. This landing page is
-> a stub so the navigation, brand tokens and section structure can be reviewed
-> at the Phase 0 gate.
+## Scan box
+
+- **What this is.** The architect-grade reference for the v2 Anatomy of Code
+  platform — the teaching, certification and reference system for DEPT®'s
+  Adobe Experience Cloud practice, built on the CODE-CODER framework.
+- **The shape.** A modular-monolith FastAPI application (the learner plane)
+  and Directus 11 (the staff write plane) over **one** Postgres, fronted by
+  Apache, serving a buildless ES-module SPA. Media lives in Postgres large
+  objects — no S3, no object store.
+- **Why it exists.** v2's hard constraint was *no loss of content, data or
+  functionality*. These docs record which decision lives where, why it was
+  made, and what the parity harness protects.
+- **So what.** Six sections, each opening with its own scan box. Start with
+  **System architecture** for the whole picture, then drop into the plane you
+  are working in.
 
 The Anatomy of Code platform teaches, certifies and references the CODE-CODER
-framework for DEPT®'s Adobe Experience Cloud practice. v2 re-architects the
-system into a clean modular monolith with a real CMS (Directus), proper
-authorisation, environment management, caching and — these docs.
+framework for DEPT®'s Adobe Experience Cloud practice. v2 re-architected the
+system from a single frozen HTML monolith into a clean two-plane platform: a
+modular-monolith FastAPI application that owns the runtime read API, the quiz
+and the signed certificates, and Directus 11 as the editorial write plane —
+both over the same `codecoder` Postgres database. The browser still loads a
+buildless ES-module single-page app; Apache still terminates TLS and serves
+it. What changed underneath is the discipline: real authorisation, real
+environment management, a cache-backed read path, and these docs.
 
 ## Who this is for
 
-- **Architects and senior engineers** building on the platform.
+- **Architects and senior engineers** building on or extending the platform.
 - **IT generalists** onboarding to the practice who need to operate, deploy
-  and extend it.
-- **Content authors and quiz administrators** working through Directus.
+  and reason about it.
+- **Content authors and quiz administrators** working through the Directus
+  staff plane.
+
+The audience is DEPT®, India-based and globally distributed. The voice is
+plain, professional and opinionated — written to be architected from, not
+skimmed and forgotten.
 
 ## The six sections
 
+Read **System architecture** first — it is the overview the other five hang
+off. After that the order does not matter; jump to the plane you are in.
+
 | Section | What it covers |
 |---|---|
-| [Front-end](/frontend/) | The buildless ES-module SPA — `core/`, `shared/`, `modules/`, styles, the registry, the three modes (Manual, Read, Feed). |
-| [Content architecture](/content-architecture/) | The consolidated `content/` tree, the source-of-truth shift to Postgres, schemas, the frozen monolith, the LAYER pattern. |
-| [Database](/database/) | The Postgres schema, Alembic migrations, the ER diagram, large-object media, backup/restore. |
-| [Deployment](/deployment/) | `infra/deploy.sh`, the Apache vhost, systemd + uvicorn, environment and secrets, upgrade and rollback. |
-| [Quiz management](/quiz-management/) | The question bank, the quiz lifecycle, real-vs-dev certificates, verification, admin flows. |
-| [System architecture](/system-architecture/) | The modular monolith, the Directus topology, the two auth planes, caching, security, observability. |
+| [System architecture](/system-architecture/intro) | The capstone overview — the two-plane model (FastAPI learner plane + Directus staff plane) over one Postgres, the modular monolith, the cache-backed read path, the auth model, the security baseline, and observability. |
+| [Front-end](/frontend/intro) | The buildless ES-module SPA — `core/`, `shared/`, `modules/`, the block and feed renderer registry, the modes (Manual, Read, Feed, role-gated Moderation), and the unified theme. Visual parity with the frozen monolith is the gate. |
+| [Content architecture](/content-architecture/intro) | The four content types and where each lives — course prose, feed UGC, media, config — over one Postgres, written by Directus, read by FastAPI, with media as Postgres large objects. |
+| [Database](/database/intro) | The thirteen-table schema, the 0001–0008 Alembic chain, the scoped `directus_app` role, large-object media, and the Postgres-only features the platform leans on. |
+| [Quiz management](/quiz-management/intro) | The certification quiz — lifecycle, the question bank and UGC questions, HMAC-signed certificates, public verification, and the RBAC and admin surfaces. |
+| [Deployment](/deployment/intro) | Single-VM topology, `deploy.sh`, the Apache vhost (TLS / CSP / cache), environments and secrets, the Directus stand-up, and day-two operations. |
 
-## Where these docs live in the design
+## The two planes, in one diagram
 
-This site is the user-facing surface of the **Phase 0 design contracts** in
-`docs/architecture/v2/`. The contracts are the design; this site is the
-reference.
+<pre className="arch-diagram">
+                         ┌───────────────────────────┐
+       browser  ───────► │   Apache (TLS · CSP · /)   │
+   (ES-module SPA)       └─────────────┬──────┬──────┘
+                                       │      │ /cms/
+                          /api  /media │      │ proxy
+                                       ▼      ▼
+                  ┌──────────────────────┐  ┌──────────────────┐
+                  │  FastAPI application  │  │   Directus 11    │
+                  │   (learner plane)     │  │  (staff plane)   │
+                  │  quiz · certs · feed  │  │  authors content │
+                  │  cache-backed read    │  │  + config        │
+                  └───────────┬──────────┘  └────────┬─────────┘
+                              │  writes runtime data  │  writes content/config
+                              ▼                        ▼  (scoped directus_app role)
+                  ┌─────────────────────────────────────────────┐
+                  │        Postgres — one database               │
+                  │  app tables · content · config · media LOs   │
+                  └─────────────────────────────────────────────┘
+</pre>
 
-| Design contract | Section it primarily feeds |
+The FastAPI plane reads content through a cache; it never reaches into
+Directus at runtime. Directus writes content and config, then fires a webhook
+that invalidates the relevant cache entry. That loopback seam — not a shared
+library, not a shared cache key by accident — is the whole coexistence story.
+**System architecture** and **Content architecture** tell it in full.
+
+## Where these docs sit in the design
+
+This site is the reader-facing surface of the **Phase 0 design contracts** in
+the repository at `docs/architecture/v2/`. The contracts are the design record;
+this site is the worked reference distilled from them and from the shipped
+code. Where the two diverge, these pages document **what shipped** — the final
+v2 state — and say so explicitly.
+
+| Design contract (in the repo) | Section it primarily feeds |
 |---|---|
-| [`v2-plan.md`](https://internal.in.deptagency.com/) — the shared contract | this landing page + System architecture |
+| `v2-plan.md` — the shared contract | System architecture |
 | `v2/01-blueprint.md` — directory tree, module boundaries, migration maps | Front-end, System architecture |
-| `v2/02-parity-method.md` — baseline + parity harness | Deployment (verification), Quiz (certificate parity) |
-| `v2/03-data-model.md` — target Postgres schema, Alembic | Database |
-| `v2/04-authz-model.md` — role taxonomy, SSO + PKCE | System architecture (auth planes), Quiz (admin flows) |
-| `v2/05-config-cms.md` — config registry, Directus collection map | Content architecture, Deployment (env), System architecture |
+| `v2/02-parity-method.md` — baseline + parity harness | Deployment, Quiz |
+| `v2/03-data-model.md` — Postgres schema, Alembic, media-final | Database, Content architecture |
+| `v2/04-authz-model.md` — role taxonomy, SSO + PKCE | System architecture, Quiz |
+| `v2/05-config-cms.md` — config registry, Directus collection map | Content architecture, Deployment |
 | `v2/06-caching-performance.md` — Apache + Postgres + app cache | Deployment, System architecture |
 | `v2/07-security-baseline.md` — security checklist | Deployment, System architecture, Quiz |
-| `v2/08-docs-plan.md` — this site's design contract | (meta) |
+| `v2/08-docs-plan.md` — this site's authoring contract | (meta) |
 
-:::tip Why This Matters
+:::tip[Why This Matters]
 
-The v2 effort's hard constraint is **no loss of content, data or
-functionality**. These docs are how the team — and future joiners —
-understand which decision lives where, why it was made, and what the
-parity harness is protecting.
+The v2 effort's hard constraint was **no loss of content, data or
+functionality**. The cutover preserved every certificate, every question and
+every byte of media. These docs are how the team — and future joiners —
+understand which decision lives where, why it was made, and what the parity
+harness is protecting. When something looks surprising in the code, the
+answer is almost always here, written down on purpose.
 
 :::
 
 ## How to read this site
 
-- **Scan box first.** Every page leads with a Scan Box — three to five
-  bullets, roughly a 30-second read covering *what / why / so what*.
+- **Scan box first.** Every page leads with a scan box — three to five
+  bullets, roughly a thirty-second read covering *what / why / so what*.
 - **Prose underneath.** Architect-level, opinionated, written to be read
   end-to-end. Not bullet-form.
-- **Diagrams woven through.** ASCII for static architecture (matches the
-  main app's `.arch-diagram`/`.arch-row` blocks); Mermaid for flows.
-- **Four callout types**: *Why This Matters*, *Agency Tip*, *Common
+- **Diagrams woven through.** ASCII for static architecture and topology
+  (matching the main app's `.arch-diagram` blocks); Mermaid for flows,
+  sequences and decision trees.
+- **Four callout types** — *Why This Matters*, *Agency Tip*, *Common
   Pitfall*, *Before / After*. No fifth.
 
-See [`v2/08-docs-plan.md`](https://internal.in.deptagency.com/) for the
-authoring policy.
+:::note[Agency Tip]
 
-## Status
+If you are onboarding, read **System architecture** end to end, then skim each
+section's scan box. That is roughly fifteen minutes and leaves you able to
+place any file in the repository on the map. Come back for the prose when you
+need to change something in that area.
 
-This site is a Phase 0 scaffold:
+:::
 
-- Branch `v2` (main is untouched).
-- No `npm install` has been run yet — Phase 5a does that.
-- Each section has only an intro stub. Phase 5a writes the rest.
+The authoring policy for this site lives in the repository at
+`docs/architecture/v2/08-docs-plan.md`.

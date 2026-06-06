@@ -1,8 +1,8 @@
 {
   "label": "System architecture",
-  "position": 7,
+  "position": 2,
   "collapsible": true,
-  "collapsed": true,
+  "collapsed": false,
   "link": {
     "type": "doc",
     "id": "system-architecture/intro"
