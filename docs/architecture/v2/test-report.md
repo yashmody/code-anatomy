@@ -27,9 +27,12 @@ that is called out with the manual step needed to close it.
   **valid=true** against the seeded Postgres — the strict mode, not just
   route-shape. Smoke is 15/15 against both sqlite and Postgres. Alembic is at
   head `0008`. The docs site builds with zero broken links.
-- **Honest residue:** two pytest cases in `tests/test_backend_features.py` FAIL,
-  but both are **stale test fixtures lagging the v2 refactor, not app
-  regressions** — evidence below. Two areas are **environment-limited, not
+- **Resolved after this report:** the two pytest cases that FAILed below were
+  confirmed stale (testing the retired v1 `require_role`/single-`role` model)
+  and were **rewritten to the v2 model** (`require_permission` + `persona` +
+  `roles`/`permissions`) — `pytest -q` is now **5 passed** (verified; no app code
+  changed). The §2 analysis is kept for the record. Two areas are
+  **environment-limited, not
   failed:** the full Directus HTTP server boot (custom collections not yet
   registered) and the browser visual render. Neither is a deterministic gate.
 

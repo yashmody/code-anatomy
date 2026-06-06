@@ -67,49 +67,51 @@ def test_media_type_detection():
 
 # ---------- Dynamic RBAC Endpoint Security Tests ----------
 
-def test_rbac_require_role_dependency(monkeypatch):
-    """Test that require_role dynamically queries user database role and handles auth errors."""
-    mock_user_email = "test_creator@deptagency.com"
+def test_rbac_require_permission_dependency(monkeypatch):
+    """v2 RBAC: require_permission checks the session user's capability roles
+    (read via users.roles_for) against PERMISSION_GRANTS, with platform_admin as
+    the single global bypass.
 
-    # The RBAC dependency lives in core.auth and calls `users.get_user` via
-    # the `users` binding imported at the top of core/auth.py. Patch that
-    # binding so the lookup is intercepted.
-    def mock_get_user(email):
-        return {
-            "email": mock_user_email,
-            "name": "Test Creator",
-            "picture": "",
-            "role": "FeedCreator",
-            "provider": "dev",
-        }
-    monkeypatch.setattr(auth.users, "get_user", mock_get_user)
+    Replaces the v1 single-role require_role test. In v2 `require_role` is a
+    deprecated shim that no route uses; every route enforces require_permission,
+    and a user's capability lives in the `user_roles` join (not `users.role`).
+    """
+    from app.core import deps
 
-    # Test validator
-    feed_creator_validator = auth.require_role(["FeedCreator"])
-    moderator_validator = auth.require_role(["Moderator"])
+    email = "test_creator@deptagency.com"
+    # _session_user_or_401 reads users.get_user(email); the capability set comes
+    # from users.roles_for(email). Patch both on the shared users module.
+    monkeypatch.setattr(users, "get_user", lambda e: {"email": email} if e == email else None)
+    held = {"value": set()}
+    monkeypatch.setattr(users, "roles_for", lambda e: held["value"])
 
-    # Mock request with session
     class MockRequest:
         def __init__(self, session_data):
             self.session = session_data
-            self.url = type('url', (), {'path': '/api/feed'})()
+            self.url = type("url", (), {"path": "/api/feed"})()
             self.headers = {}
 
-    # Success Case
-    req_success = MockRequest({"user": {"email": mock_user_email}})
-    res = feed_creator_validator(req_success)
-    assert res["role"] == "FeedCreator"
+    create_dep = deps.require_permission("feed.create")        # granted to feed_contributor
+    moderate_dep = deps.require_permission("moderate.view")    # granted to feed_moderator
 
-    # Failure Case (Insufficent Role)
-    req_fail_role = MockRequest({"user": {"email": mock_user_email}})
+    # Success — a feed_contributor holds feed.create.
+    held["value"] = {"learner", "feed_contributor"}
+    res = create_dep(MockRequest({"user": {"email": email}}))
+    assert res["email"] == email
+
+    # 403 — a plain learner does not hold feed.create.
+    held["value"] = {"learner"}
     with pytest.raises(HTTPException) as exc_info:
-        moderator_validator(req_fail_role)
+        create_dep(MockRequest({"user": {"email": email}}))
     assert exc_info.value.status_code == 403
 
-    # Failure Case (Unauthorized/No Session)
-    req_fail_auth = MockRequest({})
+    # platform_admin is the single global bypass — holds every permission.
+    held["value"] = {"platform_admin"}
+    assert moderate_dep(MockRequest({"user": {"email": email}}))["email"] == email
+
+    # 401 — no session (path starts /api/ → JSON 401, not a redirect).
     with pytest.raises(HTTPException) as exc_info:
-        feed_creator_validator(req_fail_auth)
+        create_dep(MockRequest({}))
     assert exc_info.value.status_code == 401
 
 
@@ -211,15 +213,19 @@ def test_course_endpoints(monkeypatch):
     monkeypatch.setattr(content_routes.content_storage, "get_chapter", lambda filename: mock_chapter_data if filename == "code-c.json" else None)
 
     from app.modules.auth import routes as auth_routes
+    # v2 user shape: persona (job family) replaces the v1 single `role`; capability
+    # roles live in user_roles and are read via users.roles_for, which /auth/me
+    # surfaces as `roles` + derived `permissions`.
     user_record = {
         "email": "test@deptagency.com",
         "name": "Test User",
         "picture": "",
-        "role": "FeedCreator",
+        "persona": "architect",
         "provider": "dev",
         "preferences": {},
     }
     monkeypatch.setattr(auth_routes.users, "get_user", lambda email: user_record if email == "test@deptagency.com" else None)
+    monkeypatch.setattr(auth_routes.users, "roles_for", lambda email: {"learner"})
     # The dev /login/dev handler upserts the user via users.upsert_user — stub it so we don't hit the DB.
     monkeypatch.setattr(auth_routes.users, "upsert_user", lambda **kw: user_record)
     monkeypatch.setattr(auth_routes, "refresh_session_user", lambda req, email: req.session.setdefault("user", dict(user_record)))
@@ -251,5 +257,7 @@ def test_course_endpoints(monkeypatch):
     assert res_me_auth.status_code == 200
     me_data = res_me_auth.json()
     assert me_data["email"] == "test@deptagency.com"
-    assert me_data["role"] == "FeedCreator"
+    assert me_data["persona"] == "architect"           # v2: persona, not the v1 `role`
+    assert me_data["roles"] == ["learner"]             # capability roles from roles_for
+    assert "permissions" in me_data                     # derived from roles via PERMISSION_GRANTS
     assert me_data["initials"] == "TU"
