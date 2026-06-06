@@ -9,9 +9,10 @@ sidebar_position: 3
 ## Scan box
 
 - **Directus is the staff plane over the same Postgres.** It is a separate Node
-  service (`cms/`) that introspects the existing `codecoder` tables and gives
-  editors an admin UI, RBAC, asset management, and an audit trail. FastAPI stays
-  the learner-facing runtime API.
+  service (`cms/`) — co-resident with FastAPI on the app VM — that introspects
+  the existing `codecoder` tables on the **remote shared instance** (reached over
+  TLS) and gives editors an admin UI, RBAC, asset management, and an audit trail.
+  FastAPI stays the learner-facing runtime API.
 - **Directus connects as a scoped `directus_app` role.** Alembic migration
   `0008` creates a dedicated Postgres login role with `GRANT`s only on the
   authoring tables and an explicit `REVOKE ALL` on the runtime and audit tables
@@ -41,19 +42,20 @@ FastAPI.
 
 <pre className="arch-diagram">
 {`
+   ── app VM ───────────────────────────────────┐
    editor browser ──► Apache /cms ──► Directus (Node, cms/)
-                                          │  reads/writes as
-                                          │  directus_app role
-                                          ▼
-                            ┌──────────────────────────────┐
-   learner browser ──► Apache /api/* ──► FastAPI ──────────►│  PostgreSQL       │
-                                          │  reads as       │  (codecoder)      │
-                                          │  app role       │                   │
-                                          │                 │  app tables       │
-                                          │                 │  directus_* tables│
-                                          │  loopback       │  media large objs │
-                                          ▼  webhook         └──────────────────┘
+                                          │  writes as directus_app
+                                          │  role · over TLS
+                                          ▼     ┌──── remote PostgreSQL ─────┐
+                            ┌─────────────┴────►│  codecoder (prod)          │
+   learner browser ─► Apache /api/* ─► FastAPI  │  + codecoder_dev (dev)     │
+                                          │  reads as app_prod · over TLS    │
+                                          │     │  app tables                │
+                                          │     │  directus_* tables         │
+                                          │     │  media large objects       │
+                                          ▼     └────────────────────────────┘
                                        AppCache ◄── Directus → /api/cms/webhook
+                                          (loopback, on the app VM)
 `}
 </pre>
 
@@ -82,8 +84,12 @@ in `03-data-model.md §5`. The shape:
 The migration is additive, reversible, and moves no content. It sets no
 password: `CREATE ROLE` without a password leaves the role unable to log in
 until the operator configures one out of band, which is the intended posture.
-On SQLite (the local smoke suite) the migration is a no-op, since SQLite has no
-roles.
+The role **name is per environment** (`DIRECTUS_DB_ROLE`: `directus_app` for
+prod, `directus_app_dev` for dev) — because the database is now a shared remote
+instance and Postgres roles are cluster-global, a distinct role name per env is
+what stops a dev credential from reaching the prod database (see
+[Role isolation](../database/role-isolation.md)). On SQLite (the local smoke
+suite) the migration is a no-op, since SQLite has no roles.
 
 :::tip[Why This Matters]
 The `directus_app` role is the hard boundary that lets a CMS share a database

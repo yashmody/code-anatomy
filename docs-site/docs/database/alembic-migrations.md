@@ -128,10 +128,13 @@ untouched.
 
 ### 0008 — Directus role
 
-`0008_directus_app_role.py` creates the scoped `directus_app` Postgres login
-role and pins its reach with a GRANT/REVOKE matrix. It is additive,
-reversible, and moves no content. The full matrix is documented in
-[Role isolation](./role-isolation.md).
+`0008_directus_app_role.py` creates the scoped Directus Postgres login role and
+pins its reach with a GRANT/REVOKE matrix. The role **name is parameterised**
+via `DIRECTUS_DB_ROLE` (`directus_app` for prod, `directus_app_dev` for dev) so
+that on the shared remote instance the dev role is GRANTed only on
+`codecoder_dev` and can never reach prod. It is additive, reversible, and moves
+no content. The full matrix — and why a distinct role name per env is what gives
+credential isolation on one cluster — is in [Role isolation](./role-isolation.md).
 
 ## The score type — load-bearing
 
@@ -223,7 +226,19 @@ From the `backend/` directory:
 
 `env.py` resolves `DATABASE_URL` from the environment first, then from
 `app.core.config`, so a one-off `DATABASE_URL=... alembic upgrade head`
-points the tool at a different database for a single command.
+points the tool at a different database for a single command. Against the
+**remote shared instance** this is how you target the right env and supply the
+right credential: migrations run with a **privileged** credential (DDL on the
+target database) — the runtime app role (`app_prod` / `app_dev`) is DML-only and
+cannot run DDL, create extensions, or create the Directus role. Set
+`DIRECTUS_DB_ROLE` alongside it so `0008` creates the env-correct Directus role,
+and keep `?sslmode=require` in the URL:
+
+```bash
+DATABASE_URL="postgresql://migrator:****@REMOTE_DB_HOST:5432/codecoder?sslmode=require" \
+DIRECTUS_DB_ROLE=directus_app \
+  .venv/bin/alembic upgrade head        # prod; for dev use codecoder_dev + directus_app_dev
+```
 
 For a first-time cutover on a database that already holds the legacy
 seven-table baseline, the helper `backend/scripts/init_alembic.sh` stamps

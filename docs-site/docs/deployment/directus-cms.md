@@ -58,10 +58,12 @@ deliberate omission of `MemoryDenyWriteExecute` — the V8 JIT, like the media
 pipeline, needs write-execute pages.
 
 **The Docker Compose alternative.** `cms/docker-compose.yml` runs the official
-`directus/directus:11.17.4` image against the host Postgres, with `cms/.env` as
-the `env_file` and `cms/uploads` bind-mounted. The Apache `/cms/` proxy and port
-8055 are identical, so nothing downstream changes. Use it only if the box already
-runs Docker.
+`directus/directus:11.17.4` image against the **remote** Postgres (the same
+`DB_HOST=REMOTE_DB_HOST` / `DB_DATABASE` / `DB_SSL=require` the systemd unit uses
+— there is no co-located DB container any more), with `cms/.env` as the `env_file`
+and `cms/uploads` bind-mounted. The Apache `/cms/` proxy and port 8055 are
+identical, so nothing downstream changes. Use it only if the box already runs
+Docker.
 
 :::caution[Common Pitfall]
 Running both the systemd unit and the Docker container at once. They contend for
@@ -82,12 +84,16 @@ flowchart TD
     --> E["5 · write + enable + start cms-directus unit"]
 ```
 
-1. **Alembic `0008` first.** It creates the scoped `directus_app` role — DDL on
+1. **Alembic `0008` first.** It creates the scoped Directus role — DDL on
    `directus_*`, DML on the content tables only, with `REVOKE ALL` on `attempts`,
-   `quiz_sessions`, `signing_keys`, and `auth_audit`. `deploy.sh` only *sets the
-   role's password*; it does not create the role. If you stand Directus up by
-   hand, run `cd /opt/dept-anatomy/backend && .venv/bin/alembic upgrade head`
-   first.
+   `quiz_sessions`, `signing_keys`, and `auth_audit`. The role **name is per env**
+   (`DIRECTUS_DB_ROLE`: `directus_app` for prod, `directus_app_dev` for dev), so
+   on the shared remote instance the dev role is GRANTed only on `codecoder_dev`.
+   `deploy.sh` only *sets the role's password* on the remote (via the remote
+   superuser); it does not create the role. If you stand Directus up by hand, run
+   the migration against the remote with a privileged credential first:
+   `cd /opt/dept-anatomy/backend && DATABASE_URL="$PGURL_ADMIN"
+   DIRECTUS_DB_ROLE=directus_app .venv/bin/alembic upgrade head`.
 2. **`npx directus bootstrap`** creates the `directus_*` system tables and the
    break-glass admin from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in `cms/.env`.
 3. **`cms/bootstrap.sh`** wires the four staff roles, the per-collection

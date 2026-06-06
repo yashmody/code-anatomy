@@ -24,7 +24,12 @@ sidebar_position: 6
   same-origin only via Apache.
 - **Directus is fenced at the database.** The `directus_app` role has explicit
   `REVOKE ALL` on the runtime and audit tables, so editorial access cannot reach
-  signing keys, quiz attempts, or the auth audit trail.
+  signing keys, quiz attempts, or the auth audit trail. The role name is per-env
+  (`directus_app` / `directus_app_dev`) so the one shared remote instance keeps
+  dev and prod credentials apart.
+- **The database link is TLS.** Postgres is a remote shared instance; every
+  connection enforces `sslmode=require` (`verify-full` with a CA preferred) from
+  the `DATABASE_URL`, and the runtime app role is DML-only.
 
 The security baseline is the set of always-on controls that hold regardless of
 which feature a request hits. The design contract is `07-security-baseline.md`,
@@ -161,6 +166,41 @@ backstop behind the application-level RBAC: even a misconfigured Directus
 permission set cannot reach the runtime-only and audit data. The full grant
 table is in [Directus topology](./directus-topology.md).
 
+Two further isolation properties follow from the database being a **remote
+shared instance** rather than co-resident on the app VM:
+
+- **Per-environment role names.** The role name is parameterised
+  (`DIRECTUS_DB_ROLE`: `directus_app` for prod, `directus_app_dev` for dev), and
+  the FastAPI app role is per-env too (`app_prod` / `app_dev`). Because Postgres
+  roles are cluster-global while GRANTs are per-database, a *distinct role name
+  per environment*, GRANTed only on its own database, is what keeps a dev
+  credential off the prod database on the one shared instance.
+- **The runtime role is DML-only.** The app role written into `DATABASE_URL`
+  cannot run DDL, create extensions, or alter roles on the managed instance — so
+  a compromise of the app VM yields a least-privilege credential, never DB
+  superuser. Schema changes are owned by Alembic, run with a separate privileged
+  migration credential.
+
+## TLS to the database
+
+The database link now leaves the app VM, so the connection is encrypted in
+transit. Every connection string carries `sslmode=require` at minimum
+(`verify-full` with a provisioned CA preferred) — psycopg2 and SQLAlchemy honour
+the `sslmode` query parameter, so TLS is enforced from the `DATABASE_URL` itself
+with no extra code. `verify-full` additionally pins the connection to a trusted
+CA and matches the host against the server certificate, defending against an
+active man-in-the-middle, not just passive sniffing. A connection that cannot be
+established over TLS fails closed rather than silently downgrading to cleartext.
+
+:::caution[Common Pitfall]
+Relying on "the DB is on a private network" instead of TLS. A remote connection
+without `sslmode=require` is cleartext on the wire — credentials and every row,
+including media bytes, are exposed to anything that can observe the path between
+the app VM and the instance. Network segmentation is defence in depth, not a
+substitute: keep `sslmode=require` in the URL and verify with
+`psql … -c "\conninfo"` that an `SSL connection` line is reported.
+:::
+
 ## What lives where
 
 | Control | Owner | Location |
@@ -172,5 +212,6 @@ table is in [Directus topology](./directus-topology.md).
 | OAuth PKCE + nonce + pre-auth cookie | FastAPI | `core/auth.py`, `modules/auth/routes.py` |
 | Fail-closed secret validation | FastAPI | `core/config.py` |
 | Certificate HMAC signing | FastAPI | `modules/quiz/storage.py`, `signing_keys` table |
-| Directus DB isolation | PostgreSQL | Alembic `0008` |
+| Directus DB isolation (per-env roles) | PostgreSQL | Alembic `0008` (`DIRECTUS_DB_ROLE`) |
+| Database TLS (`sslmode=require` / `verify-full`) | FastAPI / Directus | `DATABASE_URL`, `cms/.env` |
 | Payload encryption (AES-GCM) | FastAPI | `core/encryption.py` |

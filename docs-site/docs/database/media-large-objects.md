@@ -166,12 +166,14 @@ The trigger only fires when a `media_assets` row is deleted. It cannot help
 with the partial-upload case above, where bytes are committed but the
 metadata row never lands — there is no row to delete and no trigger to fire.
 For that, the standard Postgres contrib tool `vacuumlo` runs nightly as an
-infra cron. It scans every OID-typed column in the database and unlinks any
-large object referenced nowhere:
+infra cron (a systemd timer on the app VM). It connects to the **remote**
+database over TLS, scans every OID-typed column, and unlinks any large object
+referenced nowhere. Run one sweep per database (`codecoder`, `codecoder_dev`):
 
 ```
-# /etc/cron.d/codecoder-vacuumlo
-17 3 * * *  postgres  vacuumlo -v -n codecoder >> /var/log/codecoder/vacuumlo.log 2>&1
+# /etc/cron.d/codecoder-vacuumlo  (app VM; PGURL points at the remote DB over TLS)
+# PGURL=postgresql://app_prod:****@REMOTE_DB_HOST:5432/codecoder?sslmode=require
+17 3 * * *  cca  vacuumlo -v -n "$PGURL" >> /var/log/codecoder/vacuumlo.log 2>&1
 ```
 
 The `-n` (dry-run) flag is kept until the report is reviewed and confirmed to
@@ -194,7 +196,10 @@ guarantee.
 Large objects are not captured by an ordinary table-only dump — `pg_dump`
 includes them by default in the custom and directory formats, but a
 plain-SQL dump with `--table` filters will silently miss them. When you take
-a logical backup of this database, use a whole-database custom-format dump
-(`pg_dump --format=custom codecoder`) so the `pg_largeobject` contents come
-along with the `media_assets` rows that reference them. A backup that has the
-metadata rows but not the bytes is a backup of broken references.
+a logical backup of this database, take a whole-database custom-format dump of
+the **remote** database over TLS (`pg_dump --format=custom --large-objects
+--dbname="$PGURL"` where `$PGURL` carries `sslmode=require`) so the
+`pg_largeobject` contents come along with the `media_assets` rows that reference
+them. A backup that has the metadata rows but not the bytes is a backup of
+broken references. The full backup/restore procedure is in the
+[deployment operations](../deployment/operations.md) page and `docs/RUNBOOK.md`.

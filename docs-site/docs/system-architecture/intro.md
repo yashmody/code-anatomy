@@ -15,8 +15,9 @@ observability posture that holds it all together.
 
 - **Two planes, one database.** The *learner plane* is a FastAPI modular
   monolith with Google SSO; the *staff plane* is Directus 11. Both read and
-  write the **same `codecoder` Postgres**. There is no second database and no
-  S3 — media lives in Postgres large objects.
+  write the **same `codecoder` Postgres**, now a **remote shared instance**
+  reached over TLS (one instance hosts the prod and dev databases, isolated by
+  per-env roles). There is no S3 — media lives in Postgres large objects.
 - **The backend is a modular monolith.** One FastAPI app, split internally into
   `backend/app/core/` (shared infrastructure: db, auth, config, cache,
   security, observability) and `backend/app/modules/` (`auth`, `quiz`,
@@ -45,29 +46,34 @@ Apache. Media never leaves the database.
 
 <pre className="arch-diagram">
 {`
-                          ┌──────────────────────────────────────┐
-   learner / browser ───► │  Apache  (TLS, proxy, static, cache)  │
-   staff / browser   ───► └───┬───────────────┬──────────────┬────┘
-                              │ /app, /        │ /cms         │ /static
-                              │ /api/*         │              │
-                              ▼                ▼              ▼
-                    ┌──────────────────┐  ┌──────────┐   (FastAPI
-                    │ FastAPI monolith │  │ Directus │    StaticFiles)
-                    │  (learner plane) │  │  (staff  │
-                    │                  │  │   plane) │
-                    │  core/ modules/  │  └────┬─────┘
-                    └─────┬──────┬─────┘       │
-                          │      │ loopback    │
-                          │      │ webhook ◄───┘ (Directus → /api/cms/webhook)
-                          │      ▼
-                          │   AppCache (memory | redis)
+   ┌───────────────────────────────── app VM ──────────────────────────────┐
+   │                      ┌──────────────────────────────────────┐         │
+   │ learner/browser ───► │  Apache  (TLS, proxy, static, cache)  │         │
+   │ staff/browser   ───► └───┬───────────────┬──────────────┬────┘         │
+   │                          │ /app, /        │ /cms         │ /static     │
+   │                          │ /api/*         │              │             │
+   │                          ▼                ▼              ▼             │
+   │                ┌──────────────────┐  ┌──────────┐   (FastAPI          │
+   │                │ FastAPI monolith │  │ Directus │    StaticFiles)     │
+   │                │  (learner plane) │  │  (staff  │                     │
+   │                │  core/ modules/  │  │   plane) │                     │
+   │                └─────┬──────┬─────┘  └────┬─────┘                     │
+   │                      │      │ loopback    │                          │
+   │                      │      │ webhook ◄───┘ (Directus → /api/cms/webhook)│
+   │                      │      ▼                                         │
+   │                      │   AppCache (memory | redis)                    │
+   │                      │                                                │
+   └──────────────────────┼────────────────────────────────────────────────┘
+                          │ TLS (sslmode=require) · egress :5432
                           ▼
-                 ┌─────────────────────────────────┐
-                 │   PostgreSQL  (codecoder)        │
-                 │   app tables + media large       │
-                 │   objects + directus_* tables    │
-                 │   directus_app = scoped role     │
-                 └─────────────────────────────────┘
+                 ┌─────────────────────────────────────┐
+                 │  remote PostgreSQL instance          │
+                 │  codecoder (prod) + codecoder_dev    │
+                 │  app tables + media large objects    │
+                 │  + directus_* tables                 │
+                 │  per-env roles (app_prod/directus_app│
+                 │  · app_dev/directus_app_dev)         │
+                 └─────────────────────────────────────┘
 `}
 </pre>
 

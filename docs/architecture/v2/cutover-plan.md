@@ -21,12 +21,15 @@ Either gate failing is a stop.
 ## 0 · Scan box
 
 - **What:** the ordered runbook to promote the v2 branch — modular-monolith
-  FastAPI app (`cca-quiz`) + Directus editorial plane (`cms-directus`) over one
-  `codecoder` Postgres — onto the production VM, then open traffic.
+  FastAPI app (`cca-quiz`) + Directus editorial plane (`cms-directus`) on the
+  app VM, connecting out to a **remote shared Postgres** that hosts the `codecoder`
+  prod database alongside the `codecoder_dev` dev database — then open traffic.
 - **Why:** v2 changes the database shape (Alembic `0001`→`0008`), adds a second
   writer (Directus over the scoped `directus_app` role), and moves media into
-  Postgres large objects. A wrong order at cutover breaks the stand-up; a
-  missed backup makes rollback slow. This plan makes both safe.
+  Postgres large objects. The database now lives on a **separate remote host**
+  reached over TLS, not on the app VM. A wrong order at cutover breaks the
+  stand-up; a missed backup makes rollback slow; a cleartext connection leaks
+  every byte in transit. This plan makes all three safe.
 - **So what:** follow the four phases below — pre-flight, cutover, gate checks,
   rollback-or-go. Do **not** open traffic until every gate check passes. The
   cert canary `CCA-F-20260605-E79E74AB` verifying post-restore and post-cutover
@@ -34,17 +37,19 @@ Either gate failing is a stop.
   certificate.
 - **Reversible by design:** the v2 migrations are additive (`0008` is a role +
   GRANTs; the new tables carry no destructive drops in the shipped chain), so
-  rollback is an Apache vhost swap + service restart, with the `pg_dump` restore
-  held in reserve only if data integrity is in doubt.
+  rollback is an Apache vhost swap + service restart, with the remote-DB snapshot
+  restore held in reserve only if data integrity is in doubt.
 
 :::note[Why This Matters]
-The two things that make a v2 cutover different from a routine `deploy.sh
---update` are (1) the **strict Directus bootstrap order** — Alembic `0008`
-*before* `directus bootstrap` *before* `cms/bootstrap.sh` *before* `schema
-apply` (RUNBOOK §7.4) — and (2) **media now lives in Postgres**, so the backup
-must include large objects (`pg_dump --large-objects`) or a restore silently
-drops every video and image. Get those two right and the rest is a normal
-deploy.
+Three things make a v2 cutover different from a routine `deploy.sh --update`.
+(1) The **strict Directus bootstrap order** — Alembic `0008` *before* `directus
+bootstrap` *before* `cms/bootstrap.sh` *before* `schema apply` (RUNBOOK §7.4).
+(2) **Media now lives in Postgres**, so the backup must include large objects
+(`pg_dump --large-objects`) or a restore silently drops every video and image.
+(3) The **database is remote**: the app VM no longer provisions a local
+Postgres — it connects out over TLS to a shared instance whose prod and dev
+databases must stay isolated by separate login roles. Get those three right and
+the rest is a normal deploy.
 :::
 
 ---
@@ -52,23 +57,118 @@ deploy.
 ## 1 · Pre-cutover (pre-flight gate)
 
 Everything in this section happens **before** you touch the running deploy.
-Nothing here changes production. The gate is: all eight checks green, or stop.
+Nothing here changes production. The gate is: all nine checks green, or stop.
+
+### 1.0 The remote shared Postgres (provisioning + connectivity)
+
+The database is no longer a local Postgres on the app VM. It is a **single
+remote instance** (`REMOTE_DB_HOST:5432`) that hosts both the prod database
+(`codecoder`) and the dev database (`codecoder_dev`) — and staging
+(`codecoder_staging`) if that environment is live. Isolation between
+environments is by **separate database** *and* **separate login role name**, so
+a dev credential can never reach prod.
+
+**The DBA (or a privileged operator with the remote superuser password)
+pre-creates all of this before the window opens** — the app VM holds only a
+DML-only runtime credential and cannot provision any of it:
+
+<pre className="arch-diagram">
+{`
+            ┌──────────────────── remote Postgres instance ────────────────────┐
+            │  REMOTE_DB_HOST : 5432   ·   TLS required (server cert)           │
+            │                                                                   │
+            │   database codecoder (prod)        database codecoder_dev (dev)   │
+            │   ├─ ext: pgcrypto, hstore         ├─ ext: pgcrypto, hstore       │
+            │   ├─ role app_prod      (DML)      ├─ role app_dev      (DML)     │
+            │   └─ role directus_app  (scoped)   └─ role directus_app_dev (scoped)│
+            └───────────────────────────────────────────────────────────────────┘
+                        ▲                                   ▲
+            sslmode=require│ (verify-full + CA preferred)   │
+                        │                                   │
+            ┌───────────┴───────────┐           ┌───────────┴───────────┐
+            │  PROD app VM           │           │  DEV app VM            │
+            │  FastAPI + Directus    │           │  FastAPI + Directus    │
+            │  → codecoder           │           │  → codecoder_dev       │
+            └───────────────────────┘           └───────────────────────┘
+`}
+</pre>
+
+The DBA pre-creates, on the remote instance, before cutover:
+
+- **The databases** — `codecoder` (prod) and `codecoder_dev` (dev), separate
+  databases on the one instance.
+- **The extensions in each database** — `pgcrypto` (for `gen_random_uuid()`)
+  and `hstore`. The runtime app role has no privilege to `CREATE EXTENSION` on a
+  managed instance, so these must exist before the app boots; `init_db()` will
+  not be able to create them (it now treats that as non-fatal).
+- **The per-env login roles, with passwords** — the FastAPI app role
+  (`app_prod` for prod, `app_dev` for dev) and the Directus role (`directus_app`
+  for prod, `directus_app_dev` for dev), each GRANTed only on its own database.
+  Roles are cluster-global, but GRANTs are per-database-object — so a *distinct
+  role name per environment* is what buys isolation.
+- **TLS** — a server certificate so connections can require encryption.
+  `sslmode=require` is the minimum; `verify-full` with a provisioned CA is
+  preferred (it defends against an active man-in-the-middle, not just passive
+  sniffing).
+
+**Network + trust pre-flight on the app VM:**
+
+- The app VM must be able to reach `REMOTE_DB_HOST:5432` — open the egress
+  firewall / NSG rule from the app VM to the DB host on 5432.
+- If you require `verify-full`, the CA certificate must be present on the app VM
+  and referenced by `sslrootcert=` (in the `DATABASE_URL` query or
+  `PGSSLROOTCERT`), and the `DATABASE_URL` host must match the certificate's
+  subject.
+
+**Connectivity test — run this BEFORE migrating anything.** Confirm the app VM
+can reach the DB *and* that the connection is encrypted:
+
+```bash
+# 1. The runtime app role reaches its OWN database, over TLS.
+psql "postgresql://app_prod:****@REMOTE_DB_HOST:5432/codecoder?sslmode=require" \
+     -c "SELECT 1;"
+#    expect: a single row '1'
+
+# 2. Prove SSL is actually in use — not silently downgraded.
+psql "postgresql://app_prod:****@REMOTE_DB_HOST:5432/codecoder?sslmode=require" \
+     -c "\conninfo"
+#    expect a line containing: SSL connection (protocol: TLSv1.3, cipher: ...)
+```
+
+If `\conninfo` does **not** report an SSL connection, stop — the connection is
+cleartext and the cutover is a no-go until TLS is enforced in the URL.
+
+:::caution[Common Pitfall]
+Granting one role name — say `directus_app` — on **both** `codecoder` and
+`codecoder_dev` because "it is the same instance anyway". A Postgres ROLE is
+cluster-global, so that single credential then reaches *both* databases, and
+dev/prod isolation is gone. Use a distinct role name per environment
+(`directus_app` on prod, `directus_app_dev` on dev; `app_prod` vs `app_dev` for
+the FastAPI role) and GRANT each only on its own database. The separate database
+gives you data isolation; the separate role *name* gives you credential
+isolation. You need both.
+:::
 
 ### 1.1 Take a recoverable backup (large objects included)
 
-The media bytes live in `pg_largeobject`. A plain `pg_dump` drops them. Use the
-custom-format dump with `--large-objects` exactly as RUNBOOK §1.1 specifies:
+The media bytes live in `pg_largeobject`. A plain `pg_dump` drops them. Take the
+backup **of the remote database, over TLS**, with the custom-format dump and
+`--large-objects` exactly as RUNBOOK §1.1 specifies. The dump runs from the app
+VM (or any host that can reach the instance) against the remote `codecoder`:
 
 ```bash
-sudo -u postgres pg_dump \
+pg_dump \
     --format=custom \
     --large-objects \
-    --file=/var/backups/cca-precutover-$(date +%F).dump \
-    codecoder
+    --dbname="postgresql://app_prod:****@REMOTE_DB_HOST:5432/codecoder?sslmode=require" \
+    --file=/var/backups/cca-precutover-$(date +%F).dump
 ```
 
 Verify the dump is non-trivial in size (media makes it large) and record the
-path. This is your rollback restore source — see §4.3.
+path. This is your rollback restore source — see §4.3. Note the dump now travels
+over the network: keep `sslmode=require` so the bytes are encrypted in transit,
+and keep the file off the DB host (the database no longer lives on the app VM,
+so the backup artefact and the data are already separated by default).
 
 ### 1.2 Snapshot the current production deploy
 
@@ -147,7 +247,9 @@ the existing production key, not a fresh one.
 
 ```
 ┌─ PRE-FLIGHT GATE (all must be GREEN) ───────────────────────────┐
-│ [ ] pg_dump --large-objects taken, path recorded               │
+│ [ ] remote DB reachable + \conninfo shows SSL (SELECT 1 ok)    │
+│ [ ] DBs/extensions/per-env roles pre-created by the DBA        │
+│ [ ] pg_dump --large-objects of REMOTE codecoder, path recorded │
 │ [ ] live Apache vhost copied aside (rollback target)           │
 │ [ ] previous code rev + alembic current recorded               │
 │ [ ] cert canary verifies PRE-cutover (baseline)                │
@@ -170,40 +272,66 @@ internals.
 
 ```mermaid
 flowchart TD
-    A["1 · Land v2 code on the VM<br/>(merge / checkout v2)"] --> B["2 · alembic upgrade head<br/>0001 → 0008"]
+    A["1 · Land v2 code on the VM<br/>(merge / checkout v2 · DB_MODE=external)"] --> B["2 · alembic upgrade head<br/>0001 → 0008 · against REMOTE · privileged credential<br/>DIRECTUS_DB_ROLE=directus_app"]
     B --> C["3 · Seeds: roles + signing key (via 0005/0007)<br/>app_config + first admin (lifespan)"]
-    C --> D["4 · Set directus_app password<br/>(deploy.sh ALTER ROLE)"]
+    C --> D["4 · Set directus_app password on the REMOTE<br/>(deploy.sh ALTER ROLE · remote superuser)"]
     D --> E["5 · Directus bootstrap order 7.4<br/>bootstrap → bootstrap.sh → schema apply"]
-    E --> F["6 · Start both systemd units<br/>cca-quiz + cms-directus"]
+    E --> F["6 · Start both systemd units<br/>cca-quiz + cms-directus (→ remote DB over TLS)"]
     F --> G["7 · Reload Apache<br/>new vhost: CSP / cache / /cms proxy"]
     G --> H{"Gate checks §3"}
     H -->|all pass| I["Open traffic"]
     H -->|any fail| J["Rollback §4"]
 ```
 
-### Step 1 — Land the v2 code
+### Step 1 — Land the v2 code (external-DB mode)
 
 Merge `v2` to the deployment branch / tag, then on the VM put the code in place.
 For a box already running an older build, `sudo ./deploy.sh --update` syncs code
 and restarts services; for a fresh box, run the full `sudo ./deploy.sh`. The
 installer is idempotent and re-runnable.
 
-### Step 2 — Migrate the schema (`0001` → `0008`)
+**Run `deploy.sh` in `DB_MODE=external`.** In this mode the installer does
+**not** install or provision a local Postgres — no `psql` over the
+`/var/run/postgresql` socket as superuser, no `pg_hba.conf` edits, no
+`listen_addresses` flip. None of that applies to a managed remote instance, and
+the runtime credential the app VM holds has no privilege to do it. The installer
+instead takes the supplied remote `DATABASE_URL` (host `REMOTE_DB_HOST`, the
+per-env database, `sslmode=require` in the query) and wires the app and Directus
+to connect *out* to it. The local-Postgres provisioning path (`DB_MODE=local`)
+is retained only for a self-contained box and for the local sqlite smoke; the
+production cutover uses `external`.
+
+### Step 2 — Migrate the schema (`0001` → `0008`) against the remote
 
 Schema evolution is owned by Alembic, **not** by app startup (`init_db()` only
-creates missing tables as a dev convenience). Run the chain from `backend/`:
+creates missing tables as a dev convenience, and on a managed remote it no
+longer fails the boot when it lacks DDL/extension privilege). Run the chain
+against the **remote** database, with a **privileged migration credential** —
+the runtime app role (`app_prod`/`app_dev`) is DML-only and cannot run DDL or
+create the Directus role, so migrations need a role with DDL privilege on the
+target database:
 
 ```bash
-cd /opt/dept-anatomy/backend && .venv/bin/alembic upgrade head
+cd /opt/dept-anatomy/backend
+# DATABASE_URL points at the REMOTE database with a privileged (DDL) credential.
+# DIRECTUS_DB_ROLE names the Directus role 0008 should create + GRANT for THIS env.
+DATABASE_URL="postgresql://migrator:****@REMOTE_DB_HOST:5432/codecoder?sslmode=require" \
+DIRECTUS_DB_ROLE=directus_app \
+  .venv/bin/alembic upgrade head
 ```
+
+For dev, point `DATABASE_URL` at `codecoder_dev` and set
+`DIRECTUS_DB_ROLE=directus_app_dev`, so `0008` creates and GRANTs the
+*dev-specific* Directus role on the *dev* database — never the prod role.
 
 This applies the full shipped chain: `0001` baseline → `0002` reconcile →
 `0003` new tables (`quiz_sessions`, `roles`/`user_roles`, `signing_keys`,
 `app_config`, `media_assets`) → `0004` columns → `0005` **seed roles + the
 `legacy-prod` signing-key row** → `0006` large-object cleanup trigger → `0007`
-**seed non-prod signing keys** → `0008` **create the scoped `directus_app`
-role + GRANT/REVOKE**. End state: `alembic current` = `0008_directus_app_role
-(head)`. This must run **before** any Directus step (RUNBOOK §7.4 step 1).
+**seed non-prod signing keys** → `0008` **create the scoped Directus role
+(`DIRECTUS_DB_ROLE`, default `directus_app`) + GRANT/REVOKE**. End state:
+`alembic current` = `0008_directus_app_role (head)`. This must run **before**
+any Directus step (RUNBOOK §7.4 step 1).
 
 ### Step 3 — Seeds
 
@@ -219,12 +347,18 @@ The remaining two seed paths run when the app boots:
 No separate manual seed command is required beyond `alembic upgrade head` + a
 clean app start.
 
-### Step 4 — Set the `directus_app` password
+### Step 4 — Set the Directus role password on the remote
 
-The role itself is created by `0008` (step 2). `deploy.sh` only sets its
-password — an idempotent `ALTER ROLE … WITH LOGIN PASSWORD …` — and persists it
-into `cms/.env` as `DB_PASSWORD`. If `0008` has not run, `deploy.sh` warns and
-skips; that is why step 2 precedes this.
+The role itself is created by `0008` (step 2) under the name `DIRECTUS_DB_ROLE`
+(`directus_app` for prod, `directus_app_dev` for dev). `deploy.sh` only sets its
+password — an idempotent `ALTER ROLE … WITH LOGIN PASSWORD …` run against the
+**remote** instance with the remote superuser credential — and persists it into
+`cms/.env` as `DB_PASSWORD`, alongside `DB_HOST=REMOTE_DB_HOST`,
+`DB_DATABASE=codecoder` (or `codecoder_dev`), and `DB_SSL=require` so Directus
+itself connects over TLS. If `0008` has not run, `deploy.sh` warns and skips;
+that is why step 2 precedes this. The runtime app role (`app_prod`/`app_dev`) is
+a separate credential the DBA already set in §1.0 — `deploy.sh` does not create
+or alter it, it only writes the supplied `DATABASE_URL` into `backend/.env`.
 
 ### Step 5 — Directus bootstrap (strict order — RUNBOOK §7.4)
 
@@ -326,19 +460,20 @@ curl -s http://127.0.0.1:8055/server/health        # or via the /cms/ proxy
 # expect: {"status":"ok"}
 ```
 
-### 3.5 `directus_app` isolation
+### 3.5 Directus role isolation
 
-Confirm the four runtime/audit tables are hard-denied to `directus_app` and the
-content tables are readable. As the superuser:
+Confirm the four runtime/audit tables are hard-denied to the env's Directus role
+and the content tables are readable. Run against the **remote** database with a
+privileged credential; use the env-correct role name (`directus_app` on prod,
+`directus_app_dev` on dev):
 
 ```bash
+PSQL="psql postgresql://migrator:****@REMOTE_DB_HOST:5432/codecoder?sslmode=require"
 # Denied (expect 'f' / permission denied) for each:
 #   attempts, quiz_sessions, signing_keys, auth_audit
 # Readable (expect 't') for e.g. course_chapters, app_config.
-sudo -u postgres psql codecoder -c \
-  "SELECT has_table_privilege('directus_app','attempts','SELECT')"      # f
-sudo -u postgres psql codecoder -c \
-  "SELECT has_table_privilege('directus_app','course_chapters','SELECT')"  # t
+$PSQL -c "SELECT has_table_privilege('directus_app','attempts','SELECT')"        # f
+$PSQL -c "SELECT has_table_privilege('directus_app','course_chapters','SELECT')" # t
 ```
 
 ### 3.6 Health + readiness
@@ -363,8 +498,10 @@ curl -s https://<prod-host>/readyz    # 200 {status:ok, checks:{db:ok,...}}
 Rollback is **two cheap steps first** (vhost swap + service restart) and a
 **restore only if data integrity is in doubt**. Because the v2 migrations are
 additive — `0008` is a role + GRANTs, the new tables carry no destructive drops
-in the shipped chain — you rarely need the database restore. Decide in this
-order:
+in the shipped chain — you rarely need the database restore. And because the
+database is **remote**, the cheap steps touch only the app VM (Apache + the two
+services); the data on the shared instance is untouched by a vhost swap. Decide
+in this order:
 
 ### 4.1 Apache vhost swap (always the first move)
 
@@ -387,18 +524,24 @@ systemctl restart cca-quiz
 systemctl stop cms-directus   # if Directus is the failure, take it out of the path
 ```
 
-The previous build runs against the **same** Postgres — the additive v2 schema
-is backward-compatible with the v1 app for the runtime tables it reads.
+The previous build runs against the **same remote** Postgres — the additive v2
+schema is backward-compatible with the v1 app for the runtime tables it reads.
+Point the rolled-back app at the same remote `DATABASE_URL` (`sslmode=require`);
+nothing about the connection changes, only the code revision does.
 
-### 4.3 Database restore (only if data integrity is in doubt)
+### 4.3 Remote database restore (only if data integrity is in doubt)
 
 If — and only if — the data itself is suspect, restore the §1.1 dump into a
-**scratch** database first, validate, then cut over. Never restore over the live
-`codecoder` blind:
+**scratch** database **on the remote instance** first, validate, then cut over.
+Never restore over the live `codecoder` blind. The scratch DB is created on the
+shared instance (by the DBA or with the remote superuser), and the restore runs
+over TLS:
 
 ```bash
-sudo -u postgres createdb codecoder_rollback
-sudo -u postgres pg_restore --dbname=codecoder_rollback \
+# On the remote instance (DBA / remote superuser):
+createdb -h REMOTE_DB_HOST -U postgres codecoder_rollback   # or CREATE DATABASE
+pg_restore \
+    --dbname="postgresql://postgres:****@REMOTE_DB_HOST:5432/codecoder_rollback?sslmode=require" \
     /var/backups/cca-precutover-$(date +%F).dump
 # validate, incl. the cert canary against the restored data (RUNBOOK §1.2),
 # THEN promote the scratch DB per RUNBOOK §1.2.
@@ -406,6 +549,9 @@ sudo -u postgres pg_restore --dbname=codecoder_rollback \
 
 The dump includes large objects (§1.1), so media restores with it. Use the cert
 canary as the restore acceptance check exactly as RUNBOOK §1.2 prescribes.
+Because the DB no longer lives on the app VM, a full rollback is the Apache /
+symlink swap on the VM **plus** restoring the remote database snapshot on the
+instance — two separate hosts, two separate moves.
 
 :::note[Why This Matters]
 The migrations being additive is what makes rollback a *vhost swap*, not a
@@ -449,17 +595,45 @@ rests on the SPA's `esc()` discipline until the flip. The timeline:
 
 ### 5.4 Backups schedule
 
-Resume the nightly `pg_dump --large-objects` (90-day retention, weekly `age`-
-encrypted offsite copy), the `cms/uploads/` tar (Directus-internal files only —
-app media is in Postgres), the quarterly restore drill with the cert canary as
-acceptance, and the nightly `vacuumlo` large-object cleanup (RUNBOOK §1, §5,
-§7.6).
+Resume the nightly `pg_dump --large-objects` **against the remote `codecoder`
+over TLS** (90-day retention, weekly `age`-encrypted offsite copy), the
+`cms/uploads/` tar (Directus-internal files only — app media is in Postgres),
+the quarterly restore drill with the cert canary as acceptance, and the nightly
+`vacuumlo` against the remote DB for large-object cleanup (RUNBOOK §1, §5, §7.6).
+Because the database is shared, run the backup and `vacuumlo` jobs **per
+database** — the prod schedule targets `codecoder`, the dev schedule targets
+`codecoder_dev` — never one job that sweeps both.
 
 :::tip[Agency Tip]
 The first quarterly restore drill after cutover is worth running early — within
 the first fortnight, not at the quarter boundary. It is the only check that
-proves the *new* large-object-bearing backup actually round-trips media, and it
-is far cheaper to discover a backup gap in week two than in a real incident.
+proves the *new* large-object-bearing backup actually round-trips media over the
+network, and it is far cheaper to discover a backup gap (or a TLS / firewall
+gap on the backup path) in week two than in a real incident.
+:::
+
+### 5.5 Dev/prod isolation on the shared instance
+
+The single shared instance is a cost decision, not an isolation compromise — but
+it stays isolated only if every credential is env-scoped. The standing rule:
+
+- **Separate database per env** — prod is `codecoder`, dev is `codecoder_dev`.
+  No query, dump, or migration crosses that boundary.
+- **Separate login-role *name* per env** — `app_prod` / `directus_app` reach
+  only `codecoder`; `app_dev` / `directus_app_dev` reach only `codecoder_dev`.
+  Because roles are cluster-global, a *shared* role name would be reachable on
+  both databases regardless of intent — the distinct names are what keep a dev
+  credential from ever touching prod.
+- **Separate secrets per env** — the dev `backend/.env` / `cms/.env` carry the
+  dev `DATABASE_URL` and dev passwords only; rotate each env's passwords
+  independently (RUNBOOK §1, §3, §7.7).
+
+:::caution[Common Pitfall]
+Pointing a dev or staging app VM at the prod database "just to test against real
+data". On a shared instance the only thing stopping that is the credential: if
+the dev VM holds a role GRANTed on `codecoder`, it *will* read and write prod.
+Keep dev credentials GRANTed on `codecoder_dev` alone, and verify after any role
+change that `has_database_privilege('app_dev','codecoder','CONNECT')` is `false`.
 :::
 
 ---

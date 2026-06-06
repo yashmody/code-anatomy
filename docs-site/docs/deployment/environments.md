@@ -97,7 +97,9 @@ SMTP_PASS=
 ALLOWED_DOMAIN=deptagency.com
 ADMIN_EMAILS=                 # comma-separated; seeded as platform_admin
 
-# Database
+# Database — remote shared instance, TLS required
+# e.g. postgresql://app_prod:****@REMOTE_DB_HOST:5432/codecoder?sslmode=require
+#      (verify-full + &sslrootcert=/etc/dept-anatomy/db-ca.pem where a CA exists)
 DATABASE_URL=                 # carries the DB password — keep this file 0600
 DB_POOL_SIZE=5
 DB_MAX_OVERFLOW=5
@@ -126,9 +128,16 @@ A few keys deserve a note:
 - **The cache TTLs** (`CACHE_TTL_FRAMEWORK`, `CACHE_TTL_FEED`,
   `CACHE_TTL_APP_CONFIG`) drive the in-process cache's self-healing window — see
   [Day-two operations](./operations).
+- **`DATABASE_URL` points at the remote shared instance.** It carries the per-env
+  database (`codecoder` for prod, `codecoder_dev` for dev), the per-env runtime
+  role (`app_prod` / `app_dev`, DML-only), and **`?sslmode=require`** so the
+  connection is encrypted — psycopg2 / SQLAlchemy honour the `sslmode` query
+  parameter, so TLS is enforced from the URL with no extra code. With a
+  provisioned CA, prefer `sslmode=verify-full&sslrootcert=...`.
 - **`DB_POOL_SIZE` / `DB_MAX_OVERFLOW`** are Tier-2 config (no secret material),
-  safe to set in the template. They size the SQLAlchemy pool against Postgres's
-  `max_connections`.
+  safe to set in the template. They size the SQLAlchemy pool against the remote
+  instance's `max_connections` — counted across every app VM that shares it,
+  plus Directus's pool and the raw large-object connections.
 
 ## start_local.sh — the same model locally
 
@@ -155,8 +164,11 @@ Three flags:
   best-effort: a CMS failure does not bring down the FastAPI and static pair,
   because the CMS is for editorial work, not the runtime read path. It requires
   `cms/`, `cms/node_modules`, and a reachable Postgres.
-- **`--db`** starts a local Postgres via `pg_ctl`, Homebrew services, or Docker,
-  whichever is available.
+- **`--db`** starts a *local* Postgres via `pg_ctl`, Homebrew services, or
+  Docker, whichever is available. This is a local-dev convenience only — the
+  `DB_MODE=local` path. Production (and any shared dev) points `DATABASE_URL` at
+  the **remote** instance instead and does not start a local server; the local
+  sqlite smoke harness is unaffected.
 
 :::caution[Common Pitfall]
 In local dev, `/anatomy/*` resource links **404**. In production Apache aliases

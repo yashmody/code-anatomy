@@ -12,9 +12,10 @@ sidebar_position: 3
   Python, and Postgres pre-installed) to a serving box. Every step is guarded so
   re-running it never wipes data, `.env`, or database rows.
 - It runs as **root** and provisions, in order: service users, the venv, the
-  `.env`, the database (role, schema, ETL seed), the `cca-quiz` systemd unit,
-  Directus, SELinux labels, the Apache vhost, the firewall, and the Postgres
-  tuning plus large-object sweep.
+  `.env` (with the remote `DATABASE_URL`), the schema + ETL seed **against the
+  remote database** (no local Postgres install in `DB_MODE=external`), the
+  `cca-quiz` systemd unit, Directus, SELinux labels, the Apache vhost, the
+  firewall, and the large-object sweep.
 - Two modes: a **full install** (`sudo ./deploy.sh`) and `--update`
   (`sudo ./deploy.sh --update`), which re-syncs code and restarts services but
   skips the package/firewall/SELinux work.
@@ -51,14 +52,17 @@ automatically:
 ```bash
 cp deploy.env.example deploy.env
 chmod 600 deploy.env
-# edit: POSTGRES_SUPERUSER_PASSWORD, DOMAIN, GOOGLE_CLIENT_ID/SECRET, …
+# edit: DB_MODE, DATABASE_URL (remote), DOMAIN, GOOGLE_CLIENT_ID/SECRET, …
 sudo ./deploy.sh
 ```
 
 The common knobs: `DOMAIN`, `APP_ENV` (`development` | `staging` | `production`),
-`POSTGRES_SUPERUSER_PASSWORD`, the `GOOGLE_*` OAuth credentials, `CERT_FILE` /
-`KEY_FILE` / `CHAIN_FILE` for TLS, `DEPLOY_DIRECTUS` to gate the CMS, and
-`CSP_ENFORCE` to flip the Content-Security-Policy from Report-Only to enforced.
+`DB_MODE` (`external` for the remote shared Postgres — the production mode — or
+`local` for a self-contained box), the remote `DATABASE_URL` and the privileged
+migration credential it needs for the schema step, the `GOOGLE_*` OAuth
+credentials, `CERT_FILE` / `KEY_FILE` / `CHAIN_FILE` for TLS, `DEPLOY_DIRECTUS`
+to gate the CMS, and `CSP_ENFORCE` to flip the Content-Security-Policy from
+Report-Only to enforced.
 
 ## What each step does
 
@@ -67,25 +71,27 @@ Directus step, and SELinux is skipped on non-RHEL):
 
 ```mermaid
 flowchart TD
-    A["1 · Pre-flight<br/>Python / httpd / psql · PG socket + auth"] --> B["2 · Service user<br/>create 'cca' (system, nologin)"]
+    A["1 · Pre-flight<br/>Python / httpd / psql · remote DB reachable over TLS"] --> B["2 · Service user<br/>create 'cca' (system, nologin)"]
     B --> C["3 · Sync bundle<br/>rsync backend/ frontend/ content/ → APP_HOME"]
     C --> D["4 · Virtualenv<br/>create venv · pip install requirements.txt"]
-    D --> E["5 · .env<br/>generate secrets · stamp APP_ENV · DATABASE_URL"]
-    E --> F["6 · PostgreSQL<br/>role · DB · schema · pg_hba · ETL seed"]
+    D --> E["5 · .env<br/>generate secrets · stamp APP_ENV · remote DATABASE_URL"]
+    E --> F["6 · Schema + seed (REMOTE)<br/>alembic upgrade head · ETL seed · sslmode=require"]
     F --> G["7 · systemd cca-quiz<br/>write + enable + start uvicorn unit"]
     G --> H["7b · Directus<br/>(only when DEPLOY_DIRECTUS=true)"]
     H --> I["8 · SELinux<br/>(RHEL only) httpd labels + network bool"]
     I --> J["9 · Apache vhost<br/>modules · TLS · CSP · cache · proxy"]
-    J --> K["10 · Firewall<br/>open 80 + 443 (ufw / firewalld)"]
-    K --> L["11 · PG tuning + LO sweep<br/>cca-tuning.conf · vacuumlo timer"]
+    J --> K["10 · Firewall<br/>in: 80 + 443 · out: REMOTE_DB_HOST:5432"]
+    K --> L["11 · LO sweep<br/>vacuumlo timer → remote DB over TLS"]
 ```
 
-**1 · Pre-flight.** Confirms Python 3.8+, Apache, and `psql` are present;
-locates the Postgres Unix socket *before* any `psql` call (so a misconfigured
-server fails fast instead of hanging on a TCP fallback); and establishes a
-superuser auth path — either a supplied `POSTGRES_SUPERUSER_PASSWORD` or peer
-authentication, adding the `local all postgres peer` rule to `pg_hba.conf` if it
-is missing.
+**1 · Pre-flight.** Confirms Python 3.8+, Apache, and the `psql` client are
+present, and that the **remote database is reachable over TLS** before any schema
+work begins — a `SELECT 1` against the supplied remote `DATABASE_URL` with
+`sslmode=require`, so an unreachable host, a closed egress rule, or a missing
+server cert fails fast. In `DB_MODE=external` there is no local socket to locate
+and no `pg_hba.conf` to edit: the migration and seed steps use a **privileged**
+remote credential (the DBA's migration role) supplied to the installer, while the
+runtime app role written into `.env` is DML-only.
 
 **2 · Service user.** Creates `cca` as a system user with a `nologin` shell and
 its own home. Skipped if it already exists.
@@ -100,20 +106,24 @@ never clobbers issued certificates or quiz results.
 upgrades pip, and installs `requirements.txt`.
 
 **5 · Environment file.** On first create only, it generates a random
-`SECRET_KEY` and `APP_PAYLOAD_SECRET`, stamps `APP_ENV`, builds the
-`DATABASE_URL` with a generated DB password, and seeds the certificate-HMAC
-continuity keys — `CERT_HMAC_LEGACY` is mirrored from the new `SECRET_KEY` so
-freshly issued certs verify, and `CERT_HMAC_PROD` is generated fresh. An existing
-`.env` is left untouched. The file is then `chmod 600`, owned by `cca`.
+`SECRET_KEY` and `APP_PAYLOAD_SECRET`, stamps `APP_ENV`, writes the supplied
+**remote `DATABASE_URL`** (host `REMOTE_DB_HOST`, the per-env database,
+`sslmode=require` in the query — `verify-full` plus `sslrootcert=` where a CA is
+provisioned), and seeds the certificate-HMAC continuity keys — `CERT_HMAC_LEGACY`
+is mirrored from the new `SECRET_KEY` so freshly issued certs verify, and
+`CERT_HMAC_PROD` is generated fresh. An existing `.env` is left untouched. The
+file is then `chmod 600`, owned by `cca`.
 
-**6 · PostgreSQL.** The database half, all idempotent: ensure the cluster is
-running and listening on localhost; create or password-sync the `codecoder` role;
-create the database; add the `pg_hba.conf` md5 rules for local and `127.0.0.1`
-access; apply `deploy_schema.sql` as the superuser; grant table and sequence
-privileges to the app role; verify the app role can actually connect over TCP
-with the `.env` password; then run the ETL migration
-(`python -m scripts.migrate_to_postgres`) to seed questions, course chapters, the
-framework, and feed items.
+**6 · Schema + seed (against the remote).** The database half, all idempotent and
+run against the **remote** instance over TLS. The databases, extensions
+(`pgcrypto`, `hstore`), and per-env login roles are pre-created by the DBA, so
+this step does **not** create a cluster, edit `pg_hba.conf`, or flip
+`listen_addresses` — none of which apply to a managed remote. With a privileged
+migration credential it runs `alembic upgrade head` (the schema, including
+`0008`'s scoped Directus role and GRANTs, named by `DIRECTUS_DB_ROLE` per env),
+verifies the runtime app role can connect over TLS with the `.env` password, then
+runs the ETL migration (`python -m scripts.migrate_to_postgres`) to seed
+questions, course chapters, the framework, and feed items.
 
 **7 · systemd (`cca-quiz`).** Writes `/etc/systemd/system/cca-quiz.service` — a
 hardened `Type=exec` unit running uvicorn bound to `127.0.0.1:8000` with
@@ -133,14 +143,18 @@ HSTS, the CSP profiles, gzip, HTTP/2, the cache matrix, the `/cms/` proxy), runs
 `httpd -t` to validate, and restarts Apache. This is the
 [Apache vhost](./apache-vhost) page's whole subject.
 
-**10 · Firewall.** Opens 80 and 443 via `ufw` or `firewalld`, whichever is
-active. It does not open 8000, 8055, or 5432 — those stay loopback-only.
+**10 · Firewall.** Opens 80 and 443 inbound via `ufw` or `firewalld`, whichever
+is active. It does not expose 8000 or 8055 — those stay loopback-only. The one
+outbound rule that matters is **egress to `REMOTE_DB_HOST:5432`** for the
+database connection; on Azure the NSG scopes that egress to the DB host alone.
 
-**11 · Postgres tuning + LO sweep.** Installs `infra/postgres/cca-tuning.conf`
-into Postgres's `conf.d` and reloads, and installs the `vacuumlo` orphan-cleanup
-sweep as a nightly systemd timer (with a cron fallback). Both steps are guarded —
-a bundle missing those `infra/` files skips them with a warning rather than
-failing.
+**11 · LO sweep.** Installs the `vacuumlo` orphan-cleanup sweep as a nightly
+systemd timer (with a cron fallback) that connects to the **remote** database
+over TLS. Postgres server tuning (`shared_buffers`, `max_connections`,
+`log_min_duration_statement`) is no longer the installer's job — it is owned by
+the DBA on the remote instance, not by a local `infra/postgres/cca-tuning.conf`.
+The sweep step is guarded — a bundle missing the `infra/` files skips it with a
+warning rather than failing.
 
 ## The systemd unit it writes
 
@@ -189,11 +203,15 @@ Two details earn explanation:
 Every step is existence-guarded, which is the property that makes the script
 safe to re-run after a partial failure or for a routine update:
 
-- The service user, role, and database are created only if absent.
-- The schema (`deploy_schema.sql`) uses `CREATE … IF NOT EXISTS` throughout.
+- The app VM service user is created only if absent. The database, extensions,
+  and per-env login roles are pre-created on the remote instance by the DBA — the
+  installer never creates them, it only connects.
+- The schema is applied by Alembic (`alembic upgrade head`), which is inherently
+  idempotent — already-applied revisions are skipped by the version table.
 - The ETL migration skips rows that already exist and inserts only new ones.
-- The `.env` is generated once and never overwritten; the DB password is synced
-  in both directions so the role and the `.env` can never drift apart.
+- The `.env` is generated once and never overwritten; on a first create the
+  remote `DATABASE_URL` (with its password and `sslmode`) is written verbatim
+  from what the operator supplied, so the role and the `.env` cannot drift.
 - `GOOGLE_REDIRECT_URI` is written on first create only — an operator who
   customised it keeps their value across `--update` runs.
 
@@ -221,7 +239,7 @@ check — local, then end-to-end:
 
 ```bash
 systemctl status cca-quiz          # active (running)
-systemctl status postgresql        # active (running)
+psql "$DATABASE_URL" -c "\conninfo" # reachable + SSL connection line
 curl -I http://127.0.0.1:8000/      # 200 or 307 (bypasses Apache)
 curl http://127.0.0.1:8000/api/course/framework | head -c 200   # JSON
 sudo httpd -t                       # Syntax OK

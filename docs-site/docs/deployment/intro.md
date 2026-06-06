@@ -8,15 +8,19 @@ sidebar_position: 1
 
 ## Scan box
 
-- v2 runs on **one virtual machine**. Apache terminates TLS and is the only
-  process listening on the public network; behind it sit two co-resident
-  application processes — **uvicorn** (FastAPI, the application plane) and
-  **Directus** (Node, the editorial write plane) — and one **PostgreSQL**
-  cluster they both share.
-- **`deploy.sh`** is the single, idempotent installer. It provisions the
-  service users, the Python virtualenv, the `.env`, the database (role, schema,
-  ETL seed), the two systemd units, the Apache vhost, the firewall, and the
-  nightly large-object sweep. Re-running it is always safe.
+- v2 runs the application plane on **one virtual machine**. Apache terminates
+  TLS and is the only process listening on the public network; behind it sit two
+  co-resident application processes — **uvicorn** (FastAPI, the application
+  plane) and **Directus** (Node, the editorial write plane). The **PostgreSQL**
+  database is a **separate remote instance** they both connect out to over TLS —
+  it is no longer on the VM.
+- **`deploy.sh`** is the single, idempotent installer. In `DB_MODE=external`
+  (the production mode) it provisions the service users, the Python virtualenv,
+  the `.env` (with the remote `DATABASE_URL`), the two systemd units, the Apache
+  vhost, the firewall, and the nightly large-object sweep — but it does **not**
+  install or provision a local Postgres. The remote databases, extensions, and
+  per-env login roles are pre-created by the DBA; Alembic owns the schema and the
+  ETL seed runs against the remote. Re-running the installer is always safe.
 - The **Apache vhost** is the security and performance surface: TLS 1.2/1.3 with
   HSTS, two Content-Security-Policy profiles (one for the app, one for the frozen
   course), gzip and HTTP/2, per-location cache rules, the `/cms/` reverse proxy,
@@ -50,23 +54,24 @@ and `07-security-baseline.md`.
 ## The shape of the deploy
 
 ```
-                          ┌─────────────────────────────────────────────┐
-   Browser ──HTTPS:443──▶ │  Apache httpd  (TLS · HSTS · CSP · cache)    │
-                          └───┬───────────────┬──────────────┬──────────┘
-                              │ Alias         │ Alias        │ ProxyPass
-                              ▼               ▼              ▼
-                     /anatomy → frozen   /app → SPA     / → uvicorn 127.0.0.1:8000
-                     content/frozen/     frontend/      (FastAPI application plane)
-                                                        /cms/ → Directus 127.0.0.1:8055
-                                                              (editorial write plane)
-                              │               │              │
-                              └───────────────┴──────────────┘
-                                              ▼
-                              ┌─────────────────────────────────┐
-                              │  PostgreSQL  ·  codecoder DB     │
-                              │  app role + scoped directus_app  │
-                              │  media bytes in pg_largeobject   │
-                              └─────────────────────────────────┘
+   ┌──────────────────────────────── app VM ─────────────────────────────────┐
+   │                      ┌─────────────────────────────────────────────┐     │
+   │ Browser ─HTTPS:443─▶ │  Apache httpd  (TLS · HSTS · CSP · cache)    │     │
+   │                      └───┬───────────────┬──────────────┬──────────┘     │
+   │                          │ Alias         │ Alias        │ ProxyPass       │
+   │                          ▼               ▼              ▼                 │
+   │                 /anatomy → frozen   /app → SPA     / → uvicorn :8000      │
+   │                 content/frozen/     frontend/      /cms/ → Directus :8055 │
+   │                                                    │              │       │
+   └────────────────────────────────────────────────────┼──────────────┼──────┘
+                                                         │ TLS egress :5432    │
+                                                         ▼              ▼
+                              ┌──────────────────────────────────────────────┐
+                              │  remote PostgreSQL instance (REMOTE_DB_HOST)  │
+                              │  codecoder (prod): app_prod + directus_app    │
+                              │  codecoder_dev (dev): app_dev + directus_app_dev│
+                              │  media bytes in pg_largeobject · TLS required │
+                              └──────────────────────────────────────────────┘
 ```
 
 ## Section map

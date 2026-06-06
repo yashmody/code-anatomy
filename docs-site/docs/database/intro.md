@@ -6,20 +6,25 @@ sidebar_position: 1
 
 # Database
 
-The v2 platform runs on a single Postgres database named `codecoder`. Two
-services share it: the FastAPI application plane writes runtime data
-(attempts, quiz sessions, media bytes, feed flags) and the Directus
-editorial plane writes content and configuration through a scoped database
-role. There is no second database, no object store, and no SQLite in
-production. This section documents the schema, the migration chain that
-builds it, and the lifecycle rules that keep it honest.
+The v2 platform runs on a single Postgres database per environment — `codecoder`
+for production — hosted on a **remote shared instance** the app VM connects out
+to over TLS. The one instance carries every environment's database side by side
+(`codecoder` for prod, `codecoder_dev` for dev), isolated by separate login roles
+per environment. Two services share each database: the FastAPI application plane
+writes runtime data (attempts, quiz sessions, media bytes, feed flags) and the
+Directus editorial plane writes content and configuration through a scoped
+database role. There is no object store and no SQLite in production. This section
+documents the schema, the migration chain that builds it, and the lifecycle rules
+that keep it honest.
 
 ## Scan box
 
-- **One Postgres, two writers.** FastAPI owns the runtime tables; Directus
-  edits the content and config tables as the scoped `directus_app` role.
-  Thirteen application tables, plus Directus's own `directus_*` system
-  tables, coexist in the same database without name collision.
+- **One Postgres database per env, two writers.** FastAPI owns the runtime
+  tables; Directus edits the content and config tables as the scoped
+  `directus_app` role. Thirteen application tables, plus Directus's own
+  `directus_*` system tables, coexist in the same database without name
+  collision. The database lives on a **remote shared instance** (one instance,
+  separate `codecoder` / `codecoder_dev` databases, per-env roles, TLS).
 - **Alembic owns every schema change.** The chain runs `0001`→`0008`. The
   baseline (`0001`) is stamped — never run — against the live schema, so
   adoption touched no existing rows. The hand-rolled `_migrate()` patcher
@@ -48,6 +53,15 @@ boundary, one transactional guarantee, and one place where the FastAPI
 runtime and the Directus editor agree on the truth. The earlier idea of an
 S3 or storage-adapter media tier was cancelled on 2026-06-06; large objects
 are the permanent media home.
+
+What changed in the same period is *where* that Postgres runs. It moved off the
+app VM to a **remote shared instance** — one instance hosting both the prod
+(`codecoder`) and dev (`codecoder_dev`) databases — because a co-resident
+Postgres, with the media bytes now inside it, consumed too much of the VM's disk.
+The "one engine, one backup boundary" property is unchanged *per environment*;
+what is new is that the connection is over TLS and that two environments share the
+instance, isolated by separate databases and separate per-env login roles (see
+[Role isolation](./role-isolation.md)).
 
 The cost of that choice is that the schema is Postgres-specific and cannot
 be exercised faithfully on SQLite. The SQLite shims still present in

@@ -111,11 +111,13 @@ The reasoning, per the data-model contract §7.1:
   rather than handed to a request that then fails.
 - **`pool_recycle=1800`** (30 minutes) retires connections before any
   server-side idle timeout can kill them out from under the pool.
-- **`pool_size` × `worker_count`** must stay well under Postgres
-  `max_connections` (default 100), with headroom for Directus's own pool,
-  `psql` sessions, and the **raw large-object connections** the media path
-  opens (`engine.raw_connection()`), which are *not* drawn from the
-  SQLAlchemy pool and must be counted separately.
+- **`pool_size` × `worker_count`** must stay well under the **remote instance's**
+  `max_connections`, with headroom for Directus's own pool, `psql` sessions, and
+  the **raw large-object connections** the media path opens
+  (`engine.raw_connection()`), which are *not* drawn from the SQLAlchemy pool and
+  must be counted separately. On the shared instance the budget is across *every*
+  environment and app VM that connects — prod and dev share the same
+  `max_connections` ceiling, so size each env's pool with the other in mind.
 
 On SQLite, `db.py` uses `NullPool` and `check_same_thread=False` — pooling is
 largely moot there and `NullPool` avoids stale-connection surprises with
@@ -176,13 +178,34 @@ two cooperating but isolated planes.
 
 ## Extensions
 
-`init_db()` ensures two Postgres extensions exist:
+The schema depends on two Postgres extensions:
 
 - **`pgcrypto`** — provides `gen_random_uuid()`, used for media asset ids.
 - **`hstore`** — still required by `users.preferences` and
   `attempts.metadata` in the shipped schema.
 
-Both are created with `CREATE EXTENSION IF NOT EXISTS`, so they are
-idempotent on every boot. If a future migration converts the `hstore` columns
-to `JSONB`, the `hstore` extension can be dropped — but that is not the
-shipped state.
+On a self-managed Postgres `init_db()` issues `CREATE EXTENSION IF NOT EXISTS`
+for both, which is idempotent. On the **remote shared instance**, however, the
+runtime app role (`app_prod` / `app_dev`) is DML-only and has **no privilege to
+`CREATE EXTENSION`** — that is a superuser/owner operation on a managed instance.
+So the extensions are **pre-created by the DBA** in each database (`codecoder`,
+`codecoder_dev`) before the app boots, and `init_db()` treats its own
+`CREATE EXTENSION` attempt as **non-fatal**: if the call fails for lack of
+privilege, the app logs and continues rather than refusing to start, because the
+extension is already present. The schema is owned by Alembic (run with a
+privileged migration credential), not by per-boot DDL.
+
+:::caution[Common Pitfall]
+
+Assuming the app can bootstrap its own extensions on a managed remote, as it did
+when Postgres was co-resident and `init_db()` ran as a privileged local role. It
+cannot — the runtime role has DML only. If `pgcrypto` or `hstore` is missing,
+media asset id generation and the `hstore` columns break, and the fix is for the
+DBA to `CREATE EXTENSION` in that database, not to widen the app role's
+privileges. Pre-create the extensions as part of the same DBA pre-flight that
+creates the databases and the per-env roles.
+
+:::
+
+If a future migration converts the `hstore` columns to `JSONB`, the `hstore`
+extension can be dropped — but that is not the shipped state.

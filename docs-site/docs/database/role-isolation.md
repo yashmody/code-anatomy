@@ -9,7 +9,10 @@ sidebar_position: 4
 ## Scan box
 
 - **Directus connects as a dedicated, scoped Postgres role** — `directus_app`
-  — created by `0008_directus_app_role`. It is *not* the superuser role the
+  in production — created by `0008_directus_app_role`. The role **name is
+  per environment** (`DIRECTUS_DB_ROLE`: `directus_app` for prod,
+  `directus_app_dev` for dev) so that on the shared remote instance a dev
+  credential cannot reach the prod database. It is *not* the superuser role the
   migrations run as.
 - **The role reaches exactly the content and config tables it edits**, with
   per-table granularity: full DML on authoring surfaces, `UPDATE`-only on the
@@ -131,14 +134,16 @@ survives the next migration is worth the extra line.
 
 ## Reversibility and password handling
 
-The migration is additive and reversible. `downgrade()` runs `DROP OWNED BY
-directus_app` (which removes every grant the role holds across the database)
-and then `DROP ROLE directus_app`, both guarded on a `pg_roles` existence
-check so a re-run is a clean no-op.
+The migration is additive and reversible. `downgrade()` runs `DROP OWNED BY`
+the role (which removes every grant it holds across the database) and then
+`DROP ROLE`, both guarded on a `pg_roles` existence check so a re-run is a clean
+no-op.
 
-The role is created `LOGIN` but with **no password**:
+The role is created `LOGIN` but with **no password**, under the name supplied by
+`DIRECTUS_DB_ROLE` (defaulting to `directus_app`):
 
 ```sql
+-- name from DIRECTUS_DB_ROLE: directus_app (prod) | directus_app_dev (dev)
 CREATE ROLE directus_app LOGIN;
 ```
 
@@ -147,6 +152,38 @@ auth method) is configured. That is intentional: the migration is
 environment-agnostic and must not bake a credential into source control. The
 operator sets and rotates the password out of band — `deploy.sh` in
 production, the local 4a setup for development.
+
+## Per-environment role names on the shared instance
+
+The database now lives on a **remote shared instance** that hosts both the prod
+database (`codecoder`) and the dev database (`codecoder_dev`). Data isolation
+comes from the separate databases — but credential isolation needs more, because
+of how Postgres scopes roles.
+
+A Postgres ROLE is **cluster-global**: it exists once for the whole instance, not
+per database. A GRANT, by contrast, is per-database-object. So a *single* role
+name GRANTed on both databases would be one credential that reaches both — the
+separate databases would not contain it. The isolation therefore depends on a
+**distinct role name per environment**, each GRANTed only on its own database:
+
+| Environment | Database | Directus role | FastAPI app role |
+|---|---|---|---|
+| Production | `codecoder` | `directus_app` | `app_prod` |
+| Development | `codecoder_dev` | `directus_app_dev` | `app_dev` |
+
+`0008` reads `DIRECTUS_DB_ROLE`, so running the migration against `codecoder_dev`
+with `DIRECTUS_DB_ROLE=directus_app_dev` creates and GRANTs the *dev* Directus
+role on the *dev* database, never the prod role. The FastAPI app role is created
+out of band by the DBA, also per-env, and is DML-only.
+
+:::caution[Common Pitfall]
+Granting `directus_app` (or one `app` role) on **both** `codecoder` and
+`codecoder_dev` "because it is the same instance". That single credential then
+reaches both databases and dev/prod isolation is gone. Use a distinct role *name*
+per environment and GRANT each only on its own database — the separate database
+gives data isolation, the separate role name gives credential isolation, and you
+need both.
+:::
 
 :::tip[Agency Tip]
 
