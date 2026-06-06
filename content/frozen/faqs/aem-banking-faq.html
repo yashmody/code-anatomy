@@ -131,15 +131,20 @@
 </style>
 </head>
 <body>
+<!-- Unified theme: shared key anatomy-app-theme, same-origin with /app in prod.
+     Resolves under /anatomy/ — note the ../ to reach the island root. -->
+<script src="../theme-boot.js"></script>
 <div class="grain"></div>
 
 <header class="brand-bar">
-  <a href="index.html" class="back">← All FAQs</a>
+  <!-- Prod: /app/ (same origin). Local dev SPA is on a separate port. -->
+  <a href="/app/" class="back">← Anatomy of Code</a>
+  <a href="index.html" class="back">All FAQs</a>
   <img src="https://www.deptagency.com/wp-content/uploads/2025/10/logo-dept.svg" class="dept-svg-logo" alt="DEPT®" onerror="this.style.display='none';this.nextElementSibling.style.display='inline'" />
   <span style="display:none;font-family:var(--serif);font-weight:800;font-size:18px;color:var(--ink)">DEPT®</span>
   <div class="tagline">Architect's FAQ</div>
   <div class="spacer"></div>
-  <button class="theme-toggle" id="themeToggle">
+  <button class="theme-toggle" id="themeToggle" onclick="toggleAppTheme()">
     <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
     <span id="themeLabel">Dark Mode</span>
   </button>
@@ -588,21 +593,7 @@
 </footer>
 
 <script>
-  // Theme toggle
-  const root = document.documentElement;
-  const themeBtn = document.getElementById('themeToggle');
-  const themeLabel = document.getElementById('themeLabel');
-  const themeIcon = document.getElementById('themeIcon');
-  const moonIcon = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-  const sunIcon = '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
-  function applyTheme(t){
-    root.setAttribute('data-theme', t);
-    if(t === 'dark'){ themeIcon.innerHTML = moonIcon; themeLabel.textContent = 'Light Mode'; }
-    else { themeIcon.innerHTML = sunIcon; themeLabel.textContent = 'Dark Mode'; }
-  }
-  themeBtn.addEventListener('click', () => {
-    applyTheme(root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-  });
+  // Theme is owned by theme-boot.js (unified anatomy-app-theme + window.toggleAppTheme).
 
   // Search + tag filter
   const searchInput = document.getElementById('search');

@@ -118,6 +118,8 @@
 </style>
 </head>
 <body>
+<!-- Unified theme: shared key anatomy-app-theme, same-origin with /app in prod. -->
+<script src="theme-boot.js"></script>
 <div class="wrap">
   <div class="brand-bar reveal">
     <div class="brand-left">
@@ -126,8 +128,9 @@
       <div class="brand-sub">Growth Invention · Discovery Tool</div>
     </div>
     <div class="brand-right">
-      <a href="anatomy-of-code-course.html" class="back-link">← Course</a>
-      <button class="theme-toggle" onclick="toggleTheme()">
+      <!-- Prod: /app/ (same origin). Local dev SPA is on a separate port. -->
+      <a href="/app/" class="back-link">← Anatomy of Code</a>
+      <button class="theme-toggle" onclick="toggleAppTheme()">
         <svg id="themeIcon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         <span id="themeLabel">Dark Mode</span>
       </button>
@@ -820,16 +823,7 @@
   },{rootMargin:'-15% 0px -70% 0px',threshold:0});
   document.querySelectorAll('.node').forEach(s=>obs.observe(s));
 
-  // theme toggle
-  let dark = false;
-  const moonPaths = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
-  const sunPaths = `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`;
-  function toggleTheme(){
-    dark = !dark;
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    document.getElementById('themeLabel').textContent = dark ? 'Light Mode' : 'Dark Mode';
-    document.getElementById('themeIcon').innerHTML = dark ? moonPaths : sunPaths;
-  }
+  // Theme is owned by theme-boot.js (unified anatomy-app-theme + window.toggleAppTheme).
 
   // tick checkboxes on click
   document.querySelectorAll('ul.questions li').forEach(li => {

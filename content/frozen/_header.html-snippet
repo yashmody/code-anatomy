@@ -1,0 +1,34 @@
+<!-- _header.html-snippet — reference for the unified resource-island header.
+
+  This is NOT a server-included partial (the resource pages are static, served
+  by Apache Alias /anatomy/ with no template engine). It documents the canonical
+  header shape so every island stays consistent. Each page keeps its own inline
+  brand-bar CSS (tokens already differ slightly per page); only the structure +
+  wiring below is shared.
+
+  Three load-bearing pieces every island must carry after Phase 4b:
+
+  1. The theme-boot include, placed FIRST inside <body> so the page paints with
+     the persisted theme. From the island root use:
+         <script src="theme-boot.js"></script>
+     From content/frozen/faqs/* (one level down) use:
+         <script src="../theme-boot.js"></script>
+
+  2. A back-link to the SPA. In production all three surfaces are same-origin
+     behind Apache, so the SPA lives at an absolute /app/. In LOCAL dev the SPA
+     runs on a different port (e.g. python -m http.server in frontend/) and
+     localStorage is NOT shared across ports — open the SPA there manually.
+         <a href="/app/" class="back-link">&larr; Anatomy of Code</a>
+
+  3. The theme toggle button, wired to the global exposed by theme-boot.js:
+         <button class="theme-toggle" id="themeToggle" onclick="toggleAppTheme()">
+           <svg id="themeIcon" ...sun glyph...></svg>
+           <span id="themeLabel">Dark Mode</span>
+         </button>
+     theme-boot.js keeps #themeLabel + #themeIcon in sync and persists under
+     anatomy-app-theme. If the button has no inline onclick, theme-boot also
+     auto-binds the click — so either wiring works.
+
+  Style the bar with the page's existing brand-bar tokens (ochre #FF4900 accent,
+  Syne display / DM Sans body / JetBrains Mono labels). Do not restyle the page
+  body. -->

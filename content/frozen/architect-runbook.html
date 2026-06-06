@@ -147,18 +147,23 @@ footer a{color:var(--ochre)}
 </style>
 </head>
 <body>
+<!-- Unified theme: shared key anatomy-app-theme, same-origin with /app in prod. -->
+<script src="theme-boot.js"></script>
 <div class="grain"></div>
 
 <div class="brand-bar">
-  <a href="anatomy-of-code-course.html" class="brand-left">
+  <!-- Back to the SPA. Prod: /app/ (Apache, same origin). Local dev runs the
+       SPA on a separate port — open it there manually; localStorage is not
+       shared across ports in dev. -->
+  <a href="/app/" class="brand-left">
     <img src="https://www.deptagency.com/wp-content/uploads/2025/10/logo-dept.svg" alt="DEPT®" class="dept-svg-logo">
     <span class="brand-tagline">Architect's Runbook</span>
   </a>
   <div class="brand-right">
-    <a href="anatomy-of-code-course.html" class="back-link">← Course</a>
+    <a href="/app/" class="back-link">← Anatomy of Code</a>
     <a href="code-coder-checklist.html" class="back-link">Checklist</a>
     <a href="faqs/index.html" class="back-link">FAQs</a>
-    <button class="theme-toggle" id="themeToggle">
+    <button class="theme-toggle" id="themeToggle" onclick="toggleAppTheme()">
       <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
       <span id="themeLabel">Dark Mode</span>
     </button>
@@ -811,20 +816,7 @@ footer a{color:var(--ochre)}
 </footer>
 
 <script>
-const root=document.documentElement;
-const themeBtn=document.getElementById('themeToggle');
-const themeLabel=document.getElementById('themeLabel');
-const themeIcon=document.getElementById('themeIcon');
-const moonIcon='<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
-const sunIcon='<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>';
-function applyTheme(t){
-  root.setAttribute('data-theme',t);
-  themeIcon.innerHTML=t==='dark'?moonIcon:sunIcon;
-  themeLabel.textContent=t==='dark'?'Light Mode':'Dark Mode';
-  try{localStorage.setItem('runbook-theme',t);}catch(e){}
-}
-try{const saved=localStorage.getItem('runbook-theme');if(saved)applyTheme(saved);}catch(e){}
-themeBtn.addEventListener('click',()=>{applyTheme(root.getAttribute('data-theme')==='dark'?'light':'dark');});
+// Theme is owned by theme-boot.js (unified anatomy-app-theme + window.toggleAppTheme).
 
 function showPath(p){
   document.querySelectorAll('.path').forEach(el=>el.classList.toggle('active', el.dataset.path===p));
