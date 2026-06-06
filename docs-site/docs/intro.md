@@ -61,26 +61,33 @@ off. After that the order does not matter; jump to the plane you are in.
 
 ## The two planes, in one diagram
 
-<pre className="arch-diagram">
-                         ┌───────────────────────────┐
-       browser  ───────► │   Apache (TLS · CSP · /)   │
-   (ES-module SPA)       └─────────────┬──────┬──────┘
-                                       │      │ /cms/
-                          /api  /media │      │ proxy
-                                       ▼      ▼
-                  ┌──────────────────────┐  ┌──────────────────┐
-                  │  FastAPI application  │  │   Directus 11    │
-                  │   (learner plane)     │  │  (staff plane)   │
-                  │  quiz · certs · feed  │  │  authors content │
-                  │  cache-backed read    │  │  + config        │
-                  └───────────┬──────────┘  └────────┬─────────┘
-                              │  writes runtime data  │  writes content/config
-                              ▼                        ▼  (scoped directus_app role)
-                  ┌─────────────────────────────────────────────┐
-                  │        Postgres — one database               │
-                  │  app tables · content · config · media LOs   │
-                  └─────────────────────────────────────────────┘
-</pre>
+```mermaid
+flowchart TB
+    BR(["🧑 Browser\n(ES-module SPA)"])
+
+    AP["Apache\nTLS · CSP · /"]
+
+    subgraph LP["Learner plane"]
+        FA["FastAPI application\nquiz · certs · feed\ncache-backed read"]
+    end
+
+    subgraph SP["Staff plane"]
+        DIR["Directus 11\nauthors content + config"]
+    end
+
+    PG[("PostgreSQL\napp tables · content\nconfig · media LOs")]
+
+    BR -->|HTTPS| AP
+    AP -->|"/api /media /"| FA
+    AP -->|"/cms/ proxy"| DIR
+    FA -->|writes runtime data| PG
+    DIR -->|"writes content/config\nscoped directus_app role"| PG
+    DIR -->|"loopback webhook\ncache invalidation"| FA
+
+    style LP fill:#fff8f5,stroke:#FF4900,stroke-width:2px
+    style SP fill:#f5f8ff,stroke:#4466cc,stroke-width:2px
+    style PG fill:#f5fff8,stroke:#338855,stroke-width:2px
+```
 
 The FastAPI plane reads content through a cache; it never reaches into
 Directus at runtime. Directus writes content and config, then fires a webhook

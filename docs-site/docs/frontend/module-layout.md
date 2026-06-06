@@ -25,15 +25,14 @@ sidebar_position: 3
 
 ## The three zones
 
-<pre className="arch-diagram">
-{`
+```text
 frontend/
 ├── core/        app-level wiring — knows about the environment and the shell
 │   ├── main.js        router + boot + app-bar chrome
-│   ├── config.js      every runtime constant
+│   ├── config.js      every runtime constant (API_BASE, CONTENT_BASE, QUIZ_URL)
 │   ├── theme.js       the single theme manager
 │   ├── api-client.js  loadJSON — the course content read helper
-│   └── auth-ui.js      global sign-in slot + permission helpers
+│   └── auth-ui.js     global sign-in slot + permission helpers
 ├── shared/      render toolkit — knows nothing about the environment
 │   ├── registry.js    block + feed-item dispatch tables
 │   ├── blocks/        14 block renderers (one file each)
@@ -47,8 +46,7 @@ frontend/
 │   │                  scenario.js · video.js · vocab.js
 │   └── moderate/      moderate.js
 └── styles/      monolith.css (frozen) · app.css · read.css · feed.css · moderate.css
-`}
-</pre>
+```
 
 The dependency direction is one-way and worth holding in mind: `modules/`
 imports from `shared/` and `core/`; `shared/` imports only from `shared/` and

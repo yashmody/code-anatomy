@@ -46,19 +46,27 @@ layer: it binds the id before any inner middleware or handler runs, so their
 logs carry it, and stamps the response on the way out regardless of what the
 inner stack did.
 
-<pre className="arch-diagram">
-{`
-   request ─► RequestIdMiddleware (outermost)
-                 │ bind request_id (uuid4 or inbound X-Request-ID)
-                 ▼
-              SecurityHeaders ─► CORS ─► Session ─► route handler
-                 │                                      │
-                 │   every log line here carries        │
-                 │   request_id=<id> via RequestIdFilter │
-                 ▼                                      ▼
-   response ◄─ X-Request-ID: <id> echoed back ◄────────┘
-`}
-</pre>
+```mermaid
+flowchart LR
+    REQ(["HTTP request"])
+
+    subgraph MW["Middleware stack (outermost → innermost)"]
+        direction TB
+        M1["RequestIdMiddleware\nbind request_id\nuuid4 or inbound X-Request-ID"]
+        M2["SecurityHeaders\nCSP · HSTS · X-Frame-Options"]
+        M3["CORSMiddleware\nallowlist origins"]
+        M4["SessionMiddleware\nsigned cookie"]
+        M5["Route handler\nbusiness logic"]
+        M1 --> M2 --> M3 --> M4 --> M5
+    end
+
+    LOG["Every log line carries\nrequest_id=... via RequestIdFilter"]
+    RESP(["HTTP response\nX-Request-ID: echoed back"])
+
+    REQ --> M1
+    MW -.->|"contextvar propagation"| LOG
+    M5 --> RESP
+```
 
 Because the id lives in a `contextvar`, any module that logs during the request
 — in `core`, in a module service, in a storage call — emits the same

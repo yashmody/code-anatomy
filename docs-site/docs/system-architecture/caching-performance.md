@@ -32,28 +32,34 @@ coupling between the editorial plane and the read path.
 
 ## The three layers
 
-<pre className="arch-diagram">
-{`
-   ┌─────────────────────────────────────────────────────────┐
-   │  Layer 1 — Apache                                         │
-   │  mod_cache / mod_deflate / mod_expires                    │
-   │  static assets, SPA bundle, compression, cache headers   │
-   └───────────────────────────┬─────────────────────────────┘
-                               │ proxy /api/*
-                               ▼
-   ┌─────────────────────────────────────────────────────────┐
-   │  Layer 2 — AppCache  (in-process / Redis)                │
-   │  Tier-2 config reads (app_config) + Tier-3 content reads  │
-   │  TTL + explicit invalidation                              │
-   └───────────────────────────┬─────────────────────────────┘
-                               │ cache miss
-                               ▼
-   ┌─────────────────────────────────────────────────────────┐
-   │  Layer 3 — PostgreSQL                                     │
-   │  the source of truth; tuned for the read-heavy workload   │
-   └─────────────────────────────────────────────────────────┘
-`}
-</pre>
+```mermaid
+flowchart TD
+    REQ["Incoming request\n/api/* or static asset"]
+
+    subgraph L1["Layer 1 — Apache"]
+        AP["mod_cache · mod_deflate · mod_expires\nstatic assets · SPA bundle · compression · cache headers"]
+    end
+
+    subgraph L2["Layer 2 — AppCache (in-process / Redis)"]
+        AC["get_or_compute · invalidate · invalidate_prefix\nTier-2 config reads + Tier-3 content reads\nTTL + explicit invalidation"]
+    end
+
+    subgraph L3["Layer 3 — PostgreSQL"]
+        PG[("Source of truth\ntuned for read-heavy workload")]
+    end
+
+    INV["Directus webhook /\nmoderation write"]
+
+    REQ --> L1
+    L1 -->|"proxy /api/*"| L2
+    L2 -->|cache miss| L3
+    L3 -->|fresh value| L2
+    INV -->|"invalidate(key)\nor invalidate_prefix(prefix)"| AC
+
+    style L1 fill:#f0f4ff,stroke:#4466cc,stroke-width:1px
+    style L2 fill:#fff8f5,stroke:#FF4900,stroke-width:1px
+    style L3 fill:#f5fff8,stroke:#338855,stroke-width:1px
+```
 
 - **Layer 1 — Apache** owns static and proxy-level caching: the SPA bundle, the
   frozen course artefact, compression, and the cache headers for templated

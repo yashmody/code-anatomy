@@ -56,23 +56,22 @@ module needs but does not own lives here:
 
 `modules/` is the domain logic, one directory per bounded context:
 
-<pre className="arch-diagram">
-{`
-  backend/app/
-  ├── main.py            composition only — builds app, mounts routers
-  ├── core/              shared infrastructure (no domain logic)
-  │     config db models auth users deps cache cms_client
-  │     security observability encryption roles
-  └── modules/
-        ├── auth/        /login, /auth/google*, /auth/me, /logout, session-key
-        ├── quiz/        /, /quiz/*, /certificate/*, /verify, /history, /admin
-        ├── content/     /api/course/*  (framework, chapters, explainer)
-        ├── feed/        /api/feed, /api/feed/flag, /api/moderate/*
-        ├── media/       /api/media/upload, /media/{video,image}/{id}
-        ├── cms/         /api/cms/webhook, /api/cms/health
-        └── admin/       /api/admin/roles  (role assignment REST)
-`}
-</pre>
+```text
+backend/app/
+├── main.py            composition only — builds app, mounts routers
+├── core/              shared infrastructure (no domain logic)
+│     config db models auth users deps cache cms_client
+│     security observability encryption roles
+└── modules/
+      ├── auth/        /login, /auth/google*, /auth/me, /logout, session-key
+      ├── quiz/        /, /quiz/*, /certificate/*, /verify, /history, /admin
+      ├── content/     /api/course/*  (framework, chapters, explainer)
+      ├── feed/        /api/feed, /api/feed/flag, /api/moderate/*
+      ├── media/       /api/media/upload, /media/{video,image}/{id}
+      ├── cms/         /api/cms/webhook, /api/cms/roles-sync
+      ├── superadmin/  /superadmin/login, /superadmin/setup, /superadmin/totp
+      └── admin/       /api/admin/roles  (role assignment REST)
+```
 
 The two halves map directly onto the locked decision in `v2-plan.md`: "ONE
 FastAPI backend internally split into `core/` (shared) + `modules/`."

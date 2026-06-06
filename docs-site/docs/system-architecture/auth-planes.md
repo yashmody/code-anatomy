@@ -43,22 +43,33 @@ The split is along *who you are to the system*. A learner consumes the course,
 takes quizzes, and (if granted) contributes to the feed. A staff member edits
 content and configuration, moderates the feed, and manages quiz questions.
 
-<pre className="arch-diagram">
-{`
-   LEARNER PLANE                        STAFF PLANE
-   (FastAPI + Google SSO)               (Directus)
-   ───────────────────────             ───────────────────────
-   learner            ◄── floor        content_author
-   feed_contributor                    quiz_admin
-                                        feed_moderator
-                                        platform_admin  ◄── global bypass
+```mermaid
+flowchart TB
+    subgraph LP["Learner plane — FastAPI + Google SSO"]
+        L1["learner ← floor (every authenticated user)"]
+        L2["feed_contributor"]
+    end
 
-   both planes resolve to ──► one user_roles table ──► roles_for(email)
-                                                            │
-                                                            ▼
-                                              require_permission(perm)
-`}
-</pre>
+    subgraph SP["Staff plane — Directus"]
+        S1["content_author"]
+        S2["quiz_admin"]
+        S3["feed_moderator"]
+        S4["platform_admin ← global bypass"]
+    end
+
+    UR[("user_roles table\none row per user × role")]
+    RF["roles_for(email)\nalways includes learner"]
+    RP["require_permission(perm)\nthe single runtime gate"]
+
+    LP -->|grant via sign-in| UR
+    SP -->|grant via Directus admin| UR
+    UR --> RF
+    RF --> RP
+
+    style LP fill:#fff8f5,stroke:#FF4900,stroke-width:2px
+    style SP fill:#f5f8ff,stroke:#4466cc,stroke-width:2px
+    style RP fill:#f5fff8,stroke:#338855,stroke-width:2px
+```
 
 Both planes ultimately resolve through the **same** `user_roles` table. A staff
 role and a learner role are rows in the same table; the "plane" is which surface

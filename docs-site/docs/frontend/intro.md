@@ -51,28 +51,26 @@ pages call it out and describe what actually shipped.
 
 ## Section map
 
-<pre className="arch-diagram">
-{`
-  frontend/
-  ├── index.html      app shell — app-bar, nav, #view mount, module entry
-  ├── core/           app-level wiring
-  │     main.js       hash router + boot + chrome  → Architecture, Router/modes
-  │     config.js     runtime constants            → Configuration and theming
-  │     theme.js      unified theme manager        → Configuration and theming
-  │     api-client.js loadJSON content read path   → The content read path
-  │     auth-ui.js    global sign-in + gates       → Router and modes
-  ├── shared/         framework-agnostic render toolkit
-  │     registry.js   block + feed-item dispatch   → Blocks and the registry
-  │     blocks/       14 renderers, one per type   → Blocks and the registry
-  │     render/       chapter · diagram · explainer
-  │     framework.js  dom.js
-  ├── modules/        the surfaces
-  │     course/       manual.js · read.js          → Router and modes
-  │     feed/         feed.js + 12 files           → Blocks, Content read path
-  │     moderate/     moderate.js                  → Router and modes
-  └── styles/   monolith.css(frozen) app.css read.css feed.css moderate.css
-`}
-</pre>
+```text
+frontend/
+├── index.html      app shell — app-bar, nav, #view mount, module entry
+├── core/           app-level wiring
+│     main.js       hash router + boot + chrome  → Architecture, Router/modes
+│     config.js     runtime constants (API_BASE, CONTENT_BASE, QUIZ_URL)
+│     theme.js      unified theme manager        → Configuration and theming
+│     api-client.js loadJSON content read path   → The content read path
+│     auth-ui.js    global sign-in + gates       → Router and modes
+├── shared/         framework-agnostic render toolkit
+│     registry.js   block + feed-item dispatch   → Blocks and the registry
+│     blocks/       14 renderers, one per type   → Blocks and the registry
+│     render/       chapter · diagram · explainer
+│     framework.js  dom.js
+├── modules/        the surfaces
+│     course/       manual.js · read.js          → Router and modes
+│     feed/         feed.js + 12 files           → Blocks, Content read path
+│     moderate/     moderate.js                  → Router and modes
+└── styles/   monolith.css(frozen) app.css read.css feed.css moderate.css
+```
 
 | Page | Covers |
 |---|---|

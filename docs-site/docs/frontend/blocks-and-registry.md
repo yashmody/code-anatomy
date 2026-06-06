@@ -26,14 +26,25 @@ sidebar_position: 4
 `shared/registry.js` is small on purpose. It imports each renderer, builds a
 lookup keyed by `type`, and exposes two dispatch functions:
 
-<pre className="arch-diagram">
-{`
-renderBlock(block)        →  blockRenderers[block.type](block)   → HTML string
-renderFeedBody(item)      →  feedRenderers[item.type](item)      → HTML string
-                             unknown type → visible fallback
-                             thrown error → caught, logged, fallback
-`}
-</pre>
+```mermaid
+flowchart LR
+    B["block / item object"]
+    RB["renderBlock(block)"]
+    RF["renderFeedBody(item)"]
+    BR["blockRenderers\n block.type → fn"]
+    FR["feedRenderers\n item.type → fn"]
+    HTML["HTML string"]
+    FB["visible fallback\n(unknown type or error)"]
+
+    B -->|course block| RB
+    B -->|feed item| RF
+    RB --> BR
+    RF --> FR
+    BR -->|known type| HTML
+    FR -->|known type| HTML
+    BR -->|unknown / throws| FB
+    FR -->|unknown / throws| FB
+```
 
 The function signature is uniform: a renderer takes one data object and returns
 an HTML string. It does not touch the DOM, fetch anything, or hold state. That

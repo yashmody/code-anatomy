@@ -44,38 +44,42 @@ observability posture that holds it all together.
 The whole system is two application planes over a single Postgres, fronted by
 Apache. Media never leaves the database.
 
-<pre className="arch-diagram">
-{`
-   ┌───────────────────────────────── app VM ──────────────────────────────┐
-   │                      ┌──────────────────────────────────────┐         │
-   │ learner/browser ───► │  Apache  (TLS, proxy, static, cache)  │         │
-   │ staff/browser   ───► └───┬───────────────┬──────────────┬────┘         │
-   │                          │ /app, /        │ /cms         │ /static     │
-   │                          │ /api/*         │              │             │
-   │                          ▼                ▼              ▼             │
-   │                ┌──────────────────┐  ┌──────────┐   (FastAPI          │
-   │                │ FastAPI monolith │  │ Directus │    StaticFiles)     │
-   │                │  (learner plane) │  │  (staff  │                     │
-   │                │  core/ modules/  │  │   plane) │                     │
-   │                └─────┬──────┬─────┘  └────┬─────┘                     │
-   │                      │      │ loopback    │                          │
-   │                      │      │ webhook ◄───┘ (Directus → /api/cms/webhook)│
-   │                      │      ▼                                         │
-   │                      │   AppCache (memory | redis)                    │
-   │                      │                                                │
-   └──────────────────────┼────────────────────────────────────────────────┘
-                          │ TLS (sslmode=require) · egress :5432
-                          ▼
-                 ┌─────────────────────────────────────┐
-                 │  remote PostgreSQL instance          │
-                 │  codecoder (prod) + codecoder_dev    │
-                 │  app tables + media large objects    │
-                 │  + directus_* tables                 │
-                 │  per-env roles (app_prod/directus_app│
-                 │  · app_dev/directus_app_dev)         │
-                 └─────────────────────────────────────┘
-`}
-</pre>
+```mermaid
+flowchart TB
+    LB(["🧑 Learner\nbrowser"])
+    SB(["👤 Staff\nbrowser"])
+    SA(["🔐 Superadmin\nbrowser"])
+
+    subgraph VM["App VM"]
+        AP["Apache 2.4\nTLS · /app/ · /anatomy/ · /cms/ · /api/*\nmod_cache · mod_deflate · HTTP/2 · CSP/HSTS"]
+
+        subgraph LP["Learner plane"]
+            FA["FastAPI modular monolith\ncore/  —  db · auth · config · cache · security · observability\nmodules/  —  quiz · feed · content · media · cms · admin · superadmin"]
+            AC[("AppCache\nmemory → Redis")]
+        end
+
+        subgraph SP["Staff plane"]
+            DIR["Directus 11\nEditorial CMS · Node 22\nGoogle SSO (staff only)"]
+        end
+    end
+
+    PG[("PostgreSQL 14\n20.228.243.225\ncodecoder · codecoder_dev\napp tables · media large objects\ndirectus_* tables")]
+
+    LB -->|HTTPS| AP
+    SB -->|HTTPS /cms/| AP
+    SA -->|"/superadmin/login\n(password + TOTP)"| AP
+    AP -->|"proxy /api/* · /auth/* · /"| FA
+    AP -->|"proxy /cms/"| DIR
+    FA <-->|read · write · TTL invalidation| AC
+    DIR -->|"loopback webhook\nPOST /api/cms/webhook"| FA
+    FA -->|"TLS :5432\nrole: ccdev / app_dev"| PG
+    DIR -->|"TLS :5432\nrole: directus_app_dev"| PG
+
+    style LP fill:#fff8f5,stroke:#FF4900,stroke-width:2px
+    style SP fill:#f5f8ff,stroke:#4466cc,stroke-width:2px
+    style PG fill:#f5fff8,stroke:#338855,stroke-width:2px
+    style AC fill:#fff8f5,stroke:#FF4900,stroke-dasharray:4 2
+```
 
 :::tip[Why This Matters]
 A "modular monolith with a shared-database CMS" is a deliberate commitment, not

@@ -40,24 +40,40 @@ collections/roles/permissions as code, with a schema snapshot). Apache proxies
 `/cms` to it; the learner surfaces (`/app`, `/`, `/api/*`) continue to hit
 FastAPI.
 
-<pre className="arch-diagram">
-{`
-   ── app VM ───────────────────────────────────┐
-   editor browser ──► Apache /cms ──► Directus (Node, cms/)
-                                          │  writes as directus_app
-                                          │  role · over TLS
-                                          ▼     ┌──── remote PostgreSQL ─────┐
-                            ┌─────────────┴────►│  codecoder (prod)          │
-   learner browser ─► Apache /api/* ─► FastAPI  │  + codecoder_dev (dev)     │
-                                          │  reads as app_prod · over TLS    │
-                                          │     │  app tables                │
-                                          │     │  directus_* tables         │
-                                          │     │  media large objects       │
-                                          ▼     └────────────────────────────┘
-                                       AppCache ◄── Directus → /api/cms/webhook
-                                          (loopback, on the app VM)
-`}
-</pre>
+```mermaid
+flowchart LR
+    EB(["👤 Editor\nbrowser"])
+    LB(["🧑 Learner\nbrowser"])
+
+    subgraph VM["App VM"]
+        AP["Apache 2.4"]
+
+        subgraph SP["Staff plane"]
+            DIR["Directus 11\nNode 22 · cms/"]
+        end
+
+        subgraph LP["Learner plane"]
+            FA["FastAPI\nmodular monolith"]
+            AC[("AppCache")]
+        end
+    end
+
+    PG[("PostgreSQL 14\ncodecoder · codecoder_dev\napp tables · directus_* tables\nmedia large objects")]
+
+    EB -->|HTTPS /cms/| AP
+    LB -->|HTTPS /api/*| AP
+    AP -->|proxy| DIR
+    AP -->|proxy| FA
+    DIR -->|"role: directus_app_dev\nTLS :5432"| PG
+    FA -->|"role: ccdev\nTLS :5432"| PG
+    FA <-->|read/write| AC
+    DIR -->|"loopback\nPOST /api/cms/webhook\n(cache invalidation)"| FA
+
+    style SP fill:#f5f8ff,stroke:#4466cc,stroke-width:2px
+    style LP fill:#fff8f5,stroke:#FF4900,stroke-width:2px
+    style PG fill:#f5fff8,stroke:#338855,stroke-width:2px
+    style AC fill:#fff8f5,stroke:#FF4900,stroke-dasharray:4 2
+```
 
 Directus also creates and manages its own `directus_*` system tables inside the
 same database — the `directus_app` role holds `CREATE`/`USAGE` on the public
