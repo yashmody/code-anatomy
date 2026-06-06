@@ -24,10 +24,54 @@ from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Literal, Optional
+from urllib.parse import parse_qs, urlsplit
 
 from dotenv import load_dotenv
 from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Hosts that are treated as a LOCAL database — a remote-TLS requirement never
+# applies to these (loopback / unix-socket forms). Anything else with a
+# postgresql scheme is REMOTE and must carry TLS outside development.
+_LOCAL_DB_HOSTS = frozenset({None, "", "localhost", "127.0.0.1", "::1"})
+
+# sslmode values that constitute an actual TLS-enforcing connection. `prefer`
+# and `allow` are deliberately excluded: they silently fall back to cleartext.
+_TLS_SSLMODES = frozenset({"require", "verify-ca", "verify-full"})
+
+
+def _split_db_url(url: str):
+    """Return (scheme, host, sslmode) for a DATABASE_URL.
+
+    `sslmode` is the lower-cased value of the URL's `sslmode` query parameter
+    (or None). Host is lower-cased; for unix-socket / hostless forms it is "".
+    Parsing is defensive — a malformed URL yields ("", "", None) so callers can
+    fall through to their local/permissive branch rather than crash at import.
+    """
+    try:
+        parts = urlsplit(url)
+    except (ValueError, TypeError):
+        return "", "", None
+    scheme = (parts.scheme or "").lower()
+    host = (parts.hostname or "").lower()
+    qs = parse_qs(parts.query)
+    sslmode = qs.get("sslmode", [None])[0]
+    if sslmode is not None:
+        sslmode = sslmode.lower()
+    return scheme, host, sslmode
+
+
+def _db_is_remote(url: str) -> bool:
+    """True iff `url` is a postgresql connection to a non-local host.
+
+    sqlite (and any non-postgresql scheme) is never remote. A postgresql URL
+    whose host is loopback or a unix socket is local; everything else is
+    remote and therefore subject to the TLS requirement outside development.
+    """
+    scheme, host, _ = _split_db_url(url)
+    if scheme.startswith("sqlite") or not scheme.startswith("postgresql"):
+        return False
+    return host not in _LOCAL_DB_HOSTS
 
 # This file lives at backend/app/core/config.py. Walking up three parents
 # (config.py → core/ → app/ → backend/) lands on the backend root, so all
@@ -182,6 +226,25 @@ class Settings(BaseSettings):
             return self.google_redirect_uri
         return self.app_base_url.rstrip("/") + "/auth/google/callback"
 
+    @property
+    def database_is_remote(self) -> bool:
+        """True iff DATABASE_URL is a postgresql connection to a non-local host.
+
+        Drives the remote-TLS requirement (see validate_db_tls) and lets db.py
+        reason about connection posture without re-parsing the URL.
+        """
+        return _db_is_remote(self.database_url)
+
+    @property
+    def database_sslmode(self) -> Optional[str]:
+        """The lower-cased `sslmode` query value of DATABASE_URL, or None.
+
+        TLS is carried entirely by the URL query (psycopg2/SQLAlchemy honour
+        `?sslmode=`); this exposes it for logging / reuse without a second
+        parse at the call-site.
+        """
+        return _split_db_url(self.database_url)[2]
+
     # ── Validators ──────────────────────────────────────────────────────────
 
     @model_validator(mode="after")
@@ -229,6 +292,37 @@ class Settings(BaseSettings):
             )
 
         return self
+
+    @model_validator(mode="after")
+    def validate_db_tls(self) -> "Settings":
+        """Refuse a cleartext connection to a REMOTE Postgres outside development.
+
+        The DB moved to a remote shared Postgres instance (one server, separate
+        databases per env). A remote connection must ride TLS — psycopg2 and
+        SQLAlchemy both honour `?sslmode=` in the URL query, so TLS is achieved
+        purely by the URL, but nothing *requires* it. This validator closes that
+        gap: outside `development`, a postgresql URL pointing at a non-local
+        host MUST carry `sslmode` in {require, verify-ca, verify-full}.
+
+        In development we do not raise — dev may use sqlite, a localhost
+        Postgres, or a trusted tunnel. (An explicit sslmode is still allowed in
+        dev; it is simply not mandatory.) Local hosts (localhost, 127.0.0.1,
+        ::1, unix sockets) are never subject to the requirement in any env.
+        """
+        if self.app_env == "development":
+            return self
+
+        if not self.database_is_remote:
+            return self
+
+        if self.database_sslmode in _TLS_SSLMODES:
+            return self
+
+        raise ValueError(
+            f"Remote DATABASE_URL in {self.app_env} must use TLS: append "
+            "?sslmode=require (or verify-full with a CA). Refusing to connect "
+            "to a remote Postgres in cleartext."
+        )
 
 
 # ─────────────────────────────────────────────────────────────────────────────

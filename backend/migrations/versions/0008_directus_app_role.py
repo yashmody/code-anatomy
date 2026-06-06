@@ -5,10 +5,20 @@ Revises: 0007_seed_nonprod_signing_keys
 Create Date: 2026-06-06
 
 Stands up the dedicated Postgres login role Directus connects as
-(`directus_app`) and pins its reach to exactly the tables it edits/reads as
-collections, while explicitly denying the runtime-only and audit tables. This
-is the DB-level half of the Phase 4a Directus coexistence; it is ADDITIVE and
-REVERSIBLE and does NOT move any content.
+(`directus_app` by default) and pins its reach to exactly the tables it
+edits/reads as collections, while explicitly denying the runtime-only and audit
+tables. This is the DB-level half of the Phase 4a Directus coexistence; it is
+ADDITIVE and REVERSIBLE and does NOT move any content.
+
+Remote-shared-Postgres note (dev/prod isolation): a Postgres ROLE is
+cluster-global, but GRANTs are per-database-object. With one remote server
+hosting several databases (prod=codecoder, dev=codecoder_dev), granting a single
+`directus_app` on BOTH databases would let one credential reach both — breaking
+isolation. So the role NAME is parameterised via DIRECTUS_DB_ROLE: the dev DB is
+migrated with DIRECTUS_DB_ROLE=directus_app_dev (a distinct role granted only on
+codecoder_dev) while prod keeps the default directus_app (granted only on
+codecoder). The default is unchanged, so existing local + prod behaviour is
+identical when the env var is unset.
 
 The authority comes from 03-data-model.md §5 — the "Directus DB-role GRANT
 table". The shape:
@@ -33,6 +43,8 @@ by a pg_roles check, GRANT/REVOKE are themselves idempotent.
 """
 from __future__ import annotations
 
+import os
+import re
 from typing import Sequence, Union
 
 from alembic import op
@@ -43,13 +55,39 @@ branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
 
+# The Directus login-role name. Default `directus_app` keeps existing local +
+# prod behaviour identical; the dev DB is migrated with
+# DIRECTUS_DB_ROLE=directus_app_dev so the dev credential cannot reach prod.
+#
+# SECURITY: the role name is interpolated directly into DDL (no bind params for
+# identifiers in Postgres DDL), so it MUST be a plain SQL identifier. We refuse
+# anything outside ^[a-z_][a-z0-9_]{0,62}$ — this rejects quotes, semicolons,
+# whitespace and every other SQL-injection vector an attacker could try to
+# smuggle through the env var, before any SQL is emitted.
+_ROLE_NAME_RE = re.compile(r"^[a-z_][a-z0-9_]{0,62}$")
+
+
+def _directus_role() -> str:
+    role = os.getenv("DIRECTUS_DB_ROLE", "directus_app")
+    if not _ROLE_NAME_RE.match(role):
+        raise ValueError(
+            f"DIRECTUS_DB_ROLE={role!r} is not a valid Postgres identifier. "
+            "It is interpolated into DDL, so it must match "
+            "^[a-z_][a-z0-9_]{0,62}$ (lower-case letters, digits, underscore; "
+            "starting with a letter or underscore). Refusing to emit SQL."
+        )
+    return role
+
+
 # Idempotent role creation: CREATE ROLE has no IF NOT EXISTS, so guard on
 # pg_roles. LOGIN (so Directus can connect) but NO password — set out of band.
-_CREATE_ROLE_SQL = """
+# `role` is validated by _directus_role() before reaching this template.
+def _create_role_sql(role: str) -> str:
+    return f"""
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'directus_app') THEN
-        CREATE ROLE directus_app LOGIN;
+    IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '{role}') THEN
+        CREATE ROLE {role} LOGIN;
     END IF;
 END
 $$;
@@ -61,50 +99,52 @@ def upgrade() -> None:
     if bind.dialect.name != "postgresql":
         return  # sqlite has no roles; nothing to do.
 
+    role = _directus_role()
+
     # 1. The role itself — login-capable, password set out of band.
-    op.execute(_CREATE_ROLE_SQL)
+    op.execute(_create_role_sql(role))
 
     # 2. Schema-level: Directus must create + manage its own directus_* tables.
-    op.execute("GRANT CREATE, USAGE ON SCHEMA public TO directus_app;")
+    op.execute(f"GRANT CREATE, USAGE ON SCHEMA public TO {role};")
 
     # 3. Scoped table grants (03 §5 GRANT table).
 
     # Identity + reference: read-only view inside Directus. user_roles is
     # SELECT-only by default; the optional grant UI (INSERT/UPDATE/DELETE) is
     # gated behind a decision in 05-config-cms.md, so we do not grant it here.
-    op.execute("GRANT SELECT ON users, roles, user_roles TO directus_app;")
+    op.execute(f"GRANT SELECT ON users, roles, user_roles TO {role};")
 
     # Authoring + UGC surface: official authoring of questions, and the
     # Content Author surface over course_chapters. Full DML — rows here are
     # editor-managed content.
     op.execute(
-        "GRANT SELECT, INSERT, UPDATE, DELETE "
-        "ON course_chapters, questions TO directus_app;"
+        f"GRANT SELECT, INSERT, UPDATE, DELETE "
+        f"ON course_chapters, questions TO {role};"
     )
 
     # frameworks: 2-row reference content, authored in Directus but rows must
     # never be DROPPED (the runtime resolves against exactly these rows), so no
     # DELETE.
-    op.execute("GRANT SELECT, INSERT, UPDATE ON frameworks TO directus_app;")
+    op.execute(f"GRANT SELECT, INSERT, UPDATE ON frameworks TO {role};")
 
     # feed_items: moderation surface only — Directus flips the status field on
     # existing posts. It must never create or remove posts (those come from the
     # learner runtime), so no INSERT and no DELETE.
-    op.execute("GRANT SELECT, UPDATE ON feed_items TO directus_app;")
+    op.execute(f"GRANT SELECT, UPDATE ON feed_items TO {role};")
 
     # app_config: Platform Admin config UI. Deletion of config keys must go
     # through a migration, so no DELETE.
-    op.execute("GRANT SELECT, INSERT, UPDATE ON app_config TO directus_app;")
+    op.execute(f"GRANT SELECT, INSERT, UPDATE ON app_config TO {role};")
 
     # media_assets: metadata read only, for the asset browser. The bytes live
     # in pg_largeobject and are served exclusively by FastAPI; Directus never
     # writes here.
-    op.execute("GRANT SELECT ON media_assets TO directus_app;")
+    op.execute(f"GRANT SELECT ON media_assets TO {role};")
 
     # Sequences: serial/identity-backed inserts (questions, course_chapters,
     # app_config, frameworks) need USAGE+SELECT on the owning sequences.
     op.execute(
-        "GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO directus_app;"
+        f"GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO {role};"
     )
 
     # 4. Explicit hard denial of the runtime + audit tables. A blanket REVOKE
@@ -115,8 +155,8 @@ def upgrade() -> None:
     #   signing_keys   — key metadata; Platform-Admin infra path only
     #   auth_audit     — append-only audit; not even SELECT for Directus
     op.execute(
-        "REVOKE ALL ON attempts, quiz_sessions, signing_keys, auth_audit "
-        "FROM directus_app;"
+        f"REVOKE ALL ON attempts, quiz_sessions, signing_keys, auth_audit "
+        f"FROM {role};"
     )
 
 
@@ -125,17 +165,19 @@ def downgrade() -> None:
     if bind.dialect.name != "postgresql":
         return  # sqlite no-op.
 
+    role = _directus_role()
+
     # Drop the role cleanly. DROP ROLE fails if the role still owns objects or
     # holds grants, so DROP OWNED BY first (this also removes every GRANT made
     # to the role across the database), then DROP ROLE. Guard on existence so a
     # re-run is a clean no-op.
     op.execute(
-        """
+        f"""
         DO $$
         BEGIN
-            IF EXISTS (SELECT FROM pg_roles WHERE rolname = 'directus_app') THEN
-                DROP OWNED BY directus_app;
-                DROP ROLE directus_app;
+            IF EXISTS (SELECT FROM pg_roles WHERE rolname = '{role}') THEN
+                DROP OWNED BY {role};
+                DROP ROLE {role};
             END IF;
         END
         $$;
