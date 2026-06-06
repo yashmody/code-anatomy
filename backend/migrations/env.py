@@ -36,7 +36,11 @@ if config.config_file_name is not None:
 
 # Resolve the DB URL: env var wins, then app config.
 _db_url = os.getenv("DATABASE_URL", app_config.DATABASE_URL)
-config.set_main_option("sqlalchemy.url", _db_url)
+# configparser (alembic's online engine config) treats `%` as interpolation
+# syntax, so a URL-encoded password (e.g. %40 for `@`, %23 for `#`) raises
+# "invalid interpolation syntax". Escape `%` -> `%%` for the config string only;
+# offline mode (run_migrations_offline) uses the raw `_db_url` directly.
+config.set_main_option("sqlalchemy.url", _db_url.replace("%", "%%"))
 
 target_metadata = Base.metadata
 
