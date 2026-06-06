@@ -14,7 +14,7 @@ from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 
 from app.core import auth, config, users
-from app.core.deps import refresh_session_user
+from app.core.deps import PERMISSION_GRANTS, refresh_session_user
 from app.modules.auth import storage as auth_storage
 
 
@@ -183,6 +183,27 @@ async def logout(request: Request):
 
 # ── Current user profile ─────────────────────────────────────────────────────
 
+
+def _permissions_for_roles(held_roles: set) -> list:
+    """Reverse-map the locked permission matrix into the perms a role set holds.
+
+    `core.deps.PERMISSION_GRANTS` maps `permission -> {roles that hold it}`.
+    Here we invert it: a user holds a permission iff their role set intersects
+    that permission's grant set. `platform_admin` is the implicit global bypass
+    (it holds every permission), matching `require_permission`'s logic so the
+    SPA's conditional nav agrees with the server's enforcement.
+
+    Returns a sorted list. Cheap — a single pass over the small matrix, no DB.
+    """
+    if "platform_admin" in held_roles:
+        return sorted(PERMISSION_GRANTS.keys())
+    return sorted(
+        perm
+        for perm, grant_roles in PERMISSION_GRANTS.items()
+        if held_roles & grant_roles
+    )
+
+
 @router.get("/auth/me")
 async def get_current_user_profile(request: Request):
     """Retrieve details of the currently authenticated session user."""
@@ -197,13 +218,19 @@ async def get_current_user_profile(request: Request):
     initials = "".join(w[0] for w in name.split()[:2]).upper() if name else "??"
     userId = f"u.{db_user['email'].split('@')[0]}"
 
+    # One roles_for read; both `roles` and `permissions` derive from it so the
+    # SPA can conditionally show the moderation nav without a second call. The
+    # API still enforces every permission server-side regardless of this hint.
+    held_roles = users.roles_for(db_user["email"])
+
     return {
         "userId": userId,
         "email": db_user["email"],
         "name": db_user["name"],
         "picture": db_user["picture"],
         "persona": db_user["persona"],
-        "roles": sorted(users.roles_for(db_user["email"])),
+        "roles": sorted(held_roles),
+        "permissions": _permissions_for_roles(held_roles),
         "provider": db_user["provider"],
         "preferences": db_user["preferences"],
         "initials": initials,

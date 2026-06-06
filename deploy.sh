@@ -1045,6 +1045,22 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
       # Reuse the FastAPI Google creds only if no dedicated CMS creds were given.
       CMS_GOOGLE_ID="${AUTH_GOOGLE_CLIENT_ID:-$GOOGLE_CLIENT_ID}"
       CMS_GOOGLE_SECRET="${AUTH_GOOGLE_CLIENT_SECRET:-$GOOGLE_CLIENT_SECRET}"
+      # SSO posture (4a F2 reconcile — must match cms/.env.example):
+      #   - PUBLIC_REGISTRATION=false: admins PRE-CREATE each staff Directus
+      #     user, matched to their @deptagency.com Google email. SSO then only
+      #     LOGS IN an existing user; it never self-provisions one. This is the
+      #     secure default.
+      #   - ALLOW_LIST=deptagency.com: defence-in-depth — Directus rejects any
+      #     Google account whose verified email host is not on this list, even
+      #     if public registration were ever turned on.
+      #   - DEFAULT_ROLE_ID: the role a newly self-registered user would land in.
+      #     It is USED ONLY IF public registration is enabled; with it false the
+      #     value is inert, but we still set it (least-privilege content_author)
+      #     so the contract is explicit and a future flip is safe. The role id is
+      #     minted at runtime by cms/bootstrap.sh — set CMS_DEFAULT_ROLE_ID in the
+      #     deploy environment to that id, or leave the placeholder and paste the
+      #     id printed by bootstrap.sh into cms/.env afterwards (RUNBOOK §7.3).
+      CMS_DEFAULT_ROLE_ID="${CMS_DEFAULT_ROLE_ID:-replace-with-content_author-role-id}"
       if [[ -n "$CMS_GOOGLE_ID" && -n "$CMS_GOOGLE_SECRET" ]]; then
         env_set "$CMS_DIR/.env" AUTH_PROVIDERS              "google"
         env_set "$CMS_DIR/.env" AUTH_GOOGLE_DRIVER          "openid"
@@ -1053,8 +1069,14 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
         env_set "$CMS_DIR/.env" AUTH_GOOGLE_ISSUER_URL      "https://accounts.google.com"
         env_set "$CMS_DIR/.env" AUTH_GOOGLE_IDENTIFIER_KEY  "email"
         env_set "$CMS_DIR/.env" AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION "false"
+        # Domain restriction (defence-in-depth) + least-privilege default role.
+        env_set "$CMS_DIR/.env" AUTH_GOOGLE_ALLOW_LIST       "deptagency.com"
+        env_set "$CMS_DIR/.env" AUTH_GOOGLE_DEFAULT_ROLE_ID  "$CMS_DEFAULT_ROLE_ID"
         ok "Directus Google SSO configured (redirect: https://${DOMAIN}/cms/auth/login/google/callback)"
         warn "Register that redirect URI in the Directus OAuth client (Google Console)."
+        if [[ "$CMS_DEFAULT_ROLE_ID" == replace-with-* ]]; then
+          warn "AUTH_GOOGLE_DEFAULT_ROLE_ID is a placeholder — paste the content_author role id from bootstrap.sh into cms/.env (RUNBOOK §7.3)."
+        fi
       else
         info "No Google creds for Directus — staff use the break-glass admin until SSO is set (RUNBOOK §7.3)"
       fi

@@ -14,6 +14,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.core.cache import cache
 from app.core.db import get_session
 from app.core.models import FeedItem, Question
 from app.core.deps import require_permission
@@ -125,6 +126,11 @@ async def moderate_action(
             elif action == "remove":
                 item.status = "removed"
             s.commit()
+        # The status flip changes what the feed list / moderation queue return.
+        # This write lands in the FastAPI plane, bypassing the Directus
+        # cache-invalidation webhook, so we invalidate the same `feed_items:`
+        # prefix the webhook uses (modules/cms/routes.py) to keep reads fresh.
+        cache.invalidate_prefix("feed_items:")
 
     elif payload.item_type == "question":
         with get_session() as s:
@@ -138,5 +144,8 @@ async def moderate_action(
             elif action == "remove":
                 q.status = "archived"
             s.commit()
+        # Same rationale as feed above — invalidate the `questions:` prefix so
+        # the quiz pool / moderation queue see the new status immediately.
+        cache.invalidate_prefix("questions:")
 
     return {"status": "success"}
