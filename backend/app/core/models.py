@@ -347,3 +347,45 @@ class AuthAudit(Base):
         Index("idx_auth_audit_action", "action", "occurred_at"),
     )
 
+
+class FAQCategory(Base):
+    """FAQ Category / Topic representation."""
+    __tablename__ = "faq_categories"
+
+    id = Column(String(64), primary_key=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    status = Column(String(32), nullable=False, default="draft")
+    audience = Column(String(255), nullable=True)
+    source = Column(String(255), nullable=True)
+    reviewed_at = Column(String(100), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    items = relationship("FAQItem", back_populates="category", cascade="all, delete-orphan")
+
+    __table_args__ = (
+        Index("idx_faq_categories_status", "status"),
+    )
+
+
+class FAQItem(Base):
+    """Individual FAQ Item (Question & Answer)."""
+    __tablename__ = "faq_items"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    category_id = Column(String(64), ForeignKey("faq_categories.id", ondelete="CASCADE"), nullable=False)
+    q_num = Column(String(10), nullable=False)
+    question = Column(Text, nullable=False)
+    answer = Column(Text, nullable=False)
+    tags = Column(ARRAY_TYPE(Text), nullable=False, default=[])
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    category = relationship("FAQCategory", back_populates="items")
+
+    __table_args__ = (
+        Index("idx_faq_items_category_id", "category_id"),
+    )
+
+

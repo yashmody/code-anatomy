@@ -242,6 +242,40 @@ const COLLECTIONS = [
       { field: "granted_by", type: "string", interface: "input" },
     ],
   },
+  {
+    collection: "faq_categories",
+    note: "FAQ Categories (AEM x Banking, B2B, etc.). PK is `id`.",
+    pk: "id",
+    icon: "folder",
+    fields: [
+      { field: "id", type: "string", interface: "input", pk: true },
+      { field: "title", type: "string", interface: "input" },
+      { field: "description", type: "text", interface: "input-multiline" },
+      { field: "status", type: "string", interface: "select-dropdown",
+        options: { choices: [{ text: "published", value: "published" }, { text: "draft", value: "draft" }, { text: "soon", value: "soon" }] } },
+      { field: "audience", type: "string", interface: "input" },
+      { field: "source", type: "string", interface: "input" },
+      { field: "reviewed_at", type: "string", interface: "input" },
+      { field: "created_at", type: "timestamp", interface: "datetime", readonly: true },
+      { field: "updated_at", type: "timestamp", interface: "datetime", readonly: true },
+    ],
+  },
+  {
+    collection: "faq_items",
+    note: "Individual FAQ Questions and Answers. PK is `id`.",
+    pk: "id",
+    icon: "help_outline",
+    fields: [
+      { field: "id", type: "integer", interface: "input", pk: true, readonly: true },
+      { field: "category_id", type: "string", interface: "input" },
+      { field: "q_num", type: "string", interface: "input" },
+      { field: "question", type: "text", interface: "input-multiline" },
+      { field: "answer", type: "text", interface: "wysiwyg" },
+      { field: "tags", type: "csv", interface: "tags" },
+      { field: "created_at", type: "timestamp", interface: "datetime", readonly: true },
+      { field: "updated_at", type: "timestamp", interface: "datetime", readonly: true },
+    ],
+  },
 ];
 
 async function getCollection(name) {
@@ -452,6 +486,14 @@ function permsFor() {
     { role: "content_author", collection: "feed_items", action: "read", fields: ["*"] },
     { role: "content_author", collection: "media_assets", action: "read", fields: ["*"] },
     { role: "content_author", collection: "users", action: "read", fields: ["email", "name", "role"] },
+    { role: "content_author", collection: "faq_categories", action: "read", fields: ["*"] },
+    { role: "content_author", collection: "faq_categories", action: "create", fields: ["*"] },
+    { role: "content_author", collection: "faq_categories", action: "update", fields: ["*"] },
+    { role: "content_author", collection: "faq_categories", action: "delete", fields: ["*"] },
+    { role: "content_author", collection: "faq_items", action: "read", fields: ["*"] },
+    { role: "content_author", collection: "faq_items", action: "create", fields: ["*"] },
+    { role: "content_author", collection: "faq_items", action: "update", fields: ["*"] },
+    { role: "content_author", collection: "faq_items", action: "delete", fields: ["*"] },
 
     // quiz_admin — questions CRU; read course/feed/frameworks; read media meta.
     { role: "quiz_admin", collection: "questions", action: "read", fields: ["*"] },
@@ -462,6 +504,8 @@ function permsFor() {
     { role: "quiz_admin", collection: "feed_items", action: "read", fields: ["*"] },
     { role: "quiz_admin", collection: "media_assets", action: "read", fields: ["*"] },
     { role: "quiz_admin", collection: "users", action: "read", fields: ["email", "name", "role"] },
+    { role: "quiz_admin", collection: "faq_categories", action: "read", fields: ["*"] },
+    { role: "quiz_admin", collection: "faq_items", action: "read", fields: ["*"] },
 
     // feed_moderator — read feed; update feed_items.status only; read content; read media meta.
     { role: "feed_moderator", collection: "feed_items", action: "read", fields: ["*"] },
@@ -472,6 +516,8 @@ function permsFor() {
     { role: "feed_moderator", collection: "frameworks", action: "read", fields: ["*"] },
     { role: "feed_moderator", collection: "media_assets", action: "read", fields: ["*"] },
     { role: "feed_moderator", collection: "users", action: "read", fields: ["email", "name", "role"] },
+    { role: "feed_moderator", collection: "faq_categories", action: "read", fields: ["*"] },
+    { role: "feed_moderator", collection: "faq_items", action: "read", fields: ["*"] },
   ];
 }
 
@@ -524,6 +570,8 @@ const CACHED_COLLECTIONS = [
   "questions",
   "feed_items",
   "app_config",
+  "faq_categories",
+  "faq_items",
 ];
 
 // Request-operation options. body is a JSON OBJECT (see note inside) — never

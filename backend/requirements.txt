@@ -1,19 +1,33 @@
+# ── Framework ────────────────────────────────────────────────────────────────
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
 jinja2==3.1.4
-itsdangerous==2.2.0
 python-multipart==0.0.12
 pydantic==2.9.2
 pydantic-settings>=2.4
-requests==2.32.3
-reportlab==4.2.5
+python-dotenv>=1.0
+
+# ── Database & migrations ────────────────────────────────────────────────────
 sqlalchemy==2.0.36
 alembic>=1.13
 psycopg2-binary==2.9.10
-cryptography==43.0.1
-pillow==10.4.0
-ffmpeg-python==0.2.0
+
+# ── Auth & security ─────────────────────────────────────────────────────────
 google-auth>=2.30
-redis>=5
+itsdangerous==2.2.0
+cryptography==43.0.1
 pyotp>=2.9.0
 bcrypt>=4.0
+
+# ── Media processing ────────────────────────────────────────────────────────
+pillow==10.4.0
+ffmpeg-python==0.2.0
+
+# ── Certificates & email ────────────────────────────────────────────────────
+reportlab==4.2.5
+
+# ── HTTP client ─────────────────────────────────────────────────────────────
+requests==2.32.3
+
+# ── Cache (optional — degrades gracefully if redis is unreachable) ───────────
+redis>=5

@@ -189,6 +189,7 @@ class Settings(BaseSettings):
     cache_ttl_framework: int = 900
     cache_ttl_feed: int = 30
     cache_ttl_app_config: int = 60
+    cache_ttl_faq: int = 900
 
     # ── Cache backend (Phase 3 / 06 §4.2 — pluggable backing store) ──────────
     # `memory` is the default per the 2-worker topology decision (06 §4.2 /

@@ -117,44 +117,16 @@
     </div>
   </div>
 
-  <div class="section-label">Available <span class="count">1 published</span></div>
-  <div class="grid">
+  <div id="loading" class="section-label">Loading categories...</div>
 
-    <a href="aem-banking-faq.html" class="card">
-      <div class="card-status">● Published</div>
-      <div class="card-title">AEM <span class="x">×</span> Banking</div>
-      <div class="card-desc">Architect-level answers for regulated-industry AEM implementations — encryption, BYOK, audit logging, Splunk integration, residency, vulnerability management, and the controls a security team will ask about before sign-off.</div>
-      <div class="card-meta">
-        <span><b>13</b> Questions</span>
-        <span class="card-arrow">→</span>
-      </div>
-    </a>
-
+  <div id="publishedSection" style="display:none">
+    <div class="section-label">Available <span class="count" id="publishedCount">0 published</span></div>
+    <div class="grid" id="publishedGrid"></div>
   </div>
 
-  <div class="section-label">Coming soon <span class="count">in production</span></div>
-  <div class="grid">
-
-    <div class="card soon" aria-disabled="true">
-      <div class="card-status">○ Coming soon</div>
-      <div class="card-title">AEM <span class="x">×</span> Commerce B2B</div>
-      <div class="card-desc">Account hierarchies, contract pricing, quote-to-order flows, punchout / OCI, ERP integration patterns, and the AEM-side authoring model for buyer-segmented experiences.</div>
-      <div class="card-meta">
-        <span><b>Drafting</b></span>
-        <span class="card-arrow">→</span>
-      </div>
-    </div>
-
-    <div class="card soon" aria-disabled="true">
-      <div class="card-status">○ Coming soon</div>
-      <div class="card-title">AEM <span class="x">×</span> Commerce B2C</div>
-      <div class="card-desc">Catalog modeling, storefront performance budgets, personalization tie-ins, checkout integrations, and the headless vs. composable trade-offs for consumer-grade commerce on AEM.</div>
-      <div class="card-meta">
-        <span><b>Drafting</b></span>
-        <span class="card-arrow">→</span>
-      </div>
-    </div>
-
+  <div id="soonSection" style="display:none">
+    <div class="section-label">Coming soon <span class="count" id="soonCount">0 in production</span></div>
+    <div class="grid" id="soonGrid"></div>
   </div>
 </main>
 
@@ -165,6 +137,67 @@
 
 <script>
   // Theme is owned by theme-boot.js (unified anatomy-app-theme + window.toggleAppTheme).
+  document.addEventListener("DOMContentLoaded", async () => {
+    const API_BASE = window.location.port === '8080' ? 'http://127.0.0.1:8000' : '';
+    const loadingEl = document.getElementById("loading");
+    const publishedSection = document.getElementById("publishedSection");
+    const publishedGrid = document.getElementById("publishedGrid");
+    const publishedCount = document.getElementById("publishedCount");
+    const soonSection = document.getElementById("soonSection");
+    const soonGrid = document.getElementById("soonGrid");
+    const soonCount = document.getElementById("soonCount");
+
+    function renderTitle(title) {
+      return title.replace(/×/g, '<span class="x">×</span>').replace(/ x /g, ' <span class="x">×</span> ');
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/api/faqs`);
+      if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+      const data = await res.json();
+      const categories = data.categories || [];
+
+      const published = categories.filter(c => c.status === "published");
+      const soon = categories.filter(c => c.status === "soon" || c.status === "draft");
+
+      if (published.length > 0) {
+        publishedCount.textContent = `${published.length} published`;
+        publishedGrid.innerHTML = published.map(c => `
+          <a href="category.html?id=${c.id}" class="card">
+            <div class="card-status">● Published</div>
+            <div class="card-title">${renderTitle(c.title)}</div>
+            <div class="card-desc">${c.description || ''}</div>
+            <div class="card-meta">
+              <span><b>${c.q_count}</b> Questions</span>
+              <span class="card-arrow">→</span>
+            </div>
+          </a>
+        `).join("");
+        publishedSection.style.display = "block";
+      }
+
+      if (soon.length > 0) {
+        soonCount.textContent = `${soon.length} in production`;
+        soonGrid.innerHTML = soon.map(c => `
+          <div class="card soon" aria-disabled="true">
+            <div class="card-status">○ Coming soon</div>
+            <div class="card-title">${renderTitle(c.title)}</div>
+            <div class="card-desc">${c.description || ''}</div>
+            <div class="card-meta">
+              <span><b>Drafting</b></span>
+              <span class="card-arrow">→</span>
+            </div>
+          </div>
+        `).join("");
+        soonSection.style.display = "block";
+      }
+
+      loadingEl.style.display = "none";
+    } catch (err) {
+      console.error(err);
+      loadingEl.innerHTML = `<b style="color:var(--ochre)">Failed to load FAQ categories</b><br>${err.message}`;
+    }
+  });
 </script>
 </body>
 </html>
