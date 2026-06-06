@@ -165,7 +165,12 @@ def store_media_asset(file_path: str, filename: str, mime_type: str, uploader_em
     assert_mime_allowed(mime_type)
     raw_conn = engine.raw_connection()
     try:
-        lobj = raw_conn.lobject(0, 'w') # Create a new large object
+        # Binary mode ('wb'): symmetric with the 'rb' read in stream_video_chunks.
+        # Text mode ('w') happens to round-trip binary correctly on this
+        # psycopg2/libpq, but it asks psycopg2 to treat writes as str — only
+        # robust because we hand it bytes. 'wb' is the correct contract for
+        # binary media and removes the latent text/binary mismatch.
+        lobj = raw_conn.lobject(0, 'wb')  # Create a new large object
         oid = lobj.oid
         
         # Stream file into large object in 1MB chunks
@@ -208,7 +213,12 @@ def stream_video_chunks(oid: int, start_byte: int, end_byte: int, chunk_size: in
     """Generates byte chunks from pg_largeobject for range queries."""
     raw_conn = engine.raw_connection()
     try:
-        lobj = raw_conn.lobject(oid, 'r')
+        # Binary mode ('rb'): large-object bytes must NOT be decoded as text.
+        # In text mode ('r') psycopg2 decodes each read as UTF-8, which throws on
+        # the first non-UTF-8 byte (e.g. a PNG's 0x89 signature) — the exception
+        # was swallowed below and the stream silently yielded zero bytes. It only
+        # appeared to work for ranges that happened to be valid UTF-8.
+        lobj = raw_conn.lobject(oid, 'rb')
         lobj.seek(start_byte)
         
         bytes_to_read = end_byte - start_byte + 1

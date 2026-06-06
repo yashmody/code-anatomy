@@ -21,6 +21,9 @@ sidebar_position: 6
 - The `media_assets` row is metadata (id, OID, filename, MIME, size, uploader); the
   bytes live in `pg_largeobject`. A delete trigger and a `vacuumlo` sweep keep the
   byte store from leaking orphans.
+- Editors get a **Directus admin upload screen** (the `media-upload` module), but it
+  is a thin browser client of `POST /api/media/upload` — it streams the file to
+  FastAPI and reuses the existing session; Directus still stores no bytes.
 
 This page covers the two content types that are not prose: configuration and media.
 They share a theme — both are about putting a value in exactly the right store and
@@ -170,6 +173,52 @@ adds two mechanisms to stop the byte store leaking:
    catching orphans from a failed upload (where the large object is created before
    the metadata row is inserted).
 
+### Uploading from the Directus admin
+
+Editors should not need a terminal to add a video. The **`media-upload` module** —
+a full-page screen in the Directus admin
+(`cms/extensions/directus-extension-media-upload`) — gives them a file picker,
+drag-and-drop, an upload progress bar, and a preview, plus a *Browse* tab that lists
+existing assets. What it is **not** is a second upload path. It is a thin browser
+client of the same `POST /api/media/upload` endpoint: the file goes straight from the
+editor's browser to FastAPI, the bytes still land in `pg_largeobject` and a
+`media_assets` row, and Directus storage is never touched.
+
+```
+   Directus admin · the media-upload module (runs in the browser)
+        │  multipart/form-data, field "file", carries the aoc_session cookie
+        ▼
+   POST /api/media/upload   ── the same FastAPI endpoint, the same media.upload guard
+        │
+        ▼
+   pg_largeobject + media_assets        preview ◀── GET /media/{image,video}/{id}
+```
+
+The screen adds **no new authentication surface**. It reuses the learner-plane
+session: the browser sends the `aoc_session` cookie it already holds, and FastAPI
+applies the same `media.upload` permission (granted to `content_author` and
+`feed_contributor`). In production this is invisible — Apache serves the admin under
+`/cms/` and the API under `/` on one origin, so the upload is a plain same-origin
+request and the cookie rides along.
+
+The subtlety is that the Directus *staff* login and the app *learner* session are two
+different planes. A staff member who has only signed into Directus is not yet
+authorised: they must also hold a live app session in the same browser, on an account
+that carries `media.upload`. The screen says so in plain language on a 401 or 403
+rather than failing silently — that cross-plane coupling is the one thing to brief an
+editor on.
+
+Local development is the only place the wiring shows. Directus runs on `:8055` and
+FastAPI on `:8000` — different origins — so the operator sets the screen's *FastAPI
+base URL* field to `http://localhost:8000` once, and the backend's `CORS_ORIGINS`
+must include `http://localhost:8055`. Both are dev-only; production, being
+same-origin, needs neither.
+
+The module ships as-code with the rest of `cms/`: its built `dist/` is committed,
+`register-collections.mjs` adds it to the Directus module bar idempotently, and
+`docker-compose.yml` bind-mounts `cms/extensions` read-only so the container loads it
+with no build step.
+
 :::note[Why This Matters]
 
 Keeping media in Postgres rather than an object store is an unusual call, and it is
@@ -188,8 +237,9 @@ cancelled.
 Assuming Directus can upload or serve app media. It cannot, and that is by design.
 Directus binds `media_assets` read-only and has no path into `pg_largeobject`;
 `directus_files` is used only for incidental Directus-internal files like editor
-avatars. App media is uploaded and streamed exclusively through FastAPI. If you see
-a media asset in the Directus browser, you are looking at metadata — the bytes never
-left Postgres, and never went through Directus.
+avatars. App media is uploaded and streamed exclusively through FastAPI — even the
+admin upload screen is a browser client of `POST /api/media/upload`, not a Directus
+storage path. If you see a media asset in the Directus browser, you are looking at
+metadata — the bytes never left Postgres, and never went through Directus.
 
 :::

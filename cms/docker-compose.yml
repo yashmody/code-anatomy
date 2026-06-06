@@ -48,8 +48,11 @@ services:
       # no filesystem media store). App-media uploads into Directus Files are
       # disabled by permission. This volume stays small.
       - directus_uploads:/directus/uploads
-      # Extensions (Hooks/Flows custom ops) if added in 4c. Empty in 4a.
-      - directus_extensions:/directus/extensions
+      # App extensions (Phase 4c). Bind-mount the built extensions folder
+      # (read-only) so the official image auto-loads them from /directus/extensions.
+      # cms/extensions/directus-extension-media-upload ships a committed dist/, so
+      # the container needs no build step. Was an empty named volume in 4a.
+      - ./extensions:/directus/extensions:ro
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:8055/server/health"]
       interval: 30s
@@ -59,4 +62,3 @@ services:
 
 volumes:
   directus_uploads:
-  directus_extensions:

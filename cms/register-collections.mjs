@@ -627,6 +627,60 @@ async function ensureFlow() {
 }
 
 // ============================================================================
+// 5) MODULE BAR — enable the custom `media-upload` module (full-page admin
+//    screen, extensions/directus-extension-media-upload). A registered module
+//    only appears in the bar once it is listed in `directus_settings.module_bar`;
+//    a custom (non-core) module is never shown by the null-default. We append
+//    our entry idempotently, preserving whatever is already there.
+//
+//    When `module_bar` is still null (fresh instance — the column is nullable
+//    and not migration-seeded), the app renders the core defaults implicitly,
+//    so we seed those defaults FIRST and then append ours. This mirrors exactly
+//    what toggling the module on in Settings -> Modules would persist, so no
+//    built-in module is hidden.
+// ============================================================================
+const MODULE_ID = "media-upload";
+
+// Directus 11 core module bar default order (what a null `module_bar` renders).
+// `settings` is included because the UI persists it when the bar is customised.
+const DEFAULT_MODULE_BAR = [
+  { type: "module", id: "content", enabled: true },
+  { type: "module", id: "users", enabled: true },
+  { type: "module", id: "files", enabled: true },
+  { type: "module", id: "insights", enabled: true },
+  { type: "module", id: "settings", enabled: true },
+];
+
+async function ensureModuleEnabled() {
+  const r = await api("GET", "/settings?fields=module_bar");
+  if (!r.ok) {
+    console.error(`  [module] FAILED reading settings (${r.status}): ${JSON.stringify(r.json)}`);
+    return;
+  }
+  const current = r.json?.data?.module_bar;
+  let bar = Array.isArray(current) && current.length ? [...current] : null;
+
+  if (!bar) {
+    // Fresh instance — seed the core defaults so none get hidden, then add ours.
+    bar = [...DEFAULT_MODULE_BAR];
+    console.log("  [module] module_bar was empty — seeding core defaults before adding media-upload");
+  }
+
+  if (bar.some((e) => e && e.id === MODULE_ID)) {
+    console.log(`  [module] ${MODULE_ID} already in module_bar — skip`);
+    return;
+  }
+
+  bar.push({ type: "module", enabled: true, id: MODULE_ID });
+  const pr = await api("PATCH", "/settings", { module_bar: bar });
+  if (!pr.ok) {
+    console.error(`  [module] FAILED enabling ${MODULE_ID} (${pr.status}): ${JSON.stringify(pr.json)}`);
+  } else {
+    console.log(`  [module] ${MODULE_ID} added to module_bar (full-page admin screen enabled)`);
+  }
+}
+
+// ============================================================================
 // MAIN
 // ============================================================================
 async function main() {
@@ -642,6 +696,8 @@ async function main() {
   await ensurePermissions();
   console.log("\n== cache-invalidation flow ==");
   await ensureFlow();
+  console.log("\n== module bar (media-upload screen) ==");
+  await ensureModuleEnabled();
 
   console.log("\nDONE. Role ids (paste content_author into AUTH_GOOGLE_DEFAULT_ROLE_ID):");
   for (const [k, v] of Object.entries(roleIds)) console.log(`  ${k} = ${v}`);
