@@ -14,8 +14,18 @@
 # Usage:
 #   ./start_local.sh                       # development (default)
 #   ./start_local.sh --env staging         # boot as staging
-#   ./start_local.sh --env=production --db # production env + start local PG
+#   ./start_local.sh --env=production --db # production env + start local PG (legacy)
 #   ./start_local.sh --with-cms            # also boot Directus on :8055
+#
+# REMOTE dev database (2026-06 cutover):
+#   Local development now connects to the REMOTE shared instance's dev database
+#   (codecoder_dev) over TLS — there is NO local Postgres any more (it took too
+#   much disk). The DATABASE_URL lives in backend/.env.development.example
+#   (sslmode=require). Seed backend/.env from it (the script does this on first
+#   run) and fill in REMOTE_DB_HOST + the app_dev password from the secret store.
+#   --db (start a local Postgres) is now a LEGACY escape hatch — you do NOT need
+#   it for normal dev. The OFFLINE smoke harness (scripts/smoke.sh) is separate:
+#   it forces sqlite and never touches the network, so it stays self-contained.
 #
 # --with-cms (Phase 4a · 05-config-cms.md §5.5):
 #   After the FastAPI + static server, boots Directus locally
@@ -105,8 +115,21 @@ elif [ -f "$ENV_EXAMPLE" ]; then
     cp "$ENV_EXAMPLE" "$ENV_FILE"
     echo "🌱 Env: no .env found — seeded from $ENV_EXAMPLE"
     echo "   Edit $ENV_FILE before any non-development run (secrets are placeholders)."
+    if [ "$APP_ENV_SEL" = "development" ]; then
+        echo "   NOTE: development points DATABASE_URL at the REMOTE dev database"
+        echo "         (codecoder_dev) over TLS. Replace REMOTE_DB_HOST + the app_dev"
+        echo "         password in $ENV_FILE with the real values before first run."
+    fi
 else
     echo "⚠️  Env: neither $ENV_FILE nor $ENV_EXAMPLE exists — booting with process env only."
+fi
+
+# Database posture note (2026-06 cutover). Local dev no longer runs a local
+# Postgres: the development env connects to the remote shared dev database over
+# TLS. The offline smoke harness is the one exception (it forces sqlite).
+if [ "$APP_ENV_SEL" = "development" ] && [ "$START_DB" != true ]; then
+    echo "🛢️  DB: local dev connects to the REMOTE dev database (codecoder_dev) over TLS;"
+    echo "        no local Postgres required. (Offline smoke uses sqlite via scripts/smoke.sh.)"
 fi
 
 # Export APP_ENV for the backend process (overrides whatever .env carries so the
@@ -115,7 +138,13 @@ export APP_ENV="$APP_ENV_SEL"
 echo "🌍 APP_ENV=$APP_ENV"
 
 # 0. Optionally start PostgreSQL Database
+# LEGACY escape hatch: normal dev uses the REMOTE dev database (see the note
+# above), so --db is only for an offline/local Postgres by choice. If you pass
+# it, also point DATABASE_URL in backend/.env at the local server, otherwise the
+# app still dials the remote host from the .env.development template.
 if [ "$START_DB" = true ]; then
+    echo "🐘 --db (legacy): starting a LOCAL PostgreSQL. Normal dev uses the remote dev DB."
+    echo "   Make sure backend/.env DATABASE_URL points at localhost if you want to use it."
     echo "🐘 Attempting to start PostgreSQL database..."
 
     # Try pg_ctl (common for standard installations & Postgres.app)

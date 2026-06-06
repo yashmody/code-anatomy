@@ -65,6 +65,39 @@ DB_NAME="${DB_NAME:-codecoder}"
 DB_USER="${DB_USER:-codecoder}"
 DB_PASS="${DB_PASS:-}"
 
+# ── Database connection mode (2026-06 cutover · remote shared Postgres) ──────
+# DB_MODE selects HOW the database is provisioned and reached:
+#   local    — legacy single-VM path: deploy.sh installs/preflights a LOCAL
+#              Postgres, edits pg_hba.conf / listen_addresses, talks to it over
+#              the /var/run/postgresql Unix socket. This is the DEFAULT so an
+#              unset environment behaves exactly as before.
+#   external — the database lives on a REMOTE shared Postgres server. deploy.sh
+#              does NO local server install, NO socket detection, NO pg_hba /
+#              listen_addresses edits. It connects over TCP+TLS to DB_HOST and
+#              builds DATABASE_URL with ?sslmode=$DB_SSLMODE.
+# Convenience: if DB_HOST is set to a non-local host, external is implied even
+# when DB_MODE is left at its default.
+DB_MODE="${DB_MODE:-local}"
+DB_HOST="${DB_HOST:-localhost}"
+DB_PORT="${DB_PORT:-5432}"
+# TLS posture for the remote connection. require = encrypt (no server-identity
+# check); verify-full = encrypt AND validate the server cert against a CA
+# (provide the CA via PGSSLROOTCERT / sslrootcert). require is the floor.
+DB_SSLMODE="${DB_SSLMODE:-require}"
+# PROVISION_DB controls whether deploy.sh creates databases/roles/extensions on
+# the remote instance (needs a remote superuser password) or assumes a DBA has
+# pre-created them:
+#   auto  — provision IF a superuser password is available, else assume pre-made
+#   true  — force provisioning (requires POSTGRES_SUPERUSER_PASSWORD)
+#   false — never provision; the DBA pre-created everything (DML-only app role)
+PROVISION_DB="${PROVISION_DB:-auto}"
+# A non-local DB_HOST implies external mode (so an operator only has to set the
+# host). Covers IPs and FQDNs; the loopback/socket forms stay local.
+case "$DB_HOST" in
+  localhost|127.0.0.1|::1|/*|"") : ;;   # local socket / loopback → keep DB_MODE
+  *) DB_MODE="external" ;;
+esac
+
 # ── Directus CMS (Phase 4a · 05-config-cms.md §5.5, §8.2) ───────────────────
 # Directus is the editorial write plane: a separate Node service over the SAME
 # Postgres, reverse-proxied under /cms/. It is ADDITIVE and gated — set
@@ -78,9 +111,14 @@ CMS_SERVICE_NAME="cms-directus"
 # the FastAPI app user. Falls back to the app user if you'd rather not add one.
 CMS_USER="${CMS_USER:-directus}"
 # Scoped DB role Directus connects as (07 baseline / 03 §5). The matching role
-# is created by Alembic migration 0008 (slice 4a-1); deploy.sh only sets its
-# password. Leave CMS_DB_PASS empty to auto-generate on first run.
-CMS_DB_USER="${CMS_DB_USER:-directus_app}"
+# is created/granted by Alembic migration 0008 (slice 4a-1); deploy.sh only sets
+# its password. This role is PER-ENVIRONMENT so a dev Directus credential can
+# never reach prod (the role is GRANTed only on its own database). Canonical
+# name is DIRECTUS_DB_ROLE; CMS_DB_USER is kept as a back-compat alias.
+#   prod=directus_app · staging=directus_app_stg · dev=directus_app_dev
+DIRECTUS_DB_ROLE="${DIRECTUS_DB_ROLE:-${CMS_DB_USER:-directus_app}}"
+CMS_DB_USER="$DIRECTUS_DB_ROLE"
+# Leave CMS_DB_PASS empty to auto-generate on first run.
 CMS_DB_PASS="${CMS_DB_PASS:-}"
 # Directus admin bootstrap account (the break-glass local admin from §8.2 step
 # 4). The first SSO Platform Admin from ADMIN_EMAILS is mirrored in later, but
@@ -136,8 +174,20 @@ if [[ -f "$SRC_DIR/deploy.env" ]]; then
   DEPLOY_DIRECTUS="${DEPLOY_DIRECTUS:-true}"
   CMS_PORT="${CMS_PORT:-8055}"
   CMS_USER="${CMS_USER:-directus}"
-  CMS_DB_USER="${CMS_DB_USER:-directus_app}"
   CMS_ADMIN_EMAIL="${CMS_ADMIN_EMAIL:-${ADMIN_EMAIL:-admin@${DOMAIN}}}"
+  # Database mode (2026-06 cutover) — re-resolve in case deploy.env set them.
+  DB_MODE="${DB_MODE:-local}"
+  DB_HOST="${DB_HOST:-localhost}"
+  DB_PORT="${DB_PORT:-5432}"
+  DB_SSLMODE="${DB_SSLMODE:-require}"
+  PROVISION_DB="${PROVISION_DB:-auto}"
+  case "$DB_HOST" in
+    localhost|127.0.0.1|::1|/*|"") : ;;
+    *) DB_MODE="external" ;;
+  esac
+  # Per-env Directus role (canonical DIRECTUS_DB_ROLE; CMS_DB_USER is the alias).
+  DIRECTUS_DB_ROLE="${DIRECTUS_DB_ROLE:-${CMS_DB_USER:-directus_app}}"
+  CMS_DB_USER="$DIRECTUS_DB_ROLE"
 fi
 
 # Directus adds one numbered step to the run when enabled.
@@ -219,16 +269,31 @@ fi
 # ── pg_exec helper ───────────────────────────────────────────────────────────
 # Run a psql command as the PostgreSQL superuser.
 #
+# EXTERNAL mode (remote shared Postgres):
+#   • Requires POSTGRES_SUPERUSER_PASSWORD. Connects over TCP to the REMOTE host:
+#     PGPASSWORD=… psql -U postgres -h $DB_HOST -p $DB_PORT, with SSL forced via
+#     PGSSLMODE=$DB_SSLMODE. No Unix socket, no peer auth — those don't exist on
+#     a managed remote instance. Callers must NOT depend on this when there is no
+#     superuser password (the caller guards with the DB_PROVISION flag instead).
+#
+# LOCAL mode (legacy single-VM path):
 #   • If POSTGRES_SUPERUSER_PASSWORD is set: run psql directly as root with
-#     PGPASSWORD + `-U postgres`. No need for peer/ident auth or pg_hba edits.
+#     PGPASSWORD + `-U postgres` over the Unix socket. No pg_hba edits.
 #   • Otherwise: fall back to `runuser -l postgres` (peer auth path), wrapped
 #     in `timeout` so any hang surfaces within 10 seconds.
 #
 # The caller passes the psql command string (e.g. "psql -c 'SELECT 1'").
-# This helper transparently adds -U postgres and -h $PGHOST when using a password.
+# This helper transparently adds -U postgres plus the right host/port.
 pg_exec() {
   local raw_cmd="$*"
-  if [[ -n "$POSTGRES_SUPERUSER_PASSWORD" ]]; then
+  if [[ "$DB_MODE" == "external" ]]; then
+    # Remote instance: TCP + TLS, superuser password is mandatory here.
+    local injected="${raw_cmd/#psql/psql -U postgres -h ${DB_HOST} -p ${DB_PORT}}"
+    PGPASSWORD="$POSTGRES_SUPERUSER_PASSWORD" \
+    PGSSLMODE="${DB_SSLMODE}" \
+    PGCONNECT_TIMEOUT="${PGCONNECT_TIMEOUT:-5}" \
+      timeout 15 bash -c "$injected"
+  elif [[ -n "$POSTGRES_SUPERUSER_PASSWORD" ]]; then
     # Insert -U postgres -h $PGHOST after the leading "psql" token so callers
     # don't have to remember to add them. e.g. "psql -c '...'" becomes
     # "psql -U postgres -h /var/run/postgresql -c '...'".
@@ -243,6 +308,52 @@ pg_exec() {
     else
       timeout 10 su - postgres -c "$cmd"
     fi
+  fi
+}
+
+# ── db_provision_enabled ─────────────────────────────────────────────────────
+# Resolve PROVISION_DB (auto|true|false) into a yes/no decision for whether
+# deploy.sh should create databases / roles / extensions on the (remote) server.
+#   auto  → yes IFF a superuser password is available
+#   true  → yes (the caller dies later if no password is set)
+#   false → no  (DBA pre-created everything)
+# Echoes "yes" or "no".
+db_provision_enabled() {
+  case "$PROVISION_DB" in
+    true)  echo "yes" ;;
+    false) echo "no" ;;
+    auto|*)
+      if [[ -n "$POSTGRES_SUPERUSER_PASSWORD" ]]; then echo "yes"; else echo "no"; fi
+      ;;
+  esac
+}
+
+# ── build_database_url ───────────────────────────────────────────────────────
+# Compose the DATABASE_URL the FastAPI app reads, branching on DB_MODE:
+#   local    → postgresql://USER:PASS@localhost:5432/DBNAME   (no sslmode — the
+#              app talks to the co-resident server over loopback/socket).
+#   external → postgresql://USER:PASS@DB_HOST:DB_PORT/DBNAME?sslmode=DB_SSLMODE
+#              (TLS enforced via the URL query; psycopg2/SQLAlchemy honour it).
+# Args: <user> <pass>. The password is passed verbatim — callers redact it when
+# echoing. Note: a password containing URL-reserved characters would need
+# percent-encoding; the generated passwords (token_urlsafe) are URL-safe.
+build_database_url() {
+  local u="$1" p="$2"
+  if [[ "$DB_MODE" == "external" ]]; then
+    printf 'postgresql://%s:%s@%s:%s/%s?sslmode=%s' \
+      "$u" "$p" "$DB_HOST" "$DB_PORT" "$DB_NAME" "$DB_SSLMODE"
+  else
+    printf 'postgresql://%s:%s@localhost:5432/%s' "$u" "$p" "$DB_NAME"
+  fi
+}
+
+# Redacted host:port/db?sslmode suffix for log lines (never prints the password).
+db_url_display() {
+  if [[ "$DB_MODE" == "external" ]]; then
+    printf 'postgresql://%s:***@%s:%s/%s?sslmode=%s' \
+      "$DB_USER" "$DB_HOST" "$DB_PORT" "$DB_NAME" "$DB_SSLMODE"
+  else
+    printf 'postgresql://%s:***@localhost:5432/%s' "$DB_USER" "$DB_NAME"
   fi
 }
 
@@ -373,6 +484,33 @@ if [[ "$OS_FAMILY" == "rhel" ]] \
   info "SELinux   : Enforcing — will apply httpd policies"
 fi
 
+# ── Database mode banner ─────────────────────────────────────────────────────
+# Surface the chosen DB mode (and, when external, the remote host + DBA
+# prerequisites) before any DB work runs. The password is never printed.
+DB_PROVISION="$(db_provision_enabled)"
+if [[ "$DB_MODE" == "external" ]]; then
+  printf '\n  %b▣ Database mode : EXTERNAL (remote shared Postgres)%b\n' "$C_BOLD" "$C_RESET"
+  info "Remote host : ${DB_HOST}:${DB_PORT}  (TLS sslmode=${DB_SSLMODE})"
+  info "Database    : ${DB_NAME}   App role: ${DB_USER}   Directus role: ${DIRECTUS_DB_ROLE}"
+  if [[ "$DB_PROVISION" == "yes" ]]; then
+    info "Provisioning: ON — will create db/roles/extensions on the remote (superuser password supplied)"
+  else
+    warn "Provisioning: OFF — assuming the DBA pre-created the following on ${DB_HOST}:"
+    warn "  • database '${DB_NAME}'"
+    warn "  • extensions pgcrypto + hstore inside '${DB_NAME}'"
+    warn "  • login role '${DB_USER}' (app, DML-only) with a password + GRANTs on '${DB_NAME}'"
+    warn "  • login role '${DIRECTUS_DB_ROLE}' (Directus) with a password + GRANTs on '${DB_NAME}'"
+    warn "  • TLS enabled on the server (connections use sslmode=${DB_SSLMODE})"
+    warn "  Set PROVISION_DB=true + POSTGRES_SUPERUSER_PASSWORD to have deploy.sh do this instead."
+  fi
+  # The whole local-Postgres preflight assumes a local server — there is none.
+  warn "Local Postgres install/preflight, socket detection, pg_hba and"
+  warn "listen_addresses edits are SKIPPED in external mode (DB_MODE=local to restore)."
+else
+  printf '\n  %b▣ Database mode : LOCAL (single-VM Postgres on this host)%b\n' "$C_BOLD" "$C_RESET"
+  info "Local Postgres will be preflighted/provisioned over the Unix socket as today."
+fi
+
 # ── STEP 1 · Pre-flight checks ───────────────────────────────────────────────
 step "Pre-flight checks"
 
@@ -453,61 +591,87 @@ if ! $UPDATE_ONLY; then
   ok "psql        : $(psql --version)"
 
   # PostgreSQL connectivity
-  PG_SVC="$(pg_service_name || echo 'postgresql-14')"
-  info "PG service  : $PG_SVC"
-
-  if ! systemctl is-active --quiet "$PG_SVC"; then
-    die "$PG_SVC is not running. Start it: systemctl start $PG_SVC"
-  fi
-  ok "PG service  : active"
-
-  # Find the actual socket location BEFORE attempting any psql call.
-  # This avoids the silent TCP-fallback hang.
-  PG_SOCK="$(pg_socket_dir || echo '')"
-  if [[ -z "$PG_SOCK" ]]; then
-    warn "No PostgreSQL Unix socket found in /var/run/postgresql or /tmp"
-    info "Diagnostics:"
-    info "  ls -la /var/run/postgresql/ :"
-    ls -la /var/run/postgresql/ 2>&1 | head -5 | while read -r l; do info "    $l"; done
-    info "  ls -la /tmp/.s.PGSQL.5432   :"
-    ls -la /tmp/.s.PGSQL.5432 2>&1 | head -3 | while read -r l; do info "    $l"; done
-    info "  Listening TCP ports        :"
-    ss -tlnp 2>/dev/null | grep -E ':(5432|postgres)' \
-      | while read -r l; do info "    $l"; done || true
-    die "Cannot locate the Postgres socket. The server is running but unreachable. Check: journalctl -u $PG_SVC -n 30"
-  fi
-  ok "Socket dir  : $PG_SOCK"
-  export PGHOST="$PG_SOCK"
-  export PGCONNECT_TIMEOUT=3
-
-  # Two auth paths:
-  #   1. POSTGRES_SUPERUSER_PASSWORD supplied → use it directly (no pg_hba edits).
-  #   2. No password → fall back to peer auth, adding the rule to pg_hba.conf
-  #      if it's missing.
-  if [[ -n "$POSTGRES_SUPERUSER_PASSWORD" ]]; then
-    ok "Auth mode   : password (POSTGRES_SUPERUSER_PASSWORD env var)"
-  else
-    PG_HBA_PATH="$(pg_hba_path || echo '')"
-    if [[ -n "$PG_HBA_PATH" ]]; then
-      ok "pg_hba.conf : $PG_HBA_PATH"
-      ensure_postgres_peer_auth "$PG_HBA_PATH" "$PG_SVC"
-      ok "Auth mode   : peer (postgres OS user → postgres PG role)"
+  if [[ "$DB_MODE" == "external" ]]; then
+    # ── EXTERNAL: remote shared Postgres ──────────────────────────────────────
+    # No local server: skip socket detection, service check, pg_hba/peer auth.
+    # We only verify the psql CLIENT exists, then (when provisioning) confirm we
+    # can reach the REMOTE instance over TCP+TLS as the superuser. When NOT
+    # provisioning, the runtime app role connects later from .env — we don't need
+    # superuser reachability and skip the trial entirely.
+    info "PG mode     : external — local server preflight skipped"
+    if [[ "$DB_PROVISION" == "yes" ]]; then
+      if [[ -z "$POSTGRES_SUPERUSER_PASSWORD" ]]; then
+        die "PROVISION_DB requires POSTGRES_SUPERUSER_PASSWORD to reach ${DB_HOST}. Set it, or use PROVISION_DB=false (DBA pre-creates)."
+      fi
+      info "Verifying remote superuser reachability ${DB_HOST}:${DB_PORT} (sslmode=${DB_SSLMODE}) …"
+      if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
+        ok "PostgreSQL  : reachable over TLS at ${DB_HOST}:${DB_PORT}"
+      else
+        info "Captured psql error:"
+        pg_exec "psql -c 'SELECT 1'" 2>&1 | head -5 | while read -r l; do warn "  $l"; done
+        die "Cannot reach the remote Postgres as superuser. Check DB_HOST/DB_PORT, the superuser password, TLS, and that the server allows your IP."
+      fi
     else
-      warn "Could not locate pg_hba.conf — no auth fallback available"
-      die  "Set POSTGRES_SUPERUSER_PASSWORD and re-run: sudo POSTGRES_SUPERUSER_PASSWORD='...' ./deploy.sh"
+      ok "Provisioning off — assuming DBA pre-created db/roles/extensions on ${DB_HOST} (see banner above)"
     fi
-  fi
-
-  # Trial connection
-  if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
-    ok "PostgreSQL  : reachable via socket ($PG_SOCK)"
   else
-    info "Captured psql error:"
-    pg_exec "psql -c 'SELECT 1'" 2>&1 | head -5 | while read -r l; do warn "  $l"; done
+    # ── LOCAL: single-VM Postgres (legacy path, unchanged) ────────────────────
+    PG_SVC="$(pg_service_name || echo 'postgresql-14')"
+    info "PG service  : $PG_SVC"
+
+    if ! systemctl is-active --quiet "$PG_SVC"; then
+      die "$PG_SVC is not running. Start it: systemctl start $PG_SVC"
+    fi
+    ok "PG service  : active"
+
+    # Find the actual socket location BEFORE attempting any psql call.
+    # This avoids the silent TCP-fallback hang.
+    PG_SOCK="$(pg_socket_dir || echo '')"
+    if [[ -z "$PG_SOCK" ]]; then
+      warn "No PostgreSQL Unix socket found in /var/run/postgresql or /tmp"
+      info "Diagnostics:"
+      info "  ls -la /var/run/postgresql/ :"
+      ls -la /var/run/postgresql/ 2>&1 | head -5 | while read -r l; do info "    $l"; done
+      info "  ls -la /tmp/.s.PGSQL.5432   :"
+      ls -la /tmp/.s.PGSQL.5432 2>&1 | head -3 | while read -r l; do info "    $l"; done
+      info "  Listening TCP ports        :"
+      ss -tlnp 2>/dev/null | grep -E ':(5432|postgres)' \
+        | while read -r l; do info "    $l"; done || true
+      die "Cannot locate the Postgres socket. The server is running but unreachable. Check: journalctl -u $PG_SVC -n 30"
+    fi
+    ok "Socket dir  : $PG_SOCK"
+    export PGHOST="$PG_SOCK"
+    export PGCONNECT_TIMEOUT=3
+
+    # Two auth paths:
+    #   1. POSTGRES_SUPERUSER_PASSWORD supplied → use it directly (no pg_hba edits).
+    #   2. No password → fall back to peer auth, adding the rule to pg_hba.conf
+    #      if it's missing.
     if [[ -n "$POSTGRES_SUPERUSER_PASSWORD" ]]; then
-      die "psql rejected the supplied POSTGRES_SUPERUSER_PASSWORD — check the password is correct."
+      ok "Auth mode   : password (POSTGRES_SUPERUSER_PASSWORD env var)"
     else
-      die "psql failed. Either set POSTGRES_SUPERUSER_PASSWORD=... or fix $PG_HBA_PATH auth."
+      PG_HBA_PATH="$(pg_hba_path || echo '')"
+      if [[ -n "$PG_HBA_PATH" ]]; then
+        ok "pg_hba.conf : $PG_HBA_PATH"
+        ensure_postgres_peer_auth "$PG_HBA_PATH" "$PG_SVC"
+        ok "Auth mode   : peer (postgres OS user → postgres PG role)"
+      else
+        warn "Could not locate pg_hba.conf — no auth fallback available"
+        die  "Set POSTGRES_SUPERUSER_PASSWORD and re-run: sudo POSTGRES_SUPERUSER_PASSWORD='...' ./deploy.sh"
+      fi
+    fi
+
+    # Trial connection
+    if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
+      ok "PostgreSQL  : reachable via socket ($PG_SOCK)"
+    else
+      info "Captured psql error:"
+      pg_exec "psql -c 'SELECT 1'" 2>&1 | head -5 | while read -r l; do warn "  $l"; done
+      if [[ -n "$POSTGRES_SUPERUSER_PASSWORD" ]]; then
+        die "psql rejected the supplied POSTGRES_SUPERUSER_PASSWORD — check the password is correct."
+      else
+        die "psql failed. Either set POSTGRES_SUPERUSER_PASSWORD=... or fix $PG_HBA_PATH auth."
+      fi
     fi
   fi
 
@@ -643,7 +807,8 @@ if [[ ! -f "$QUIZ_DIR/.env" ]]; then
     DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
     ok "Generated DB password"
   fi
-  DB_URL="postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}"
+  # DATABASE_URL: local (loopback) or external (remote host + ?sslmode=) per DB_MODE.
+  DB_URL="$(build_database_url "$DB_USER" "$DB_PASS")"
 
   # Q-14: GOOGLE_REDIRECT_URI is set on first create only — never overwritten on
   # subsequent deploys. Operators who customise this (e.g. /oauth/google/callback
@@ -657,7 +822,7 @@ if [[ ! -f "$QUIZ_DIR/.env" ]]; then
   fi
 
   env_set "$QUIZ_DIR/.env" DATABASE_URL "$DB_URL"
-  ok "DATABASE_URL         → postgresql://${DB_USER}:***@localhost:5432/${DB_NAME}"
+  ok "DATABASE_URL         → $(db_url_display)"
 
   if [[ -n "$GOOGLE_CLIENT_ID" && -n "$GOOGLE_CLIENT_SECRET" ]]; then
     env_set "$QUIZ_DIR/.env" QUIZ_DEV_MODE        "false"
@@ -693,180 +858,272 @@ ok "Permissions set (owner: $APP_USER, .env: 600)"
 # ── STEP 6 · PostgreSQL ──────────────────────────────────────────────────────
 step "PostgreSQL — role, database, schema, ETL seed"
 
-# Resolve unit name
-PG_SVC="$(pg_service_name)" \
-  || die "No PostgreSQL systemd unit found. Ensure postgresql (or postgresql-14) is installed."
-info "Service unit         : $PG_SVC"
-
-# Ensure running
-if ! systemctl is-active --quiet "$PG_SVC"; then
-  info "Starting $PG_SVC …"
-  systemctl start "$PG_SVC" \
-    || die "Could not start $PG_SVC. Run: systemctl status $PG_SVC"
-fi
-
-# Wait for socket readiness. Uses the explicit socket path discovered in
-# pre-flight (PGHOST is already exported above) plus PGCONNECT_TIMEOUT,
-# so every psql call returns in ≤3 s instead of hanging on TCP fallback.
-# Re-discover the socket here in case step 6 ran without preflight (--update).
-if [[ -z "${PGHOST:-}" ]]; then
-  PG_SOCK="$(pg_socket_dir || echo '/var/run/postgresql')"
-  export PGHOST="$PG_SOCK"
-  export PGCONNECT_TIMEOUT=3
-fi
-info "Waiting for PostgreSQL to accept connections "
-for i in {1..20}; do
-  if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
-    echo; ok "PostgreSQL is up and accepting connections"; break
-  fi
-  wait_dot; sleep 1
-  [[ $i -eq 20 ]] && { echo; die "PostgreSQL did not become ready after 20 s."; }
-done
-
-# Now ensure Postgres is also listening on TCP/127.0.0.1 so the FastAPI app
-# (which uses psycopg2's TCP driver via DATABASE_URL) can connect.
-# Check by parsing postgresql.conf's listen_addresses setting.
-PG_CONF="$(pg_exec "psql -tAc 'SHOW config_file'" 2>/dev/null | tr -d '[:space:]')"
-info "postgresql.conf      : $PG_CONF"
-if [[ -n "$PG_CONF" && -f "$PG_CONF" ]]; then
-  LISTEN_NOW="$(pg_exec "psql -tAc 'SHOW listen_addresses'" 2>/dev/null | tr -d '[:space:]')"
-  if [[ "$LISTEN_NOW" != "*" && "$LISTEN_NOW" != *"localhost"* && "$LISTEN_NOW" != *"127.0.0.1"* ]]; then
-    info "listen_addresses = '$LISTEN_NOW' — enabling localhost…"
-    # Replace existing line or append
-    if grep -qE "^\s*#?\s*listen_addresses" "$PG_CONF"; then
-      sed -i "s|^\s*#\?\s*listen_addresses.*|listen_addresses = 'localhost'|" "$PG_CONF"
-    else
-      echo "listen_addresses = 'localhost'" >> "$PG_CONF"
-    fi
-    info "Restarting $PG_SVC to apply listen_addresses…"
-    systemctl restart "$PG_SVC"
-    # Wait again briefly for it to come back
-    for i in {1..15}; do
-      pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1 && break
-      sleep 1
-    done
-    ok "PostgreSQL now listens on localhost (TCP)"
-  else
-    ok "PostgreSQL already listens on TCP (listen_addresses='$LISTEN_NOW')"
-  fi
-fi
-
-# Role
-# Always pull the .env password and ALTER ROLE to match — this prevents the
-# "password in .env" ↔ "password the role was created with" desync that
-# happens after re-runs with regenerated passwords or partial failures.
+# Make sure DB_PASS is set before we build any URL (covers --update where STEP 5
+# left it from the existing .env, and a fresh provision where it was generated).
 if [[ -z "$DB_PASS" ]]; then
   DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
 fi
 
-if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" \
-    2>/dev/null | grep -q 1; then
-  pg_exec "psql -c \"CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\""
-  ok "Role '${DB_USER}' created"
-else
-  # Role exists — sync the password to what's in .env so the app/ETL can connect
-  pg_exec "psql -c \"ALTER ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\"" >/dev/null
-  ok "Role '${DB_USER}' exists — password synced to .env"
-fi
+if [[ "$DB_MODE" == "local" ]]; then
+  # ── LOCAL provisioning (legacy single-VM path — unchanged behaviour) ────────
+  # Everything here assumes a LOCAL server on this host: the systemd unit, the
+  # Unix socket, listen_addresses and pg_hba.conf edits. None of it applies to a
+  # remote managed instance, so the whole block is guarded by DB_MODE=local.
 
-# Persist the (possibly newly generated) password into .env using env_set
-# to avoid sed delimiter clashes with any character in DB_PASS.
-env_set "$QUIZ_DIR/.env" DATABASE_URL \
-  "postgresql://${DB_USER}:${DB_PASS}@localhost:5432/${DB_NAME}"
+  # Resolve unit name
+  PG_SVC="$(pg_service_name)" \
+    || die "No PostgreSQL systemd unit found. Ensure postgresql (or postgresql-14) is installed."
+  info "Service unit         : $PG_SVC"
 
-# Database
-if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" \
-    2>/dev/null | grep -q 1; then
-  pg_exec "psql -c \"CREATE DATABASE ${DB_NAME} OWNER ${DB_USER}\""
-  ok "Database '${DB_NAME}' created"
-else
-  ok "Database '${DB_NAME}' already exists"
-fi
-
-# Privileges
-pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER}\"" \
-  >/dev/null 2>&1
-ok "Privileges granted to '${DB_USER}'"
-
-# pg_hba.conf
-PG_HBA="$(pg_exec "psql -tAc 'SHOW hba_file'" 2>/dev/null | tr -d '[:space:]')"
-info "pg_hba.conf          : $PG_HBA"
-
-if [[ -n "$PG_HBA" && -f "$PG_HBA" ]]; then
-  HBA_CHANGED=false
-  if ! grep -qE "^local\s+${DB_NAME}\s+${DB_USER}" "$PG_HBA"; then
-    sed -i "/^local\s\+all/i local   ${DB_NAME}   ${DB_USER}   md5" "$PG_HBA"
-    HBA_CHANGED=true; info "Added local md5 rule"
+  # Ensure running
+  if ! systemctl is-active --quiet "$PG_SVC"; then
+    info "Starting $PG_SVC …"
+    systemctl start "$PG_SVC" \
+      || die "Could not start $PG_SVC. Run: systemctl status $PG_SVC"
   fi
-  if ! grep -qE "^host\s+${DB_NAME}\s+${DB_USER}\s+127\.0\.0\.1" "$PG_HBA"; then
-    sed -i "/^host\s\+all/i host   ${DB_NAME}   ${DB_USER}   127.0.0.1/32   md5" "$PG_HBA"
-    HBA_CHANGED=true; info "Added host md5 rule (127.0.0.1)"
+
+  # Wait for socket readiness. Uses the explicit socket path discovered in
+  # pre-flight (PGHOST is already exported above) plus PGCONNECT_TIMEOUT,
+  # so every psql call returns in ≤3 s instead of hanging on TCP fallback.
+  # Re-discover the socket here in case step 6 ran without preflight (--update).
+  if [[ -z "${PGHOST:-}" ]]; then
+    PG_SOCK="$(pg_socket_dir || echo '/var/run/postgresql')"
+    export PGHOST="$PG_SOCK"
+    export PGCONNECT_TIMEOUT=3
   fi
-  if $HBA_CHANGED; then
-    systemctl reload "$PG_SVC" 2>/dev/null || systemctl restart "$PG_SVC" || true
-    ok "pg_hba.conf updated and PostgreSQL reloaded"
+  info "Waiting for PostgreSQL to accept connections "
+  for i in {1..20}; do
+    if pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1; then
+      echo; ok "PostgreSQL is up and accepting connections"; break
+    fi
+    wait_dot; sleep 1
+    [[ $i -eq 20 ]] && { echo; die "PostgreSQL did not become ready after 20 s."; }
+  done
+
+  # Now ensure Postgres is also listening on TCP/127.0.0.1 so the FastAPI app
+  # (which uses psycopg2's TCP driver via DATABASE_URL) can connect.
+  # Check by parsing postgresql.conf's listen_addresses setting.
+  PG_CONF="$(pg_exec "psql -tAc 'SHOW config_file'" 2>/dev/null | tr -d '[:space:]')"
+  info "postgresql.conf      : $PG_CONF"
+  if [[ -n "$PG_CONF" && -f "$PG_CONF" ]]; then
+    LISTEN_NOW="$(pg_exec "psql -tAc 'SHOW listen_addresses'" 2>/dev/null | tr -d '[:space:]')"
+    if [[ "$LISTEN_NOW" != "*" && "$LISTEN_NOW" != *"localhost"* && "$LISTEN_NOW" != *"127.0.0.1"* ]]; then
+      info "listen_addresses = '$LISTEN_NOW' — enabling localhost…"
+      # Replace existing line or append
+      if grep -qE "^\s*#?\s*listen_addresses" "$PG_CONF"; then
+        sed -i "s|^\s*#\?\s*listen_addresses.*|listen_addresses = 'localhost'|" "$PG_CONF"
+      else
+        echo "listen_addresses = 'localhost'" >> "$PG_CONF"
+      fi
+      info "Restarting $PG_SVC to apply listen_addresses…"
+      systemctl restart "$PG_SVC"
+      # Wait again briefly for it to come back
+      for i in {1..15}; do
+        pg_exec "psql -c 'SELECT 1'" >/dev/null 2>&1 && break
+        sleep 1
+      done
+      ok "PostgreSQL now listens on localhost (TCP)"
+    else
+      ok "PostgreSQL already listens on TCP (listen_addresses='$LISTEN_NOW')"
+    fi
+  fi
+
+  # Role
+  # Always pull the .env password and ALTER ROLE to match — this prevents the
+  # "password in .env" ↔ "password the role was created with" desync that
+  # happens after re-runs with regenerated passwords or partial failures.
+  if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" \
+      2>/dev/null | grep -q 1; then
+    pg_exec "psql -c \"CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\""
+    ok "Role '${DB_USER}' created"
   else
-    ok "pg_hba.conf already has correct entries"
+    # Role exists — sync the password to what's in .env so the app/ETL can connect
+    pg_exec "psql -c \"ALTER ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\"" >/dev/null
+    ok "Role '${DB_USER}' exists — password synced to .env"
+  fi
+
+  # Persist the (possibly newly generated) password into .env using env_set
+  # to avoid sed delimiter clashes with any character in DB_PASS.
+  env_set "$QUIZ_DIR/.env" DATABASE_URL "$(build_database_url "$DB_USER" "$DB_PASS")"
+
+  # Database
+  if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" \
+      2>/dev/null | grep -q 1; then
+    pg_exec "psql -c \"CREATE DATABASE ${DB_NAME} OWNER ${DB_USER}\""
+    ok "Database '${DB_NAME}' created"
+  else
+    ok "Database '${DB_NAME}' already exists"
+  fi
+
+  # Privileges
+  pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER}\"" \
+    >/dev/null 2>&1
+  ok "Privileges granted to '${DB_USER}'"
+
+  # pg_hba.conf
+  PG_HBA="$(pg_exec "psql -tAc 'SHOW hba_file'" 2>/dev/null | tr -d '[:space:]')"
+  info "pg_hba.conf          : $PG_HBA"
+
+  if [[ -n "$PG_HBA" && -f "$PG_HBA" ]]; then
+    HBA_CHANGED=false
+    if ! grep -qE "^local\s+${DB_NAME}\s+${DB_USER}" "$PG_HBA"; then
+      sed -i "/^local\s\+all/i local   ${DB_NAME}   ${DB_USER}   md5" "$PG_HBA"
+      HBA_CHANGED=true; info "Added local md5 rule"
+    fi
+    if ! grep -qE "^host\s+${DB_NAME}\s+${DB_USER}\s+127\.0\.0\.1" "$PG_HBA"; then
+      sed -i "/^host\s\+all/i host   ${DB_NAME}   ${DB_USER}   127.0.0.1/32   md5" "$PG_HBA"
+      HBA_CHANGED=true; info "Added host md5 rule (127.0.0.1)"
+    fi
+    if $HBA_CHANGED; then
+      systemctl reload "$PG_SVC" 2>/dev/null || systemctl restart "$PG_SVC" || true
+      ok "pg_hba.conf updated and PostgreSQL reloaded"
+    else
+      ok "pg_hba.conf already has correct entries"
+    fi
+  fi
+
+  # Schema (DDL)
+  # Apply as the postgres superuser via pg_exec (auth path we already verified).
+  # This is more robust than connecting as codecoder over TCP — no password
+  # mismatch is possible, and pgcrypto/hstore extensions require superuser.
+  info "Applying deploy_schema.sql …"
+  SCHEMA_TMP="/tmp/deploy_schema_$$.sql"
+  # Copy schema to a path the postgres user can read (runuser drops privs)
+  cp "$QUIZ_DIR/deploy_schema.sql" "$SCHEMA_TMP"
+  chmod 644 "$SCHEMA_TMP"
+  pg_exec "psql -d ${DB_NAME} -f ${SCHEMA_TMP}" \
+    2>&1 | grep -v '^$' | while read -r line; do info "  pg: $line"; done
+  rm -f "$SCHEMA_TMP"
+
+  # Grant table privileges to the application role so the app can read/write
+  # everything created by the postgres superuser.
+  pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO ${DB_USER}\"" \
+    >/dev/null 2>&1
+  pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO ${DB_USER}\"" \
+    >/dev/null 2>&1
+  pg_exec "psql -d ${DB_NAME} -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${DB_USER}\"" \
+    >/dev/null 2>&1
+  ok "Schema applied (tables/indexes created or already exist)"
+  ok "Table & sequence privileges granted to '${DB_USER}'"
+
+  # Verify the app role can connect over TCP using the password in .env.
+  # This is the same connection the ETL and FastAPI app will use, so catching
+  # auth failures here is much clearer than failing mid-migration.
+  info "Verifying app role can connect over TCP with .env password …"
+  if PGPASSWORD="$DB_PASS" PGCONNECT_TIMEOUT=3 \
+     timeout 5 psql -U "$DB_USER" -d "$DB_NAME" -h 127.0.0.1 -c 'SELECT 1' >/dev/null 2>&1; then
+    ok "App role '${DB_USER}' authenticates over TCP"
+  else
+    warn "App role TCP auth failed. Capturing error:"
+    PGPASSWORD="$DB_PASS" PGCONNECT_TIMEOUT=3 \
+      timeout 5 psql -U "$DB_USER" -d "$DB_NAME" -h 127.0.0.1 -c 'SELECT 1' 2>&1 \
+      | head -5 | while read -r l; do warn "  $l"; done
+    die "App role cannot connect. Check pg_hba.conf has an md5 host rule for ${DB_USER}."
+  fi
+
+else
+  # ── EXTERNAL provisioning (remote shared Postgres) ──────────────────────────
+  # No local server: no systemd unit, no socket, no listen_addresses, no
+  # pg_hba.conf edits — those don't exist on a managed remote instance. The DBA
+  # owns server-level config + TLS. We either (a) provision db/roles/extensions
+  # remotely when a superuser password is available, or (b) assume the DBA did.
+  # In BOTH cases the schema is owned by Alembic (run below), NOT by
+  # deploy_schema.sql + create_all, because the runtime app role has DML only.
+  info "External Postgres    : ${DB_HOST}:${DB_PORT}/${DB_NAME}  (TLS sslmode=${DB_SSLMODE})"
+
+  # Persist the remote DATABASE_URL into .env (used by Alembic + seeds + the app).
+  env_set "$QUIZ_DIR/.env" DATABASE_URL "$(build_database_url "$DB_USER" "$DB_PASS")"
+  ok "DATABASE_URL         → $(db_url_display)"
+
+  if [[ "$DB_PROVISION" == "yes" ]]; then
+    # Remote provisioning as the superuser (reachability verified in preflight).
+    # CREATE DATABASE cannot run inside a transaction block and must target the
+    # maintenance DB, so each statement is its own psql call.
+    info "Provisioning remote database + login roles + extensions …"
+
+    # App login role (DML-only; schema privileges are granted post-Alembic).
+    if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${DB_USER}'\"" \
+        2>/dev/null | grep -q 1; then
+      pg_exec "psql -c \"CREATE ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\""
+      ok "Role '${DB_USER}' created (app, login)"
+    else
+      pg_exec "psql -c \"ALTER ROLE ${DB_USER} WITH LOGIN PASSWORD '${DB_PASS}'\"" >/dev/null
+      ok "Role '${DB_USER}' exists — password synced to .env"
+    fi
+
+    # Database, owned by the app role.
+    if ! pg_exec "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='${DB_NAME}'\"" \
+        2>/dev/null | grep -q 1; then
+      pg_exec "psql -c \"CREATE DATABASE ${DB_NAME} OWNER ${DB_USER}\""
+      ok "Database '${DB_NAME}' created on remote"
+    else
+      ok "Database '${DB_NAME}' already exists on remote"
+    fi
+    pg_exec "psql -c \"GRANT ALL PRIVILEGES ON DATABASE ${DB_NAME} TO ${DB_USER}\"" \
+      >/dev/null 2>&1
+    ok "Database-level privileges granted to '${DB_USER}'"
+
+    # Extensions — must be created by a superuser INSIDE the target database.
+    # The app's init_db() no longer creates these (the runtime role lacks the
+    # privilege on a managed instance); we do it here while we hold superuser.
+    pg_exec "psql -d ${DB_NAME} -c \"CREATE EXTENSION IF NOT EXISTS pgcrypto\"" \
+      >/dev/null 2>&1 && ok "Extension pgcrypto present in '${DB_NAME}'" \
+      || warn "Could not create pgcrypto in '${DB_NAME}' — ask the DBA to add it"
+    pg_exec "psql -d ${DB_NAME} -c \"CREATE EXTENSION IF NOT EXISTS hstore\"" \
+      >/dev/null 2>&1 && ok "Extension hstore present in '${DB_NAME}'" \
+      || warn "Could not create hstore in '${DB_NAME}' — ask the DBA to add it"
+  else
+    # DBA pre-created everything. We do NOT touch roles/db/extensions; we only
+    # rely on the DATABASE_URL written above. Alembic (run below) needs a
+    # privileged migration credential — see the note printed in the banner.
+    warn "PROVISION_DB=off — not creating remote db/roles/extensions (DBA owns them)."
+    warn "Alembic below needs a privileged migration credential for DDL + the 0008"
+    warn "directus-role GRANTs. If DATABASE_URL's role is DML-only, run migrations"
+    warn "separately with a migration role, or set PROVISION_DB=true + a superuser pw."
   fi
 fi
 
-# Schema (DDL)
-# Apply as the postgres superuser via pg_exec (auth path we already verified).
-# This is more robust than connecting as codecoder over TCP — no password
-# mismatch is possible, and pgcrypto/hstore extensions require superuser.
-info "Applying deploy_schema.sql …"
-SCHEMA_TMP="/tmp/deploy_schema_$$.sql"
-# Copy schema to a path the postgres user can read (runuser drops privs)
-cp "$QUIZ_DIR/deploy_schema.sql" "$SCHEMA_TMP"
-chmod 644 "$SCHEMA_TMP"
-pg_exec "psql -d ${DB_NAME} -f ${SCHEMA_TMP}" \
-  2>&1 | grep -v '^$' | while read -r line; do info "  pg: $line"; done
-rm -f "$SCHEMA_TMP"
-
-# Grant table privileges to the application role so the app can read/write
-# everything created by the postgres superuser.
-pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL ON ALL TABLES IN SCHEMA public TO ${DB_USER}\"" \
-  >/dev/null 2>&1
-pg_exec "psql -d ${DB_NAME} -c \"GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO ${DB_USER}\"" \
-  >/dev/null 2>&1
-pg_exec "psql -d ${DB_NAME} -c \"ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO ${DB_USER}\"" \
-  >/dev/null 2>&1
-ok "Schema applied (tables/indexes created or already exist)"
-ok "Table & sequence privileges granted to '${DB_USER}'"
-
-# Verify the app role can connect over TCP using the password in .env.
-# This is the same connection the ETL and FastAPI app will use, so catching
-# auth failures here is much clearer than failing mid-migration.
-info "Verifying app role can connect over TCP with .env password …"
-if PGPASSWORD="$DB_PASS" PGCONNECT_TIMEOUT=3 \
-   timeout 5 psql -U "$DB_USER" -d "$DB_NAME" -h 127.0.0.1 -c 'SELECT 1' >/dev/null 2>&1; then
-  ok "App role '${DB_USER}' authenticates over TCP"
-else
-  warn "App role TCP auth failed. Capturing error:"
-  PGPASSWORD="$DB_PASS" PGCONNECT_TIMEOUT=3 \
-    timeout 5 psql -U "$DB_USER" -d "$DB_NAME" -h 127.0.0.1 -c 'SELECT 1' 2>&1 \
-    | head -5 | while read -r l; do warn "  $l"; done
-  die "App role cannot connect. Check pg_hba.conf has an md5 host rule for ${DB_USER}."
-fi
-
-# ETL seed
+# Schema + seeds
 # Note: we do NOT `source .env` here. app/config.py uses python-dotenv to
 # load it directly, which correctly handles values with spaces or special
-# characters like "FROM_NAME=DEPT® Academy" that break bash source.
-info "Running ETL migration: question bank + feed + course chapters + framework …"
+# characters like "FROM_NAME=DEPT® Academy" that break bash source. The schema
+# migration reads DATABASE_URL from .env (local loopback or remote+TLS), so it
+# targets whichever instance STEP 6 pointed .env at — no change needed here.
+#
+# DIRECTUS_DB_ROLE is exported into the migration environment so the 0008
+# migration creates/grants the PER-ENV Directus role (prod=directus_app,
+# staging=directus_app_stg, dev=directus_app_dev) — one credential cannot reach
+# two databases, preserving dev/prod isolation on the shared instance.
+if [[ "$DB_MODE" == "external" ]]; then
+  info "Running schema migration + seeds against remote ${DB_HOST}:${DB_PORT}/${DB_NAME} …"
+else
+  info "Running ETL migration: question bank + feed + course chapters + framework …"
+fi
 cd "$QUIZ_DIR"
+DIRECTUS_DB_ROLE="$DIRECTUS_DB_ROLE" \
 "$QUIZ_DIR/.venv/bin/python" -m scripts.migrate_to_postgres \
   2>&1 | while read -r line; do info "  etl: $line"; done
-ok "ETL migration complete"
+ok "Schema migration + seeds complete"
 
 # ── STEP 7 · systemd service ─────────────────────────────────────────────────
 step "systemd service  ($SERVICE_NAME)"
+
+# Ordering dependency for the units. In LOCAL mode the app must start after the
+# co-resident Postgres unit. In EXTERNAL mode the database is remote, so there is
+# no local PG unit to order against — depend on the network being up instead.
+if [[ "$DB_MODE" == "local" ]]; then
+  PG_AFTER="${PG_SVC}.service"
+  PG_WANTS="${PG_SVC}.service"
+else
+  PG_AFTER="network-online.target"
+  PG_WANTS="network-online.target"
+fi
 
 info "Writing /etc/systemd/system/${SERVICE_NAME}.service …"
 cat > "/etc/systemd/system/${SERVICE_NAME}.service" <<EOF
 [Unit]
 Description=DEPT CCA Quiz (FastAPI / uvicorn)
-After=network.target ${PG_SVC}.service
+After=network.target ${PG_AFTER}
 
 [Service]
 Type=exec
@@ -973,10 +1230,11 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
       esac
 
       # ── (c) Directus DB role password ───────────────────────────────────────
-      # The role itself is created by Alembic 0008 (slice 4a-1). Here we only set
-      # its password (idempotent ALTER ROLE) and persist it into cms/.env, the
-      # same pattern STEP 6 uses for the app role. If 0008 has not run, the role
-      # is absent — warn and continue so the rest of the as-code install lands.
+      # CMS_DB_USER is the PER-ENV Directus role (DIRECTUS_DB_ROLE): prod
+      # directus_app, staging directus_app_stg, dev directus_app_dev. The role +
+      # its per-database GRANTs are created by Alembic 0008 (slice 4a-1). Here we
+      # only set its password (idempotent ALTER ROLE) and persist it into
+      # cms/.env. If 0008 has not run, the role is absent — warn and continue.
       if [[ -z "$CMS_DB_PASS" ]]; then
         if [[ -f "$CMS_DIR/.env" ]] && grep -q '^DB_PASSWORD=' "$CMS_DIR/.env"; then
           CMS_DB_PASS="$(grep '^DB_PASSWORD=' "$CMS_DIR/.env" | head -1 | cut -d= -f2-)"
@@ -986,13 +1244,21 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
           ok "Generated Directus DB password"
         fi
       fi
-      if pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${CMS_DB_USER}'\"" \
-          2>/dev/null | grep -q 1; then
-        pg_exec "psql -c \"ALTER ROLE ${CMS_DB_USER} WITH LOGIN PASSWORD '${CMS_DB_PASS}'\"" >/dev/null
-        ok "Role '${CMS_DB_USER}' password synced"
+      # Setting the role password needs superuser/role-admin. In local mode (or
+      # external mode WITH provisioning) we have it; in external+no-provision the
+      # DBA owns the role's password, so we skip the ALTER and just write cms/.env.
+      if [[ "$DB_MODE" == "local" || "$DB_PROVISION" == "yes" ]]; then
+        if pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${CMS_DB_USER}'\"" \
+            2>/dev/null | grep -q 1; then
+          pg_exec "psql -c \"ALTER ROLE ${CMS_DB_USER} WITH LOGIN PASSWORD '${CMS_DB_PASS}'\"" >/dev/null
+          ok "Role '${CMS_DB_USER}' password synced"
+        else
+          warn "Role '${CMS_DB_USER}' not found — run Alembic 0008 (slice 4a-1) first."
+          warn "  cd $QUIZ_DIR && .venv/bin/alembic upgrade head"
+        fi
       else
-        warn "Role '${CMS_DB_USER}' not found — run Alembic 0008 (slice 4a-1) first."
-        warn "  cd $QUIZ_DIR && .venv/bin/alembic upgrade head"
+        warn "External + PROVISION_DB=off: not altering '${CMS_DB_USER}' (DBA owns its password)."
+        warn "  Ensure cms/.env DB_PASSWORD matches the password the DBA set for '${CMS_DB_USER}'."
       fi
 
       # ── (d) cms/.env ─────────────────────────────────────────────────────────
@@ -1020,12 +1286,29 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
         ok "cms/.env already exists — leaving secrets untouched"
       fi
 
-      # Always (re)write the connection + URL keys so a DB password rotation or a
-      # DOMAIN change is picked up. Directus connects over TCP to the same
-      # Postgres as the app (matches DATABASE_URL host/port).
+      # Always (re)write the connection + URL keys so a DB password rotation, a
+      # DOMAIN change, or a DB-mode change is picked up. Directus connects to the
+      # SAME Postgres as the app and at the SAME host/port — loopback in local
+      # mode, the remote host over TLS in external mode (matches DATABASE_URL).
       env_set "$CMS_DIR/.env" DB_CLIENT   "pg"
-      env_set "$CMS_DIR/.env" DB_HOST     "127.0.0.1"
-      env_set "$CMS_DIR/.env" DB_PORT     "5432"
+      if [[ "$DB_MODE" == "external" ]]; then
+        env_set "$CMS_DIR/.env" DB_HOST   "$DB_HOST"
+        env_set "$CMS_DIR/.env" DB_PORT   "$DB_PORT"
+        # TLS to the remote instance (matches the app's sslmode). For
+        # sslmode=require WITHOUT a provisioned CA, node-postgres cannot verify
+        # the chain, so reject-unauthorized must be false (documented in
+        # cms/.env.example). For verify-full, set DB_SSL__CA + reject=true by hand.
+        env_set "$CMS_DIR/.env" DB_SSL    "true"
+        if [[ "$DB_SSLMODE" == "verify-full" || "$DB_SSLMODE" == "verify-ca" ]]; then
+          info "Directus DB_SSL=true (sslmode=${DB_SSLMODE}) — set DB_SSL__CA + DB_SSL__REJECT_UNAUTHORIZED=true in cms/.env to validate the server cert."
+        else
+          env_set "$CMS_DIR/.env" DB_SSL__REJECT_UNAUTHORIZED "false"
+          info "Directus DB_SSL=true with DB_SSL__REJECT_UNAUTHORIZED=false (sslmode=${DB_SSLMODE}: encrypt without CA verification)."
+        fi
+      else
+        env_set "$CMS_DIR/.env" DB_HOST   "127.0.0.1"
+        env_set "$CMS_DIR/.env" DB_PORT   "5432"
+      fi
       env_set "$CMS_DIR/.env" DB_DATABASE "$DB_NAME"
       env_set "$CMS_DIR/.env" DB_USER     "$CMS_DB_USER"
       env_set "$CMS_DIR/.env" DB_PASSWORD "$CMS_DB_PASS"
@@ -1138,8 +1421,8 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
       cat > "/etc/systemd/system/${CMS_SERVICE_NAME}.service" <<EOF
 [Unit]
 Description=DEPT CCA Directus CMS (editorial write plane over Postgres)
-After=network.target ${PG_SVC}.service ${SERVICE_NAME}.service
-Wants=${PG_SVC}.service
+After=network.target ${PG_AFTER} ${SERVICE_NAME}.service
+Wants=${PG_WANTS}
 
 [Service]
 Type=exec
@@ -1570,7 +1853,18 @@ fi
 # Both are GUARDED by existence checks: 3-ops runs in parallel and the files may
 # not be present in an older bundle. Missing source = skip with a warning, never
 # fatal. Every action is idempotent — safe to re-run.
-if ! $UPDATE_ONLY; then
+#
+# EXTERNAL mode: both artefacts are LOCAL-server operations — editing the live
+# postgresql.conf's conf.d and running vacuumlo as the local 'postgres' OS user.
+# On a remote managed instance neither exists on this VM; server tuning + the LO
+# sweep belong on the DB server and are owned by the DBA. So the whole step is
+# skipped (and not counted) in external mode.
+if [[ "$DB_MODE" == "external" ]]; then
+  TOTAL_STEPS=$((TOTAL_STEPS - 1))
+  if ! $UPDATE_ONLY; then
+    info "Postgres tuning + LO sweep: SKIPPED in external mode (remote DB — DBA owns server tuning + vacuumlo)."
+  fi
+elif ! $UPDATE_ONLY; then
   step "Postgres tuning + LO sweep"
 
   PG_TUNING_SRC="$SRC_DIR/infra/postgres/cca-tuning.conf"
@@ -1698,7 +1992,11 @@ printf '%b│%b  Web logs     : tail -f %s/%s_error.log\n'          "$C_CYAN" "$
 printf '%b│%b  Restart app  : systemctl restart %s\n'             "$C_CYAN" "$C_RESET" "$SERVICE_NAME"
 printf '%b│%b  Reload web   : systemctl reload %s\n'              "$C_CYAN" "$C_RESET" "$APACHE_SERVICE"
 printf '%b│%b  Update code  : sudo %s/deploy.sh --update\n'       "$C_CYAN" "$C_RESET" "$APP_HOME"
+if [[ "$DB_MODE" == "external" ]]; then
+printf '%b│%b  DB connect   : PGSSLMODE=%s psql -U %s -d %s -h %s -p %s\n' "$C_CYAN" "$C_RESET" "$DB_SSLMODE" "$DB_USER" "$DB_NAME" "$DB_HOST" "$DB_PORT"
+else
 printf '%b│%b  DB connect   : psql -U %s -d %s -h 127.0.0.1\n'   "$C_CYAN" "$C_RESET" "$DB_USER" "$DB_NAME"
+fi
 [[ "$DEPLOY_DIRECTUS" == "true" ]] && {
 printf '%b│%b  CMS status   : systemctl status %s\n'              "$C_CYAN" "$C_RESET" "$CMS_SERVICE_NAME"
 printf '%b│%b  CMS logs     : journalctl -u %s -f\n'              "$C_CYAN" "$C_RESET" "$CMS_SERVICE_NAME"
