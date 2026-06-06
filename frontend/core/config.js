@@ -53,14 +53,12 @@ export const SECTION_FILES = [
   'ai-bmad.json', 'ai-gov.json'
 ];
 
-// CONTENT_BASE — base path for frozen content pages (FAQs, Checklist, Runbooks).
-// Apache aliases /anatomy/ → content/frozen/ in production (same origin).
-// In local dev (port 8080, Python static server from repo root) there is no
-// /anatomy/ alias — the files sit at /content/frozen/ instead.
-export const CONTENT_BASE =
-  (typeof location !== 'undefined' && location.port === '8080')
-    ? '/content/frozen'
-    : '/anatomy';
+// CONTENT_BASE — base path for resource pages (FAQs, Checklist, Runbooks).
+// /resources/ is the canonical URL in both local dev and production.
+// Local dev: Python static server on :8080 serves /resources/ via a symlink
+//   at the repo root: resources -> content/frozen
+// Production: Apache alias  Alias /resources/ → content/frozen/
+export const CONTENT_BASE = '/resources';
 
 // localStorage keys. One file owns these so renames don't drop a user's
 // theme on the floor.
