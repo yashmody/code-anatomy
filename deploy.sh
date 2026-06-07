@@ -239,6 +239,95 @@ die()  { printf '%bERR%b %s\n'   "$C_RED"    "$C_RESET" "$*" >&2; exit 1; }
 # wait_dot — prints a dot on the same line while waiting
 wait_dot() { printf '.'; }
 
+# ── Deploy checkpoint + rollback safety net ─────────────────────────────────
+# Records the state we are deploying FROM/TO so a failed run is recoverable.
+# write_checkpoint() runs ONCE, right before the first destructive step (bundle
+# sync / migrations), and arms an EXIT trap. On any non-zero exit the trap
+# prints a ROLLBACK HINT block: the last-known-good git SHA to check out and the
+# Alembic revision to downgrade to. We deliberately do NOT auto-roll-back —
+# restarting services or downgrading a half-applied migration blind can worsen a
+# partial failure. The operator gets a precise, copy-pasteable recovery path.
+CHECKPOINT_FILE=""
+PREV_DEPLOY_SHA=""
+BUNDLE_SHA=""
+PRE_MIGRATION_REV=""
+CCA_DEPLOY_OK=0
+
+write_checkpoint() {
+  local ckdir
+  ckdir="$(dirname "${DEPLOY_LOG:-/var/log/cca/x}")"
+  mkdir -p "$ckdir" 2>/dev/null || return 0
+
+  # SHA of the bundle we are deploying (SRC_DIR is the git checkout).
+  BUNDLE_SHA="$(git -C "$SRC_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+  # Last successful deploy's SHA — read from the most recent prior checkpoint
+  # whose status is "success", so a failed run rolls back to code that actually
+  # ran (NOT to a previous failed attempt's SHA, which never deployed cleanly).
+  local f
+  for f in $(ls -1t "$ckdir"/checkpoint-*.json 2>/dev/null || true); do
+    if grep -q '"status": "success"' "$f" 2>/dev/null; then
+      PREV_DEPLOY_SHA="$(grep -oE '"deployed_sha"[: ]+"[^"]*"' "$f" 2>/dev/null \
+        | head -1 | sed -E 's/.*"([^"]*)"$/\1/')"
+      break
+    fi
+  done
+  [[ -z "$PREV_DEPLOY_SHA" ]] && PREV_DEPLOY_SHA="unknown"
+
+  CHECKPOINT_FILE="$ckdir/checkpoint-$(date +%Y%m%d-%H%M%S).json"
+  cat > "$CHECKPOINT_FILE" <<JSON
+{
+  "started_at": "$(date -Iseconds 2>/dev/null || date)",
+  "status": "in_progress",
+  "deployed_sha": "$BUNDLE_SHA",
+  "previous_sha": "$PREV_DEPLOY_SHA",
+  "previous_alembic_rev": "",
+  "app_home": "$APP_HOME",
+  "db_mode": "${DB_MODE:-local}",
+  "update_only": ${UPDATE_ONLY:-false}
+}
+JSON
+  info "Checkpoint → $CHECKPOINT_FILE  (deploying ${BUNDLE_SHA}, last good ${PREV_DEPLOY_SHA})"
+  trap _on_deploy_exit EXIT
+}
+
+record_pre_migration_rev() {
+  # Best-effort: capture the live Alembic revision BEFORE we upgrade, so the
+  # rollback hint can name the exact downgrade target. Safe to fail (a fresh
+  # install has no prior revision).
+  PRE_MIGRATION_REV="$( cd "$QUIZ_DIR" 2>/dev/null \
+    && "$QUIZ_DIR/.venv/bin/alembic" current 2>/dev/null \
+    | grep -oE '^[0-9a-f]+' | head -1 || true )"
+  [[ -z "$PRE_MIGRATION_REV" ]] && PRE_MIGRATION_REV="(none — fresh install)"
+  if [[ -n "$CHECKPOINT_FILE" && -f "$CHECKPOINT_FILE" ]]; then
+    sed -i "s|\"previous_alembic_rev\": \"\"|\"previous_alembic_rev\": \"${PRE_MIGRATION_REV}\"|" \
+      "$CHECKPOINT_FILE" 2>/dev/null || true
+  fi
+}
+
+_on_deploy_exit() {
+  local rc=$?
+  [[ "$CCA_DEPLOY_OK" == "1" || $rc -eq 0 ]] && return 0
+  [[ -z "$CHECKPOINT_FILE" ]] && return 0
+  sed -i 's|"status": "in_progress"|"status": "failed"|' "$CHECKPOINT_FILE" 2>/dev/null || true
+
+  local qdir="${QUIZ_DIR:-$APP_HOME/backend}"
+  printf '\n%b' "${C_RED:-}"
+  printf '╔══════════════════════════════════════════════════════════╗\n'
+  printf '║   ✗  DEPLOY FAILED (exit %-3s) — ROLLBACK HINT             ║\n' "$rc"
+  printf '╚══════════════════════════════════════════════════════════╝%b\n' "${C_RESET:-}"
+  printf '  Checkpoint : %s\n' "$CHECKPOINT_FILE"
+  printf '  Full log   : %s\n' "${DEPLOY_LOG:-<not captured>}"
+  printf '\n  The VM may be PARTIALLY updated. To recover:\n'
+  printf '   1. Roll code back to the last good build:\n'
+  printf '        git -C %s checkout %s\n' "$SRC_DIR" "$PREV_DEPLOY_SHA"
+  printf '   2. If migrations ran, downgrade the DB to the pre-deploy revision:\n'
+  printf '        cd %s && .venv/bin/alembic downgrade %s\n' "$qdir" "${PRE_MIGRATION_REV:-<prior-rev>}"
+  printf '   3. Re-run the deploy from the rolled-back tree:\n'
+  printf '        sudo %s/deploy.sh%s\n' "$SRC_DIR" "$( ${UPDATE_ONLY:-false} && echo ' --update' || true )"
+  printf '   4. Verify:  systemctl status %s  &&  curl -fsS localhost:%s/readyz\n\n' \
+    "$SERVICE_NAME" "${QUIZ_PORT:-8000}"
+}
+
 [[ $EUID -eq 0 ]] || die "Run as root:  sudo ./deploy.sh"
 
 UPDATE_ONLY=false
@@ -726,6 +815,10 @@ else
 fi
 
 # ── STEP 3 · Sync bundle ─────────────────────────────────────────────────────
+# Last safe moment before we mutate the VM (rsync --delete + migrations follow).
+# Record a recovery checkpoint and arm the rollback-hint trap.
+write_checkpoint
+
 step "Sync bundle → $APP_HOME"
 
 # Guard: refuse to ship frontend JavaScript that does not parse. A single
@@ -1162,6 +1255,9 @@ if [[ "$DB_MODE" == "external" ]]; then
 else
   info "Running ETL migration: question bank + feed + course chapters + framework …"
 fi
+# Capture the pre-upgrade Alembic revision so the rollback hint can name the
+# exact downgrade target if the migration below fails.
+record_pre_migration_rev
 cd "$QUIZ_DIR"
 DIRECTUS_DB_ROLE="$DIRECTUS_DB_ROLE" \
 "$QUIZ_DIR/.venv/bin/python" -m scripts.migrate_to_postgres \
@@ -2077,6 +2173,27 @@ EOF
   fi
 fi
 
+# ── Log rotation for /var/log/cca (deploy + checkpoint logs) ─────────────────
+# deploy.sh writes a timestamped log and a JSON checkpoint per run under
+# /var/log/cca; without rotation that directory grows without bound. Install a
+# logrotate policy so old runs are compressed and pruned (30-day retention).
+# Runs in EVERY mode (local/external/update) — these are local-VM artefacts
+# regardless of where Postgres lives, so this sits OUTSIDE the external-mode
+# STEP 11 skip above. Idempotent; guarded on source + logrotate availability.
+LOGROTATE_SRC="$SRC_DIR/infra/logrotate/cca"
+if [[ -f "$LOGROTATE_SRC" && -d /etc/logrotate.d ]]; then
+  install -m 0644 "$LOGROTATE_SRC" /etc/logrotate.d/cca
+  ok "Log rotation installed → /etc/logrotate.d/cca (deploy logs: daily, 30-day retention)"
+  if command -v logrotate &>/dev/null; then
+    logrotate --debug /etc/logrotate.d/cca >/dev/null 2>&1 \
+      || warn "logrotate config check reported an issue — verify /etc/logrotate.d/cca by hand"
+  fi
+elif [[ ! -f "$LOGROTATE_SRC" ]]; then
+  warn "infra/logrotate/cca absent in bundle — skipping log-rotation install"
+else
+  warn "/etc/logrotate.d not present — install logrotate, then copy infra/logrotate/cca by hand"
+fi
+
 # ── Summary ──────────────────────────────────────────────────────────────────
 ELAPSED=$(( SECONDS - DEPLOY_START ))
 PROTO="https"; $TLS_AVAILABLE || PROTO="http"
@@ -2137,4 +2254,11 @@ if ! $TLS_AVAILABLE; then
   warn "TLS not configured — running on HTTP."
   warn "Get a cert:  sudo certbot --apache -d ${DOMAIN}"
   warn "Then set CERT_FILE/KEY_FILE and re-run ./deploy.sh"
+fi
+
+# Deploy reached the end cleanly — disarm the rollback hint and mark the
+# checkpoint good so the next run knows this SHA was the last known good.
+CCA_DEPLOY_OK=1
+if [[ -n "$CHECKPOINT_FILE" && -f "$CHECKPOINT_FILE" ]]; then
+  sed -i 's|"status": "in_progress"|"status": "success"|' "$CHECKPOINT_FILE" 2>/dev/null || true
 fi

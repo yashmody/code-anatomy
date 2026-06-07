@@ -23,6 +23,7 @@ keep verifying, the buildless SPA keeps fetching the same paths):
              /api/runbooks/upload (POST xlsx), /api/runbooks/json (POST),
              /api/runbooks/{slug} (DELETE)
 """
+import shutil
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, Request
@@ -126,6 +127,41 @@ async def readyz():
             ready = False
     else:
         checks["cache"] = "skip (memory backend)"
+
+    # Disk space — warn (not fail) on low free space so the probe doesn't
+    # flap under transient load; an operator should be paged before it's "ok".
+    try:
+        usage = shutil.disk_usage(config.settings.log_dir)
+        free_ratio = usage.free / usage.total
+        free_gb = usage.free / (1024**3)
+        if free_gb < 1 or free_ratio < 0.10:
+            checks["disk"] = f"warn: {free_gb:.1f}GB free ({free_ratio:.0%})"
+        else:
+            checks["disk"] = f"ok: {free_gb:.1f}GB free ({free_ratio:.0%})"
+    except OSError as exc:
+        checks["disk"] = f"error: {exc.__class__.__name__}"
+
+    # DB pool saturation — warn when checked-out connections approach the
+    # configured ceiling. Production uses QueuePool, whose checkedout() is the
+    # live leased count; the ceiling is db_pool_size + db_max_overflow (the same
+    # values db.py hands the engine — note pool.overflow() is a *current* count,
+    # not the max, so we read the ceiling from config). Dev/SQLite uses NullPool,
+    # which exposes no checkedout()/size() — report skip there.
+    try:
+        pool = db.engine.pool
+        if hasattr(pool, "checkedout"):
+            checked_out = pool.checkedout()
+            ceiling = config.settings.db_pool_size + max(config.settings.db_max_overflow, 0)
+            if ceiling > 0:
+                utilisation = checked_out / ceiling
+                detail = f"{checked_out}/{ceiling} ({utilisation:.0%})"
+                checks["db_pool"] = f"warn: {detail}" if utilisation >= 0.80 else f"ok: {detail}"
+            else:
+                checks["db_pool"] = "skip (no fixed pool)"
+        else:
+            checks["db_pool"] = "skip (no pooling)"
+    except Exception as exc:  # noqa: BLE001 — readiness reports, never raises
+        checks["db_pool"] = f"error: {exc.__class__.__name__}"
 
     body = {"status": "ok" if ready else "not_ready", "checks": checks}
     return JSONResponse(body, status_code=200 if ready else 503)
