@@ -762,11 +762,14 @@ info "Running rsync from $SRC_DIR …"
 #   $APP_HOME/frontend/        (was app/)
 #   $APP_HOME/content/source/  (was content-architecture/)
 #   $APP_HOME/content/frozen/  (was content-system/)
+#   $APP_HOME/resources/       (served at /resources/ via the Apache Alias)
+#   $APP_HOME/infra/           (cron wrappers, e.g. infra/cron/adobe-sync.sh)
 RSYNC_OUT="$(rsync -a --delete --stats \
   --exclude '.venv/' \
   --exclude 'backend/quiz_results/' \
   --exclude 'backend/certificates/' \
   --exclude 'backend/outbox/' \
+  --exclude 'backend/logs/' \
   --exclude 'backend/.env' \
   --exclude '__pycache__/' \
   --exclude '*.pyc' \
@@ -774,6 +777,8 @@ RSYNC_OUT="$(rsync -a --delete --stats \
   "$SRC_DIR/backend" \
   "$SRC_DIR/frontend" \
   "$SRC_DIR/content" \
+  "$SRC_DIR/resources" \
+  "$SRC_DIR/infra" \
   "$APP_HOME/" 2>&1)"
 
 # Print key rsync stats
@@ -1658,9 +1663,9 @@ if ! $UPDATE_ONLY; then
     # Q-13: NO 'Alias /static/' — FastAPI mounts /static/ itself; let it fall
     # through to ProxyPass so the app's CSS/JS bundles ship from uvicorn.
 
-    # /runbook → resources/runbook.html (dynamic reader SPA, static file)
+    # /runbook → /resources/runbooks/ (short URL → the static Runbooks landing)
     RewriteEngine On
-    RewriteRule ^/runbook$ /resources/runbook.html [L]
+    RewriteRule ^/runbook$ /resources/runbooks/ [R=302,L]
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"http\"
@@ -1892,8 +1897,8 @@ ${CHAIN_LINE}
     </Location>
 
 ${CMS_LOCATION_BLOCK}
-    # /runbook → content/frozen/runbook.html (dynamic reader, served as static file)
-    RewriteRule ^/runbook$ /resources/runbook.html [L]
+    # /runbook → /resources/runbooks/ (short URL → the static Runbooks landing)
+    RewriteRule ^/runbook$ /resources/runbooks/ [R=302,L]
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"https\"

@@ -178,46 +178,10 @@ class MediaAsset(Base):
     uploaded_at = Column(DateTime, default=datetime.utcnow)
 
 
-class TechflixEpisode(Base):
-    """Techflix — curated video episodes grouped by topic.
-
-    A thin editorial layer over `media_assets`: each row pairs one video asset
-    with display metadata (topic, title, description, ordering) plus an optional
-    poster image (itself a `media_assets` row) and a probed duration. Populated
-    by `scripts/upload_media.py` from a `techflix.json` manifest; read by
-    `GET /api/media/techflix`. The bytes still stream from `/media/video/{id}`.
-
-    Two FKs point at `media_assets` (video + poster), so the relationships must
-    name their `foreign_keys` explicitly. The bare-asset rows stay generic;
-    only the editorial metadata lives here.
-    """
-    __tablename__ = "techflix_episodes"
-
-    id = Column(String(64), primary_key=True)  # UUID string
-    video_asset_id = Column(
-        String(64), ForeignKey("media_assets.id", ondelete="CASCADE"),
-        nullable=False, unique=True,
-    )
-    poster_asset_id = Column(
-        String(64), ForeignKey("media_assets.id", ondelete="SET NULL"),
-        nullable=True,
-    )
-    topic = Column(String(128), nullable=False, index=True)
-    title = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    sort_order = Column(Integer, nullable=False, default=0)
-    duration_sec = Column(Integer, nullable=True)  # None when FFprobe unavailable
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    video_asset = relationship("MediaAsset", foreign_keys=[video_asset_id])
-    poster_asset = relationship("MediaAsset", foreign_keys=[poster_asset_id])
-
-
 # ─────────────────────────────────────────────────────────────────────────────
-# Unified video model (migration 0014). media_assets is the physical file layer;
-# these sit on top. TechflixEpisode above is LEGACY — superseded by
-# TechflixVideoMap; kept until 0014's backfill is verified in prod, then dropped.
+# Unified video model (migrations 0014 + 0015). `media_assets` is the physical
+# file layer; these sit on top. (The legacy `techflix_episodes` table/model was
+# superseded by TechflixVideoMap — backfilled by 0014, dropped by 0015.)
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -296,7 +260,7 @@ class ContentVideoMap(Base):
 
 
 class TechflixVideoMap(Base):
-    """Techflix section metadata for a VideoAsset (supersedes TechflixEpisode)."""
+    """Techflix section metadata for a VideoAsset (supersedes the legacy techflix_episodes table)."""
     __tablename__ = "techflix_video_map"
 
     id = Column(BigInteger, primary_key=True, autoincrement=True)

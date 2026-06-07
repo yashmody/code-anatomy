@@ -1,7 +1,7 @@
 # v2 — Cutover plan (promote v2 to production)
 
 > Status: **Cutover runbook · Phase 5.** Branch `v2`. The plan to take the
-> sealed v2 state (phases 0–4b, smoke 15/15, Alembic head `0008`) onto the
+> sealed v2 state (phases 0–4b, smoke 15/15, Alembic head `0015`) onto the
 > production VM and open traffic — with concrete gate checks and a fast,
 > rehearsed rollback.
 > Owner: cutover engineer. Audience: the on-call engineer running the promote.
@@ -272,7 +272,7 @@ internals.
 
 ```mermaid
 flowchart TD
-    A["1 · Land v2 code on the VM<br/>(merge / checkout v2 · DB_MODE=external)"] --> B["2 · alembic upgrade head<br/>0001 → 0008 · against REMOTE · privileged credential<br/>DIRECTUS_DB_ROLE=directus_app"]
+    A["1 · Land v2 code on the VM<br/>(merge / checkout v2 · DB_MODE=external)"] --> B["2 · alembic upgrade head<br/>0001 → 0015 · against REMOTE · privileged credential<br/>DIRECTUS_DB_ROLE=directus_app"]
     B --> C["3 · Seeds: roles + signing key (via 0005/0007)<br/>app_config + first admin (lifespan)"]
     C --> D["4 · Set directus_app password on the REMOTE<br/>(deploy.sh ALTER ROLE · remote superuser)"]
     D --> E["5 · Directus bootstrap order 7.4<br/>bootstrap → bootstrap.sh → schema apply"]

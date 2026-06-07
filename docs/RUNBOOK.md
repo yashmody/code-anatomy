@@ -99,7 +99,7 @@ psql "postgresql://postgres:****@REMOTE_DB_HOST:5432/codecoder_restore_drill?ssl
 the verifier at the scratch DB and confirm `verify_signature` returns `True`:
 
 ```bash
-cd /opt/dept-anatomy/quiz-certification   # the deployed backend
+cd /opt/dept-anatomy/backend   # the deployed backend
 DATABASE_URL="postgresql://postgres:****@REMOTE_DB_HOST:5432/codecoder_restore_drill?sslmode=require" \
   CERT_HMAC_LEGACY="$CERT_HMAC_LEGACY" \
   .venv/bin/python - <<'PY'

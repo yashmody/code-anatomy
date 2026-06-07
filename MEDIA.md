@@ -75,5 +75,5 @@ curl -is -H 'Range: bytes=0-1023' https://<host>/media/video/<slug-or-id> | head
   Range/binary stream (which would break scrubbing).
 - The variant table is the seam for adaptive streaming (HLS/multi-rendition) — add
   `kind='hls'`/`mp4_720` variants later with no change above.
-- Legacy: `techflix_episodes` is superseded by `techflix_video_map` (0014 backfilled
-  it); it is dropped in a later migration once verified.
+- Legacy: the old `techflix_episodes` table was superseded by `techflix_video_map`
+  — migration `0014` backfilled it into the unified model, and `0015` dropped it.

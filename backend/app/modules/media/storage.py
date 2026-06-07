@@ -20,12 +20,6 @@ from app.core.models import (
 )
 
 
-def get_asset(asset_id: str) -> Optional[MediaAsset]:
-    """Return a raw MediaAsset (physical file) by id, or None."""
-    with get_session() as s:
-        return s.get(MediaAsset, asset_id)
-
-
 def _file_dict(ma: MediaAsset) -> dict:
     return {"oid": ma.large_object_oid, "mime": ma.mime_type, "size": ma.size_bytes}
 

@@ -86,17 +86,6 @@ def upsert_user(
         return _user_to_dict(u)
 
 
-def set_user_role(email: str, role: str) -> None:
-    """DEPRECATED — kept only for any straggling caller during the 2b cutover.
-
-    The legacy semantics (writing a persona key into `users.role`) is wrong
-    in v2: persona moved to `users.persona`. This helper now writes
-    `users.persona` so legacy callers keep working through the transition;
-    new code MUST call `set_user_persona` directly.
-    """
-    set_user_persona(email, role)
-
-
 def set_user_persona(email: str, persona: str) -> None:
     """Write the user's persona (job family) — drives quiz-level recommendation only."""
     with get_session() as s:

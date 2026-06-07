@@ -15,10 +15,8 @@ Phase 2e hardening (v2/07 §6):
     Phase 2d may further extend with sniffs at additional offsets.
 """
 import os
-import stat
 import tempfile
 import uuid
-import datetime
 from typing import Dict, Tuple, Generator, Optional
 
 from fastapi import HTTPException
@@ -101,24 +99,6 @@ def assert_mime_allowed(mime_type: Optional[str]) -> None:
         raise HTTPException(status_code=415, detail="Unsupported or unrecognised media type")
     if mime_type.lower() in _DENY_MIMES:
         raise HTTPException(status_code=415, detail="SVG and XML-based media are not allowed")
-
-
-def create_secure_tempfile(suffix: str = "") -> Tuple[int, str]:
-    """`tempfile.mkstemp` wrapper that hardens permissions to 0o600.
-
-    mkstemp() on POSIX already opens with `O_CREAT|O_EXCL|O_RDWR` and mode
-    0o600 — but the umask on some hosts can widen the resulting mode on
-    very old kernels, so we re-chmod explicitly. Returns (fd, path) just
-    like the stdlib for drop-in replacement.
-    """
-    fd, path = tempfile.mkstemp(suffix=suffix)
-    try:
-        os.chmod(path, stat.S_IRUSR | stat.S_IWUSR)  # 0o600
-    except OSError:
-        # Best-effort: a host that refuses chmod still has the mkstemp default,
-        # which is already 0600 on every POSIX we care about.
-        pass
-    return fd, path
 
 
 def validate_image(file_path: str) -> Tuple[bool, Optional[str]]:

@@ -2,8 +2,9 @@
 
 This is a monorepo with three deliverables:
 
-- **Course** — `content-system/` (the static HTML field manual + checklist, runbook, FAQs)
-- **Quiz** — `quiz-certification/` (FastAPI app, deployable)
+- **Course** — `content/frozen/` (the static HTML field manual + checklist, runbook, FAQs)
+- **Backend** — `backend/` (FastAPI app, deployable)
+- **Frontend** — `frontend/` (the buildless SPA)
 - **Prompts** — `prompt-library/` (reusable prompts and sample apps)
 
 We use **GitHub Flow**: `main` is always publishable, work happens on short-lived
@@ -23,8 +24,8 @@ is trusted — `main` is lightly protected, not locked down.
 
   | Scope      | For                                              | Example                   |
   |------------|--------------------------------------------------|---------------------------|
-  | `course/`  | Course content (`content-system/…course.html`)   | `course/llmo-refresh`     |
-  | `quiz/`    | Quiz app (`quiz-certification/`)                 | `quiz/proctoring`         |
+  | `course/`  | Course content (`content/frozen/…course.html`)   | `course/llmo-refresh`     |
+  | `quiz/`    | Backend app (`backend/`)                         | `quiz/proctoring`         |
   | `ref/`     | Checklist, runbook, FAQs                         | `ref/api-gateway-section` |
   | `prompts/` | `prompt-library/`                                | `prompts/aem-migration`   |
   | `fix/`     | Bug fixes (any area)                             | `fix/dark-mode-toast`     |

@@ -171,7 +171,7 @@ You'll **still** need to add SMTP settings (step 6) — production mode sends re
    - Creates the `codecoder` database role with a random password.
    - Creates the `codecoder` database.
    - Configures `pg_hba.conf` for password-based local auth.
-   - Applies `deploy_schema.sql` (extensions, all tables, indexes).
+   - Runs the Alembic migration chain (`alembic upgrade head`) — extensions, all tables, indexes.
    - Runs the ETL migration script to seed questions, course chapters, framework, and feed items.
 7. Installs and starts a systemd service `cca-quiz` (this runs `app.main:app` from `backend/`).
 8. Configures **SELinux** (lets Apache talk to the app + read `frontend/` and `content/frozen/`).
@@ -371,19 +371,21 @@ sudo -u postgres pg_dump codecoder > /tmp/codecoder_backup_$(date +%Y%m%d).sql
 sudo -u postgres psql -d codecoder < /tmp/codecoder_backup_YYYYMMDD.sql
 ```
 
-### Schema file
+### Schema (Alembic)
 
-The canonical schema is at `backend/deploy_schema.sql`. It uses
-`CREATE TABLE IF NOT EXISTS` and `CREATE INDEX IF NOT EXISTS`, so it is safe to re-apply:
+The schema is owned by **Alembic migrations** under `backend/migrations/versions/`
+(there is no hand-rolled `deploy_schema.sql`). `deploy.sh` runs the chain; to
+(re-)apply by hand, idempotently, to the head revision:
 
 ```bash
-PGPASSWORD=<password> psql -U codecoder -d codecoder -h 127.0.0.1 \
-  -f /opt/dept-anatomy/backend/deploy_schema.sql
+cd /opt/dept-anatomy/backend
+DATABASE_URL="postgresql://…@<host>:5432/codecoder?sslmode=require" \
+  .venv/bin/alembic upgrade head
+.venv/bin/alembic current      # confirm the head revision
 ```
 
-Phase 2a replaces this hand-rolled DDL with Alembic migrations under
-`backend/migrations/`. Until then the legacy schema is kept as a reference at
-`backend/migrations/legacy/reference.sql`.
+Migrations are additive and re-runnable. `init_db()`'s `create_all()` is only a
+dev-time safety net — production schema evolution is always Alembic.
 
 ---
 

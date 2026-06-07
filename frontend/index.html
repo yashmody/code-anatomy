@@ -36,16 +36,16 @@
                 aria-haspopup="true" aria-expanded="false" aria-controls="resDropdown">Resources ▾</button>
         <div class="res-dropdown" id="resDropdown" role="menu" aria-label="Resources" hidden>
           <!-- Quiz href set from QUIZ_URL (core/config.js) by core/main.js — Quiz is a
-               separate page set, so it keeps target=_blank. The /anatomy/ resources are
-               SAME-TAB (4b: shared back-header takes the reader back to the SPA);
-               served via Apache Alias /anatomy/ → content/frozen/. -->
+               separate page set, so it keeps target=_blank. The resource links below are
+               SAME-TAB and re-pointed at runtime to CONTENT_BASE (/resources) by
+               initChrome(); served via the Apache Alias /resources/ → content/frozen/. -->
           <a class="res-item" role="menuitem" id="resQuiz" target="_blank" rel="noopener" href="/">
             <span class="res-name">Quiz</span><span class="res-meta">Certification · CCA-F</span></a>
-          <a class="res-item" role="menuitem" id="resFaqs" href="/anatomy/faqs/">
+          <a class="res-item" role="menuitem" id="resFaqs" href="/resources/faqs/">
             <span class="res-name">FAQs</span><span class="res-meta">Vertical &amp; platform</span></a>
-          <a class="res-item" role="menuitem" id="resChecklist" href="/anatomy/code-coder-checklist.html">
+          <a class="res-item" role="menuitem" id="resChecklist" href="/resources/checklists/">
             <span class="res-name">Checklist</span><span class="res-meta">Discovery</span></a>
-          <a class="res-item" role="menuitem" id="resRunbook" href="/anatomy/runbooks/">
+          <a class="res-item" role="menuitem" id="resRunbook" href="/resources/runbooks/">
             <span class="res-name">Runbooks</span><span class="res-meta">All roles</span></a>
         </div>
       </div>

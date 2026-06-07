@@ -28,7 +28,7 @@ async def list_techflix(user=Depends(require_authenticated)):
     order, each with its episodes (title, description, duration, poster, and the
     stable `/media/video/{id}` stream URL). The bytes themselves are served —
     with HTTP Range support — by `stream_video` below. Populated by
-    `scripts/upload_media.py` from a `techflix.json` manifest.
+    `scripts.media techflix` from a `techflix.json` manifest.
     """
     episodes = media_storage.list_techflix_episodes()
     topics: dict[str, list] = {}

@@ -94,10 +94,11 @@ function initChrome() {
   const quiz = document.getElementById('resQuiz');
   if (quiz) quiz.href = QUIZ_URL;
 
-  // Content resource links — Apache aliases /anatomy/ in prod; local dev uses /content/frozen/.
+  // Content resource links — static, served by the Apache Alias /resources/ → resources/.
+  // Each section is a folder with an index.html landing page (CONTENT_BASE = /resources).
   const resLinks = {
     resFaqs:      `${CONTENT_BASE}/faqs/`,
-    resChecklist: `${CONTENT_BASE}/code-coder-checklist.html`,
+    resChecklist: `${CONTENT_BASE}/checklists/`,
     resRunbook:   `${CONTENT_BASE}/runbooks/`,
   };
   for (const [id, href] of Object.entries(resLinks)) {

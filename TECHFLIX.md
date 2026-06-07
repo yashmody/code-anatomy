@@ -154,9 +154,11 @@ In the app, open the **Techflix** tab (visible to signed-in users).
 ## How it fits together
 
 ```
-techflix.json + *.mp4  ──scripts.media techflix──▶  Postgres
-                                                  ├─ media_assets        (video bytes as large objects + poster image)
-                                                  └─ techflix_episodes   (topic, title, description, order, duration, poster ref)
+techflix.json + *.mp4  ──scripts.media techflix──▶  Postgres (unified video model)
+                                                  ├─ media_assets        (the bytes: video + poster, as large objects)
+                                                  ├─ video_asset         (one logical video: title, duration, slug)
+                                                  ├─ video_variant       (original + poster → media_assets files)
+                                                  └─ techflix_video_map  (topic, title override, order)
                                                           │
 Browser ◀── GET /api/media/techflix (grouped by topic) ──┘   ← the Techflix section reads this
 Browser ◀── GET /media/video/{id}  (Range / scrubbing)        ← the player streams this
@@ -164,8 +166,9 @@ Browser ◀── GET /media/video/{id}  (Range / scrubbing)        ← the play
 
 - **Access:** the Techflix listing requires a signed-in user; the raw
   `/media/video/{id}` byte stream is unauthenticated (same as all media today).
-- **Schema:** episodes live in `techflix_episodes` (migration `0011`). Run
-  `alembic upgrade head` once per environment before the first upload.
+- **Schema:** episode metadata lives in `techflix_video_map` over `video_asset`
+  (migration `0014`). Run `alembic upgrade head` once per environment before the
+  first upload.
 - **Source of truth:** Postgres. No filesystem media store, no CDN — consistent
   with `MEDIA.md`.
 
@@ -179,4 +182,4 @@ Browser ◀── GET /media/video/{id}  (Range / scrubbing)        ← the play
 | Episode card has no thumbnail / no duration | FFmpeg wasn't available when you ran the script. Install it, then re-run (posters/duration backfill for episodes that lack them). |
 | `[manifest] skipping entry … missing topic` | That entry is missing a required field (`file`, `topic`, or `title`). Fix `techflix.json` and re-run. |
 | Video in folder but no card | It isn't listed in `techflix.json`, or its `file` name doesn't match exactly. Non-manifest videos ingest as plain media but don't become Techflix episodes. |
-| `relation "techflix_episodes" does not exist` | The migration hasn't run in this environment. `cd backend && alembic upgrade head`. |
+| `relation "techflix_video_map" does not exist` | The migration hasn't run in this environment. `cd backend && alembic upgrade head`. |
