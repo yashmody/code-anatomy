@@ -164,3 +164,23 @@ export async function getAllTopics() {
 export async function getAllCategories() {
   return buildCategories();
 }
+
+
+// Upload a video file for a feed post. Stores it in the unified video model
+// (surface='feed') and returns the new video_asset_id, which the composer
+// attaches to the feed item (the backend then links social_feed_video).
+export async function uploadFeedVideo(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('surface', 'feed');
+  const res = await fetch(`${API_BASE}/api/media/upload`, {
+    method: 'POST', body: fd, credentials: 'include',
+  });
+  if (!res.ok) {
+    let msg = `Upload failed (${res.status})`;
+    try { const j = await res.json(); if (j && j.detail) msg = j.detail; } catch (_) {}
+    throw new Error(msg);
+  }
+  const data = await res.json();
+  return data.video_asset_id || data.asset_id;
+}

@@ -222,6 +222,7 @@ function fallbackValidate(item) {
       if (!isInt(item.durationSec) || item.durationSec < 1) add('/durationSec', 'must be an integer ≥ 1');
       if (item.hook != null && !isStr(item.hook)) add('/hook', 'must be a string');
       if (item.url != null && !isStr(item.url)) add('/url', 'must be a string');
+      if (item.videoAssetId != null && !isStr(item.videoAssetId)) add('/videoAssetId', 'must be a string');
       break;
     case 'list':
       if (!isStr(item.title) || !item.title) add('/title', 'is required');

@@ -110,10 +110,32 @@ async def post_feed(
         item["status"] = "pending-review"  # force post state if containing a question
 
     feed_storage.save_feed_item(item)
+
+    # Video feed item with an uploaded asset → link it in the unified model
+    # (social_feed_video). The asset was created by POST /api/media/upload
+    # (surface='feed'); the composer passes back its `videoAssetId`.
+    if item.get("type") == "video" and item.get("videoAssetId"):
+        _link_feed_video(item["id"], item["videoAssetId"])
+
     # New post → invalidate the cached published list so the author (and
     # everyone else) sees it immediately rather than after a TTL window.
     cache.invalidate_prefix("feed_items:")
     return {"status": "success", "id": item["id"]}
+
+
+def _link_feed_video(feed_item_id: str, video_asset_id: str) -> None:
+    """Idempotently link a feed item to its uploaded VideoAsset."""
+    from app.core.db import get_session
+    from app.core.models import SocialFeedVideo, VideoAsset
+    from sqlalchemy import select
+    with get_session() as s:
+        if not s.get(VideoAsset, video_asset_id):
+            return  # unknown asset — ignore rather than fail the post
+        exists = s.scalar(select(SocialFeedVideo).where(
+            SocialFeedVideo.feed_item_id == feed_item_id))
+        if not exists:
+            s.add(SocialFeedVideo(feed_item_id=feed_item_id, video_asset_id=video_asset_id))
+            s.commit()
 
 
 # ── Moderation ───────────────────────────────────────────────────────────────

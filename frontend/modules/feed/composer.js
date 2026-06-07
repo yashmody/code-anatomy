@@ -20,7 +20,7 @@
 
 import { esc } from '../../shared/dom.js';
 import { requireSession } from './auth.js';
-import { getAllCategories, createPost } from './store.js';
+import { getAllCategories, createPost, uploadFeedVideo } from './store.js';
 import { validateFeedItem } from './validate.js';
 import { renderDiagram, runMermaid } from '../../shared/render/diagram.js';
 
@@ -345,8 +345,28 @@ export async function openComposer({ onPosted, returnFocusTo } = {}) {
 
   backdrop.addEventListener('change', (e) => {
     const typeRadio = e.target.closest('[name="composer-type"]');
-    if (typeRadio) { state.type = typeRadio.value; paintFields(); }
+    if (typeRadio) { state.type = typeRadio.value; paintFields(); return; }
+    const fileInput = e.target.closest('input[name="videoFile"]');
+    if (fileInput && fileInput.files && fileInput.files[0]) {
+      handleVideoUpload(fileInput.files[0]);
+    }
   });
+
+  // Upload a chosen video file immediately; stash the returned asset id in state
+  // so submit() includes it (state survives paintFields re-renders; the status
+  // line is re-derived from state.videoAssetId on each paint).
+  async function handleVideoUpload(file) {
+    const status = backdrop.querySelector('[data-vid-status]');
+    if (status) status.textContent = `Uploading ${file.name}…`;
+    try {
+      const id = await uploadFeedVideo(file);
+      state.videoAssetId = id;
+      if (status) status.textContent = '✓ Video uploaded — it will stream from the app.';
+    } catch (err) {
+      state.videoAssetId = null;
+      if (status) status.textContent = `Upload failed: ${err && err.message ? err.message : 'try again'}`;
+    }
+  }
 
   // ── focus trap + ESC ──
   // Bound to `document` (not the backdrop) so Tab-trap + ESC keep working even when focus
@@ -571,7 +591,7 @@ function categorySelectHTML(categories) {
 function typeFieldsHTML(state, categories) {
   switch (state.type) {
     case 'post': return postFields();
-    case 'video': return videoFields();
+    case 'video': return videoFields(state);
     case 'list': return listFields(state);
     case 'card': return cardFields();
     case 'vocab': return vocabFields();
@@ -605,11 +625,21 @@ function postFields() {
     mediaSectionHTML();
 }
 
-function videoFields() {
+function videoFields(state) {
+  const status = (state && state.videoAssetId)
+    ? '✓ Video uploaded — it will stream from the app.'
+    : 'Optional — upload a video file to host & stream it in the app.';
+  const uploadRow =
+    `<div class="composer-row" data-field="videoFile">` +
+      `<label>Upload video</label>` +
+      `<input type="file" name="videoFile" accept="video/mp4,video/webm,video/quicktime" class="composer-input">` +
+      `<p class="composer-help" data-vid-status>${esc(status)}</p>` +
+    `</div>`;
   return row('title', 'title', 'Title', { required: true }) +
     row('durationSec', 'durationSec', 'Duration (seconds)', { required: true, inputType: 'number', min: 1, placeholder: 'e.g. 45' }) +
     row('hook', 'hook', 'Hook', { optional: true, textarea: true, rows: 2 }) +
-    row('url', 'url', 'Video URL', { optional: true, placeholder: 'https://…' }) +
+    uploadRow +
+    row('url', 'url', 'Or paste a Video URL', { optional: true, placeholder: 'https://…' }) +
     mediaSectionHTML();
 }
 
@@ -751,6 +781,7 @@ export function readPayloadFrom(backdrop, state) {
     if (!Number.isNaN(dur)) out.durationSec = dur; // blank/NaN → omitted → schema flags missing
     const hook = v('hook').trim(); if (hook) out.hook = hook;
     const url = v('url').trim(); if (url) out.url = url;
+    if (state.videoAssetId) out.videoAssetId = state.videoAssetId;  // uploaded → stream from app
     return out;
   }
   if (t === 'list') {

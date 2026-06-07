@@ -8,7 +8,7 @@ size-cap guard, then delegates ingest.
 import os
 import tempfile
 
-from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.core import config
@@ -43,9 +43,18 @@ async def list_techflix(user=Depends(require_authenticated)):
 async def upload_media(
     request: Request,
     file: UploadFile = File(...),
+    surface: str = Form("feed"),
+    title: str = Form(None),
     user=Depends(require_permission("media.upload")),
 ):
-    """Upload a file to PostgreSQL Large Objects with strict type/size/FFmpeg resolution validation."""
+    """Upload a file with strict type/size/FFmpeg validation.
+
+    Video → ingested into the unified model (video_asset + 'original' variant +
+    auto poster + duration) on the given `surface` (default 'feed' — the UI path).
+    Returns `video_asset_id` so the caller (e.g. the feed composer) can attach it.
+    Image → stored as a plain media_asset (e.g. a feed image). The response keeps
+    `asset_id` for back-compat.
+    """
     # 1. Read headers for type spoofing protection
     head_bytes = await file.read(2048)  # Read signature block
     await file.seek(0)  # Reset pointer
@@ -89,29 +98,37 @@ async def upload_media(
             if not valid:
                 raise HTTPException(status_code=400, detail=err)
 
-        # 4. Ingest into PostgreSQL Large Objects
-        asset_id, oid = media_service.store_media_asset(
+        # 4. Ingest
+        if is_video:
+            video_asset_id = media_service.ingest_video(
+                temp_path, title=(title or file.filename), mime_type=mime_type,
+                uploaded_by=user["email"], surfaces=(surface or "feed",),
+            )
+            return {
+                "status": "success",
+                "video_asset_id": video_asset_id,
+                "asset_id": video_asset_id,          # back-compat alias
+                "url": f"/media/video/{video_asset_id}",
+            }
+        # Images stay plain media_assets (e.g. feed images).
+        asset_id, _ = media_service.store_media_asset(
             temp_path, file.filename, mime_type, user["email"]
         )
-
-        # Generate the access endpoints
-        endpoint = f"/media/video/{asset_id}" if is_video else f"/media/image/{asset_id}"
-        return {"status": "success", "asset_id": asset_id, "url": endpoint}
+        return {"status": "success", "asset_id": asset_id, "url": f"/media/image/{asset_id}"}
 
     finally:
         if os.path.exists(temp_path):
             os.remove(temp_path)
 
 
-@router.get("/media/video/{asset_id}")
-async def stream_video(request: Request, asset_id: str):
-    """Stream videos from PostgreSQL large objects supporting HTTP Range requests (scrubbing)."""
-    asset = media_storage.get_asset(asset_id)
-    if not asset:
+@router.get("/media/video/{ref}")
+async def stream_video(request: Request, ref: str):
+    """Stream a video with HTTP Range support. `ref` = video_asset id or slug
+    (preferred), or a legacy media_asset id. Resolves to the primary variant."""
+    info = media_storage.resolve_playable(ref)
+    if not info:
         raise HTTPException(status_code=404, detail="Asset not found")
-    oid = asset.large_object_oid
-    size = asset.size_bytes
-    mime = asset.mime_type
+    oid, size, mime = info["oid"], info["size"], info["mime"]
 
     range_header = request.headers.get("Range")
     if not range_header:
@@ -149,15 +166,14 @@ async def stream_video(request: Request, asset_id: str):
     return StreamingResponse(generator, status_code=206, headers=headers, media_type=mime)
 
 
-@router.get("/media/image/{asset_id}")
-async def serve_image(asset_id: str):
-    """Serve images stored inside PostgreSQL Large Objects."""
-    asset = media_storage.get_asset(asset_id)
-    if not asset:
+@router.get("/media/image/{ref}")
+async def serve_image(ref: str):
+    """Serve an image. `ref` = media_asset id (a poster/image file), or a
+    video_asset id/slug (→ its poster variant)."""
+    info = media_storage.resolve_image(ref)
+    if not info:
         raise HTTPException(status_code=404, detail="Asset not found")
-    oid = asset.large_object_oid
-    size = asset.size_bytes
-    mime = asset.mime_type
+    oid, size, mime = info["oid"], info["size"], info["mime"]
 
     # `Content-Encoding: identity` keeps GZipMiddleware off already-compressed
     # image bytes (gzip would only waste CPU and drop Content-Length).

@@ -214,6 +214,117 @@ class TechflixEpisode(Base):
     poster_asset = relationship("MediaAsset", foreign_keys=[poster_asset_id])
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Unified video model (migration 0014). media_assets is the physical file layer;
+# these sit on top. TechflixEpisode above is LEGACY — superseded by
+# TechflixVideoMap; kept until 0014's backfill is verified in prod, then dropped.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class VideoAsset(Base):
+    """One logical video. Its bytes live in `media_assets` via `VideoVariant` rows."""
+    __tablename__ = "video_asset"
+
+    id = Column(String(64), primary_key=True)  # UUID
+    slug = Column(String(128), unique=True, nullable=True)  # stable embed handle
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    duration_sec = Column(Integer, nullable=True)
+    status = Column(String(16), nullable=False, default="ready")  # ready|processing|archived
+    uploaded_by = Column(String(255), ForeignKey("users.email", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    variants = relationship("VideoVariant", back_populates="video_asset",
+                            cascade="all, delete-orphan", lazy="selectin")
+    placements = relationship("VideoPlacement", cascade="all, delete-orphan", lazy="selectin")
+
+
+class VideoVariant(Base):
+    """A rendition/file of a VideoAsset — points at a `media_assets` large object.
+
+    `kind` ∈ original | poster | thumbnail | hls | mp4_720 | mp4_1080 | … . Exactly
+    one variant per asset is `is_primary` (the default playable original). Posters/
+    thumbnails are image variants. New renditions (HLS, ABR) slot in here later
+    with no change above — this is the variant seam.
+    """
+    __tablename__ = "video_variant"
+
+    id = Column(String(64), primary_key=True)  # UUID
+    video_asset_id = Column(String(64), ForeignKey("video_asset.id", ondelete="CASCADE"), nullable=False)
+    media_asset_id = Column(String(64), ForeignKey("media_assets.id", ondelete="CASCADE"), nullable=False)
+    kind = Column(String(24), nullable=False)
+    mime_type = Column(String(64), nullable=True)
+    width = Column(Integer, nullable=True)
+    height = Column(Integer, nullable=True)
+    bitrate_kbps = Column(Integer, nullable=True)
+    is_primary = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    video_asset = relationship("VideoAsset", back_populates="variants")
+    media_asset = relationship("MediaAsset")
+
+    __table_args__ = (
+        UniqueConstraint("video_asset_id", "kind", name="uq_video_variant_asset_kind"),
+    )
+
+
+class VideoPlacement(Base):
+    """Which surface a VideoAsset may appear on (policy/classification)."""
+    __tablename__ = "video_placement"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    video_asset_id = Column(String(64), ForeignKey("video_asset.id", ondelete="CASCADE"), nullable=False)
+    surface = Column(String(16), nullable=False)  # content|techflix|feed
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("video_asset_id", "surface", name="uq_video_placement"),
+    )
+
+
+class ContentVideoMap(Base):
+    """Which content chapter/block embeds a VideoAsset (impact tracking)."""
+    __tablename__ = "content_video_map"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    video_asset_id = Column(String(64), ForeignKey("video_asset.id", ondelete="CASCADE"), nullable=False)
+    chapter = Column(String(128), nullable=True)    # e.g. code-c.json
+    block_ref = Column(String(128), nullable=True)  # block id within the chapter
+    caption = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class TechflixVideoMap(Base):
+    """Techflix section metadata for a VideoAsset (supersedes TechflixEpisode)."""
+    __tablename__ = "techflix_video_map"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    video_asset_id = Column(String(64), ForeignKey("video_asset.id", ondelete="CASCADE"),
+                            nullable=False, unique=True)
+    topic = Column(String(128), nullable=False, index=True)
+    title = Column(String(255), nullable=True)        # override; else VideoAsset.title
+    description = Column(Text, nullable=True)          # override
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    video_asset = relationship("VideoAsset")
+
+
+class SocialFeedVideo(Base):
+    """Feed UGC metadata linking a feed_item to a VideoAsset."""
+    __tablename__ = "social_feed_video"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    feed_item_id = Column(String(64), ForeignKey("feed_items.id", ondelete="CASCADE"),
+                          nullable=False, unique=True)
+    video_asset_id = Column(String(64), ForeignKey("video_asset.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    video_asset = relationship("VideoAsset")
+
+
 class WhatsNewItem(Base):
     """What's New — a single Adobe update ingested by the content-refresh sync.
 

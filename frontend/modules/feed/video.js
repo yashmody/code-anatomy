@@ -21,8 +21,13 @@ export function video(item) {
   const vlabel = item.hook
     ? `<span class="vlabel">${esc(String(item.hook).slice(0, 28))}</span>`
     : `<span class="vlabel">Video</span>`;
-  const tile = `<div class="video">${vlabel}` +
-    `<button class="play" type="button" aria-label="Play video">${PLAY_SVG}</button>${dur}</div>`;
+  // Uploaded video (hosted in the app) → a real player streamed from the unified
+  // model. Otherwise the gradient placeholder tile (legacy URL-only posts).
+  const tile = item.videoAssetId
+    ? `<div class="video"><video class="video-el" controls preload="metadata" playsinline ` +
+        `controlslist="nodownload" src="${esc('/media/video/' + item.videoAssetId)}"></video>${dur}</div>`
+    : `<div class="video">${vlabel}` +
+        `<button class="play" type="button" aria-label="Play video">${PLAY_SVG}</button>${dur}</div>`;
   const hook = item.hook ? `<p class="card-sub">${esc(item.hook)}</p>` : '';
   return tile + cardTop(item) +
     `<div class="card-body"><h3 class="card-title">${esc(item.title || '')}</h3>${hook}</div>`;

@@ -28,7 +28,9 @@ from sqlalchemy import select
 
 from app.core import config
 from app.core.db import get_session, engine
-from app.core.models import MediaAsset, User
+from app.core.models import (
+    MediaAsset, User, VideoAsset, VideoVariant, VideoPlacement,
+)
 
 # Supported signatures (magic numbers)
 _SIGNATURES = {
@@ -235,3 +237,88 @@ def stream_video_chunks(oid: int, start_byte: int, end_byte: int, chunk_size: in
         print(f"[media_service] Error streaming large object OID {oid}: {e}")
     finally:
         raw_conn.close()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Unified video ingest (migration 0014 model) — the single path used by the CLI,
+# the upload route, and the Techflix importer. Stores the file in media_assets
+# (large object) and builds video_asset + variants (+ poster) + placements.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def probe_duration(file_path: str) -> Optional[int]:
+    """Whole-second duration via FFprobe, or None if unavailable (ffmpeg absent)."""
+    try:
+        probe = ffmpeg.probe(file_path)
+        return int(round(float(probe["format"]["duration"])))
+    except Exception:
+        return None
+
+
+def extract_poster(file_path: str, poster_time=3) -> Optional[str]:
+    """Extract one frame to a temp JPEG; return its path or None. Caller deletes it."""
+    fd, out = tempfile.mkstemp(suffix=".jpg")
+    os.close(fd)
+    try:
+        (
+            ffmpeg.input(file_path, ss=poster_time)
+            .output(out, vframes=1, format="image2", vcodec="mjpeg")
+            .overwrite_output().run(quiet=True)
+        )
+        if os.path.getsize(out) > 0:
+            return out
+    except Exception:
+        pass
+    if os.path.exists(out):
+        os.remove(out)
+    return None
+
+
+def ingest_video(
+    file_path: str, *, title: str, mime_type: str, uploaded_by: str = "",
+    slug: Optional[str] = None, poster_time=3, surfaces=("content",),
+    make_poster: bool = True,
+) -> str:
+    """Ingest a video file into the unified model. Returns the VideoAsset id.
+
+    Steps: store the original file (large object) → probe duration + extract a
+    poster (best-effort; skipped if ffmpeg is unavailable) → create the
+    video_asset, the 'original' (primary) variant, an optional 'poster' variant,
+    and the requested placement rows. All metadata writes happen in one session.
+    """
+    assert_mime_allowed(mime_type)
+    orig_asset_id, _ = store_media_asset(file_path, os.path.basename(file_path), mime_type, uploaded_by)
+
+    duration = probe_duration(file_path)
+    poster_asset_id = None
+    if make_poster:
+        poster_path = extract_poster(file_path, poster_time)
+        if poster_path:
+            try:
+                poster_asset_id, _ = store_media_asset(
+                    poster_path, f"{os.path.splitext(os.path.basename(file_path))[0]}-poster.jpg",
+                    "image/jpeg", uploaded_by,
+                )
+            finally:
+                if os.path.exists(poster_path):
+                    os.remove(poster_path)
+
+    va_id = str(uuid.uuid4())
+    with get_session() as s:
+        uploader = s.get(User, uploaded_by.lower()) if uploaded_by else None
+        s.add(VideoAsset(
+            id=va_id, slug=slug, title=title, duration_sec=duration,
+            status="ready", uploaded_by=(uploader.email if uploader else None),
+        ))
+        s.add(VideoVariant(
+            id=str(uuid.uuid4()), video_asset_id=va_id, media_asset_id=orig_asset_id,
+            kind="original", mime_type=mime_type, is_primary=True,
+        ))
+        if poster_asset_id:
+            s.add(VideoVariant(
+                id=str(uuid.uuid4()), video_asset_id=va_id, media_asset_id=poster_asset_id,
+                kind="poster", mime_type="image/jpeg", is_primary=False,
+            ))
+        for surface in dict.fromkeys(surfaces):  # de-dup, preserve order
+            s.add(VideoPlacement(video_asset_id=va_id, surface=surface))
+        s.commit()
+    return va_id

@@ -88,7 +88,7 @@ Run it as the app's service user so file permissions stay clean:
 
 ```bash
 cd /opt/dept-anatomy/backend
-sudo -u cca .venv/bin/python -m scripts.upload_media /opt/dept-anatomy/media/techflix
+.venv/bin/python -m scripts.media techflix /opt/dept-anatomy/media/techflix
 ```
 
 You'll see one block per video:
@@ -126,12 +126,12 @@ video:
 
 ```bash
 # 1. find it
-sudo -u cca .venv/bin/python -m scripts.list_media
+.venv/bin/python -m scripts.media list
 # 2. delete its metadata row (large object is reclaimed by vacuumlo later)
 sudo -u postgres psql -d codecoder -c \
   "DELETE FROM media_assets WHERE filename = 'caching-e01.mp4'"
 # 3. re-upload (gets a fresh asset id; episode row re-links on next run)
-sudo -u cca .venv/bin/python -m scripts.upload_media /opt/dept-anatomy/media/techflix
+.venv/bin/python -m scripts.media techflix /opt/dept-anatomy/media/techflix
 ```
 
 ---
@@ -154,7 +154,7 @@ In the app, open the **Techflix** tab (visible to signed-in users).
 ## How it fits together
 
 ```
-techflix.json + *.mp4  ──scripts.upload_media──▶  Postgres
+techflix.json + *.mp4  ──scripts.media techflix──▶  Postgres
                                                   ├─ media_assets        (video bytes as large objects + poster image)
                                                   └─ techflix_episodes   (topic, title, description, order, duration, poster ref)
                                                           │
