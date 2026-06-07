@@ -502,6 +502,25 @@ path.write_text("\n".join(out) + "\n")
 PY
 }
 
+# env_del — remove every line whose key starts with the given prefix.
+# Needed for Directus DB_SSL handling: Directus builds an `ssl` OBJECT from ANY
+# nested DB_SSL__* key (e.g. DB_SSL__REJECT_UNAUTHORIZED), and node-postgres
+# treats a non-null ssl object as SSL ENABLED — overriding DB_SSL=false. So for
+# a local no-SSL Postgres the nested keys must be ABSENT, not merely =false, or
+# Directus crash-loops on "The server does not support SSL connections".
+env_del() {
+  local file="$1" prefix="$2"
+  [[ -f "$file" ]] || return 0
+  python3 - "$file" "$prefix" <<'PY'
+import sys, pathlib
+path = pathlib.Path(sys.argv[1])
+prefix = sys.argv[2]
+lines = path.read_text().splitlines()
+out = [ln for ln in lines if not (ln.lstrip().startswith(prefix) or ln.lstrip().startswith("#" + prefix))]
+path.write_text("\n".join(out) + "\n")
+PY
+}
+
 # ── pg_hba_path ──────────────────────────────────────────────────────────────
 # Locate pg_hba.conf by filesystem inspection (no psql call required).
 # Covers PGDG (/var/lib/pgsql/<ver>/data) and Debian (/etc/postgresql/<ver>/main).
@@ -1483,29 +1502,35 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
           info "Directus DB_SSL=true with DB_SSL__REJECT_UNAUTHORIZED=false (sslmode=${DB_SSLMODE}: encrypt without CA verification)."
         fi
       else
-        # Local Postgres (loopback) — no SSL needed.
-        env_set "$CMS_DIR/.env" DB_HOST                    "127.0.0.1"
-        env_set "$CMS_DIR/.env" DB_PORT                    "5432"
-        env_set "$CMS_DIR/.env" DB_SSL                     "false"
-        env_set "$CMS_DIR/.env" DB_SSL__REJECT_UNAUTHORIZED "false"
-        env_set "$CMS_DIR/.env" PGSSLMODE                  "disable"
-        info "Directus DB_SSL=false (local Postgres, no SSL required)."
+        # Local Postgres (loopback) — no SSL. CRUCIAL: DB_SSL=false is NOT
+        # enough — Directus turns ANY nested DB_SSL__* key into an `ssl` object,
+        # which node-postgres reads as SSL ENABLED. The nested keys must be
+        # ABSENT, so we env_del the whole DB_SSL__ prefix (the cms/.env.example
+        # ships DB_SSL__REJECT_UNAUTHORIZED for the remote default).
+        env_set "$CMS_DIR/.env" DB_HOST    "127.0.0.1"
+        env_set "$CMS_DIR/.env" DB_PORT    "5432"
+        env_set "$CMS_DIR/.env" DB_SSL     "false"
+        env_del "$CMS_DIR/.env" "DB_SSL__"
+        env_set "$CMS_DIR/.env" PGSSLMODE  "disable"
+        info "Directus DB_SSL=false + DB_SSL__* removed (local Postgres, no TLS)."
       fi
       # ── Safety net: a loopback Postgres never speaks TLS ────────────────────
       # Force SSL OFF whenever the resolved DB host is loopback, regardless of
-      # how DB_MODE / DB_SSLMODE resolved. A co-resident Postgres on this VM has
-      # no TLS, so a carried-over DB_SSL=true (the cms/.env.example REMOTE
-      # default) would otherwise crash-loop Directus on
-      # "Error: The server does not support SSL connections" and Apache would
-      # then 503 /cms/. Belt-and-braces over the local branch above: it also
-      # covers the misconfiguration where DB_MODE=external is set but DB_HOST
-      # still points at loopback.
+      # how DB_MODE / DB_SSLMODE resolved. A co-resident Postgres has no TLS, so
+      # a carried-over DB_SSL=true OR a stale DB_SSL__* nested key (the
+      # cms/.env.example REMOTE default) would otherwise crash-loop Directus on
+      # "Error: The server does not support SSL connections" → Apache 503 /cms/.
+      # We MUST env_del the DB_SSL__ prefix: a nested key makes Directus build an
+      # `ssl` object that enables TLS even with DB_SSL=false. Belt-and-braces
+      # over the local branch; also covers DB_MODE=external mis-set with a
+      # loopback DB_HOST. Remote hosts never enter this branch, so their TLS
+      # (DB_SSL=true + DB_SSL__REJECT_UNAUTHORIZED) is left intact.
       case "${DB_HOST:-localhost}" in
         localhost|127.0.0.1|::1|"")
-          env_set "$CMS_DIR/.env" DB_SSL                     "false"
-          env_set "$CMS_DIR/.env" DB_SSL__REJECT_UNAUTHORIZED "false"
-          env_set "$CMS_DIR/.env" PGSSLMODE                  "disable"
-          info "Directus DB_SSL forced false (loopback Postgres — no TLS available)."
+          env_set "$CMS_DIR/.env" DB_SSL     "false"
+          env_del "$CMS_DIR/.env" "DB_SSL__"
+          env_set "$CMS_DIR/.env" PGSSLMODE  "disable"
+          info "Directus DB_SSL forced false + DB_SSL__* removed (loopback Postgres — no TLS)."
           ;;
       esac
       env_set "$CMS_DIR/.env" DB_DATABASE "$DB_NAME"
@@ -1875,6 +1900,20 @@ if ! $UPDATE_ONLY; then
     CMS_LOCATION_BLOCK=""
     CMS_PROXY_BLOCK=""
     info "Directus    : DEPLOY_DIRECTUS=false — /cms/ proxy omitted from vhost"
+  fi
+
+  # HTTP-only (no TLS) + Directus: splice the SAME /cms proxy + CSP <Location>
+  # into the :80 vhost. The CMS_* blocks are defined just above — AFTER
+  # HTTP_BLOCK was built — so we inject them by string substitution here. The
+  # HTTPS vhost interpolates them inline; the HTTP fallback historically did
+  # NOT, so on an HTTP-only box /cms/ fell through the catch-all to the quiz app
+  # (404) instead of reaching Directus. Anchors are unique lines in HTTP_BLOCK.
+  if ! $TLS_AVAILABLE && [[ -n "$CMS_PROXY_BLOCK" ]]; then
+    _pph_anchor="    ProxyPreserveHost On"
+    _catchall_anchor="    ProxyPass        /  http://127.0.0.1:${QUIZ_PORT}/"
+    HTTP_BLOCK="${HTTP_BLOCK/$_pph_anchor/${CMS_LOCATION_BLOCK}$_pph_anchor}"
+    HTTP_BLOCK="${HTTP_BLOCK/$_catchall_anchor/${CMS_PROXY_BLOCK}$_catchall_anchor}"
+    info "Directus    : /cms/ proxy + CSP spliced into the HTTP-only vhost."
   fi
 
   if $TLS_AVAILABLE; then
