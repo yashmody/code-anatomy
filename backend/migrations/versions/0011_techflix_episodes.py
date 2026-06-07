@@ -27,20 +27,32 @@ depends_on = None
 
 def upgrade() -> None:
     bind = op.get_bind()
+    dialect = bind.dialect.name
     inspector = sa.inspect(bind)
     existing_tables = set(inspector.get_table_names())
 
     if "techflix_episodes" not in existing_tables:
+        # FK columns must match media_assets.id's actual DB type.
+        # deploy_schema.sql creates media_assets.id as UUID on Postgres;
+        # create_all() creates it as VARCHAR(64). Detect and match so the FK
+        # constraint can be enforced. The ORM model uses String(64) for both
+        # paths — psycopg2 coerces Python str ↔ UUID transparently at DML time.
+        if dialect == "postgresql":
+            from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+            _asset_fk_type = PG_UUID(as_uuid=False)
+        else:
+            _asset_fk_type = sa.String(64)
+
         op.create_table(
             "techflix_episodes",
             sa.Column("id", sa.String(64), primary_key=True),
             sa.Column(
-                "video_asset_id", sa.String(64),
+                "video_asset_id", _asset_fk_type,
                 sa.ForeignKey("media_assets.id", ondelete="CASCADE"),
                 nullable=False,
             ),
             sa.Column(
-                "poster_asset_id", sa.String(64),
+                "poster_asset_id", _asset_fk_type,
                 sa.ForeignKey("media_assets.id", ondelete="SET NULL"),
                 nullable=True,
             ),
