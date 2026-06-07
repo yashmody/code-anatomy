@@ -38,11 +38,9 @@
 | Init DB (Python) | `cd backend && .venv/bin/python -c "from app.core.db import init_db; init_db()"` | Creates all tables via SQLAlchemy `create_all`. Run before `alembic stamp` on a fresh DB. |
 | Seed roles | `cd backend && .venv/bin/python -m scripts.seed_roles` | Inserts the canonical role rows if they are missing. Idempotent. |
 | Seed app config | `cd backend && .venv/bin/python -m scripts.seed_app_config` | Seeds `app_config` table with defaults. Idempotent. |
-| Seed FAQs | `cd backend && .venv/bin/python -m scripts.seed_faqs` | Loads FAQ content into the DB. |
 | Migrate to Postgres | `cd backend && .venv/bin/python -m scripts.migrate_to_postgres` | One-time migration of data from SQLite to Postgres. |
-| Backfill user roles | `cd backend && .venv/bin/python -m scripts.backfill_user_roles` | Backfills `user_roles` for existing users missing a `learner` row. |
-| List media | `cd backend && .venv/bin/python -m scripts.list_media` | Lists all `media_assets` rows and their large-object OIDs. |
-| Upload media | `cd backend && .venv/bin/python -m scripts.upload_media <file>` | Uploads a file to Postgres large objects. |
+| List media | `cd backend && .venv/bin/python -m scripts.media list` | Lists video assets (id, slug, surface, file). |
+| Upload media | `cd backend && .venv/bin/python -m scripts.media upload <folder>` | Ingests a video folder into Postgres large objects (unified media model). |
 
 ### 1.3 Superadmin (break-glass)
 
@@ -57,7 +55,6 @@
 |--------|------|-------------|
 | `deploy.sh` | `./deploy.sh` | Full production deploy: rsync backend + frontend + content, run Alembic, restart systemd units, reload Apache, smoke `/healthz`. |
 | `init_env.sh` | `backend/scripts/init_env.sh` | Bootstrap helper: creates `.venv`, installs pip deps. Run once on a fresh checkout. |
-| `init_alembic.sh` | `backend/scripts/init_alembic.sh` | One-time Alembic initialisation. Already done — do not re-run on the live DB. |
 
 ---
 
@@ -221,10 +218,9 @@ File location: `cms/.env` (gitignored). Copy from `cms/.env.example`.
 |------|-----|-------|
 | **SPA (main app)** | `http://127.0.0.1:8080/frontend/index.html` | Static frontend served by Python `http.server`. |
 | **Course HTML** | `http://127.0.0.1:8080/content/frozen/anatomy-of-code-course.html` | Frozen course page — no API needed. |
-| **FAQs landing** | `http://127.0.0.1:8080/content/frozen/faqs/index.html` | |
-| **AEM Banking FAQ** | `http://127.0.0.1:8080/content/frozen/faqs/aem-banking-faq.html` | |
-| **Discovery Checklist** | `http://127.0.0.1:8080/content/frozen/code-coder-checklist.html` | |
-| **Architect's Runbook** | `http://127.0.0.1:8080/content/frozen/architect-runbook.html` | |
+| **FAQs** | `http://127.0.0.1:8080/resources/faqs/` | static landing + FAQ pages |
+| **Checklists** | `http://127.0.0.1:8080/resources/checklists/` | static landing + checklist |
+| **Runbooks** | `http://127.0.0.1:8080/resources/runbooks/` | static landing + runbook |
 | **FastAPI root** | `http://127.0.0.1:8000/` | Quiz app home (login / quiz / history). |
 | **FastAPI Swagger UI** | `http://127.0.0.1:8000/docs` | Auto-generated OpenAPI docs for all routes. |
 | **FastAPI ReDoc** | `http://127.0.0.1:8000/redoc` | Alternative API docs. |
@@ -315,7 +311,9 @@ File location: `cms/.env` (gitignored). Copy from `cms/.env.example`.
 |------|---------------|
 | SPA | `https://internal.in.deptagency.com/app/` |
 | Course HTML | `https://internal.in.deptagency.com/anatomy/anatomy-of-code-course.html` |
-| FAQs | `https://internal.in.deptagency.com/anatomy/faqs/` |
+| FAQs | `https://internal.in.deptagency.com/resources/faqs/` |
+| Checklists | `https://internal.in.deptagency.com/resources/checklists/` |
+| Runbooks | `https://internal.in.deptagency.com/resources/runbooks/` |
 | FastAPI API | `https://internal.in.deptagency.com/api/*` |
 | Auth | `https://internal.in.deptagency.com/auth/*` |
 | Directus CMS | `https://internal.in.deptagency.com/cms/` |

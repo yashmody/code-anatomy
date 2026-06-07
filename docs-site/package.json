@@ -1,8 +1,8 @@
 {
-  "name": "dept-anatomy-of-code-docs",
+  "name": "tenet-docs",
   "version": "0.1.0",
   "private": true,
-  "description": "DEPT Anatomy of Code v2 — Docusaurus documentation site (scaffold only; Phase 5a fills content).",
+  "description": "DEPT® Tenet — Docusaurus documentation site (User / Admin / Developer guides).",
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",

@@ -1,5 +1,5 @@
 ---
-id: intro
+id: quiz-intro
 title: Quiz management
 sidebar_position: 1
 ---

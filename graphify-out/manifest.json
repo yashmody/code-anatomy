@@ -45,8 +45,8 @@
     "semantic_hash": "10986e227a4881a1a9e793d0aca72694"
   },
   "backend/app/core/deps.py": {
-    "mtime": 1780812943.9691966,
-    "ast_hash": "a7005139d493e8ba010978e32de03542",
+    "mtime": 1780841386.5061038,
+    "ast_hash": "6518b0e119fec00b4de6b19f7008732c",
     "semantic_hash": ""
   },
   "backend/app/core/encryption.py": {
@@ -60,8 +60,8 @@
     "semantic_hash": ""
   },
   "backend/app/core/models.py": {
-    "mtime": 1780837606.4577785,
-    "ast_hash": "feccd47a4d9fc5643449266180fc53e4",
+    "mtime": 1780841106.5225394,
+    "ast_hash": "89f853896bba40199ee38c3a59e4cd9e",
     "semantic_hash": ""
   },
   "backend/app/core/observability.py": {
@@ -85,8 +85,8 @@
     "semantic_hash": ""
   },
   "backend/app/main.py": {
-    "mtime": 1780835641.038222,
-    "ast_hash": "41717f248e2c33c35c56ded3171dcd1c",
+    "mtime": 1780841007.625973,
+    "ast_hash": "be9df9df60554cb3d84ab451d54f6ab5",
     "semantic_hash": ""
   },
   "backend/app/modules/__init__.py": {
@@ -130,8 +130,8 @@
     "semantic_hash": "46f7d1464253e0cf317a10730989a9a0"
   },
   "backend/app/modules/cms/routes.py": {
-    "mtime": 1780814797.426446,
-    "ast_hash": "b0f1dff438cecf6b3ecbad2f719ce2cf",
+    "mtime": 1780841039.757568,
+    "ast_hash": "36aa6594a606f6f9cd8a3b5ca09aacc8",
     "semantic_hash": ""
   },
   "backend/app/modules/content/__init__.py": {
@@ -299,16 +299,6 @@
     "ast_hash": "f31e48cbb4d4907f6f02a6afa04c5448",
     "semantic_hash": "f31e48cbb4d4907f6f02a6afa04c5448"
   },
-  "backend/scripts/backfill_user_roles.py": {
-    "mtime": 1780736581.3380811,
-    "ast_hash": "c41719a1f16bae3200298d43dd17e6b5",
-    "semantic_hash": "c41719a1f16bae3200298d43dd17e6b5"
-  },
-  "backend/scripts/init_alembic.sh": {
-    "mtime": 1780736581.338422,
-    "ast_hash": "989133324ca8dc0bd5cf2e84b2505491",
-    "semantic_hash": "989133324ca8dc0bd5cf2e84b2505491"
-  },
   "backend/scripts/init_env.sh": {
     "mtime": 1780736581.338724,
     "ast_hash": "c7e27daf8d25563391973829c1104c66",
@@ -350,8 +340,8 @@
     "semantic_hash": "a4ecfb4266d5757a1d4626fb7feba6df"
   },
   "cms/register-collections.mjs": {
-    "mtime": 1780814778.208079,
-    "ast_hash": "b5178f4ee21c22e61a0763e1d22b84c8",
+    "mtime": 1780841351.4821794,
+    "ast_hash": "91dbdbb746327c0041546ca20ed56179",
     "semantic_hash": ""
   },
   "content/frozen/theme-boot.js": {
@@ -545,8 +535,8 @@
     "semantic_hash": "0d6779f7eea60f39c4d7b9b945cb26a8"
   },
   "deploy.sh": {
-    "mtime": 1780837795.4547713,
-    "ast_hash": "3a261f8fd817e85ef7f997ef5a76ddd2",
+    "mtime": 1780841231.9843976,
+    "ast_hash": "a49c9ff4ce505679de7221a721230f1f",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/@easyops-cn/docusaurus-search-local/default/__plugin.json": {
@@ -590,13 +580,13 @@
     "semantic_hash": "7be83c5152b7dd2be6be37e9eba06d77"
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/p/docs-7fc.json": {
-    "mtime": 1780736808.560432,
-    "ast_hash": "0adc55010b024912f05b6f212b0c4dba",
-    "semantic_hash": "0adc55010b024912f05b6f212b0c4dba"
+    "mtime": 1780843202.560866,
+    "ast_hash": "bfd52b037c305263d825e8e7b4ac0a36",
+    "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-content-architecture-config-and-media-md-c6e.json": {
-    "mtime": 1780753125.4680445,
-    "ast_hash": "1fee2aa84061666451d806aea1278f7c",
+    "mtime": 1780842138.6544502,
+    "ast_hash": "7032fd31ab1e74284871dadf6c7913ad",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-content-architecture-content-tree-and-schemas-md-83d.json": {
@@ -620,8 +610,8 @@
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-content-architecture-intro-md-5db.json": {
-    "mtime": 1780753125.4680843,
-    "ast_hash": "eaf9f4da2b86dad8889795d1c7bc28c6",
+    "mtime": 1780842138.6544433,
+    "ast_hash": "1bee0553c8c5958fc7b906ff2add4a99",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-database-alembic-migrations-md-5d6.json": {
@@ -675,12 +665,12 @@
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-deployment-intro-md-b16.json": {
-    "mtime": 1780753125.4684882,
-    "ast_hash": "15c5729cc3c12e2ea6ebfaa74ef26435",
+    "mtime": 1780842239.3707154,
+    "ast_hash": "915248e6083999431d8a7f245764645e",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-deployment-operations-md-960.json": {
-    "mtime": 1780753125.4683657,
+    "mtime": 1780842239.3707528,
     "ast_hash": "015b06cf6059b325c7e6c3b3fd3d4c07",
     "semantic_hash": ""
   },
@@ -710,8 +700,8 @@
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-frontend-intro-md-784.json": {
-    "mtime": 1780753125.4685872,
-    "ast_hash": "a553e3d9a1fccda529f6034b518f0724",
+    "mtime": 1780842138.2859018,
+    "ast_hash": "c4552b163284d3a4a25f955e9c40cd2d",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-frontend-module-layout-md-60e.json": {
@@ -725,8 +715,8 @@
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-intro-md-0e3.json": {
-    "mtime": 1780753125.4685345,
-    "ast_hash": "fab930ac163c08c9e9b13bd38684e2c3",
+    "mtime": 1780842299.8855548,
+    "ast_hash": "7ac96c60d92d0b75de79bd776c893fb5",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-quiz-management-certificates-md-107.json": {
@@ -735,8 +725,8 @@
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-quiz-management-intro-md-b61.json": {
-    "mtime": 1780753125.4686513,
-    "ast_hash": "98e1f273e548acd8202b761ca8ae66fb",
+    "mtime": 1780842138.6546931,
+    "ast_hash": "6d19d8722d0230472f3d3c72f162f975",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-quiz-management-question-bank-md-604.json": {
@@ -805,9 +795,9 @@
     "semantic_hash": "b7e012e4d907b935174568ab9e0c2dc5"
   },
   "docs-site/.docusaurus/globalData.json": {
-    "mtime": 1780736808.5598555,
-    "ast_hash": "4681f046bdf7eaa964e2bec59dd0b354",
-    "semantic_hash": "4681f046bdf7eaa964e2bec59dd0b354"
+    "mtime": 1780843202.5608697,
+    "ast_hash": "f260a584b235112974291b9e3730abe4",
+    "semantic_hash": ""
   },
   "docs-site/.docusaurus/i18n.json": {
     "mtime": 1780736808.5601873,
@@ -815,18 +805,18 @@
     "semantic_hash": "edba69caca8cf3adfa287ddf9eac87f3"
   },
   "docs-site/.docusaurus/registry.js": {
-    "mtime": 1780753125.503416,
-    "ast_hash": "de39bc7bc656bff902c1ef51619ed284",
+    "mtime": 1780843202.5649118,
+    "ast_hash": "51383abc73ea4cb406c3ad621a80d966",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/routes.js": {
-    "mtime": 1780753125.5036883,
-    "ast_hash": "a028ecc3eb23b4d3cf8edadb3ef441d2",
+    "mtime": 1780843202.5649707,
+    "ast_hash": "5e0001fc3f0cd16c131a645e764fa4ec",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/routesChunkNames.json": {
-    "mtime": 1780753125.5030882,
-    "ast_hash": "a5ce2fde749319169c7376220f9aeaf6",
+    "mtime": 1780843202.564955,
+    "ast_hash": "8cc9332e41f2a8014557e2ead407b403",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/site-metadata.json": {
@@ -838,36 +828,6 @@
     "mtime": 1780736808.560187,
     "ast_hash": "7ab271e5fa354ebf467537fd086a4fb4",
     "semantic_hash": "7ab271e5fa354ebf467537fd086a4fb4"
-  },
-  "docs-site/docs/content-architecture/_category_.json": {
-    "mtime": 1780736581.3861184,
-    "ast_hash": "101c76defea8477618da2552a98fae68",
-    "semantic_hash": "101c76defea8477618da2552a98fae68"
-  },
-  "docs-site/docs/database/_category_.json": {
-    "mtime": 1780736581.4365735,
-    "ast_hash": "c568e77b52ce451980a57397085c61bf",
-    "semantic_hash": "c568e77b52ce451980a57397085c61bf"
-  },
-  "docs-site/docs/deployment/_category_.json": {
-    "mtime": 1780736581.5019295,
-    "ast_hash": "77dc9e209eb9ba936d4d1c1488f3aa0d",
-    "semantic_hash": "77dc9e209eb9ba936d4d1c1488f3aa0d"
-  },
-  "docs-site/docs/frontend/_category_.json": {
-    "mtime": 1780736581.5068123,
-    "ast_hash": "2bb4e119e0b878f5610be1ec6d5ce501",
-    "semantic_hash": "2bb4e119e0b878f5610be1ec6d5ce501"
-  },
-  "docs-site/docs/quiz-management/_category_.json": {
-    "mtime": 1780736581.514567,
-    "ast_hash": "7c5e420e5d57963992843ba10e7a1bf8",
-    "semantic_hash": "7c5e420e5d57963992843ba10e7a1bf8"
-  },
-  "docs-site/docs/system-architecture/_category_.json": {
-    "mtime": 1780736581.5189009,
-    "ast_hash": "6b8734ff7464f7ae7de1a04fa0e05fb8",
-    "semantic_hash": "6b8734ff7464f7ae7de1a04fa0e05fb8"
   },
   "docs-site/docusaurus.config.js": {
     "mtime": 1780736581.523539,
@@ -900,8 +860,8 @@
     "semantic_hash": ""
   },
   "frontend/core/main.js": {
-    "mtime": 1780837752.3760953,
-    "ast_hash": "47aaf225551bdd6254e85b2ab9286ded",
+    "mtime": 1780839173.5813465,
+    "ast_hash": "e172daa11e245133c2c8ab8aeb1c2173",
     "semantic_hash": ""
   },
   "frontend/core/theme.js": {
@@ -1280,9 +1240,9 @@
     "semantic_hash": "d88e4588ee6360dfe5f58631ed1e0e7d"
   },
   ".claude/agents/content-quality.md": {
-    "mtime": 1780645717.8195155,
-    "ast_hash": "7596ca60aa6a367a6bd1fd328a8c3ab6",
-    "semantic_hash": "7596ca60aa6a367a6bd1fd328a8c3ab6"
+    "mtime": 1780839475.3467753,
+    "ast_hash": "e9148cb7f7f6bde57ecc4fbb138963f1",
+    "semantic_hash": ""
   },
   ".claude/skills/graphify/SKILL.md": {
     "mtime": 1780743008.6970208,
@@ -1335,8 +1295,8 @@
     "semantic_hash": "6c3af78fa3e90e46401f330c2cdc2ffc"
   },
   "CONTRIBUTING.md": {
-    "mtime": 1780838003.4185777,
-    "ast_hash": "09b52d1845dbe96df92733efa65d5ac8",
+    "mtime": 1780840735.9069195,
+    "ast_hash": "9d002bc68d604b4053d250b72cd9092c",
     "semantic_hash": ""
   },
   "DEPLOY.md": {
@@ -1355,9 +1315,9 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1780736581.2923143,
-    "ast_hash": "d927cf13f6292960b038c7fa76dd7e53",
-    "semantic_hash": "d927cf13f6292960b038c7fa76dd7e53"
+    "mtime": 1780840781.6311727,
+    "ast_hash": "9479d95d9d42953d55211d78f359af11",
+    "semantic_hash": ""
   },
   "backend/README.md": {
     "mtime": 1780736581.2986836,
@@ -1365,9 +1325,9 @@
     "semantic_hash": "348f0051688f20f4c54576032bca95a1"
   },
   "backend/migrations/README.md": {
-    "mtime": 1780736581.3317406,
-    "ast_hash": "e7f6227a4afbb0566e22151bf040ddf6",
-    "semantic_hash": "e7f6227a4afbb0566e22151bf040ddf6"
+    "mtime": 1780842916.7970858,
+    "ast_hash": "a39ef444d191ddc1a3b310b4c0a2db1e",
+    "semantic_hash": ""
   },
   "backend/migrations/legacy/README.md": {
     "mtime": 1780736581.3327324,
@@ -1439,11 +1399,6 @@
     "ast_hash": "2038cfdc8f71a409402abf51e1dd8a59",
     "semantic_hash": "2038cfdc8f71a409402abf51e1dd8a59"
   },
-  "content/source/MIGRATION-GAP.md": {
-    "mtime": 1780736581.366839,
-    "ast_hash": "332acd415cfbda67fc34f23c52f4ea22",
-    "semantic_hash": "332acd415cfbda67fc34f23c52f4ea22"
-  },
   "content/source/SCHEMA.md": {
     "mtime": 1780736581.3671443,
     "ast_hash": "474b1b6f39cc1ad2dbb22a26c7ea473a",
@@ -1464,205 +1419,10 @@
     "ast_hash": "3bca5abc65c20eea2f6f1ae50f43754c",
     "semantic_hash": "3bca5abc65c20eea2f6f1ae50f43754c"
   },
-  "docs-site/docs/content-architecture/config-and-media.md": {
-    "mtime": 1780744389.4392493,
-    "ast_hash": "8c5cc66a9a75879779ffdab27492f856",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/content-architecture/content-tree-and-schemas.md": {
-    "mtime": 1780736581.387618,
-    "ast_hash": "62ad6cf5b952299a89702837252f34d4",
-    "semantic_hash": "62ad6cf5b952299a89702837252f34d4"
-  },
-  "docs-site/docs/content-architecture/course-block-model.md": {
-    "mtime": 1780736581.3880265,
-    "ast_hash": "1d2ddd67ad3ff4b5ef48fa60caf5c225",
-    "semantic_hash": "1d2ddd67ad3ff4b5ef48fa60caf5c225"
-  },
-  "docs-site/docs/content-architecture/directus-write-plane.md": {
-    "mtime": 1780736581.3888266,
-    "ast_hash": "db8fe72b36fa482820399a0185c38ec8",
-    "semantic_hash": "db8fe72b36fa482820399a0185c38ec8"
-  },
-  "docs-site/docs/content-architecture/four-content-types.md": {
-    "mtime": 1780736581.390413,
-    "ast_hash": "e41d02fbd43af44109bb46dabca5d326",
-    "semantic_hash": "e41d02fbd43af44109bb46dabca5d326"
-  },
-  "docs-site/docs/content-architecture/intro.md": {
-    "mtime": 1780736581.4160125,
-    "ast_hash": "30f8a1db539270aa28feac54c11183e7",
-    "semantic_hash": "30f8a1db539270aa28feac54c11183e7"
-  },
-  "docs-site/docs/database/alembic-migrations.md": {
-    "mtime": 1780736581.4753342,
-    "ast_hash": "c221fcbcb937b1bb66530f7dc92b0602",
-    "semantic_hash": "c221fcbcb937b1bb66530f7dc92b0602"
-  },
-  "docs-site/docs/database/intro.md": {
-    "mtime": 1780736581.4973078,
-    "ast_hash": "68e1b311ce2a2b51ab92175d745ab173",
-    "semantic_hash": "68e1b311ce2a2b51ab92175d745ab173"
-  },
-  "docs-site/docs/database/media-large-objects.md": {
-    "mtime": 1780736581.4986794,
-    "ast_hash": "dc17263bd929975a32990f7e1240da5a",
-    "semantic_hash": "dc17263bd929975a32990f7e1240da5a"
-  },
-  "docs-site/docs/database/postgres-only-features.md": {
-    "mtime": 1780736581.4996555,
-    "ast_hash": "62bc8ac97e01d67a0d30c20a8c517fdd",
-    "semantic_hash": "62bc8ac97e01d67a0d30c20a8c517fdd"
-  },
-  "docs-site/docs/database/role-isolation.md": {
-    "mtime": 1780736581.5002556,
-    "ast_hash": "6caf54834944abb807e5830a2f40aef3",
-    "semantic_hash": "6caf54834944abb807e5830a2f40aef3"
-  },
-  "docs-site/docs/database/schema-overview.md": {
-    "mtime": 1780736581.5012758,
-    "ast_hash": "41d78e7bee322a47718e1bea7e38eb46",
-    "semantic_hash": "41d78e7bee322a47718e1bea7e38eb46"
-  },
-  "docs-site/docs/deployment/apache-vhost.md": {
-    "mtime": 1780736581.502536,
-    "ast_hash": "e3e0d37f9ffed4dd99e52e502ef86b01",
-    "semantic_hash": "e3e0d37f9ffed4dd99e52e502ef86b01"
-  },
-  "docs-site/docs/deployment/deploy-script.md": {
-    "mtime": 1780736581.5031683,
-    "ast_hash": "b76ad0a1be466741e53a4d44e5f921ef",
-    "semantic_hash": "b76ad0a1be466741e53a4d44e5f921ef"
-  },
-  "docs-site/docs/deployment/directus-cms.md": {
-    "mtime": 1780736581.5036502,
-    "ast_hash": "7d1044600005f4590d0c5bd326ccc1dd",
-    "semantic_hash": "7d1044600005f4590d0c5bd326ccc1dd"
-  },
-  "docs-site/docs/deployment/environments.md": {
-    "mtime": 1780736581.5041497,
-    "ast_hash": "4412a122461e7034079c71e4ecc4b069",
-    "semantic_hash": "4412a122461e7034079c71e4ecc4b069"
-  },
-  "docs-site/docs/deployment/intro.md": {
-    "mtime": 1780736581.5049722,
-    "ast_hash": "9d70fc5d02f27496dffd332d5bd70d8e",
-    "semantic_hash": "9d70fc5d02f27496dffd332d5bd70d8e"
-  },
-  "docs-site/docs/deployment/operations.md": {
-    "mtime": 1780736581.505555,
-    "ast_hash": "952d8af068ed8ecd2d623c1f27de05cc",
-    "semantic_hash": "952d8af068ed8ecd2d623c1f27de05cc"
-  },
-  "docs-site/docs/deployment/topology.md": {
-    "mtime": 1780736581.5060446,
-    "ast_hash": "997f71ab8f6561966b39f8e92da0683a",
-    "semantic_hash": "997f71ab8f6561966b39f8e92da0683a"
-  },
-  "docs-site/docs/frontend/architecture.md": {
-    "mtime": 1780736581.5076544,
-    "ast_hash": "52eb669ab64735a4e968121a1e38a666",
-    "semantic_hash": "52eb669ab64735a4e968121a1e38a666"
-  },
-  "docs-site/docs/frontend/blocks-and-registry.md": {
-    "mtime": 1780753718.8908045,
-    "ast_hash": "ef0cad5f780b691c3bacf6feb51418c6",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/frontend/config-and-theming.md": {
-    "mtime": 1780736581.5092075,
-    "ast_hash": "7a8f3cef5de7d54cd8fa7044a169f488",
-    "semantic_hash": "7a8f3cef5de7d54cd8fa7044a169f488"
-  },
-  "docs-site/docs/frontend/content-read-path.md": {
-    "mtime": 1780736581.509906,
-    "ast_hash": "915d6f225b095ea0948772baa9d2ef9e",
-    "semantic_hash": "915d6f225b095ea0948772baa9d2ef9e"
-  },
-  "docs-site/docs/frontend/intro.md": {
-    "mtime": 1780753736.8669107,
-    "ast_hash": "0a3ed7912b192d56bda318f943082bf1",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/frontend/module-layout.md": {
-    "mtime": 1780753749.359793,
-    "ast_hash": "0ef70a60d67f1207c0a7650d93a0237a",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/frontend/router-and-modes.md": {
-    "mtime": 1780736581.5120966,
-    "ast_hash": "547017d522e4de93c8dca014d70304f8",
-    "semantic_hash": "547017d522e4de93c8dca014d70304f8"
-  },
   "docs-site/docs/intro.md": {
     "mtime": 1780753663.4252477,
     "ast_hash": "39cbce6b64a2700f573ab5f443287628",
     "semantic_hash": ""
-  },
-  "docs-site/docs/quiz-management/certificates.md": {
-    "mtime": 1780736581.5156574,
-    "ast_hash": "e6e704c22569e16aee666a5275a68482",
-    "semantic_hash": "e6e704c22569e16aee666a5275a68482"
-  },
-  "docs-site/docs/quiz-management/intro.md": {
-    "mtime": 1780736581.516573,
-    "ast_hash": "ca06a51bb44a2a09b9a23ff406c3368e",
-    "semantic_hash": "ca06a51bb44a2a09b9a23ff406c3368e"
-  },
-  "docs-site/docs/quiz-management/question-bank.md": {
-    "mtime": 1780736581.5170107,
-    "ast_hash": "c7ae98622454ec72d2b1bf5bcc9d1b6b",
-    "semantic_hash": "c7ae98622454ec72d2b1bf5bcc9d1b6b"
-  },
-  "docs-site/docs/quiz-management/quiz-lifecycle.md": {
-    "mtime": 1780736581.5174482,
-    "ast_hash": "f911362f2f778d7f00a7c6a143f22d46",
-    "semantic_hash": "f911362f2f778d7f00a7c6a143f22d46"
-  },
-  "docs-site/docs/quiz-management/rbac-and-admin.md": {
-    "mtime": 1780736581.5179572,
-    "ast_hash": "15c879e2eba864e1da7bc7f4f7dda42d",
-    "semantic_hash": "15c879e2eba864e1da7bc7f4f7dda42d"
-  },
-  "docs-site/docs/quiz-management/verification.md": {
-    "mtime": 1780736581.518384,
-    "ast_hash": "63cfd1138e1c8594c13d72d5906dee7b",
-    "semantic_hash": "63cfd1138e1c8594c13d72d5906dee7b"
-  },
-  "docs-site/docs/system-architecture/auth-planes.md": {
-    "mtime": 1780753709.8895566,
-    "ast_hash": "11ef74520b03d4fc0381eb3dc2d4bf2f",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/system-architecture/caching-performance.md": {
-    "mtime": 1780753688.3557694,
-    "ast_hash": "9e1002198a534c33f308c867e0c9d1c3",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/system-architecture/directus-topology.md": {
-    "mtime": 1780753609.913834,
-    "ast_hash": "8cc813a6d591857a565c9feff0b8d521",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/system-architecture/intro.md": {
-    "mtime": 1780753592.4919386,
-    "ast_hash": "6519d1cd78777fca756762d688bc692b",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/system-architecture/modular-monolith.md": {
-    "mtime": 1780753674.9468007,
-    "ast_hash": "977924163b371073d363fb8ed70b50d5",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/system-architecture/observability.md": {
-    "mtime": 1780753698.4653466,
-    "ast_hash": "a3dbe55a5838d54aec46fd07e0614edb",
-    "semantic_hash": ""
-  },
-  "docs-site/docs/system-architecture/security-baseline.md": {
-    "mtime": 1780736581.5230641,
-    "ast_hash": "2f18f4129703ea049f23249a0b3557fa",
-    "semantic_hash": "2f18f4129703ea049f23249a0b3557fa"
   },
   "docs-site/static/img/README.md": {
     "mtime": 1780736581.5291378,
@@ -1675,14 +1435,9 @@
     "semantic_hash": ""
   },
   "docs/architecture/v2-plan.md": {
-    "mtime": 1780736581.5353034,
-    "ast_hash": "9217ccf42cb294a65ce17b82570c3e2a",
-    "semantic_hash": "9217ccf42cb294a65ce17b82570c3e2a"
-  },
-  "docs/architecture/v2/00-gate-report.md": {
-    "mtime": 1780736581.5365381,
-    "ast_hash": "5d2e1688b059281a1a74b0852c615b3f",
-    "semantic_hash": "5d2e1688b059281a1a74b0852c615b3f"
+    "mtime": 1780843168.0373013,
+    "ast_hash": "fcd43648058e4afb9b06075aaf255131",
+    "semantic_hash": ""
   },
   "docs/architecture/v2/01-blueprint.md": {
     "mtime": 1780736581.561443,
@@ -1719,14 +1474,9 @@
     "ast_hash": "98b175fb27c620bc3f0d9fa1ce197882",
     "semantic_hash": "98b175fb27c620bc3f0d9fa1ce197882"
   },
-  "docs/architecture/v2/08-docs-plan.md": {
-    "mtime": 1780736581.5699658,
-    "ast_hash": "af97493932e7fb9f9542380d7714cf5c",
-    "semantic_hash": "af97493932e7fb9f9542380d7714cf5c"
-  },
   "docs/architecture/v2/cutover-plan.md": {
-    "mtime": 1780838113.2158277,
-    "ast_hash": "82c3a9df62978e7cdbac26a5b3729356",
+    "mtime": 1780842925.2639956,
+    "ast_hash": "9bbd3233dfaf451b7d97ca2a6903a336",
     "semantic_hash": ""
   },
   "docs/architecture/v2/dba-dev-db-handover.md": {
@@ -1734,49 +1484,14 @@
     "ast_hash": "2e5cffe35eb2ae28195888bc6fda1703",
     "semantic_hash": "2e5cffe35eb2ae28195888bc6fda1703"
   },
-  "docs/architecture/v2/phase-1-report.md": {
-    "mtime": 1780736581.5723085,
-    "ast_hash": "1a5c9fc6378fd93f2091ae4e04dfc069",
-    "semantic_hash": "1a5c9fc6378fd93f2091ae4e04dfc069"
-  },
-  "docs/architecture/v2/phase-2-report.md": {
-    "mtime": 1780736581.572873,
-    "ast_hash": "68cd81018d5c57b9223c171e93ae6956",
-    "semantic_hash": "68cd81018d5c57b9223c171e93ae6956"
-  },
-  "docs/architecture/v2/phase-3-report.md": {
-    "mtime": 1780736581.5734062,
-    "ast_hash": "10644c044e5d72dcf90237346340f1f4",
-    "semantic_hash": "10644c044e5d72dcf90237346340f1f4"
-  },
-  "docs/architecture/v2/phase-4a-report.md": {
-    "mtime": 1780736581.5738194,
-    "ast_hash": "d5aa0eb6495bdd3c82529c89160f12cf",
-    "semantic_hash": "d5aa0eb6495bdd3c82529c89160f12cf"
-  },
-  "docs/architecture/v2/phase-4b-report.md": {
-    "mtime": 1780736581.5745027,
-    "ast_hash": "9d935c73a637f2f9e1c776e02908e215",
-    "semantic_hash": "9d935c73a637f2f9e1c776e02908e215"
-  },
-  "docs/architecture/v2/phase-5-report.md": {
-    "mtime": 1780736581.740157,
-    "ast_hash": "08919674e05c21db329155e097bb2585",
-    "semantic_hash": "08919674e05c21db329155e097bb2585"
-  },
-  "docs/architecture/v2/test-report.md": {
-    "mtime": 1780737692.6164627,
-    "ast_hash": "70b2f833d5f5c7335d1eafe100f8e838",
-    "semantic_hash": "70b2f833d5f5c7335d1eafe100f8e838"
-  },
   "docs/architecture/v2/url-security-audit.md": {
-    "mtime": 1780736581.5767245,
-    "ast_hash": "ab3c4aabb25dc459240c2ee0118504d8",
-    "semantic_hash": "ab3c4aabb25dc459240c2ee0118504d8"
+    "mtime": 1780843176.0817256,
+    "ast_hash": "430a646444cdb7e580fb0eea35ad7ee7",
+    "semantic_hash": ""
   },
   "frontend/index.html": {
-    "mtime": 1780837737.5505445,
-    "ast_hash": "0bd8848a8a15fe73ef049c996976c301",
+    "mtime": 1780839179.9405632,
+    "ast_hash": "c9c5253e2535a640728f6b553a37a469",
     "semantic_hash": ""
   },
   "prompt-library/sample-aem-to-react-native/README.md": {
@@ -1939,26 +1654,6 @@
     "ast_hash": "8618e5a0f71afbbb631aeff3d090693e",
     "semantic_hash": ""
   },
-  "backend/app/modules/faq/__init__.py": {
-    "mtime": 1780751976.4187438,
-    "ast_hash": "81a35e8c44af6b7bd2dffd0dae7859d7",
-    "semantic_hash": ""
-  },
-  "backend/app/modules/faq/routes.py": {
-    "mtime": 1780751990.312825,
-    "ast_hash": "64341d9e79b4d965fb7cba32fcbac9d2",
-    "semantic_hash": ""
-  },
-  "backend/app/modules/faq/schemas.py": {
-    "mtime": 1780751980.1680553,
-    "ast_hash": "8ef98789dbdd1d0c28754476c8cbb75e",
-    "semantic_hash": ""
-  },
-  "backend/app/modules/faq/storage.py": {
-    "mtime": 1780751984.2596586,
-    "ast_hash": "221c54d328e3c468e67c4cc184d35dc8",
-    "semantic_hash": ""
-  },
   "backend/app/modules/superadmin/__init__.py": {
     "mtime": 1780748372.546533,
     "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
@@ -1982,16 +1677,6 @@
   "backend/scripts/create_superadmin.py": {
     "mtime": 1780748578.9520729,
     "ast_hash": "2e2f3bf2e4a4ed276b70b9acd44f73df",
-    "semantic_hash": ""
-  },
-  "backend/scripts/seed_faqs.py": {
-    "mtime": 1780752385.829526,
-    "ast_hash": "64dff8ac39cead728f9fc2ae5d5e92f6",
-    "semantic_hash": ""
-  },
-  "backend/tests/test_faq.py": {
-    "mtime": 1780752610.4010446,
-    "ast_hash": "156d52de344555d71ea63878f8aa0e37",
     "semantic_hash": ""
   },
   "backend/tests/test_media_serve.py": {
@@ -2025,8 +1710,8 @@
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/docusaurus-plugin-debug/default/p/docs-docusaurus-debug-content-a52.json": {
-    "mtime": 1780753125.489712,
-    "ast_hash": "bb372dc49f75eff9238e5ca4fd92d99e",
+    "mtime": 1780843202.5608335,
+    "ast_hash": "79993181edf449759289710f491ccb7e",
     "semantic_hash": ""
   },
   "backend/requirements-dev.txt": {
@@ -2035,13 +1720,13 @@
     "semantic_hash": ""
   },
   "docs/architecture/v2/housekeeping.md": {
-    "mtime": 1780752350.6093528,
-    "ast_hash": "742eee10dc227aea27de56df4ad176f8",
+    "mtime": 1780843166.5615315,
+    "ast_hash": "29a82101bcc8b781b8d8d57e9f06bb46",
     "semantic_hash": ""
   },
   "docs/architecture/v2/system-overview.md": {
-    "mtime": 1780752185.630711,
-    "ast_hash": "2fc0666a1074661a57d8354e82510b22",
+    "mtime": 1780842968.9021356,
+    "ast_hash": "d5d01ded96e6b4f8119d723e81b9dc45",
     "semantic_hash": ""
   },
   "backend/migrations/versions/0011_techflix_episodes.py": {
@@ -2055,8 +1740,8 @@
     "semantic_hash": ""
   },
   "docs/architecture/v2/repo-migration-plan.md": {
-    "mtime": 1780809996.0775628,
-    "ast_hash": "f940d39e919feae40e0f20934f0731fa",
+    "mtime": 1780842943.5478559,
+    "ast_hash": "eac5eb7d6f2aedb789727eab41600914",
     "semantic_hash": ""
   },
   "frontend/modules/techflix/techflix.js": {
@@ -2079,19 +1764,9 @@
     "ast_hash": "72f0d2adf96acfb6990dd72da0b30c86",
     "semantic_hash": ""
   },
-  "backend/app/modules/runbooks/routes.py": {
-    "mtime": 1780814815.867286,
-    "ast_hash": "5c6f6a98b9c91630d5bf9eed3763e5b7",
-    "semantic_hash": ""
-  },
   "backend/app/modules/runbooks/schemas.py": {
     "mtime": 1780812850.3341136,
     "ast_hash": "04d8ade34832aef1946479036dc7430d",
-    "semantic_hash": ""
-  },
-  "backend/app/modules/runbooks/storage.py": {
-    "mtime": 1780812863.418092,
-    "ast_hash": "fbd132b8910215d65e083c6c987ebc72",
     "semantic_hash": ""
   },
   "backend/migrations/versions/0012_runbooks.py": {
@@ -2229,39 +1904,19 @@
     "ast_hash": "d3723bda7433d45d2f70f21282044713",
     "semantic_hash": ""
   },
-  "resources/architect-runbook.html": {
-    "mtime": 1780813973.1034224,
-    "ast_hash": "41f89687154d039c6605b7e2f221b0f0",
-    "semantic_hash": ""
-  },
-  "resources/code-coder-checklist.html": {
-    "mtime": 1780813999.5800412,
-    "ast_hash": "5a31129e22a8313930a62057fda4b58b",
-    "semantic_hash": ""
-  },
   "resources/faqs/aem-banking-faq.html": {
-    "mtime": 1780753819.5217102,
-    "ast_hash": "9576daf9590f30817a399dbcefb30742",
-    "semantic_hash": ""
-  },
-  "resources/faqs/category.html": {
-    "mtime": 1780752471.5347552,
-    "ast_hash": "3f655f950a7da1dd5e7537156b63af97",
+    "mtime": 1780839083.2602496,
+    "ast_hash": "69011a67e153654f4639151b7c4eacc8",
     "semantic_hash": ""
   },
   "resources/faqs/index.html": {
-    "mtime": 1780814025.197785,
-    "ast_hash": "cae1cb2227ed421e99cef1cd29fa1920",
-    "semantic_hash": ""
-  },
-  "resources/runbook.html": {
-    "mtime": 1780813147.0111403,
-    "ast_hash": "f339039cd68ccb4a962871cf3f52ea71",
+    "mtime": 1780839083.2611034,
+    "ast_hash": "c678477823bd22d6299b7c74e7f52180",
     "semantic_hash": ""
   },
   "resources/runbooks/index.html": {
-    "mtime": 1780814854.8331804,
-    "ast_hash": "127e87839204fdbb1afabfc40d80afd8",
+    "mtime": 1780840607.5646803,
+    "ast_hash": "f184278b804577537120d174ee004a94",
     "semantic_hash": ""
   },
   "backend/migrations/versions/0015_drop_techflix_episodes.py": {
@@ -2272,6 +1927,571 @@
   "docs/architecture/v2/09-video-model.md": {
     "mtime": 1780838169.3336077,
     "ast_hash": "faeb35a6ab9f844f9b99fdae8c095a85",
+    "semantic_hash": ""
+  },
+  "resources/theme-boot.js": {
+    "mtime": 1780839083.1404932,
+    "ast_hash": "f1582d375ea09bd590580218f010c65c",
+    "semantic_hash": ""
+  },
+  "resources/checklists/code-coder-checklist.html": {
+    "mtime": 1780839601.5048325,
+    "ast_hash": "b644aa0119ca467c57a35a426ca5e43d",
+    "semantic_hash": ""
+  },
+  "resources/checklists/index.html": {
+    "mtime": 1780839083.2629485,
+    "ast_hash": "b8548435d1f1a2ad73caeb6efd003ea9",
+    "semantic_hash": ""
+  },
+  "resources/runbooks/architect-runbook.html": {
+    "mtime": 1780840557.2975025,
+    "ast_hash": "48f9350edde6af7f3bfbbb8d4024684a",
+    "semantic_hash": ""
+  },
+  "backend/scripts/render_runbook.py": {
+    "mtime": 1780840503.027472,
+    "ast_hash": "7b6c1f2e3e05a2bdfbb03929f7f82567",
+    "semantic_hash": ""
+  },
+  "docs/CONTENT-AUTHORING.md": {
+    "mtime": 1780841445.4837284,
+    "ast_hash": "0d53e40ee2be5a6f53bfc66ece9c53b9",
+    "semantic_hash": ""
+  },
+  "backend/migrations/versions/0016_drop_faq_runbook_tables.py": {
+    "mtime": 1780841121.8651907,
+    "ast_hash": "613960ca393849f3fefba4cd9f637898",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-admin-content-scheduler-md-105.json": {
+    "mtime": 1780842929.3279636,
+    "ast_hash": "be4b07d948da558b39f8d3c9e6c26976",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-admin-database-operations-md-6d8.json": {
+    "mtime": 1780842828.6950839,
+    "ast_hash": "3c481307cd0216e1f82b0d3db7b0da7f",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-admin-deployment-md-c41.json": {
+    "mtime": 1780842929.3280385,
+    "ast_hash": "c7b1a324c0471f43c855f9766e7b74b2",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-admin-intro-md-702.json": {
+    "mtime": 1780842691.9517128,
+    "ast_hash": "5729b06fe4cdec79d72febf5a6d00494",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-admin-managing-the-cms-md-c0e.json": {
+    "mtime": 1780842799.0037465,
+    "ast_hash": "bfdf8bfae029cb9e46e958b793a7e093",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-admin-monitoring-md-759.json": {
+    "mtime": 1780842865.2645671,
+    "ast_hash": "e3292f4b8949fb057e82aa411c6b91c4",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-admin-quiz-administration-md-3f1.json": {
+    "mtime": 1780842883.276293,
+    "ast_hash": "bfc3fdc3a48d1d9011ecdde261a1d841",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-admin-users-and-roles-md-69a.json": {
+    "mtime": 1780842722.3264227,
+    "ast_hash": "aabceb1b0835380bdebda8b90fb78540",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-architecture-auth-planes-md-479.json": {
+    "mtime": 1780842239.370756,
+    "ast_hash": "e448661e68bf0aac78649b012be803c3",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-architecture-caching-performance-md-d64.json": {
+    "mtime": 1780842239.3707294,
+    "ast_hash": "8cca31d14f3fc073b6210c5b9c0855df",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-architecture-directus-topology-md-642.json": {
+    "mtime": 1780842239.3708007,
+    "ast_hash": "03d7c2c20d3a28101ec8a35ae07905d1",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-architecture-modular-monolith-md-431.json": {
+    "mtime": 1780842239.3707886,
+    "ast_hash": "f90ed62a5c5696e9728bd957ca902284",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-architecture-observability-md-bf0.json": {
+    "mtime": 1780842239.3708303,
+    "ast_hash": "00bfdf026313cc5fcabf9cdee834fc44",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-architecture-security-baseline-md-834.json": {
+    "mtime": 1780842239.370813,
+    "ast_hash": "bc1d8dbfa29ebd6ee237cfa63c63e776",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-components-architecture-md-38d.json": {
+    "mtime": 1780842138.6593556,
+    "ast_hash": "b3811b96958e2e1d1639b7a972995f70",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-components-blocks-and-registry-md-b40.json": {
+    "mtime": 1780842138.65934,
+    "ast_hash": "05571e8f6393c6635756a9aaa40c5a5e",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-components-config-and-theming-md-7e3.json": {
+    "mtime": 1780842239.3708618,
+    "ast_hash": "e1e9d917262aa0e093e461e08e41934c",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-components-content-read-path-md-21b.json": {
+    "mtime": 1780842138.6593735,
+    "ast_hash": "a143281424bd68d728666a76a8d3ecb8",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-components-intro-md-9fe.json": {
+    "mtime": 1780842138.6593626,
+    "ast_hash": "b2599051e42bc68d3d209e6219136bab",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-components-module-layout-md-9af.json": {
+    "mtime": 1780842138.6593795,
+    "ast_hash": "7fbbab072dcd2bfe9acc4c1c584cb85f",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-components-router-and-modes-md-672.json": {
+    "mtime": 1780842138.6593852,
+    "ast_hash": "5f798d20e94469c71be9c0a5a8773e6a",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-alembic-migrations-md-d39.json": {
+    "mtime": 1780842239.3709087,
+    "ast_hash": "84d3ad082a39b1a0e4c460d6c0ad876d",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-config-and-media-md-4e4.json": {
+    "mtime": 1780842239.3364375,
+    "ast_hash": "4a7bca73631536c2c51b1f0511717824",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-content-intro-md-235.json": {
+    "mtime": 1780842239.3364577,
+    "ast_hash": "f18a80c49ceea3be1149c8bcf6ad2ea8",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-content-tree-and-schemas-md-fa6.json": {
+    "mtime": 1780842239.3364465,
+    "ast_hash": "a94a18ea823af2c18a9bb330808a3573",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-course-block-model-md-a44.json": {
+    "mtime": 1780842239.336511,
+    "ast_hash": "f1dccda64a5575743961add82ac61a85",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-database-intro-md-0b8.json": {
+    "mtime": 1780842239.3365662,
+    "ast_hash": "9e3c808062319836ba0b19d90b15852c",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-directus-write-plane-md-1e0.json": {
+    "mtime": 1780842239.336591,
+    "ast_hash": "046f5c1870ac8badea1a89856945d374",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-four-content-types-md-a1b.json": {
+    "mtime": 1780842239.3366039,
+    "ast_hash": "9feb96baf068fa5041e706e8a1bf3d7c",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-intro-md-da0.json": {
+    "mtime": 1780842138.6593912,
+    "ast_hash": "bb50ec643ff820b7cf6f8ba632e70efb",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-media-large-objects-md-f34.json": {
+    "mtime": 1780842239.3708806,
+    "ast_hash": "4753f525f2e5477534319dbd5d37ed8c",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-postgres-only-features-md-b65.json": {
+    "mtime": 1780842239.3708916,
+    "ast_hash": "4b5dab6d7854ba49b41a2b7b4f7c01c0",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-role-isolation-md-936.json": {
+    "mtime": 1780842239.3709195,
+    "ast_hash": "0f0aef71bde50d5bbb6bbb02e08e1154",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-data-model-schema-overview-md-594.json": {
+    "mtime": 1780842239.3709006,
+    "ast_hash": "06d7274f9c9b78cd14477a1e4ef9ed03",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-intro-md-2b8.json": {
+    "mtime": 1780842929.328053,
+    "ast_hash": "e046a6407d0975339a0fded49841e84b",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-quiz-internals-certificates-md-a84.json": {
+    "mtime": 1780842239.33664,
+    "ast_hash": "be1423e77a4c8edf3d0b3e24ec4459dd",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-quiz-internals-question-bank-md-682.json": {
+    "mtime": 1780842239.336694,
+    "ast_hash": "caed10fd024fffcefb3d9fb9ce76233a",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-quiz-internals-quiz-intro-md-b01.json": {
+    "mtime": 1780842239.3366168,
+    "ast_hash": "bec389947f68194b252a1a9ffb10b483",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-quiz-internals-quiz-lifecycle-md-83b.json": {
+    "mtime": 1780842239.3366904,
+    "ast_hash": "dfdfd4edb02e9c2d587b866c342a1d6f",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-quiz-internals-rbac-and-admin-md-8c8.json": {
+    "mtime": 1780843202.557251,
+    "ast_hash": "0a6adb683b8034e0ea69e458cc4460f3",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-developer-quiz-internals-verification-md-073.json": {
+    "mtime": 1780842239.3367167,
+    "ast_hash": "715929ebef8ee9f14a7ccb2061c2c23b",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-user-creating-feed-posts-md-dfd.json": {
+    "mtime": 1780842381.4817808,
+    "ast_hash": "ff4b3b7d509d8d4b696df16836a5eb5c",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-user-discovery-checklists-md-adc.json": {
+    "mtime": 1780842441.8781118,
+    "ast_hash": "081bdc02679a3116634cdc8d18036c25",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-user-feature-requests-md-328.json": {
+    "mtime": 1780842664.8370488,
+    "ast_hash": "4e1d1377eaf434c322bbc64a62803ac8",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-user-intro-md-678.json": {
+    "mtime": 1780842322.664553,
+    "ast_hash": "21ca18b6b4077a880482a0411bb273f3",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-user-managing-faqs-md-561.json": {
+    "mtime": 1780842363.1601985,
+    "ast_hash": "62a1f08304dd592d305bf1e19ef8cd2e",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-user-publishing-runbooks-md-27f.json": {
+    "mtime": 1780842420.1123147,
+    "ast_hash": "205f73bf826b36f04816b02bb791ce4c",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-user-refreshing-the-quiz-md-802.json": {
+    "mtime": 1780842457.9380808,
+    "ast_hash": "ef483588a605fb6c38dab7c6c59ef90f",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-user-updating-course-content-md-bcc.json": {
+    "mtime": 1780842342.7100375,
+    "ast_hash": "33975c421fc17735d085317f8e62012d",
+    "semantic_hash": ""
+  },
+  "docs-site/.docusaurus/docusaurus-plugin-content-docs/default/site-docs-user-uploading-media-md-d73.json": {
+    "mtime": 1780842405.3892512,
+    "ast_hash": "0d9d449c6cba0ed1fb171d3cbd58bbb1",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/admin/_category_.json": {
+    "mtime": 1780842640.9796708,
+    "ast_hash": "12e53a4eb15436833b5b5dc93317c96d",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/_category_.json": {
+    "mtime": 1780842164.2360454,
+    "ast_hash": "c92e8771a542474ab6f6ffae798ad534",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/architecture/_category_.json": {
+    "mtime": 1780842170.9763894,
+    "ast_hash": "ff55ef501bf2b1aaf897f0f3c244e1c9",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/components/_category_.json": {
+    "mtime": 1780842172.8669407,
+    "ast_hash": "1fce34486f3798210f08b71b473b5910",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/_category_.json": {
+    "mtime": 1780842175.220731,
+    "ast_hash": "a3b94837bb9fa20fba035967d5ecf0c6",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/quiz-internals/_category_.json": {
+    "mtime": 1780842176.9268463,
+    "ast_hash": "5b3038adac224ae454f5391cda569299",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/_category_.json": {
+    "mtime": 1780842277.1202447,
+    "ast_hash": "59bf11e8bc934d737a4f651455473d8e",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/admin/content-scheduler.md": {
+    "mtime": 1780842883.2422135,
+    "ast_hash": "34e2e131fae0d8ea9834b569e710430a",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/admin/database-operations.md": {
+    "mtime": 1780842798.9575522,
+    "ast_hash": "c8ffd1be8dbb51f70196cd4f3481c829",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/admin/deployment.md": {
+    "mtime": 1780842929.2827368,
+    "ast_hash": "003b95cb631f1a416e668966f7d3bed2",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/admin/intro.md": {
+    "mtime": 1780842664.8019783,
+    "ast_hash": "8dbda45c3d2e37a8a31f7a60d4c2767c",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/admin/managing-the-cms.md": {
+    "mtime": 1780842759.8581784,
+    "ast_hash": "8a2d17b22993dc7deea98c1c5e983095",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/admin/monitoring.md": {
+    "mtime": 1780842828.6615443,
+    "ast_hash": "039cb04269325bd0f546d28f92920cb2",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/admin/quiz-administration.md": {
+    "mtime": 1780842865.2197893,
+    "ast_hash": "b621882136896ce4d2c893bf562c6af2",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/admin/users-and-roles.md": {
+    "mtime": 1780842691.9192967,
+    "ast_hash": "491aad9d92dd23e224b55409c818494b",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/architecture/auth-planes.md": {
+    "mtime": 1780842238.9075975,
+    "ast_hash": "4c754a00dcc9d4885feefd38a2f2de14",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/architecture/caching-performance.md": {
+    "mtime": 1780842238.9084754,
+    "ast_hash": "7a836887fdc3d4034c5b309810b12c06",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/architecture/directus-topology.md": {
+    "mtime": 1780842238.9055321,
+    "ast_hash": "f62c9984e5a6d515d4b29a808a5a1302",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/architecture/modular-monolith.md": {
+    "mtime": 1780842238.9047892,
+    "ast_hash": "6e7d92148f7d613dfbe1b23f53a2d228",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/architecture/observability.md": {
+    "mtime": 1780842238.910213,
+    "ast_hash": "12971698bc1bb7777a533874a17399e7",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/architecture/security-baseline.md": {
+    "mtime": 1780842238.9095109,
+    "ast_hash": "9ecf077a63533164f50b251ba3a37036",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/components/architecture.md": {
+    "mtime": 1780736581.5076544,
+    "ast_hash": "52eb669ab64735a4e968121a1e38a666",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/components/blocks-and-registry.md": {
+    "mtime": 1780753718.8908045,
+    "ast_hash": "ef0cad5f780b691c3bacf6feb51418c6",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/components/config-and-theming.md": {
+    "mtime": 1780736581.5092075,
+    "ast_hash": "7a8f3cef5de7d54cd8fa7044a169f488",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/components/content-read-path.md": {
+    "mtime": 1780736581.509906,
+    "ast_hash": "915d6f225b095ea0948772baa9d2ef9e",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/components/intro.md": {
+    "mtime": 1780753736.8669107,
+    "ast_hash": "0a3ed7912b192d56bda318f943082bf1",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/components/module-layout.md": {
+    "mtime": 1780753749.359793,
+    "ast_hash": "0ef70a60d67f1207c0a7650d93a0237a",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/components/router-and-modes.md": {
+    "mtime": 1780736581.5120966,
+    "ast_hash": "547017d522e4de93c8dca014d70304f8",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/alembic-migrations.md": {
+    "mtime": 1780842238.89949,
+    "ast_hash": "696be4a2f15103678d9a3362b601902d",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/config-and-media.md": {
+    "mtime": 1780842238.9034271,
+    "ast_hash": "1244b0041a9a6578c21c17cd25fe736d",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/content-intro.md": {
+    "mtime": 1780842238.8972208,
+    "ast_hash": "f289d8f0c1e26baa7ff49fb15cf60333",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/content-tree-and-schemas.md": {
+    "mtime": 1780842238.9022322,
+    "ast_hash": "de5950a3cf6eac227dfbf50780e62672",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/course-block-model.md": {
+    "mtime": 1780842238.902801,
+    "ast_hash": "e72f224e29c20f0648efed73bb38a667",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/database-intro.md": {
+    "mtime": 1780842238.8965018,
+    "ast_hash": "489c9ef64255c76a3cc37be83ba4a8f9",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/directus-write-plane.md": {
+    "mtime": 1780842238.9042017,
+    "ast_hash": "940aa8bd63c417aa5b299375d166dfdd",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/four-content-types.md": {
+    "mtime": 1780842238.9014754,
+    "ast_hash": "a0a5efbc40f3c848b88e138478efa3fd",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/media-large-objects.md": {
+    "mtime": 1780842238.900108,
+    "ast_hash": "dc17263bd929975a32990f7e1240da5a",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/postgres-only-features.md": {
+    "mtime": 1780842238.8987348,
+    "ast_hash": "df0d85cfffb015dee8f6358dcf7a4d66",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/role-isolation.md": {
+    "mtime": 1780842238.9007645,
+    "ast_hash": "5ca6a555effeeddc6fa7abb71a1f2105",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/data-model/schema-overview.md": {
+    "mtime": 1780842238.8982017,
+    "ast_hash": "41d78e7bee322a47718e1bea7e38eb46",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/intro.md": {
+    "mtime": 1780753592.4919386,
+    "ast_hash": "6519d1cd78777fca756762d688bc692b",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/quiz-internals/certificates.md": {
+    "mtime": 1780736581.5156574,
+    "ast_hash": "e6e704c22569e16aee666a5275a68482",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/quiz-internals/question-bank.md": {
+    "mtime": 1780736581.5170107,
+    "ast_hash": "c7ae98622454ec72d2b1bf5bcc9d1b6b",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/quiz-internals/quiz-intro.md": {
+    "mtime": 1780842238.8976212,
+    "ast_hash": "5d4fc5fd74d508d2066ae917432cc254",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/quiz-internals/quiz-lifecycle.md": {
+    "mtime": 1780736581.5174482,
+    "ast_hash": "f911362f2f778d7f00a7c6a143f22d46",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/quiz-internals/rbac-and-admin.md": {
+    "mtime": 1780736581.5179572,
+    "ast_hash": "15c879e2eba864e1da7bc7f4f7dda42d",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/developer/quiz-internals/verification.md": {
+    "mtime": 1780736581.518384,
+    "ast_hash": "63cfd1138e1c8594c13d72d5906dee7b",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/creating-feed-posts.md": {
+    "mtime": 1780842363.1253586,
+    "ast_hash": "9de097d68219b218b194f133c9a9549e",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/discovery-checklists.md": {
+    "mtime": 1780843159.4926016,
+    "ast_hash": "1ce51b01418c0944421e6ee1ac9a9d5a",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/feature-requests.md": {
+    "mtime": 1780842457.892487,
+    "ast_hash": "e71b5e7d8744841916805c505a41135b",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/intro.md": {
+    "mtime": 1780842299.8529012,
+    "ast_hash": "7eb8143e1f7948d54844868f15c15c72",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/managing-faqs.md": {
+    "mtime": 1780843131.1569562,
+    "ast_hash": "2ef5d068437c2775982ee2b20e30ccff",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/publishing-runbooks.md": {
+    "mtime": 1780843142.5335555,
+    "ast_hash": "feb048fba3df1b7d93111146e68316ff",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/refreshing-the-quiz.md": {
+    "mtime": 1780842441.8233576,
+    "ast_hash": "ddb17fa5b64b16f4ecfd136ade7e338b",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/updating-course-content.md": {
+    "mtime": 1780842322.6220813,
+    "ast_hash": "50d422af052da9208915b6b1406e9dab",
+    "semantic_hash": ""
+  },
+  "docs-site/docs/user/uploading-media.md": {
+    "mtime": 1780842381.4341686,
+    "ast_hash": "c39b15fcce136be976dec63edd79eec8",
     "semantic_hash": ""
   }
 }

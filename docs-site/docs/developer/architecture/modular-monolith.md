@@ -1,7 +1,7 @@
 ---
 id: modular-monolith
 title: Modular monolith
-sidebar_position: 2
+sidebar_position: 1
 ---
 
 # Modular monolith

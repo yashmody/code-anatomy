@@ -187,7 +187,7 @@ remote instance reached over TCP+TLS, shared across environments by database.
 ### Scan box
 
 - Phase 5b certified **0 CRITICAL, 0 HIGH** open. All four original CRITICALs
-  are closed in code (`phase-5-report.md:162-168`). What remains is **6 MEDIUM,
+  are closed in code. What remains is **6 MEDIUM,
   4 LOW, 3 INFO** — none forge a certificate or open a path to prod data.
 - Two of those MEDIUMs are the documented **must-fix-before-cutover** pair:
   **V2-F-02** (`/csp/report` has no handler) and **V2-F-03** (`fastapi` /
@@ -207,13 +207,13 @@ remote instance reached over TCP+TLS, shared across environments by database.
 ### 2.1 Phase 5b verdict (recap)
 
 The Phase 5b security sweep certified **CRITICAL 0 · HIGH 0 · MEDIUM 6 · LOW 4
-· INFO 3** (`phase-5-report.md:168`). The four original CRITICAL findings are
-closed in code (`phase-5-report.md:162-168`). The edge posture — TLS 1.2/1.3,
+· INFO 3**. The four original CRITICAL findings are
+closed in code. The edge posture — TLS 1.2/1.3,
 HSTS, CSP, the eight security headers split between Apache and the app's
 `SecurityHeadersMiddleware`, and the dual-guarded loopback webhook — is sound
-(`phase-5-report.md:181`, `deploy.sh:1405-1417`,`1493-1499`).
+(`deploy.sh:1405-1417`,`1493-1499`).
 
-The MEDIUM/LOW list (`phase-5-report.md:192-201`):
+The MEDIUM/LOW list:
 
 | ID | Sev | Area | Summary |
 |---|---|---|---|
@@ -231,7 +231,7 @@ The MEDIUM/LOW list (`phase-5-report.md:192-201`):
 The two must-fix items (V2-F-02, V2-F-03) remain open in the working tree:
 there is no `/csp/report` route under `backend/app/`, and `requirements.txt:1-2`
 still reads bare `fastapi` / `uvicorn[standard]`. They are release-gate tasks
-for the cutover window (`phase-5-report.md:208-211`,`259-260`); fixing them is
+for the cutover window; fixing them is
 out of this audit slice's file area but is recorded here so the gate is explicit.
 
 ### 2.2 New: remote-DB security analysis
@@ -395,7 +395,7 @@ With no new env vars set, default behaviour must equal today's.
 | S-3 | HIGH (new) | Migration `0008` hardcodes `directus_app` (`0008_directus_app_role.py:51-118`); granting it on both dev and prod DBs collapses isolation. | **Open** — the migration slice parameterises the role from `DIRECTUS_DB_ROLE` (templates already set `directus_app` / `_dev` / `_stg`). |
 | S-4 | MED | deploy.sh hardcodes `postgresql://…@localhost:5432/…` and provisions a local Postgres (`deploy.sh:646,229-247,736-811`) — none of it works against a remote instance. | **Open** — the deploy.sh slice rewrites the DB section for remote + TLS, keeping the `DB_MODE=local` path. |
 | S-5 | MED | V2-F-03 — `fastapi` / `uvicorn[standard]` unpinned (`requirements.txt:1-2`). | Release-gate task (not this slice's file area); recorded so the cutover gate is explicit. |
-| S-6 | LOW | V2-F-07 — `--forwarded-allow-ips='*'` (`deploy.sh:885`) trusts any proxy header; the loopback webhook leans on Apache `Require ip` (`deploy.sh:1497-1499`). Unchanged by the cutover but worth narrowing. | Deferred hardening per `phase-5-report.md:278`. |
+| S-6 | LOW | V2-F-07 — `--forwarded-allow-ips='*'` (`deploy.sh:885`) trusts any proxy header; the loopback webhook leans on Apache `Require ip` (`deploy.sh:1497-1499`). Unchanged by the cutover but worth narrowing. | Deferred hardening. |
 
 **Net:** URL surface is consistent and correctly ordered; the one real URL gap
 (U-1 / V2-F-02) is a known release-gate item. The new remote-DB axis introduces

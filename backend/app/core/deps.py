@@ -48,8 +48,10 @@ PERMISSION_GRANTS: Dict[str, Set[str]] = {
     "question.write":  {"quiz_admin"},
     "media.upload":    {"feed_contributor", "content_author"},
     "attempts.view_all": {"quiz_admin"},
-    # content.write — guards runbook upload/upsert/delete and FAQ seeding.
-    # Held by content_author; platform_admin is the implicit bypass.
+    # content.write — reserved capability for the content_author role. Its former
+    # consumers (runbook upload, FAQ seeding) moved to static authoring
+    # (resources/ + scripts/render_runbook.py), so no route currently requires it;
+    # kept in the locked matrix for future DB-backed content writes.
     "content.write":   {"content_author"},
     "config.read":     set(),
     "config.write":    set(),

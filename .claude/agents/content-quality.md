@@ -51,9 +51,9 @@ Scan for these and flag every instance:
 - Existing .arch-diagram blocks unchanged in style
 
 ### 6. Cross-page links
-- Course masthead pills point to: app/resources/code-coder-checklist.html,
-  app/resources/faqs/aem-banking-faq.html, app/resources/architect-runbook.html
-- All resource files cross-reference with relative paths only
+- Course masthead pills point to the static resources: /resources/checklists/,
+  /resources/faqs/, /resources/runbooks/ (each a folder with an index landing page)
+- Resource pages are static (no API); back-links go to their section index
 - No localhost or staging URLs
 
 ### 7. Dark mode + persistence

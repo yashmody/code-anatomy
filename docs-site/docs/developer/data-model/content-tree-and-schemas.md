@@ -1,7 +1,7 @@
 ---
 id: content-tree-and-schemas
 title: The content tree and JSON schemas
-sidebar_position: 3
+sidebar_position: 9
 ---
 
 # The content tree and JSON schemas

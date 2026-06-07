@@ -1,7 +1,7 @@
 ---
-id: intro
+id: content-intro
 title: Content architecture
-sidebar_position: 1
+sidebar_position: 7
 ---
 
 # Content architecture

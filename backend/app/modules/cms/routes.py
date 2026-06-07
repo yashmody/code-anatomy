@@ -97,18 +97,6 @@ async def cms_webhook(request: Request) -> dict:
                     invalidated += 1
         else:
             invalidated += cache.invalidate_prefix(f"{collection}:")
-    elif collection in ("faq_categories", "faq_items"):
-        invalidated += cache.invalidate_prefix("faq_categories:")
-    elif collection == "runbooks":
-        # Runbook metadata change from Directus — invalidate the runbooks list
-        # and any specific runbook entries that were touched.
-        if raw_keys:
-            for k in raw_keys:
-                if not k:
-                    continue
-                cache.invalidate(f"runbooks:{k}")
-                invalidated += 1
-        invalidated += cache.invalidate_prefix("runbooks:list")
     else:
         # Unknown collection — return ok but invalidate nothing. Directus
         # sometimes posts events for collections we do not cache (e.g.

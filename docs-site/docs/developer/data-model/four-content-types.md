@@ -1,7 +1,7 @@
 ---
 id: four-content-types
 title: The four content types
-sidebar_position: 2
+sidebar_position: 8
 ---
 
 # The four content types

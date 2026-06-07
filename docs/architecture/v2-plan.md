@@ -103,7 +103,7 @@ tests/baseline/                  # parity safety net
 | `v2/05-config-cms.md` | Config/CMS | Config & secrets registry, Google+LLM key design, Directus collection map — items 2, 11, 3 |
 | `v2/06-caching-performance.md` | Caching/perf | Apache cache/deflate/expires/HTTP2, cache-busting, app/Redis cache, Postgres tuning — item 5 |
 | `v2/07-security-baseline.md` | Security baseline | Full security checklist mapping each finding → remediation → phase — item 7 |
-| `v2/08-docs-plan.md` + `docs-site/` stubs | Docs scaffold | Docusaurus structure + six section stubs — item 10 |
+| `docs-site/` | Docs scaffold | Docusaurus structure + section stubs — item 10 |
 
 ## Open decisions to confirm at the Phase 0 gate
 

@@ -343,4 +343,4 @@ flowchart LR
 | Directus on remote DB | Medium | `cms/.env` still points at localhost; wire to `20.228.243.225` |
 | Disk cleanup on dev machine | Urgent | 900/932 GB used — Bash I/O failing |
 | CI for docs/tests | Low | No pipeline yet; all deploys are manual |
-| Algolia / Docusaurus site | Deferred | Plan in `08-docs-plan.md`; scaffold never built |
+| Algolia / Docusaurus site | Built | docs-site/ (Docusaurus) |

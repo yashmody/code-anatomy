@@ -49,17 +49,14 @@ baseline (everything created by the old `init_db()`/`deploy_schema.sql`):
 
 ```bash
 cd backend
-DATABASE_URL=postgresql://... bash scripts/init_alembic.sh
+# 1. If alembic_version is empty (legacy DB), stamp the baseline first:
+DATABASE_URL=postgresql://... .venv/bin/alembic stamp 0001_baseline
+# 2. Bring the schema to head (indexes + new tables/columns + seed data + LO trigger):
+DATABASE_URL=postgresql://... .venv/bin/alembic upgrade head
 ```
 
-The helper:
-
-1. Stamps `0001_baseline` if `alembic_version` is empty.
-2. Runs `alembic upgrade head` (adds indexes + new tables + new columns +
-   seed data + LO trigger).
-3. Prints the Phase 2c follow-up checklist (set `CERT_HMAC_LEGACY`).
-
-Re-running is safe; every step is guarded.
+Every migration step is guarded, so re-running is safe. Phase 2c follow-up: set
+`CERT_HMAC_LEGACY` (see below).
 
 ## Cert backward-compatibility — critical
 

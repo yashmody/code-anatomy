@@ -1,0 +1,13 @@
+{
+  "label": "Developer guide",
+  "position": 4,
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "doc",
+    "id": "developer/intro"
+  },
+  "customProps": {
+    "description": "Everything development-related: the two-plane architecture, the buildless SPA components, the data model and migrations, the REST API surface, builds and local dev, and the quiz internals."
+  }
+}

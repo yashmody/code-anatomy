@@ -7,6 +7,9 @@ This is a monorepo with three deliverables:
 - **Frontend** — `frontend/` (the buildless SPA)
 - **Prompts** — `prompt-library/` (reusable prompts and sample apps)
 
+**Adding or editing content?** See **[`docs/CONTENT-AUTHORING.md`](docs/CONTENT-AUTHORING.md)**
+— how to add course chapters, FAQs, runbooks (Excel template), checklists, and media.
+
 We use **GitHub Flow**: `main` is always publishable, work happens on short-lived
 branches, and changes are reviewed through pull requests where it helps. The team
 is trusted — `main` is lightly protected, not locked down.

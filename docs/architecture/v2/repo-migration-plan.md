@@ -175,8 +175,6 @@ These are docs-only and minor (the app and `deploy.sh` carry no repo URL):
 
 - `docs/architecture/v2/housekeeping.md` — the `git clone git@github.com:yashmody/code-anatomy.git`
   onboarding line → new org URL.
-- `docs/architecture/v2/test-report.md` — the provenance note mentioning the
-  `yashmody`-owned tables is a historical record; leave or annotate, don't rewrite.
 - Local-only `\.claude/launch.json` paths are machine-specific (not deploy-relevant).
 
 Do this as a normal PR **on the new repo** after the push.
@@ -262,4 +260,4 @@ repo** (which §6 says you must not):
 | Day-two ops, backups, Directus stand-up | `docs/RUNBOOK.md` |
 | Installer mechanics (rsync bundle, vhost, units) | `deploy.sh` |
 | Onboarding / local checkout (update clone URL here) | `docs/architecture/v2/housekeeping.md`, `LOCAL-SETUP.md` |
-| Parity acceptance the old repo's history backs | `docs/architecture/v2/02-parity-method.md`, `phase-5-report.md` |
+| Parity acceptance the old repo's history backs | `docs/architecture/v2/02-parity-method.md` |

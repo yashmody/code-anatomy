@@ -1,7 +1,7 @@
 ---
 id: directus-write-plane
 title: "Directus: the editorial write plane"
-sidebar_position: 5
+sidebar_position: 12
 ---
 
 # Directus: the editorial write plane

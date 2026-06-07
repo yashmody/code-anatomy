@@ -1,7 +1,7 @@
 ---
 id: directus-topology
 title: Directus topology
-sidebar_position: 3
+sidebar_position: 2
 ---
 
 # Directus topology
@@ -104,7 +104,7 @@ The role **name is per environment** (`DIRECTUS_DB_ROLE`: `directus_app` for
 prod, `directus_app_dev` for dev) — because the database is now a shared remote
 instance and Postgres roles are cluster-global, a distinct role name per env is
 what stops a dev credential from reaching the prod database (see
-[Role isolation](../database/role-isolation.md)). On SQLite (the local smoke
+[Role isolation](../data-model/role-isolation.md)). On SQLite (the local smoke
 suite) the migration is a no-op, since SQLite has no roles.
 
 :::tip[Why This Matters]

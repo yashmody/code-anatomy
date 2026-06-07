@@ -1,0 +1,13 @@
+{
+  "label": "Data model & content",
+  "position": 4,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "developer/data-model/database-intro"
+  },
+  "customProps": {
+    "description": "One Postgres, two writers: the schema and ER model, the Alembic chain, large-object media, the four content types, the block model, and the Directus write plane."
+  }
+}

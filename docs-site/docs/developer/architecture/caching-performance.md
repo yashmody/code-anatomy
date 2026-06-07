@@ -1,7 +1,7 @@
 ---
 id: caching-performance
 title: Caching and performance
-sidebar_position: 5
+sidebar_position: 4
 ---
 
 # Caching and performance

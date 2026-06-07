@@ -1,0 +1,13 @@
+{
+  "label": "User guide",
+  "position": 2,
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "doc",
+    "id": "user/intro"
+  },
+  "customProps": {
+    "description": "Task-shaped guides for content authors and contributors: update course content, manage FAQs, post to the feed, upload media, publish runbooks, work with checklists, and refresh the quiz after a content change."
+  }
+}

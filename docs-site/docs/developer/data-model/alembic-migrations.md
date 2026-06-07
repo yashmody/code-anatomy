@@ -1,7 +1,7 @@
 ---
 id: alembic-migrations
 title: Alembic migrations
-sidebar_position: 3
+sidebar_position: 4
 ---
 
 # Alembic migrations

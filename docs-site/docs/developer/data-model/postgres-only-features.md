@@ -1,7 +1,7 @@
 ---
 id: postgres-only-features
 title: Postgres-only features
-sidebar_position: 6
+sidebar_position: 3
 ---
 
 # Postgres-only features
@@ -173,7 +173,7 @@ Two rules keep the coexistence clean:
 
 The result is two tools sharing one database, each authoritative over its own
 namespace, neither able to corrupt the other's. That is the foundation the
-whole [database section](./intro.md) rests on: a single Postgres, governed by
+whole [database section](./database-intro.md) rests on: a single Postgres, governed by
 two cooperating but isolated planes.
 
 ## Extensions

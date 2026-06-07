@@ -1,16 +1,16 @@
 # Graph Report - dept-deploy  (2026-06-07)
 
 ## Corpus Check
-- 416 files · ~510,703 words
+- 461 files · ~486,589 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 6052 nodes · 6852 edges · 686 communities (513 shown, 173 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 224 edges (avg confidence: 0.69)
+- 8090 nodes · 8768 edges · 884 communities (715 shown, 169 thin omitted)
+- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 207 edges (avg confidence: 0.69)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `6e17719f`
+- Built from commit: `efff8f9b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -597,7 +597,6 @@
 - [[_COMMUNITY_Community 595|Community 595]]
 - [[_COMMUNITY_Community 596|Community 596]]
 - [[_COMMUNITY_Community 597|Community 597]]
-- [[_COMMUNITY_Community 598|Community 598]]
 - [[_COMMUNITY_Community 599|Community 599]]
 - [[_COMMUNITY_Community 600|Community 600]]
 - [[_COMMUNITY_Community 601|Community 601]]
@@ -678,13 +677,211 @@
 - [[_COMMUNITY_Community 683|Community 683]]
 - [[_COMMUNITY_Community 684|Community 684]]
 - [[_COMMUNITY_Community 685|Community 685]]
+- [[_COMMUNITY_Community 686|Community 686]]
+- [[_COMMUNITY_Community 687|Community 687]]
+- [[_COMMUNITY_Community 688|Community 688]]
+- [[_COMMUNITY_Community 689|Community 689]]
+- [[_COMMUNITY_Community 690|Community 690]]
+- [[_COMMUNITY_Community 691|Community 691]]
+- [[_COMMUNITY_Community 692|Community 692]]
+- [[_COMMUNITY_Community 693|Community 693]]
+- [[_COMMUNITY_Community 694|Community 694]]
+- [[_COMMUNITY_Community 695|Community 695]]
+- [[_COMMUNITY_Community 696|Community 696]]
+- [[_COMMUNITY_Community 697|Community 697]]
+- [[_COMMUNITY_Community 698|Community 698]]
+- [[_COMMUNITY_Community 699|Community 699]]
+- [[_COMMUNITY_Community 700|Community 700]]
+- [[_COMMUNITY_Community 701|Community 701]]
+- [[_COMMUNITY_Community 702|Community 702]]
+- [[_COMMUNITY_Community 703|Community 703]]
+- [[_COMMUNITY_Community 704|Community 704]]
+- [[_COMMUNITY_Community 705|Community 705]]
+- [[_COMMUNITY_Community 706|Community 706]]
+- [[_COMMUNITY_Community 707|Community 707]]
+- [[_COMMUNITY_Community 708|Community 708]]
+- [[_COMMUNITY_Community 709|Community 709]]
+- [[_COMMUNITY_Community 710|Community 710]]
+- [[_COMMUNITY_Community 711|Community 711]]
+- [[_COMMUNITY_Community 712|Community 712]]
+- [[_COMMUNITY_Community 713|Community 713]]
+- [[_COMMUNITY_Community 714|Community 714]]
+- [[_COMMUNITY_Community 715|Community 715]]
+- [[_COMMUNITY_Community 716|Community 716]]
+- [[_COMMUNITY_Community 717|Community 717]]
+- [[_COMMUNITY_Community 718|Community 718]]
+- [[_COMMUNITY_Community 719|Community 719]]
+- [[_COMMUNITY_Community 720|Community 720]]
+- [[_COMMUNITY_Community 721|Community 721]]
+- [[_COMMUNITY_Community 722|Community 722]]
+- [[_COMMUNITY_Community 723|Community 723]]
+- [[_COMMUNITY_Community 724|Community 724]]
+- [[_COMMUNITY_Community 725|Community 725]]
+- [[_COMMUNITY_Community 726|Community 726]]
+- [[_COMMUNITY_Community 727|Community 727]]
+- [[_COMMUNITY_Community 728|Community 728]]
+- [[_COMMUNITY_Community 729|Community 729]]
+- [[_COMMUNITY_Community 730|Community 730]]
+- [[_COMMUNITY_Community 731|Community 731]]
+- [[_COMMUNITY_Community 732|Community 732]]
+- [[_COMMUNITY_Community 733|Community 733]]
+- [[_COMMUNITY_Community 734|Community 734]]
+- [[_COMMUNITY_Community 735|Community 735]]
+- [[_COMMUNITY_Community 736|Community 736]]
+- [[_COMMUNITY_Community 737|Community 737]]
+- [[_COMMUNITY_Community 738|Community 738]]
+- [[_COMMUNITY_Community 739|Community 739]]
+- [[_COMMUNITY_Community 740|Community 740]]
+- [[_COMMUNITY_Community 741|Community 741]]
+- [[_COMMUNITY_Community 742|Community 742]]
+- [[_COMMUNITY_Community 743|Community 743]]
+- [[_COMMUNITY_Community 744|Community 744]]
+- [[_COMMUNITY_Community 745|Community 745]]
+- [[_COMMUNITY_Community 746|Community 746]]
+- [[_COMMUNITY_Community 747|Community 747]]
+- [[_COMMUNITY_Community 748|Community 748]]
+- [[_COMMUNITY_Community 749|Community 749]]
+- [[_COMMUNITY_Community 750|Community 750]]
+- [[_COMMUNITY_Community 751|Community 751]]
+- [[_COMMUNITY_Community 752|Community 752]]
+- [[_COMMUNITY_Community 753|Community 753]]
+- [[_COMMUNITY_Community 754|Community 754]]
+- [[_COMMUNITY_Community 755|Community 755]]
+- [[_COMMUNITY_Community 756|Community 756]]
+- [[_COMMUNITY_Community 757|Community 757]]
+- [[_COMMUNITY_Community 758|Community 758]]
+- [[_COMMUNITY_Community 759|Community 759]]
+- [[_COMMUNITY_Community 760|Community 760]]
+- [[_COMMUNITY_Community 761|Community 761]]
+- [[_COMMUNITY_Community 762|Community 762]]
+- [[_COMMUNITY_Community 763|Community 763]]
+- [[_COMMUNITY_Community 764|Community 764]]
+- [[_COMMUNITY_Community 765|Community 765]]
+- [[_COMMUNITY_Community 766|Community 766]]
+- [[_COMMUNITY_Community 767|Community 767]]
+- [[_COMMUNITY_Community 768|Community 768]]
+- [[_COMMUNITY_Community 769|Community 769]]
+- [[_COMMUNITY_Community 770|Community 770]]
+- [[_COMMUNITY_Community 771|Community 771]]
+- [[_COMMUNITY_Community 772|Community 772]]
+- [[_COMMUNITY_Community 773|Community 773]]
+- [[_COMMUNITY_Community 774|Community 774]]
+- [[_COMMUNITY_Community 775|Community 775]]
+- [[_COMMUNITY_Community 776|Community 776]]
+- [[_COMMUNITY_Community 777|Community 777]]
+- [[_COMMUNITY_Community 778|Community 778]]
+- [[_COMMUNITY_Community 779|Community 779]]
+- [[_COMMUNITY_Community 780|Community 780]]
+- [[_COMMUNITY_Community 781|Community 781]]
+- [[_COMMUNITY_Community 782|Community 782]]
+- [[_COMMUNITY_Community 783|Community 783]]
+- [[_COMMUNITY_Community 784|Community 784]]
+- [[_COMMUNITY_Community 785|Community 785]]
+- [[_COMMUNITY_Community 786|Community 786]]
+- [[_COMMUNITY_Community 787|Community 787]]
+- [[_COMMUNITY_Community 788|Community 788]]
+- [[_COMMUNITY_Community 789|Community 789]]
+- [[_COMMUNITY_Community 790|Community 790]]
+- [[_COMMUNITY_Community 791|Community 791]]
+- [[_COMMUNITY_Community 792|Community 792]]
+- [[_COMMUNITY_Community 793|Community 793]]
+- [[_COMMUNITY_Community 794|Community 794]]
+- [[_COMMUNITY_Community 795|Community 795]]
+- [[_COMMUNITY_Community 796|Community 796]]
+- [[_COMMUNITY_Community 797|Community 797]]
+- [[_COMMUNITY_Community 798|Community 798]]
+- [[_COMMUNITY_Community 799|Community 799]]
+- [[_COMMUNITY_Community 800|Community 800]]
+- [[_COMMUNITY_Community 801|Community 801]]
+- [[_COMMUNITY_Community 802|Community 802]]
+- [[_COMMUNITY_Community 803|Community 803]]
+- [[_COMMUNITY_Community 804|Community 804]]
+- [[_COMMUNITY_Community 805|Community 805]]
+- [[_COMMUNITY_Community 806|Community 806]]
+- [[_COMMUNITY_Community 807|Community 807]]
+- [[_COMMUNITY_Community 808|Community 808]]
+- [[_COMMUNITY_Community 809|Community 809]]
+- [[_COMMUNITY_Community 810|Community 810]]
+- [[_COMMUNITY_Community 811|Community 811]]
+- [[_COMMUNITY_Community 812|Community 812]]
+- [[_COMMUNITY_Community 813|Community 813]]
+- [[_COMMUNITY_Community 814|Community 814]]
+- [[_COMMUNITY_Community 815|Community 815]]
+- [[_COMMUNITY_Community 816|Community 816]]
+- [[_COMMUNITY_Community 817|Community 817]]
+- [[_COMMUNITY_Community 818|Community 818]]
+- [[_COMMUNITY_Community 819|Community 819]]
+- [[_COMMUNITY_Community 820|Community 820]]
+- [[_COMMUNITY_Community 821|Community 821]]
+- [[_COMMUNITY_Community 822|Community 822]]
+- [[_COMMUNITY_Community 823|Community 823]]
+- [[_COMMUNITY_Community 824|Community 824]]
+- [[_COMMUNITY_Community 825|Community 825]]
+- [[_COMMUNITY_Community 826|Community 826]]
+- [[_COMMUNITY_Community 827|Community 827]]
+- [[_COMMUNITY_Community 828|Community 828]]
+- [[_COMMUNITY_Community 829|Community 829]]
+- [[_COMMUNITY_Community 830|Community 830]]
+- [[_COMMUNITY_Community 831|Community 831]]
+- [[_COMMUNITY_Community 832|Community 832]]
+- [[_COMMUNITY_Community 833|Community 833]]
+- [[_COMMUNITY_Community 834|Community 834]]
+- [[_COMMUNITY_Community 835|Community 835]]
+- [[_COMMUNITY_Community 836|Community 836]]
+- [[_COMMUNITY_Community 837|Community 837]]
+- [[_COMMUNITY_Community 838|Community 838]]
+- [[_COMMUNITY_Community 839|Community 839]]
+- [[_COMMUNITY_Community 840|Community 840]]
+- [[_COMMUNITY_Community 841|Community 841]]
+- [[_COMMUNITY_Community 842|Community 842]]
+- [[_COMMUNITY_Community 843|Community 843]]
+- [[_COMMUNITY_Community 844|Community 844]]
+- [[_COMMUNITY_Community 845|Community 845]]
+- [[_COMMUNITY_Community 846|Community 846]]
+- [[_COMMUNITY_Community 847|Community 847]]
+- [[_COMMUNITY_Community 848|Community 848]]
+- [[_COMMUNITY_Community 849|Community 849]]
+- [[_COMMUNITY_Community 850|Community 850]]
+- [[_COMMUNITY_Community 851|Community 851]]
+- [[_COMMUNITY_Community 852|Community 852]]
+- [[_COMMUNITY_Community 853|Community 853]]
+- [[_COMMUNITY_Community 854|Community 854]]
+- [[_COMMUNITY_Community 855|Community 855]]
+- [[_COMMUNITY_Community 856|Community 856]]
+- [[_COMMUNITY_Community 857|Community 857]]
+- [[_COMMUNITY_Community 858|Community 858]]
+- [[_COMMUNITY_Community 859|Community 859]]
+- [[_COMMUNITY_Community 860|Community 860]]
+- [[_COMMUNITY_Community 861|Community 861]]
+- [[_COMMUNITY_Community 862|Community 862]]
+- [[_COMMUNITY_Community 863|Community 863]]
+- [[_COMMUNITY_Community 864|Community 864]]
+- [[_COMMUNITY_Community 865|Community 865]]
+- [[_COMMUNITY_Community 866|Community 866]]
+- [[_COMMUNITY_Community 867|Community 867]]
+- [[_COMMUNITY_Community 868|Community 868]]
+- [[_COMMUNITY_Community 869|Community 869]]
+- [[_COMMUNITY_Community 870|Community 870]]
+- [[_COMMUNITY_Community 871|Community 871]]
+- [[_COMMUNITY_Community 872|Community 872]]
+- [[_COMMUNITY_Community 873|Community 873]]
+- [[_COMMUNITY_Community 874|Community 874]]
+- [[_COMMUNITY_Community 875|Community 875]]
+- [[_COMMUNITY_Community 876|Community 876]]
+- [[_COMMUNITY_Community 877|Community 877]]
+- [[_COMMUNITY_Community 878|Community 878]]
+- [[_COMMUNITY_Community 879|Community 879]]
+- [[_COMMUNITY_Community 880|Community 880]]
+- [[_COMMUNITY_Community 881|Community 881]]
+- [[_COMMUNITY_Community 882|Community 882]]
+- [[_COMMUNITY_Community 883|Community 883]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `origins` - 108 edges
 2. `assets` - 108 edges
-3. `esc()` - 83 edges
-4. `get_session()` - 74 edges
-5. `docs` - 41 edges
+3. `docs` - 91 edges
+4. `esc()` - 83 edges
+5. `get_session()` - 66 edges
 6. `options` - 32 edges
 7. `raw()` - 32 edges
 8. `BASE` - 26 edges
@@ -719,7 +916,7 @@
 - **h2** — quiz_certificates_hmac, quiz_certificates_env, quiz_verification_tree [EXTRACTED 1.00]
 - **h3** — cache_three_layers, modular_monolith_core_modules, frontend_read_path_api [EXTRACTED 0.95]
 
-## Communities (686 total, 173 thin omitted)
+## Communities (884 total, 169 thin omitted)
 
 ### Community 0 - "Docusaurus Client Manifest"
 Cohesion: 0.02
@@ -774,20 +971,20 @@ Cohesion: 0.06
 Nodes (35): name, type, version, name, type, version, name, type (+27 more)
 
 ### Community 13 - "Quiz Storage Layer"
-Cohesion: 0.07
-Nodes (45): Session, get_all_chapters(), get_chapter(), get_framework(), get_framework_explainer(), Content storage — course chapters + framework + framework-explainer.  The framew, save_chapter(), save_framework() (+37 more)
+Cohesion: 0.09
+Nodes (28): all_attempts(), attempt_by_cert_id(), attempt_by_cert_id_public(), _attempt_to_dict(), attempts_for(), cooldown_remaining_days(), generate_test_code(), _generate_unique_code() (+20 more)
 
 ### Community 14 - "Feed Routes and Models"
-Cohesion: 0.08
-Nodes (33): Request, FeedItem, One logical video. Its bytes live in `media_assets` via `VideoVariant` rows., One logical video. Its bytes live in `media_assets` via `VideoVariant` rows., Feed UGC metadata linking a feed_item to a VideoAsset., Feed UGC metadata linking a feed_item to a VideoAsset., SocialFeedVideo, VideoAsset (+25 more)
+Cohesion: 0.10
+Nodes (20): flag_feed_item(), get_feed(), get_moderation_queue(), _link_feed_video(), moderate_action(), post_feed(), Feed routes — list/create/flag feed items + moderation queue + actions.  Mounted, View all items pending review or flagged for removal. (+12 more)
 
 ### Community 15 - "CMS Collection Registration"
 Cohesion: 0.14
 Nodes (27): accessLinkExists(), api(), CACHED_COLLECTIONS, collectionMeta(), COLLECTIONS, DEFAULT_MODULE_BAR, __dirname, ensureFlow() (+19 more)
 
 ### Community 16 - "Core Data Models"
-Cohesion: 0.06
-Nodes (44): Attempt, datetime, BASE, AppConfig, Attempt, ContentVideoMap, CourseChapter, MediaAsset (+36 more)
+Cohesion: 0.07
+Nodes (47): Attempt, Request, datetime, BASE, Attempt, ContentVideoMap, FeedItem, Question (+39 more)
 
 ### Community 17 - "Docs: Config and Media"
 Cohesion: 0.08
@@ -951,7 +1148,7 @@ Nodes (14): Alembic adoption for schema versioning and migrations, in-process LR
 
 ### Community 57 - "Core Users"
 Cohesion: 0.06
-Nodes (50): Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., UserRole, ensure_first_admin() (+42 more)
+Nodes (44): Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., Many-to-many grant of capability roles to users. Owned by 04-authz-model., UserRole, ensure_first_admin() (+36 more)
 
 ### Community 58 - "Default Site Docs"
 Cohesion: 0.09
@@ -998,8 +1195,8 @@ Cohesion: 0.08
 Nodes (23): Config three-tier rule (secrets/config/content), content/source/ and content/frozen/ directories, directus_app Postgres role (scoped by GRANT/REVOKE), Directus: the editorial write plane, Introspect, do not own, Scan box, Source of truth: Postgres editable, git-JSON seed, The cache-invalidation seam (+15 more)
 
 ### Community 69 - "Core Cache Appcache"
-Cohesion: 0.21
-Nodes (4): Redis-backed store (06 §4.2 swap; opt-in via CACHE_BACKEND=redis).      Connecti, Return a live client, or None if redis is unavailable.          Idempotent and c, True iff redis is usable. Triggers the lazy connect on first call., RedisBackend
+Cohesion: 0.18
+Nodes (5): Redis-backed store (06 §4.2 swap; opt-in via CACHE_BACKEND=redis).      Connecti, Return a live client, or None if redis is unavailable.          Idempotent and c, True iff redis is usable. Triggers the lazy connect on first call., Drop `key` from the cache. Returns True iff a value was removed.          Called, RedisBackend
 
 ### Community 70 - "Deploy"
 Cohesion: 0.28
@@ -1046,12 +1243,12 @@ Cohesion: 0.20
 Nodes (13): Any, _cache_key(), cfg(), _coerce(), invalidate(), known_keys(), _load_from_db(), Tier-2 config reader (Phase 2d).  A thin typed reader over the `app_config` tabl (+5 more)
 
 ### Community 81 - "Smoke Test Runner"
-Cohesion: 0.07
-Nodes (28): Any, Any, datetime, AnthropicClient, Anthropic (Claude) provider client — implements the LLMProvider seam.  Talks to, Minimal async Claude client honouring the LLMProvider protocol., Return a single text completion for `prompt`.          Honoured opts: `system` (, Return available model ids (used by *doctor* to validate config). (+20 more)
+Cohesion: 0.13
+Nodes (13): Any, Any, AnthropicClient, Anthropic (Claude) provider client — implements the LLMProvider seam.  Talks to, Minimal async Claude client honouring the LLMProvider protocol., Return a single text completion for `prompt`.          Honoured opts: `system` (, Return available model ids (used by *doctor* to validate config)., get_provider() (+5 more)
 
 ### Community 82 - "App Cache Backend"
-Cohesion: 0.20
-Nodes (4): _build_backend(), MemoryBackend, In-process dict + RLock. The Phase-2d behaviour, now a backend.      Expiry is e, Construct the backend, with graceful fallback to memory.      `backend` is "memo
+Cohesion: 0.22
+Nodes (3): clear(), MemoryBackend, In-process dict + RLock. The Phase-2d behaviour, now a backend.      Expiry is e
 
 ### Community 83 - "Quiz Anti-Cheat Model"
 Cohesion: 0.15
@@ -1070,20 +1267,20 @@ Cohesion: 0.15
 Nodes (13): minimum, type, properties, required, type, comments, engagement, saves (+5 more)
 
 ### Community 87 - "Admin Routes and RBAC"
-Cohesion: 0.05
-Nodes (46): _actor_email(), grant_role(), list_roles(), Admin role-assignment routes (04 §7.2 — the deferred Q-3 admin-roles REST).  Mou, List the capability roles a user holds.      404 if the email matches no user ro, Body for grant (POST) and revoke (DELETE).      `email` is a plain string (not p, Pull the acting admin's email for the audit trail., Grant a capability role to a user. Idempotent.      Returns `{email, role_key, g (+38 more)
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 88 - "App Main and Lifespan"
-Cohesion: 0.10
-Nodes (21): 0 · Scan box, 10 · Cross-references, 2.1 Tier definitions, 2.2 How the app reads each tier (post-v2), 2 · The three-tier separation, 4.1 Google OAuth — where keys live today and post-v2, 4.2 LLM keys — the seam, no calls yet, 4 · Google + LLM key integration plan (item 11) (+13 more)
+Cohesion: 0.09
+Nodes (22): 0 · Scan box, 10 · Cross-references, 2.1 Tier definitions, 2.2 How the app reads each tier (post-v2), 2 · The three-tier separation, 4.1 Google OAuth — where keys live today and post-v2, 4.2 LLM keys — the seam, no calls yet, 4 · Google + LLM key integration plan (item 11) (+14 more)
 
 ### Community 89 - "CODE-CODER Framework Nodes"
 Cohesion: 0.17
 Nodes (12): nodes, askGroups, deliverables, intro, name, rail, deliverables, intro (+4 more)
 
 ### Community 90 - "Docusaurus Route Chunks"
-Cohesion: 0.12
-Nodes (16): /docs/-19e, __comp, /docs/-530, __comp, /docs/content-architecture/course-block-model-26b, __comp, content, /docs/database/media-large-objects-8e4 (+8 more)
+Cohesion: 0.08
+Nodes (24): /docs/-19e, __comp, /docs/-530, __comp, /docs/admin/intro-29b, __comp, content, /docs/-ba1 (+16 more)
 
 ### Community 91 - "Framework Fixture Data"
 Cohesion: 0.17
@@ -1110,16 +1307,16 @@ Cohesion: 0.16
 Nodes (17): _iso(), list_audit(), Auth-module storage — auth_audit writes + (admin-only) audit reads.  The role-me, Append an `auth_audit` row.      `actor` is the email of whoever caused the even, Read the most recent audit rows. Admin-only — gate at the route.      Filters ar, _row_to_dict(), write_audit(), AuthAudit (+9 more)
 
 ### Community 97 - "Backend App Core"
-Cohesion: 0.24
-Nodes (7): Any, get_or_compute(), _make_etag(), Application cache seam (Phase 2d backbone, Phase 3 pluggable backend).  A small, Insert or replace `key` with `value`. Returns the new entry., Deterministic short ETag for a value.      Uses repr() — good enough for the JSO, set_()
+Cohesion: 0.16
+Nodes (12): Any, CacheEntry, get(), get_or_compute(), _make_etag(), Application cache seam (Phase 2d backbone, Phase 3 pluggable backend).  A small, Return the entry if present and not expired; else None.          Does not refres, Return the cached value, or run `loader` and cache the result.          `ttl` is (+4 more)
 
 ### Community 98 - "Backend Scripts Upload"
-Cohesion: 0.22
-Nodes (9): 3.1 `course_chapters` — the field manual, 3.2 `frameworks` — the spine (2 rows: `framework`, `explainer`), 3.3 `feed_items` — UGC + moderation surface, 3.4 `questions` — quiz bank (official + UGC), 3.5 `app_config` — config-as-content (item 11 home), 3.6 `media_assets` — metadata only (decision in §3.7 below), 3.7 `user_roles` — grants (composite-PK decision), 3.8 Resources / runbook / checklist / FAQs (+1 more)
+Cohesion: 0.12
+Nodes (15): 1 · Main app (the course), 2 · FAQs (static), 3 · Runbooks (Excel template → static), 4 · Checklists (static), 5 · Media (videos & images), a) Feed video — from the app UI (content authors), b) Techflix episodes — `techflix.json` + CLI, c) General / course-embedded video — CLI + a slug (+7 more)
 
 ### Community 99 - "Core Cache Appcache"
-Cohesion: 0.18
-Nodes (6): AppCache, Thread-safe TTL cache with a pluggable backing store.      Usage (unchanged from, memory' or 'redis' — the *active* backend after fallback., Return the cached value, or run `loader` and cache the result.          `ttl` is, Drop `key` from the cache. Returns True iff a value was removed.          Called, Drop every key starting with `prefix`. Returns the count.          Useful for co
+Cohesion: 0.22
+Nodes (5): AppCache, Thread-safe TTL cache with a pluggable backing store.      Usage (unchanged from, memory' or 'redis' — the *active* backend after fallback., Drop every key starting with `prefix`. Returns the count.          Useful for co, Drop every entry. Test helper; do not call in request handlers.
 
 ### Community 100 - "Admin Storage"
 Cohesion: 0.20
@@ -1130,8 +1327,8 @@ Cohesion: 0.12
 Nodes (18): Request, UploadFile, list_techflix(), Media routes — upload (permission: media.upload), range-streaming for video, ima, Stream videos from PostgreSQL large objects supporting HTTP Range requests (scru, Stream a video with HTTP Range support. `ref` = video_asset id or slug     (pref, Serve images stored inside PostgreSQL Large Objects., Serve images stored inside PostgreSQL Large Objects. (+10 more)
 
 ### Community 102 - "Content Architecture Category"
-Cohesion: 0.20
-Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 103 - "Content Routes"
 Cohesion: 0.16
@@ -1142,12 +1339,12 @@ Cohesion: 0.22
 Nodes (10): code, heading, id, intro, modTag, telescope, telescope, inner (+2 more)
 
 ### Community 105 - "Database Category"
-Cohesion: 0.20
-Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 106 - "Deployment Category"
-Cohesion: 0.20
-Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 107 - "Feed Envelope Flaggedbadge"
 Cohesion: 0.18
@@ -1158,12 +1355,12 @@ Cohesion: 0.22
 Nodes (10): code, heading, id, intro, modTag, telescope, telescope, inner (+2 more)
 
 ### Community 109 - "Frontend Category"
-Cohesion: 0.20
-Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 110 - "Quiz Management Category"
-Cohesion: 0.20
-Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 111 - "Schemas Course Schema"
 Cohesion: 0.20
@@ -1174,16 +1371,20 @@ Cohesion: 0.20
 Nodes (10): minimum, type, properties, type, flagCount, moderation, reviewedAt, reviewedBy (+2 more)
 
 ### Community 113 - "System Architecture Category"
-Cohesion: 0.20
-Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 114 - "Backend App Core"
-Cohesion: 0.43
-Nodes (4): CacheEntry, get(), Return the entry if present and not expired; else None.          Does not refres, One cached value, with its ETag and a monotonic expiry.
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 115 - "Backend Scripts Migrate"
 Cohesion: 0.18
 Nodes (10): How it fits together, Re-runs are safe (idempotent), Replace a video's bytes, Step 1 · Put the videos + a manifest in a folder, Step 2 · Write `techflix.json`, Step 3 · Run the upload script, Techflix · Video episodes from a folder, Troubleshooting (+2 more)
+
+### Community 116 - "Core Cache Cachebackend"
+Cohesion: 0.17
+Nodes (4): _build_backend(), CacheBackend, Construct the backend, with graceful fallback to memory.      `backend` is "memo, The storage primitives every backend implements.      Implementations must be th
 
 ### Community 117 - "Core Db"
 Cohesion: 0.06
@@ -1211,7 +1412,7 @@ Nodes (9): items, minItems, type, $ref, blocks, sections, items, minItems (+1 mo
 
 ### Community 123 - "Backend App Modules"
 Cohesion: 0.19
-Nodes (12): Request, cms_health(), cms_webhook(), _is_loopback(), CMS webhook receiver (Phase 2d).  Per `docs/architecture/v2/05-config-cms.md §7., Trivial health endpoint for the CMS seam.      Reports the in-process cache size, Reconcile a user's staff roles from a Directus role change (04 §7.2).      Loopb, Reconcile a user's staff roles from a Directus role change (04 §7.2).      Loopb (+4 more)
+Nodes (13): Request, cms_health(), cms_webhook(), _is_loopback(), CMS webhook receiver (Phase 2d).  Per `docs/architecture/v2/05-config-cms.md §7., Reconcile a user's staff roles from a Directus role change (04 §7.2).      Loopb, Reconcile a user's staff roles from a Directus role change (04 §7.2).      Loopb, Reconcile a user's staff roles from a Directus role change (04 §7.2).      Loopb (+5 more)
 
 ### Community 124 - "Baseline Smoke Cidict"
 Cohesion: 0.07
@@ -1311,7 +1512,7 @@ Nodes (7): review, blockquote, cards, heading, id, intro, modTag
 
 ### Community 148 - "Docusaurus Routeschunknames Context"
 Cohesion: 0.06
-Nodes (32): plugin, /docs/-153, __comp, __context, /docs/-413, __comp, __context, /docs/__docusaurus/debug/config-2ce (+24 more)
+Nodes (35): plugin, /docs/-153, __comp, __context, /docs/-413, __comp, __context, /docs/-481 (+27 more)
 
 ### Community 149 - "Fixtures Api Course"
 Cohesion: 0.29
@@ -1454,8 +1655,8 @@ Cohesion: 0.29
 Nodes (6): frameworkAddress, scan, sections, status, tag, title
 
 ### Community 184 - "Backend Scripts Seed"
-Cohesion: 0.40
-Nodes (5): Any, main(), Seed `app_config` with the Phase 2d defaults.  Idempotent — every row is INSERTe, Pick the value_type column for an arbitrary Python default., _value_type()
+Cohesion: 0.39
+Nodes (7): apply(), current(), read(), refreshControls(), resolve(), toggle(), write()
 
 ### Community 185 - "Cache Appcache Seam"
 Cohesion: 0.33
@@ -1490,8 +1691,8 @@ Cohesion: 0.16
 Nodes (11): _CIDict, http(), main(), Case-insensitive dict for HTTP headers — RFC 7230 §3.2., Response, run_checks(), save_fixture(), SmokeReport (+3 more)
 
 ### Community 194 - "P Docs 7fc"
-Cohesion: 0.33
-Nodes (6): description, id, sidebar, title, content-architecture/config-and-media, docs
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, content-architecture/config-and-media
 
 ### Community 195 - "P Docs 7fc"
 Cohesion: 0.40
@@ -1654,8 +1855,8 @@ Cohesion: 0.50
 Nodes (4): find_db(), main(), Resolve q0.db whether we were invoked from the repo root or from     backend/ (v, Path
 
 ### Community 235 - "Scripts Seed Roles"
-Cohesion: 0.15
-Nodes (20): Path, init_db(), Create tables if missing. Called on app startup.      Phase 2a note: the hand-ro, Which surface a VideoAsset may appear on (policy/classification)., Which surface a VideoAsset may appear on (policy/classification)., VideoPlacement, main(), Provision the break-glass superadmin account.  Run once from the backend/ direct (+12 more)
+Cohesion: 0.10
+Nodes (29): Session, Path, get_session(), init_db(), Database — SQLAlchemy engine + session.  Local dev: SQLite at q0.db (DATABASE_UR, Return a fresh session. Caller closes it., Create tables if missing. Called on app startup.      Phase 2a note: the hand-ro, Which surface a VideoAsset may appear on (policy/classification). (+21 more)
 
 ### Community 236 - "Versions 0003 New"
 Cohesion: 0.50
@@ -1722,12 +1923,12 @@ Cohesion: 0.67
 Nodes (3): /docs/database/alembic-migrations-cec, __comp, content
 
 ### Community 264 - "Docusaurus Routeschunknames Docs"
-Cohesion: 0.67
-Nodes (3): /docs/database/intro-81f, __comp, content
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 265 - "Docusaurus Routeschunknames Docs"
-Cohesion: 0.10
-Nodes (24): Request, Shared FastAPI dependencies — single source of truth for request-scoped helpers., Dependency: require `perm` for the current session user.      Logic (matches 04-, Dependency: require `perm` for the current session user.      Logic (matches 04-, Dependency: require `perm` for the current session user.      Logic (matches 04-, Return the session user, or raise a 302 to /login., Like require_user, but also redirect to onboarding if persona is unset.      v2, Return the session user, or raise a 302 to /login. (+16 more)
+Cohesion: 0.17
+Nodes (12): Return the session user, or raise a 302 to /login., Like require_user, but also redirect to onboarding if persona is unset.      v2, Return the session user, or raise a 302 to /login., Like require_user, but also redirect to onboarding if persona is unset.      v2, Return the session user, or raise a 302 to /login., Return the session user, or raise a 302 to /login., Return the session user, or raise a 302 to /login., Like require_user, but also redirect to onboarding if persona is unset.      v2 (+4 more)
 
 ### Community 266 - "Docusaurus Routeschunknames Docs"
 Cohesion: 0.67
@@ -1814,8 +2015,8 @@ Cohesion: 0.67
 Nodes (3): /docs/quiz-management/verification-07e, __comp, content
 
 ### Community 287 - "Docusaurus Routeschunknames Docs"
-Cohesion: 0.08
-Nodes (27): Any, Path, FAQCategory, FAQItem, FAQ Category / Topic representation., Individual FAQ Item (Question & Answer)., FAQ Category / Topic representation., FAQ Category / Topic representation. (+19 more)
+Cohesion: 0.29
+Nodes (7): FAQCategory, FAQ Category / Topic representation., FAQ Category / Topic representation., FAQ Category / Topic representation., FAQ Category / Topic representation., FAQ Category / Topic representation., FAQ Category / Topic representation.
 
 ### Community 288 - "Docusaurus Routeschunknames Docs"
 Cohesion: 0.67
@@ -1861,21 +2062,29 @@ Nodes (3): APP_ENV, prompt_db_into_env(), start_local.sh script
 Cohesion: 0.09
 Nodes (21): description, devDependencies, @directus/extensions-sdk, typescript, vue, directus:extension, host, path (+13 more)
 
+### Community 321 - "Docusaurus Client Manifest"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
 ### Community 322 - "Docusaurus Client Manifest"
 Cohesion: 0.11
 Nodes (17): 0 · Scan box, 1 · Sequence (where this sits in the whole plan), 2.1 History strategy — **recommend: preserve full history (mirror)**, 2.2 New repo location & branch layout, 2 · Two decisions to make first, 3 · Pre-migration gate, 4.1 Final secret scan of full history (belt-and-suspenders), 4.2 Mirror-push the repo to the new org remote (+9 more)
 
 ### Community 324 - "Docusaurus Client Manifest"
 Cohesion: 0.08
-Nodes (31): A rendition/file of a VideoAsset — points at a `media_assets` large object., A rendition/file of a VideoAsset — points at a `media_assets` large object., Techflix section metadata for a VideoAsset (supersedes the legacy techflix_episo, Techflix section metadata for a VideoAsset (supersedes TechflixEpisode)., TechflixVideoMap, VideoVariant, _file_dict(), get_asset() (+23 more)
+Nodes (32): MediaAsset, A rendition/file of a VideoAsset — points at a `media_assets` large object., A rendition/file of a VideoAsset — points at a `media_assets` large object., Techflix section metadata for a VideoAsset (supersedes the legacy techflix_episo, Techflix section metadata for a VideoAsset (supersedes TechflixEpisode)., TechflixVideoMap, VideoVariant, _file_dict() (+24 more)
 
 ### Community 368 - "Docusaurus Client Manifest"
-Cohesion: 0.14
-Nodes (21): JSONResponse, Request, RunbookCreate, UploadFile, FileResponse, delete_runbook(), _detail(), download_template() (+13 more)
+Cohesion: 0.18
+Nodes (11): 1.10 Two role systems on one column, 1.1 `users` — identity + overloaded role, 1.2 `attempts` — graded quiz submissions + cert seal, 1.3 `questions` — quiz bank with versioning + UGC, 1.4 `feed_items` — UGC stream, 1.5 `media_assets` — large-object metadata, 1.6 `course_chapters` — authored prose, one row per section file, 1.7 `frameworks` — framework spine + explainer, both in one table (+3 more)
+
+### Community 435 - "Scripts Init Alembic"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 439 - "Tests Monolith Refs"
-Cohesion: 0.33
-Nodes (5): Readiness: dependencies are reachable.      - DB: `SELECT 1` must succeed.     -, Readiness: dependencies are reachable.      - DB: `SELECT 1` must succeed.     -, Readiness: dependencies are reachable.      - DB: `SELECT 1` must succeed.     -, Readiness: dependencies are reachable.      - DB: `SELECT 1` must succeed.     -, readyz()
+Cohesion: 0.29
+Nodes (6): Readiness: dependencies are reachable.      - DB: `SELECT 1` must succeed.     -, Readiness: dependencies are reachable.      - DB: `SELECT 1` must succeed.     -, Readiness: dependencies are reachable.      - DB: `SELECT 1` must succeed.     -, Readiness: dependencies are reachable.      - DB: `SELECT 1` must succeed.     -, Readiness: dependencies are reachable.      - DB: `SELECT 1` must succeed.     -, readyz()
 
 ### Community 456 - "Community 456"
 Cohesion: 0.11
@@ -1886,8 +2095,8 @@ Cohesion: 0.06
 Nodes (30): 1. General videos (added anywhere, e.g. course-embedded), 2. Techflix videos (via manifest), 3. Feed videos (uploaded from the UI), Adding new files later, Adding videos — by category, Architecture in one paragraph, `[err] DATABASE_URL is not PostgreSQL`, `[err] Folder not found` (+22 more)
 
 ### Community 458 - "Community 458"
-Cohesion: 0.10
-Nodes (19): 1 · content/frozen/, 2 · prompt-library/, 3 · backend/, Admin review, Contributing, Cross-links inside the files, Customising, Deploy as runnable sample (+11 more)
+Cohesion: 0.11
+Nodes (20): 1 · content/frozen/, 1 · content/frozen/ and resources/, 2 · prompt-library/, 3 · backend/, Admin review, Contributing, Cross-links inside the files, Customising (+12 more)
 
 ### Community 459 - "Community 459"
 Cohesion: 0.05
@@ -1910,8 +2119,8 @@ Cohesion: 0.11
 Nodes (17): 1.1 Public route table (what a browser can reach), 1.2 Internal / loopback targets (not browser-reachable), 1.3 OAuth redirect URIs, 1.4 Front-end constants (`frontend/core/config.js`), 1.5 ASCII topology, 1.6 URL ordering / shadowing check, 1 · URL / topology map, 2.1 Phase 5b verdict (recap) (+9 more)
 
 ### Community 464 - "Community 464"
-Cohesion: 0.09
-Nodes (23): 0 · Scan box, 11 · Cross-references summary, 3.1 Recommended: mod_rewrite hashed-prefix pattern, 3.2 Alternative — small in-deploy build step (no Apache rewrite), 3 · Cache-busting for the buildless FE (§1.5 → fix), 4.1 Where: `backend/app/core/cache.py` (01-blueprint §1), 4.2 Backend choice — in-process LRU, not Redis (default), 4.3 What gets cached, with TTL and invalidation triggers (+15 more)
+Cohesion: 0.25
+Nodes (8): 0 · Scan box, 11 · Cross-references summary, 3.1 Recommended: mod_rewrite hashed-prefix pattern, 3.2 Alternative — small in-deploy build step (no Apache rewrite), 3 · Cache-busting for the buildless FE (§1.5 → fix), 5 · Quiz session persistence (§1.3 → fix, coordinates with 03 §2.3), 9 · What Phase 3b implements — ordered checklist, v2/06 — Caching & Performance
 
 ### Community 465 - "Community 465"
 Cohesion: 0.12
@@ -1990,8 +2199,8 @@ Cohesion: 0.18
 Nodes (11): 0. Current-state facts that shape the design (verified), 1. Exact v2 directory tree, 3. Router-mount scheme + new `main.py` skeleton, 4.1 File-by-file: `app/js/*` and `app/css/*` → `frontend/*`, 4.2 Where centralised concerns live (new files), 4.3 Resources duplication — single source of truth, 4. Front-end mapping, 5. Content consolidation (+3 more)
 
 ### Community 484 - "Community 484"
-Cohesion: 0.33
-Nodes (6): 1.1 Backend — `quiz-certification/app/config.py`, 1.2 Backend — values outside `config.py`, 1.3 Deploy — `deploy.env.example` / `deploy.sh`, 1.4 Front-end — `app/js/main.js`, 1.5 Absent today, needed in v2, 1 · Inventory of every configurable value today
+Cohesion: 0.18
+Nodes (11): 2.10 `auth_audit` — append-only authn/authz event log, 2.1 `attempts` — resolve score drift + add cert dev-mode (item 9), 2.2 `users` + `roles` + `user_roles` — split the overloaded column (item 8), 2.3 `quiz_sessions` — persist the in-memory `_active_quizzes` (item 6), 2.4 `app_config` — config-as-content (item 11), 2.5 `signing_keys` — per-environment cert key reference (item 9), 2.6 Migrate `hstore` → `jsonb` (users.preferences, attempts.metadata), 2.7 `media_assets` — fix id type, add a delete path hook (item 6 + §7) (+3 more)
 
 ### Community 485 - "Community 485"
 Cohesion: 0.18
@@ -2094,8 +2303,8 @@ Cohesion: 0.22
 Nodes (8): Audit trails, Health and readiness probes, Observability, Request correlation, Scan box, Structured logging, The v2 phase history, at a glance, What to watch
 
 ### Community 510 - "Community 510"
-Cohesion: 0.18
-Nodes (11): 7.1 MP4-delivery contract (explainer video), 7. PATH-REFERENCE migration map, `app/config.py` → `core/config.py`, `content-architecture/validate.py` → `content/validate.py`, `deploy.sh` → `infra/deploy.sh`, Front-end fetch endpoints + constants, `main.py` StaticFiles + the FS fallback, Python imports (`from . import ...`) (+3 more)
+Cohesion: 0.05
+Nodes (49): _actor_email(), grant_role(), list_roles(), Admin role-assignment routes (04 §7.2 — the deferred Q-3 admin-roles REST).  Mou, List the capability roles a user holds.      404 if the email matches no user ro, Body for grant (POST) and revoke (DELETE).      `email` is a plain string (not p, Pull the acting admin's email for the audit trail., Grant a capability role to a user. Idempotent.      Returns `{email, role_key, g (+41 more)
 
 ### Community 511 - "Community 511"
 Cohesion: 0.22
@@ -2246,8 +2455,8 @@ Cohesion: 0.33
 Nodes (3): Backend modular monolith: core infrastructure + domain modules, Frontend modular structure: core, shared, modules, Phase 0: Design contracts and gate decisions
 
 ### Community 548 - "Community 548"
-Cohesion: 0.18
-Nodes (11): 1.10 Two role systems on one column, 1.1 `users` — identity + overloaded role, 1.2 `attempts` — graded quiz submissions + cert seal, 1.3 `questions` — quiz bank with versioning + UGC, 1.4 `feed_items` — UGC stream, 1.5 `media_assets` — large-object metadata, 1.6 `course_chapters` — authored prose, one row per section file, 1.7 `frameworks` — framework spine + explainer, both in one table (+3 more)
+Cohesion: 0.22
+Nodes (9): healthz(), lifespan(), FastAPI composition root.  This file contains NO business logic. It builds the a, Liveness: the process is up and serving. No dependency checks., Liveness: the process is up and serving. No dependency checks., Liveness: the process is up and serving. No dependency checks., Liveness: the process is up and serving. No dependency checks., Liveness: the process is up and serving. No dependency checks. (+1 more)
 
 ### Community 549 - "Community 549"
 Cohesion: 0.33
@@ -2286,40 +2495,40 @@ Cohesion: 0.40
 Nodes (4): 00 · Architecture Prompt, The prompt, What follows, Why this prompt
 
 ### Community 559 - "Community 559"
-Cohesion: 0.18
-Nodes (11): 2.10 `auth_audit` — append-only authn/authz event log, 2.1 `attempts` — resolve score drift + add cert dev-mode (item 9), 2.2 `users` + `roles` + `user_roles` — split the overloaded column (item 8), 2.3 `quiz_sessions` — persist the in-memory `_active_quizzes` (item 6), 2.4 `app_config` — config-as-content (item 11), 2.5 `signing_keys` — per-environment cert key reference (item 9), 2.6 Migrate `hstore` → `jsonb` (users.preferences, attempts.metadata), 2.7 `media_assets` — fix id type, add a delete path hook (item 6 + §7) (+3 more)
+Cohesion: 0.40
+Nodes (5): 4.1 Where: `backend/app/core/cache.py` (01-blueprint §1), 4.2 Backend choice — in-process LRU, not Redis (default), 4.3 What gets cached, with TTL and invalidation triggers, 4.4 Conditional GET — ETag + `If-None-Match`, 4 · Application-layer cache — where it lives, what it does
 
 ### Community 560 - "Community 560"
 Cohesion: 0.22
-Nodes (9): 9. What Phase 1 executes, Open items to confirm at the Phase 0 gate (blueprint-specific), Partition summary (who can run concurrently), Slice A — Backend move + module split  *(owns `backend/`)*, Slice B — Front-end move + centralisation  *(owns `frontend/`)*, Slice C — Content consolidation  *(owns `content/`)*, Slice D — Clean-code deletions  *(cross-cutting; coordinate with A & B)*, Slice E — Infra path updates  *(owns `infra/`)* (+1 more)
+Nodes (10): Request, Dependency: require ANY signed-in user (the `learner` floor).      Use for endpo, Dependency: require ANY signed-in user (the `learner` floor).      Use for endpo, Dependency: require ANY signed-in user (the `learner` floor).      Use for endpo, Pull session user; raise 401 (JSON) or 302→/login (HTML).      Break-glass path:, Pull session user; raise 401 (JSON) or 302→/login (HTML).      Break-glass path:, Pull session user; raise 401 (JSON) or 302→/login (HTML).      Break-glass path:, Pull session user; raise 401 (JSON) or 302→/login (HTML).      Break-glass path: (+2 more)
 
 ### Community 561 - "Community 561"
 Cohesion: 0.21
 Nodes (19): HTMLResponse, Request, admin_attempts(), bind_templates(), history(), home(), onboarding_role_page(), onboarding_role_save() (+11 more)
 
 ### Community 562 - "Community 562"
-Cohesion: 0.40
-Nodes (5): 0 · Scan box, 12 · Gate questions, 2 · Findings table (the single source of truth), 6 · File-upload pipeline hardening, v2/07 · Security baseline — threat model, findings, headers, hardening
+Cohesion: 0.09
+Nodes (23): 0 · Scan box, 11.1 Hard checks (automated, in CI), 11.2 Manual review, 11.3 Pen-test scope (Phase 5b external), 11 · Acceptance criteria for Phase 5b security review, 12 · Gate questions, 1.1 Actors, 1.2 Assets (+15 more)
 
 ### Community 563 - "Community 563"
-Cohesion: 0.47
-Nodes (8): Session, main(), migrate_course_content(), migrate_feed(), migrate_media(), migrate_questions(), migrate_sqlite_data(), Migration script to transfer data from SQLite/JSON to PostgreSQL.  Ingests (v2 p
+Cohesion: 0.17
+Nodes (18): Session, get_all_chapters(), get_chapter(), get_framework(), get_framework_explainer(), Content storage — course chapters + framework + framework-explainer.  The framew, save_chapter(), save_framework() (+10 more)
 
 ### Community 564 - "Community 564"
-Cohesion: 0.08
-Nodes (24): RunbookCreate, Database — SQLAlchemy engine + session.  Local dev: SQLite at q0.db (DATABASE_UR, Role- and domain-specific runbooks.      Each row is a complete runbook — greenf, Role- and domain-specific runbooks.      Each row is a complete runbook — greenf, Role- and domain-specific runbooks.      Each row is a complete runbook — greenf, Role- and domain-specific runbooks.      Each row is a complete runbook — greenf, Runbook, App logging internals (+16 more)
+Cohesion: 0.29
+Nodes (7): FAQItem, Individual FAQ Item (Question & Answer)., Individual FAQ Item (Question & Answer)., Individual FAQ Item (Question & Answer)., Individual FAQ Item (Question & Answer)., Individual FAQ Item (Question & Answer)., Individual FAQ Item (Question & Answer).
 
 ### Community 565 - "Community 565"
-Cohesion: 0.40
-Nodes (5): 5.1 The never-in-DB rule, 5.2 Rotation procedure, 5.3 Pre-commit gitleaks, 5.4 What happens to dev `.env` on cutover, 5 · Secrets handling
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 566 - "Community 566"
 Cohesion: 0.40
 Nodes (5): 7.1 Learner-plane (FastAPI) routes — authoritative list, 7.2 Staff-plane (Directus) — outside this app, 7.3 Two anonymous endpoints — explicit decision, 7.4 Anonymous feed reads, 7 · AuthZ enforcement boundary
 
 ### Community 567 - "Community 567"
-Cohesion: 0.40
-Nodes (5): 8.1 Problem statement, 8.2 Target design (uses `03 §2.5` `signing_keys`), 8.4 Key rotation within an environment, 8.5 Exact code paths to change, 8 · Certificate dev-mode design (item 9, full design)
+Cohesion: 0.33
+Nodes (6): 7.1 Lazy-load non-current mode modules, 7.2 Preload framework + first chapter, 7.3 Conditional GET via `core/api-client.js`, 7.4 Media hints, 7.5 Bundle the framework + explainer into one round-trip (optional), 7 · Front-end performance
 
 ### Community 568 - "Community 568"
 Cohesion: 0.50
@@ -2366,20 +2575,20 @@ Cohesion: 0.25
 Nodes (7): generate(), grade(), Quiz generator — samples questions from the PostgreSQL database.  Two quizzes ar, Grade a submission against server-stored answers., Return a summary of available published topics and counts from the DB., Generate a quiz dynamically:          1. Select published questions that the use, topic_summary()
 
 ### Community 579 - "Community 579"
-Cohesion: 0.14
-Nodes (14): csp_report(), healthz(), lifespan(), FastAPI composition root.  This file contains NO business logic. It builds the a, Sink for CSP violation reports — the Report-To `csp-endpoint` target.      Unaut, Sink for CSP violation reports — the Report-To `csp-endpoint` target.      Unaut, Sink for CSP violation reports — the Report-To `csp-endpoint` target.      Unaut, Sink for CSP violation reports — the Report-To `csp-endpoint` target.      Unaut (+6 more)
+Cohesion: 0.29
+Nodes (7): csp_report(), Sink for CSP violation reports — the Report-To `csp-endpoint` target.      Unaut, Sink for CSP violation reports — the Report-To `csp-endpoint` target.      Unaut, Sink for CSP violation reports — the Report-To `csp-endpoint` target.      Unaut, Sink for CSP violation reports — the Report-To `csp-endpoint` target.      Unaut, Sink for CSP violation reports — the Report-To `csp-endpoint` target.      Unaut, Request
 
 ### Community 580 - "Community 580"
 Cohesion: 0.17
 Nodes (11): 0 · Scan box, 1 · Chosen options (from the requirements call), 2 · Architecture, 3 · Fetch + summarise, 4 · Course refresh — automatic, bounded, reversible, 5 · Data model (new — one Alembic migration, `0012`), 6 · Security & ops, 7 · Phasing (+3 more)
 
 ### Community 581 - "Community 581"
-Cohesion: 0.33
-Nodes (6): 5.1 Run modes, 5.2 File layout, 5.3 Switching modes locally, 5.4 How `deploy.sh` selects the env, 5.5 How Directus reads/writes the same Postgres in each env, 5 · Environment management (item 3)
+Cohesion: 0.18
+Nodes (11): 7.1 MP4-delivery contract (explainer video), 7. PATH-REFERENCE migration map, `app/config.py` → `core/config.py`, `content-architecture/validate.py` → `content/validate.py`, `deploy.sh` → `infra/deploy.sh`, Front-end fetch endpoints + constants, `main.py` StaticFiles + the FS fallback, Python imports (`from . import ...`) (+3 more)
 
 ### Community 585 - "Community 585"
-Cohesion: 0.33
-Nodes (6): 1.1 API contract parity, 1.2 Content parity (byte-exact via SHA-256 manifest), 1.3 DB-data preservation, 1.4 Front-end visual parity, 1.5 Quiz/cert functional parity, 1. The five invariants
+Cohesion: 0.22
+Nodes (9): 9. What Phase 1 executes, Open items to confirm at the Phase 0 gate (blueprint-specific), Partition summary (who can run concurrently), Slice A — Backend move + module split  *(owns `backend/`)*, Slice B — Front-end move + centralisation  *(owns `frontend/`)*, Slice C — Content consolidation  *(owns `content/`)*, Slice D — Clean-code deletions  *(cross-cutting; coordinate with A & B)*, Slice E — Infra path updates  *(owns `infra/`)* (+1 more)
 
 ### Community 591 - "Community 591"
 Cohesion: 0.14
@@ -2405,21 +2614,13 @@ Nodes (18): _clean_cache(), Verification test suite for dynamic RBAC, encryption
 Cohesion: 0.60
 Nodes (5): _backfill(), downgrade(), _has(), Populate the new model from media_assets + techflix_episodes. Idempotent:     ru, upgrade()
 
-### Community 598 - "Community 598"
-Cohesion: 0.20
-Nodes (9): clean_cache(), Tests for the FAQ module endpoints, storage, caching, and cache invalidation.  C, Verify that a Directus webhook update on FAQ collections invalidates cached FAQ, Wipe cache before and after every test., Verify category list endpoint queries storage and handles empty sets., Verify detail endpoint returns 404 for unknown categories and success for known, test_get_faq_categories_endpoint(), test_get_faq_category_detail_endpoint() (+1 more)
-
 ### Community 599 - "Community 599"
-Cohesion: 0.24
-Nodes (10): JSONResponse, encrypt_response_payload(), Encrypt the outgoing response payload if encryption is requested or active., Encrypt the outgoing response payload if encryption is requested or active., Encrypt the outgoing response payload if encryption is requested or active., Encrypt the outgoing response payload if encryption is requested or active., JSONResponse, quiz_start() (+2 more)
+Cohesion: 0.22
+Nodes (11): JSONResponse, encrypt_response_payload(), Encrypt the outgoing response payload if encryption is requested or active., Encrypt the outgoing response payload if encryption is requested or active., Encrypt the outgoing response payload if encryption is requested or active., Encrypt the outgoing response payload if encryption is requested or active., Encrypt the outgoing response payload if encryption is requested or active., JSONResponse (+3 more)
 
 ### Community 600 - "Community 600"
 Cohesion: 0.16
 Nodes (13): as_signed_in_user(), episode_factory(), Tests for the Techflix endpoint (GET /api/media/techflix) on the unified model., An unauthenticated /api/ request is rejected with 401 (JSON), not a redirect., Authenticated request returns 200 with a {topics: [...]} shape., An inserted episode appears under its topic with the right URLs + duration., Override the auth dependency so the route sees a signed-in learner.      `requir, Create a full Techflix episode (asset + original + poster variants + map),     r (+5 more)
-
-### Community 601 - "Community 601"
-Cohesion: 0.33
-Nodes (5): get_faq_categories(), get_faq_category_detail(), FAQ routing handlers., Retrieve all FAQ categories from the cache or DB., Retrieve details of a specific FAQ category and its associated items from cache
 
 ### Community 602 - "Community 602"
 Cohesion: 0.60
@@ -2605,21 +2806,29 @@ Nodes (3): /docs/system-architecture/security-baseline-778, __comp, content
 Cohesion: 0.67
 Nodes (3): QuestionPayload, admin_save_question(), Add or update a question in the bank, auto-versioning under the hood.
 
+### Community 651 - "Community 651"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 652 - "Community 652"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
 ### Community 654 - "Community 654"
-Cohesion: 0.22
-Nodes (9): decrypt_request_payload(), Pull fresh user data from the DB into the session.      The v2 session payload d, Pull fresh user data from the DB into the session.      The v2 session payload d, Pull fresh user data from the DB into the session.      The v2 session payload d, Pull fresh user data from the DB into the session.      The v2 session payload d, Decrypt the incoming payload if encrypted using AES-GCM., Decrypt the incoming payload if encrypted using AES-GCM., Decrypt the incoming payload if encrypted using AES-GCM. (+1 more)
+Cohesion: 0.18
+Nodes (11): decrypt_request_payload(), Pull fresh user data from the DB into the session.      The v2 session payload d, Pull fresh user data from the DB into the session.      The v2 session payload d, Pull fresh user data from the DB into the session.      The v2 session payload d, Pull fresh user data from the DB into the session.      The v2 session payload d, Pull fresh user data from the DB into the session.      The v2 session payload d, Decrypt the incoming payload if encrypted using AES-GCM., Decrypt the incoming payload if encrypted using AES-GCM. (+3 more)
 
 ### Community 655 - "Community 655"
-Cohesion: 0.40
-Nodes (5): DEPRECATED — backward-compat shim for the legacy capability vocabulary.      Map, DEPRECATED — backward-compat shim for the legacy capability vocabulary.      Map, DEPRECATED — backward-compat shim for the legacy capability vocabulary.      Map, DEPRECATED — backward-compat shim for the legacy capability vocabulary.      Map, require_role()
+Cohesion: 0.14
+Nodes (13): Shared FastAPI dependencies — single source of truth for request-scoped helpers., Dependency: require `perm` for the current session user.      Logic (matches 04-, Dependency: require `perm` for the current session user.      Logic (matches 04-, Dependency: require `perm` for the current session user.      Logic (matches 04-, Dependency: require `perm` for the current session user.      Logic (matches 04-, DEPRECATED — backward-compat shim for the legacy capability vocabulary.      Map, DEPRECATED — backward-compat shim for the legacy capability vocabulary.      Map, DEPRECATED — backward-compat shim for the legacy capability vocabulary.      Map (+5 more)
 
 ### Community 656 - "Community 656"
 Cohesion: 0.40
 Nodes (5): 4.1 Exact `SessionMiddleware` config, 4.2 Session/cookie cutover, 4.3 Session rotation, 4.4 Logout, 4 · Session + cookie policy
 
 ### Community 657 - "Community 657"
-Cohesion: 0.50
-Nodes (4): 3.1 Always-on headers (HTTPS vhost), 3.2 Content Security Policy, 3.3 SRI for the three CDN scripts, 3 · Headers — the concrete set
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 658 - "Community 658"
 Cohesion: 0.25
@@ -2646,28 +2855,28 @@ Cohesion: 0.50
 Nodes (4): main(), seed_roles — idempotent role seed + first-admin bootstrap (Phase 2b).  Run AFTER, Insert any missing role rows. Returns the count added., seed_roles()
 
 ### Community 670 - "Community 670"
-Cohesion: 0.40
-Nodes (5): 2.1 Per-module file convention, 2.2 Every current `app/*.py` module → v2 home, 2.3 Every `main.py` route → v2 module, 2.4 `storage.py` split map, 2. Backend module boundaries
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 671 - "Community 671"
-Cohesion: 0.40
-Nodes (5): 6. FILE-BY-FILE migration map, Backend, Content, Front-end, Infra / root / assets
+Cohesion: 0.17
+Nodes (12): Any, AppConfig, Runtime-tunable, non-secret config Directus can edit. See 05-config-cms.      No, Runtime-tunable, non-secret config Directus can edit. See 05-config-cms.      No, Runtime-tunable, non-secret config Directus can edit. See 05-config-cms.      No, Runtime-tunable, non-secret config Directus can edit. See 05-config-cms.      No, Runtime-tunable, non-secret config Directus can edit. See 05-config-cms.      No, Runtime-tunable, non-secret config Directus can edit. See 05-config-cms.      No (+4 more)
 
 ### Community 672 - "Community 672"
 Cohesion: 0.40
 Nodes (4): Inputs / preconditions, Notes, Steps, Weekly Adobe Sync — Task
 
 ### Community 673 - "Community 673"
-Cohesion: 0.40
-Nodes (5): 1.1 Actors, 1.2 Assets, 1.3 Trust boundaries, 1.4 Threats considered, 1 · Threat model (one page)
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 674 - "Community 674"
 Cohesion: 0.50
 Nodes (3): Guardrail, Rollback Chapter — Task, Steps
 
 ### Community 675 - "Community 675"
-Cohesion: 0.50
-Nodes (4): 11.1 Hard checks (automated, in CI), 11.2 Manual review, 11.3 Pen-test scope (Phase 5b external), 11 · Acceptance criteria for Phase 5b security review
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
 
 ### Community 676 - "Community 676"
 Cohesion: 0.50
@@ -2678,27 +2887,819 @@ Cohesion: 0.50
 Nodes (3): host_allowed(), Adobe source registry + egress allow-list for the content-refresh sync.  The fet, True iff `url`'s host is in the allow-list (egress / SSRF guard).
 
 ### Community 683 - "Community 683"
+Cohesion: 0.29
+Nodes (7): QuizSession, Persisted replacement for the in-process _active_quizzes dict.      Owned by Pha, Persisted replacement for the in-process _active_quizzes dict.      Owned by Pha, Persisted replacement for the in-process _active_quizzes dict.      Owned by Pha, Persisted replacement for the in-process _active_quizzes dict.      Owned by Pha, Persisted replacement for the in-process _active_quizzes dict.      Owned by Pha, Persisted replacement for the in-process _active_quizzes dict.      Owned by Pha
+
+### Community 685 - "Community 685"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 686 - "Community 686"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 687 - "Community 687"
+Cohesion: 0.33
+Nodes (6): 1.1 API contract parity, 1.2 Content parity (byte-exact via SHA-256 manifest), 1.3 DB-data preservation, 1.4 Front-end visual parity, 1.5 Quiz/cert functional parity, 1. The five invariants
+
+### Community 688 - "Community 688"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 689 - "Community 689"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 690 - "Community 690"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 691 - "Community 691"
+Cohesion: 0.40
+Nodes (5): 2.1 Per-module file convention, 2.2 Every current `app/*.py` module → v2 home, 2.3 Every `main.py` route → v2 module, 2.4 `storage.py` split map, 2. Backend module boundaries
+
+### Community 692 - "Community 692"
+Cohesion: 0.40
+Nodes (5): 6. FILE-BY-FILE migration map, Backend, Content, Front-end, Infra / root / assets
+
+### Community 693 - "Community 693"
+Cohesion: 0.40
+Nodes (5): 8.1 Problem statement, 8.2 Target design (uses `03 §2.5` `signing_keys`), 8.4 Key rotation within an environment, 8.5 Exact code paths to change, 8 · Certificate dev-mode design (item 9, full design)
+
+### Community 694 - "Community 694"
 Cohesion: 0.50
 Nodes (4): 9.1 Three locked Phase-0 decisions, 9.2 Twenty-three additional gate questions, 9.3 What is NOT locked, 9 · Locked decisions on seal
 
+### Community 695 - "Community 695"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 696 - "Community 696"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 697 - "Community 697"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 698 - "Community 698"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 699 - "Community 699"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 700 - "Community 700"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 701 - "Community 701"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 702 - "Community 702"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 703 - "Community 703"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 704 - "Community 704"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 705 - "Community 705"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 706 - "Community 706"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 707 - "Community 707"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 708 - "Community 708"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 709 - "Community 709"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 710 - "Community 710"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 711 - "Community 711"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 712 - "Community 712"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 713 - "Community 713"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 714 - "Community 714"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 715 - "Community 715"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 716 - "Community 716"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 717 - "Community 717"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 718 - "Community 718"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 719 - "Community 719"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 720 - "Community 720"
+Cohesion: 0.08
+Nodes (24): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+16 more)
+
+### Community 721 - "Community 721"
+Cohesion: 0.09
+Nodes (21): description, draft, frontMatter, id, sidebar_position, title, id, lastUpdatedAt (+13 more)
+
+### Community 722 - "Community 722"
+Cohesion: 0.14
+Nodes (15): datetime, HTMLParser, _extract_items(), _fetch_text(), _html_to_text(), _parse_date(), _parse_json_array(), What's New service — the weekly Adobe content-refresh pipeline (Phase 1).  Flow (+7 more)
+
+### Community 723 - "Community 723"
+Cohesion: 0.12
+Nodes (15): 0001 — baseline (stamped), 0002 — reconcile, 0003 — new tables, 0004 — new columns, 0005 — seed data, 0006 — large-object cleanup, 0007 — non-production signing keys, 0008 — Directus role (+7 more)
+
+### Community 724 - "Community 724"
+Cohesion: 0.17
+Nodes (11): Backup, Connection-pool sizing, Database operations, Large-object cleanup, Postgres extensions, Restore drill (quarterly), Rotating certificate signing keys, Rotating the Directus database password (+3 more)
+
+### Community 725 - "Community 725"
+Cohesion: 0.18
+Nodes (10): Certificate signing, CORS, Database isolation for Directus, Header ownership: FastAPI and Apache, Scan box, Secret tiers and fail-closed startup, Security baseline, The session (+2 more)
+
+### Community 726 - "Community 726"
+Cohesion: 0.18
+Nodes (10): Config-as-content and media, Config-as-content: the three tiers, How a byte gets in and out, Media: Postgres large objects, final, Scan box, The metadata row vs the bytes, Tier 1 — secrets, env only, Tier 2 — configuration, `app_config` (+2 more)
+
+### Community 727 - "Community 727"
+Cohesion: 0.18
+Nodes (10): 1. The delete trigger (correctness), 2. The `vacuumlo` sweep (resilience), Backup implications, Media large objects, Orphan prevention — two mechanisms, Scan box, The read path — Range streaming, The shape (+2 more)
+
+### Community 728 - "Community 728"
+Cohesion: 0.18
+Nodes (11): description, id, sidebar, title, description, id, sidebar, title (+3 more)
+
+### Community 729 - "Community 729"
+Cohesion: 0.18
+Nodes (10): Anatomy of a certificate, Certificates, Scan box, The cert-ID prefix policy, The development watermark, The HMAC seal, The keys — per-environment, never in the database, The no-data-loss guarantee (+2 more)
+
+### Community 730 - "Community 730"
+Cohesion: 0.18
+Nodes (10): Quiz lifecycle, Scan box, Step 1 — Start and sample, Step 2 — Hold the state, Step 3 — Submit and grade, Step 4 — Mint, persist, deliver, Step 5 — Cooldown, The request sequence (+2 more)
+
+### Community 731 - "Community 731"
+Cohesion: 0.20
+Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+
+### Community 732 - "Community 732"
+Cohesion: 0.20
+Nodes (9): Deployment, Disk layout, Running deploy.sh, Scan box, The Apache vhost, The systemd unit it writes, Topology, Verifying a deploy (+1 more)
+
+### Community 733 - "Community 733"
+Cohesion: 0.20
+Nodes (9): Caching and performance, Invalidation: precise, not blunt, Redis fails safe, Scan box, SPA cache-busting, The AppCache seam, The three layers, TTLs (+1 more)
+
+### Community 734 - "Community 734"
+Cohesion: 0.20
+Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+
+### Community 735 - "Community 735"
+Cohesion: 0.20
+Nodes (9): Cross-references, Feed mode, Manual mode, Navigation and information architecture, Read mode, Router and the four modes, Scan box, The hash router (+1 more)
+
+### Community 736 - "Community 736"
+Cohesion: 0.20
+Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+
+### Community 737 - "Community 737"
+Cohesion: 0.20
+Nodes (9): `course.schema.json` — a chapter file, `feed.schema.json` — a feed item, `frozen/` is a reference, not data, Scan box, `source/` is a seed, not the read path, The `content/` tree, The content tree and JSON schemas, The JSON schemas (+1 more)
+
+### Community 738 - "Community 738"
+Cohesion: 0.20
+Nodes (9): 1 · Static course content (authored), 2 · Feed UGC (contributor-authored, moderated), 3 · Media (bytes), 4 · Configuration (non-secret runtime tunables), Scan box, The four content types, The four kinds, Where each kind lives (+1 more)
+
+### Community 739 - "Community 739"
+Cohesion: 0.20
+Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+
+### Community 740 - "Community 740"
+Cohesion: 0.20
+Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+
+### Community 741 - "Community 741"
+Cohesion: 0.20
+Nodes (9): Caveat 1 — the single-worker pin, Caveat 2 — the failed-attempt cooldown, RBAC and admin, Scan box, See also, The admin surfaces, The enforcement primitive, The locked permission matrix (+1 more)
+
+### Community 742 - "Community 742"
+Cohesion: 0.20
+Nodes (9): collapsed, collapsible, customProps, description, label, link, id, type (+1 more)
+
+### Community 743 - "Community 743"
+Cohesion: 0.22
+Nodes (8): Bootstrap order, Directus introspects; it does not own, Google SSO for staff, Managing the CMS, Operating commands, Scan box, systemd vs Docker, The cache-invalidation webhook
+
+### Community 744 - "Community 744"
+Cohesion: 0.22
+Nodes (8): Audit trails, Health probes, Monitoring, Request correlation and logs, Routine commands, Scan box, The slow-query log, What to alert on
+
+### Community 745 - "Community 745"
+Cohesion: 0.22
+Nodes (8): Certificates, Moderating user-submitted questions, Quiz administration, Scan box, The admin surfaces, The question bank, The two operational invariants, Verification
+
+### Community 746 - "Community 746"
+Cohesion: 0.22
+Nodes (8): Auth planes, How the SPA stays in agreement, Learner sign-in: Google SSO with PKCE, Persona is a profile attribute, not a role, Scan box, Staff sign-in: Directus, The locked permission matrix, The two planes
+
+### Community 747 - "Community 747"
+Cohesion: 0.22
+Nodes (8): Directus topology, Scan box, Service layout, The scoped database role, The webhook contract, What Directus does not do, Where 4c picks up, Why webhook auth is loopback, not a secret
+
+### Community 748 - "Community 748"
+Cohesion: 0.22
+Nodes (8): Audit trails, Health and readiness probes, Observability, Request correlation, Scan box, Structured logging, The v2 phase history, at a glance, What to watch
+
+### Community 749 - "Community 749"
+Cohesion: 0.22
+Nodes (8): Blocks and the renderer registry, Cross-references, Diagram rendering, Scan box, The 14 course block renderers, The 6 feed-item renderers, The dispatch contract, The shared ↔ feed seam
+
+### Community 750 - "Community 750"
+Cohesion: 0.22
+Nodes (8): Client-side validation mirrors the server, Cross-references, Scan box, The content read path, The course read seam: `loadJSON`, The feed seam: `feed/store.js`, What the read path is *not*, Why the SPA never talks to Directus
+
+### Community 751 - "Community 751"
+Cohesion: 0.22
+Nodes (8): One source, two renderers, Scan box, The block tree, The block types, The course block model, The framework spine, The two block flags, Where the block tree actually lives
+
+### Community 752 - "Community 752"
+Cohesion: 0.22
+Nodes (8): Per-environment role names on the shared instance, Reversibility and password handling, Role isolation, Scan box, SQLite is a no-op here, The GRANT / REVOKE matrix, The hard-denied set, Two layers of authorisation, not one
+
+### Community 753 - "Community 753"
+Cohesion: 0.22
+Nodes (8): Approval — the moderator's status flip, Authoring through the admin endpoint, Permissions at a glance, Scan box, The question bank, The `questions` table, The UGC path — a feed scenario becomes a question, Versioning — edit in place, attempts unharmed
+
+### Community 754 - "Community 754"
+Cohesion: 0.22
+Nodes (8): Environment isolation, Key rotation and expiry, Scan box, The canary, restated, The public flow, The verifier's decision tree, Verification, What a stranger sees
+
+### Community 755 - "Community 755"
+Cohesion: 0.22
+Nodes (9): 3.1 `course_chapters` — the field manual, 3.2 `frameworks` — the spine (2 rows: `framework`, `explainer`), 3.3 `feed_items` — UGC + moderation surface, 3.4 `questions` — quiz bank (official + UGC), 3.5 `app_config` — config-as-content (item 11 home), 3.6 `media_assets` — metadata only (decision in §3.7 below), 3.7 `user_roles` — grants (composite-PK decision), 3.8 Resources / runbook / checklist / FAQs (+1 more)
+
+### Community 756 - "Community 756"
+Cohesion: 0.25
+Nodes (7): Granting and revoking roles, How a request is authorised, Scan box, The permission matrix, The role taxonomy, The two auth planes, Users & roles
+
+### Community 757 - "Community 757"
+Cohesion: 0.25
+Nodes (7): How modules talk to each other, Modular monolith, Scan box, The composition root, The per-module file convention, The two halves: `core/` and `modules/`, Where the boundary is going
+
+### Community 758 - "Community 758"
+Cohesion: 0.25
+Nodes (7): Brand tokens, Configuration and theming, Configuration centralisation: `core/config.js`, Cross-references, Scan box, The unified theme, Two implementations, one contract
+
+### Community 759 - "Community 759"
+Cohesion: 0.25
+Nodes (7): Cross-references, Equivalence testing, Module layout and parity, Scan box, The frozen monolith relationship, The three zones, What shipped versus the blueprint
+
+### Community 760 - "Community 760"
+Cohesion: 0.25
+Nodes (7): Directus: the editorial write plane, Introspect, do not own, Scan box, Source of truth: Postgres editable, git-JSON seed, The cache-invalidation seam, The scoped `directus_app` role, Two planes, one database
+
+### Community 761 - "Community 761"
+Cohesion: 0.25
+Nodes (7): Coexistence with Directus's system tables, Connection pooling, Extensions, Postgres-only features, Scan box, The Postgres feature set the schema relies on, The SQLite shim — what it is and is not
+
+### Community 762 - "Community 762"
+Cohesion: 0.25
+Nodes (7): Metadata can be edited in Directus, Publish runbooks, Scan box, Step 1 — download the template, Step 2 — fill the spreadsheet, Step 3 — upload, Step 4 — read it
+
+### Community 763 - "Community 763"
+Cohesion: 0.29
+Nodes (6): collapsed, collapsible, customProps, description, label, position
+
+### Community 764 - "Community 764"
+Cohesion: 0.29
+Nodes (6): Architecture: buildless ES modules, Scan box, The app shell, The import-resolution baseline, Where the runtime constants come from, Why buildless
+
+### Community 766 - "Community 766"
+Cohesion: 0.29
+Nodes (6): Entity-relationship diagram, Scan box, Schema overview, The role split, The thirteen tables, Who writes each table
+
+### Community 767 - "Community 767"
+Cohesion: 0.29
+Nodes (7): App logging internals, Common production checks, Local dev (`./start_local.sh`), Logging & diagnostics, Production (the VM), TL;DR — capture everything to share, Where logs live
+
+### Community 768 - "Community 768"
+Cohesion: 0.29
+Nodes (6): Before you start, Editing the framework, Scan box, Steps — edit a chapter, Update course content, What's where
+
+### Community 769 - "Community 769"
+Cohesion: 0.33
+Nodes (5): Cross-references, Front-end, Scan box, Section map, What lives here
+
+### Community 770 - "Community 770"
+Cohesion: 0.33
+Nodes (5): A one-line statement of the model, Content architecture, Scan box, Section map, What this section covers
+
+### Community 771 - "Community 771"
+Cohesion: 0.33
+Nodes (5): Database, Scan box, Section map, Source of truth for this section, Why a single Postgres
+
+### Community 772 - "Community 772"
+Cohesion: 0.33
+Nodes (5): Scan box, Source contracts, System architecture, The shape, in one diagram, What lives in this section
+
+### Community 773 - "Community 773"
+Cohesion: 0.33
+Nodes (5): Quiz management, Scan box, Section map, Source contracts, What lives here
+
+### Community 774 - "Community 774"
+Cohesion: 0.33
+Nodes (5): Create feed posts, Moderation (feed_moderator), Posting a scenario (and growing the quiz), Scan box, Steps — create a post
+
+### Community 775 - "Community 775"
+Cohesion: 0.33
+Nodes (5): Manage FAQs, Scan box, Steps — add a category, Steps — add a question, Verify
+
+### Community 776 - "Community 776"
+Cohesion: 0.33
+Nodes (5): Refresh the quiz after a content change, Scan box, Steps — for the content author, Steps — for the quiz admin, The workflow
+
+### Community 777 - "Community 777"
+Cohesion: 0.33
+Nodes (6): 1.1 Backend — `quiz-certification/app/config.py`, 1.2 Backend — values outside `config.py`, 1.3 Deploy — `deploy.env.example` / `deploy.sh`, 1.4 Front-end — `app/js/main.js`, 1.5 Absent today, needed in v2, 1 · Inventory of every configurable value today
+
+### Community 778 - "Community 778"
+Cohesion: 0.40
+Nodes (4): Content scheduler, How publishing works today, Scan box, What is planned
+
+### Community 779 - "Community 779"
+Cohesion: 0.40
+Nodes (4): Admin guide, Scan box, The shape of the system, What's in here
+
+### Community 780 - "Community 780"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, admin/configuration-and-credentials
+
+### Community 781 - "Community 781"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, admin/content-scheduler
+
+### Community 782 - "Community 782"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, admin/database-operations
+
+### Community 783 - "Community 783"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, admin/intro
+
+### Community 784 - "Community 784"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, admin/managing-the-cms
+
+### Community 785 - "Community 785"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, admin/monitoring
+
+### Community 786 - "Community 786"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, admin/quiz-administration
+
+### Community 787 - "Community 787"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, admin/users-and-roles
+
+### Community 788 - "Community 788"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/architecture/auth-planes
+
+### Community 789 - "Community 789"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/architecture/directus-topology
+
+### Community 790 - "Community 790"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/architecture/modular-monolith
+
+### Community 791 - "Community 791"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/architecture/observability
+
+### Community 792 - "Community 792"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/architecture/security-baseline
+
+### Community 793 - "Community 793"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/components/architecture
+
+### Community 794 - "Community 794"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/components/blocks-and-registry
+
+### Community 795 - "Community 795"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/components/config-and-theming
+
+### Community 796 - "Community 796"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/components/content-read-path
+
+### Community 797 - "Community 797"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/components/intro
+
+### Community 798 - "Community 798"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/components/module-layout
+
+### Community 799 - "Community 799"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/components/router-and-modes
+
+### Community 800 - "Community 800"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/alembic-migrations
+
+### Community 801 - "Community 801"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/config-and-media
+
+### Community 802 - "Community 802"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/content-intro
+
+### Community 803 - "Community 803"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/content-tree-and-schemas
+
+### Community 804 - "Community 804"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/course-block-model
+
+### Community 805 - "Community 805"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/database-intro
+
+### Community 806 - "Community 806"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/directus-write-plane
+
+### Community 807 - "Community 807"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/four-content-types
+
+### Community 808 - "Community 808"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/media-large-objects
+
+### Community 809 - "Community 809"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/postgres-only-features
+
+### Community 810 - "Community 810"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/role-isolation
+
+### Community 811 - "Community 811"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/data-model/schema-overview
+
+### Community 812 - "Community 812"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/intro
+
+### Community 813 - "Community 813"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/quiz-internals/certificates
+
+### Community 814 - "Community 814"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/quiz-internals/question-bank
+
+### Community 815 - "Community 815"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/quiz-internals/quiz-intro
+
+### Community 816 - "Community 816"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/quiz-internals/quiz-lifecycle
+
+### Community 817 - "Community 817"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/quiz-internals/rbac-and-admin
+
+### Community 818 - "Community 818"
+Cohesion: 0.40
+Nodes (5): description, id, sidebar, title, developer/quiz-internals/verification
+
+### Community 819 - "Community 819"
+Cohesion: 0.40
+Nodes (5): user/creating-feed-posts, description, id, sidebar, title
+
+### Community 820 - "Community 820"
+Cohesion: 0.40
+Nodes (5): user/discovery-checklists, description, id, sidebar, title
+
+### Community 821 - "Community 821"
+Cohesion: 0.40
+Nodes (5): user/feature-requests, description, id, sidebar, title
+
+### Community 822 - "Community 822"
+Cohesion: 0.40
+Nodes (5): user/intro, description, id, sidebar, title
+
+### Community 823 - "Community 823"
+Cohesion: 0.40
+Nodes (5): user/managing-faqs, description, id, sidebar, title
+
+### Community 824 - "Community 824"
+Cohesion: 0.40
+Nodes (5): user/publishing-runbooks, description, id, sidebar, title
+
+### Community 825 - "Community 825"
+Cohesion: 0.40
+Nodes (5): user/refreshing-the-quiz, description, id, sidebar, title
+
+### Community 826 - "Community 826"
+Cohesion: 0.40
+Nodes (5): user/updating-course-content, description, id, sidebar, title
+
+### Community 827 - "Community 827"
+Cohesion: 0.40
+Nodes (5): user/uploading-media, description, id, sidebar, title
+
+### Community 828 - "Community 828"
+Cohesion: 0.40
+Nodes (4): Discovery checklists, Scan box, Updating the checklist, Using the checklist
+
+### Community 829 - "Community 829"
+Cohesion: 0.40
+Nodes (4): Feature requests, In the meantime, Scan box, What is planned
+
+### Community 830 - "Community 830"
+Cohesion: 0.40
+Nodes (4): How publishing actually works, Pick your task, Scan box, User guide
+
+### Community 831 - "Community 831"
+Cohesion: 0.40
+Nodes (4): Scan box, Steps — upload a file, Upload media, What gets checked
+
+### Community 832 - "Community 832"
+Cohesion: 0.40
+Nodes (5): 7.1 `backend/app/core/config.py` — Pydantic Settings singleton, 7.2 `backend/app/core/cms_client.py` — Tier 2 read-path, 7.3 `backend/app/modules/cms/routes.py` — webhook receiver (loopback-only), 7.4 Read-paths per tier — call-site summary, 7 · Where the values are read in code (post-v2)
+
+### Community 833 - "Community 833"
+Cohesion: 0.50
+Nodes (4): 8.1 Performance smoke — `tests/baseline/perf/curl-smoke.sh`, 8.2 Apache mod_status + `Server-Timing`, 8.3 APM later — defer, 8 · Measuring & observability
+
+### Community 834 - "Community 834"
+Cohesion: 0.67
+Nodes (3): /docs/admin/configuration-and-credentials-789, __comp, content
+
+### Community 835 - "Community 835"
+Cohesion: 0.67
+Nodes (3): /docs/admin/content-scheduler-b9a, __comp, content
+
+### Community 836 - "Community 836"
+Cohesion: 0.67
+Nodes (3): /docs/admin/database-operations-bba, __comp, content
+
+### Community 837 - "Community 837"
+Cohesion: 0.67
+Nodes (3): /docs/admin/deployment-8f3, __comp, content
+
+### Community 838 - "Community 838"
+Cohesion: 0.67
+Nodes (3): /docs/admin/managing-the-cms-adc, __comp, content
+
+### Community 839 - "Community 839"
+Cohesion: 0.67
+Nodes (3): /docs/admin/monitoring-ad5, __comp, content
+
+### Community 840 - "Community 840"
+Cohesion: 0.67
+Nodes (3): /docs/admin/quiz-administration-19f, __comp, content
+
+### Community 841 - "Community 841"
+Cohesion: 0.67
+Nodes (3): /docs/admin/users-and-roles-d2e, __comp, content
+
+### Community 842 - "Community 842"
+Cohesion: 0.67
+Nodes (3): /docs/-c4a, __comp, __props
+
+### Community 843 - "Community 843"
+Cohesion: 0.67
+Nodes (3): /docs/content-architecture/course-block-model-26b, __comp, content
+
+### Community 844 - "Community 844"
+Cohesion: 0.67
+Nodes (3): /docs/database/media-large-objects-8e4, __comp, content
+
+### Community 845 - "Community 845"
+Cohesion: 0.67
+Nodes (3): /docs/developer/architecture/auth-planes-9aa, __comp, content
+
+### Community 846 - "Community 846"
+Cohesion: 0.67
+Nodes (3): /docs/developer/architecture/directus-topology-919, __comp, content
+
+### Community 847 - "Community 847"
+Cohesion: 0.67
+Nodes (3): /docs/developer/architecture/modular-monolith-16a, __comp, content
+
+### Community 848 - "Community 848"
+Cohesion: 0.67
+Nodes (3): /docs/developer/architecture/security-baseline-fc9, __comp, content
+
+### Community 849 - "Community 849"
+Cohesion: 0.67
+Nodes (3): /docs/developer/components/architecture-6f5, __comp, content
+
+### Community 850 - "Community 850"
+Cohesion: 0.67
+Nodes (3): /docs/developer/components/blocks-and-registry-e9b, __comp, content
+
+### Community 851 - "Community 851"
+Cohesion: 0.67
+Nodes (3): /docs/developer/components/config-and-theming-190, __comp, content
+
+### Community 852 - "Community 852"
+Cohesion: 0.67
+Nodes (3): /docs/developer/components/content-read-path-a02, __comp, content
+
+### Community 853 - "Community 853"
+Cohesion: 0.67
+Nodes (3): /docs/developer/components/intro-7b2, __comp, content
+
+### Community 854 - "Community 854"
+Cohesion: 0.67
+Nodes (3): /docs/developer/components/module-layout-851, __comp, content
+
+### Community 855 - "Community 855"
+Cohesion: 0.67
+Nodes (3): /docs/developer/components/router-and-modes-73d, __comp, content
+
+### Community 856 - "Community 856"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/alembic-migrations-3b2, __comp, content
+
+### Community 857 - "Community 857"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/config-and-media-21a, __comp, content
+
+### Community 858 - "Community 858"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/content-intro-be2, __comp, content
+
+### Community 859 - "Community 859"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/content-tree-and-schemas-d93, __comp, content
+
+### Community 860 - "Community 860"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/course-block-model-da4, __comp, content
+
+### Community 861 - "Community 861"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/directus-write-plane-6ee, __comp, content
+
+### Community 862 - "Community 862"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/four-content-types-6b2, __comp, content
+
+### Community 863 - "Community 863"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/media-large-objects-5da, __comp, content
+
+### Community 864 - "Community 864"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/postgres-only-features-269, __comp, content
+
+### Community 865 - "Community 865"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/role-isolation-51c, __comp, content
+
+### Community 866 - "Community 866"
+Cohesion: 0.67
+Nodes (3): /docs/developer/data-model/schema-overview-319, __comp, content
+
+### Community 867 - "Community 867"
+Cohesion: 0.67
+Nodes (3): /docs/developer/intro-a3c, __comp, content
+
+### Community 868 - "Community 868"
+Cohesion: 0.67
+Nodes (3): /docs/developer/quiz-internals/certificates-05c, __comp, content
+
+### Community 869 - "Community 869"
+Cohesion: 0.67
+Nodes (3): /docs/developer/quiz-internals/question-bank-6e5, __comp, content
+
+### Community 870 - "Community 870"
+Cohesion: 0.67
+Nodes (3): /docs/developer/quiz-internals/quiz-intro-050, __comp, content
+
+### Community 871 - "Community 871"
+Cohesion: 0.67
+Nodes (3): /docs/developer/quiz-internals/quiz-lifecycle-a92, __comp, content
+
+### Community 872 - "Community 872"
+Cohesion: 0.67
+Nodes (3): /docs/developer/quiz-internals/rbac-and-admin-857, __comp, content
+
+### Community 873 - "Community 873"
+Cohesion: 0.67
+Nodes (3): /docs/developer/quiz-internals/verification-8c6, __comp, content
+
+### Community 874 - "Community 874"
+Cohesion: 0.67
+Nodes (3): /docs/frontend/content-read-path-c5f, __comp, content
+
+### Community 875 - "Community 875"
+Cohesion: 0.67
+Nodes (3): /docs/user/creating-feed-posts-783, __comp, content
+
+### Community 876 - "Community 876"
+Cohesion: 0.67
+Nodes (3): /docs/user/discovery-checklists-323, __comp, content
+
+### Community 877 - "Community 877"
+Cohesion: 0.67
+Nodes (3): /docs/user/feature-requests-487, __comp, content
+
+### Community 878 - "Community 878"
+Cohesion: 0.67
+Nodes (3): /docs/user/intro-8ae, __comp, content
+
+### Community 879 - "Community 879"
+Cohesion: 0.67
+Nodes (3): /docs/user/managing-faqs-d96, __comp, content
+
+### Community 880 - "Community 880"
+Cohesion: 0.67
+Nodes (3): /docs/user/publishing-runbooks-cb7, __comp, content
+
+### Community 881 - "Community 881"
+Cohesion: 0.67
+Nodes (3): /docs/user/refreshing-the-quiz-747, __comp, content
+
+### Community 882 - "Community 882"
+Cohesion: 0.67
+Nodes (3): /docs/user/updating-course-content-1c8, __comp, content
+
+### Community 883 - "Community 883"
+Cohesion: 0.67
+Nodes (3): /docs/user/uploading-media-e23, __comp, content
+
 ## Knowledge Gaps
-- **3446 isolated node(s):** `version`, `configurations`, `PreToolUse`, `URLSafeTimedSerializer`, `Any` (+3441 more)
+- **5102 isolated node(s):** `version`, `configurations`, `PreToolUse`, `URLSafeTimedSerializer`, `Any` (+5097 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **173 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **169 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `get_session()` connect `Quiz Storage Layer` to `Auth Storage`, `Community 578`, `Docusaurus Client Manifest`, `Community 550`, `Quiz Service`, `Scripts Seed Roles`, `Media Service`, `Feed Routes and Models`, `Community 592`, `Community 563`, `Community 564`, `Community 533`, `Community 600`, `Core Users`, `Community 667`, `Community 669`, `Quiz Verification`, `Docusaurus Routeschunknames Docs`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
-- **Why does `readyz()` connect `Tests Monolith Refs` to `Community 579`, `Community 599`?**
-  _High betweenness centrality (0.005) - this node is a cross-community bridge._
-- **Why does `assets` connect `Docusaurus Client Manifest` to `Community 596`, `Community 662`, `Community 684`, `Community 685`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`?**
-  _High betweenness centrality (0.004) - this node is a cross-community bridge._
-- **Are the 71 inferred relationships involving `get_session()` (e.g. with `list_audit()` and `write_audit()`) actually correct?**
-  _`get_session()` has 71 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `get_session()` connect `Scripts Seed Roles` to `Auth Storage`, `Community 578`, `Docusaurus Client Manifest`, `Community 550`, `Quiz Service`, `Media Service`, `Quiz Storage Layer`, `Feed Routes and Models`, `Community 592`, `Community 563`, `Community 533`, `Community 600`, `Core Users`, `Community 667`, `Community 669`, `Quiz Verification`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `readyz()` connect `Tests Monolith Refs` to `Community 548`, `Community 599`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Why does `JSONResponse` connect `Community 599` to `Tests Monolith Refs`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Are the 63 inferred relationships involving `get_session()` (e.g. with `list_audit()` and `write_audit()`) actually correct?**
+  _`get_session()` has 63 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `version`, `configurations`, `PreToolUse` to the rest of the system?**
-  _3948 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _5590 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Docusaurus Client Manifest` be split into smaller, more focused modules?**
   _Cohesion score 0.018518518518518517 - nodes in this community are weakly interconnected._
 - **Should `React Native Sample App` be split into smaller, more focused modules?**

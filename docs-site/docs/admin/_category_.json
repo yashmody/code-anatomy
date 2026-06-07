@@ -1,0 +1,13 @@
+{
+  "label": "Admin guide",
+  "position": 3,
+  "collapsible": true,
+  "collapsed": false,
+  "link": {
+    "type": "doc",
+    "id": "admin/intro"
+  },
+  "customProps": {
+    "description": "Operating Tenet: users and roles, configuration and credentials, the CMS, the database, monitoring, quiz administration, and deployment."
+  }
+}

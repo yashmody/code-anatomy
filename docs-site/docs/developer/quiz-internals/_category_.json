@@ -1,0 +1,13 @@
+{
+  "label": "Quiz internals",
+  "position": 5,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "developer/quiz-internals/quiz-intro"
+  },
+  "customProps": {
+    "description": "The certification quiz module: lifecycle, the question bank and UGC path, HMAC-signed certificates, public verification, and the RBAC enforcement primitive."
+  }
+}

@@ -648,7 +648,8 @@ change that `has_database_privilege('app_dev','codecoder','CONNECT')` is `false`
 | Config tiers, the `app_config` registry, the webhook cache-invalidation seam | `docs/architecture/v2/05-config-cms.md` |
 | Cache profiles, the `CACHE_BACKEND=redis` switch, Apache cache matrix | `docs/architecture/v2/06-caching-performance.md` |
 | Security posture, CSP profiles, header ownership, fail-closed startup | `docs/architecture/v2/07-security-baseline.md` |
-| Cutover readiness, the security must-fix list, parity result | `docs/architecture/v2/phase-5-report.md` |
+| Security baseline + must-fix list | `docs/architecture/v2/07-security-baseline.md`, `url-security-audit.md` |
+| Parity method | `docs/architecture/v2/02-parity-method.md` |
 
 The single rule that overrides any older text: **media lives in Postgres large
 objects only — no S3, no object store, no filesystem media store.** Where an

@@ -41,26 +41,36 @@ The per-component options below (Netlify, S3, Docker, etc.) are alternatives for
 
 ---
 
-## 1 · content/frozen/
+## 1 · content/frozen/ and resources/
 
 Self-contained HTML. No build step, no server-side code, no JS framework. Drop on any static host.
 
 ```
 content/frozen/
-├── anatomy-of-code-course.html   · main field manual · ~6,700 lines · CODE–CODER deep-dives + Part II
-├── code-coder-checklist.html     · discovery checklist · 216 questions across 9 nodes
-├── architect-runbook.html        · greenfield + brownfield engagement playbooks
-└── faqs/                         · architect FAQ collection (vertical & platform-specific)
-    ├── index.html                · landing page · published + coming-soon roster
-    └── aem-banking-faq.html      · AEM × Banking · 13 questions · published
+└── anatomy-of-code-course.html   · main field manual · ~6,700 lines · CODE–CODER deep-dives + Part II
+                                    (served at /anatomy/)
+
+resources/                         · field resources — static, each section a folder with an index landing
+├── theme-boot.js                  · shared theme bootstrap (referenced as /resources/theme-boot.js)
+├── faqs/
+│   ├── index.html                 · FAQs landing
+│   └── aem-banking-faq.html       · AEM × Banking · 13 questions (zero-JS accordion)
+├── checklists/
+│   ├── index.html                 · Checklists landing
+│   └── code-coder-checklist.html  · discovery checklist · 216 questions across 9 nodes
+└── runbooks/
+    ├── index.html                 · Runbooks landing
+    └── architect-runbook.html     · greenfield + brownfield engagement playbooks
+                                    (served at /resources/ ; short URL /runbook → /resources/runbooks/)
 ```
 
 ### Cross-links inside the files
 
-In v1 the resource files lived under `app/resources/` and the course linked
-to them via `../app/resources/`. v2 consolidates everything under
-`content/frozen/`; the deploy script aliases `/anatomy/` → `content/frozen/`
-and the SELinux + Apache config matches.
+The course (`content/frozen/`) is served at `/anatomy/`; the field resources
+(`resources/`) at `/resources/` — both static Apache aliases. The resource pages
+are fully static (no API): each section is a folder with an `index.html` landing
+that links to its content page. Quiz and Techflix are the modular (dynamic) apps;
+everything else under `resources/` is plain static HTML.
 
 ### Deploy options
 
@@ -265,6 +275,8 @@ When changes ship, expect a new bundle with the same folder layout.
 ## Contributing
 
 Branching strategy, commit conventions, and the sub-agent workflow (c0 / content-quality / q0 / l0) are documented in **[`CONTRIBUTING.md`](CONTRIBUTING.md)**.
+
+Adding or editing content (course, FAQs, runbooks, checklists, media) — see **[`docs/CONTENT-AUTHORING.md`](docs/CONTENT-AUTHORING.md)**.
 
 ---
 

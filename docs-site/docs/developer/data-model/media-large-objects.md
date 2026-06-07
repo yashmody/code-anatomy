@@ -202,4 +202,4 @@ the **remote** database over TLS (`pg_dump --format=custom --large-objects
 `pg_largeobject` contents come along with the `media_assets` rows that reference
 them. A backup that has the metadata rows but not the bytes is a backup of
 broken references. The full backup/restore procedure is in the
-[deployment operations](../deployment/operations.md) page and `docs/RUNBOOK.md`.
+[database operations](../../admin/database-operations.md) page and `docs/RUNBOOK.md`.

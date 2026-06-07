@@ -1,7 +1,7 @@
 ---
 id: course-block-model
 title: The course block model
-sidebar_position: 4
+sidebar_position: 10
 ---
 
 # The course block model

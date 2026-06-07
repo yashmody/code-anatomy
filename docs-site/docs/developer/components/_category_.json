@@ -1,0 +1,13 @@
+{
+  "label": "Components (front-end)",
+  "position": 3,
+  "collapsible": true,
+  "collapsed": true,
+  "link": {
+    "type": "doc",
+    "id": "developer/components/intro"
+  },
+  "customProps": {
+    "description": "The buildless ES-module SPA: app shell and hash router, the block + feed renderer registry, the four modes, the cache-backed read path, and the unified theme."
+  }
+}

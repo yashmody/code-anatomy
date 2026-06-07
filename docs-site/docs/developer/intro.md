@@ -1,15 +1,22 @@
 ---
 id: intro
-title: System architecture
+title: Developer guide
 sidebar_position: 1
 ---
 
-# System architecture
+# Developer guide
 
-This is the architect's overview of DEPT® Anatomy of Code v2 — the boundaries
-between the two planes, how a request flows from the SPA to the cache-backed
-read path, where Directus sits over the same Postgres, and the security and
-observability posture that holds it all together.
+This is the architect's overview of the Tenet platform — the boundaries between
+the two planes, how a request flows from the SPA to the cache-backed read path,
+where Directus sits over the same Postgres, and the security and observability
+posture that holds it all together. From here, drop into
+[Architecture](./architecture/modular-monolith),
+[Components](./components/intro), the [Data model](./data-model/database-intro),
+the [API reference](./apis), [Builds & local dev](./builds-and-local-dev), or the
+[Quiz internals](./quiz-internals/quiz-intro).
+
+> "Anatomy of Code" is the course content Tenet teaches; "Tenet" is the platform
+> documented here.
 
 ## Scan box
 
@@ -96,22 +103,22 @@ already draws the seam — but that day is not v2.
 The pages below take each plane and cross-cutting concern in turn. Read them in
 order for the full picture, or jump to the one you need.
 
-1. **[Modular monolith](./modular-monolith.md)** — the `core/` + `modules/`
+1. **[Modular monolith](./architecture/modular-monolith.md)** — the `core/` + `modules/`
    shape, the per-module file convention, and the rules for how modules talk to
    each other.
-2. **[Directus topology](./directus-topology.md)** — the staff plane: how
+2. **[Directus topology](./architecture/directus-topology.md)** — the staff plane: how
    Directus sits over the shared Postgres as a scoped role, and the
    webhook → cache-invalidation contract.
-3. **[Auth planes](./auth-planes.md)** — Google SSO with PKCE for learners,
+3. **[Auth planes](./architecture/auth-planes.md)** — Google SSO with PKCE for learners,
    Directus auth for staff, and the locked permission matrix that
    `require_permission` enforces.
-4. **[Caching and performance](./caching-performance.md)** — the three cache
+4. **[Caching and performance](./architecture/caching-performance.md)** — the three cache
    layers, the `AppCache` seam, the TTLs, and how invalidation reaches the
    read path.
-5. **[Security baseline](./security-baseline.md)** — header hardening, CSP and
+5. **[Security baseline](./architecture/security-baseline.md)** — header hardening, CSP and
    HSTS ownership, secret tiers, certificate HMAC signing, and the
    `directus_app` database isolation.
-6. **[Observability](./observability.md)** — request-id correlation, structured
+6. **[Observability](./architecture/observability.md)** — request-id correlation, structured
    logs, `/healthz` and `/readyz`, the Directus audit trail, and what to watch.
 
 ## Source contracts

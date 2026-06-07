@@ -1288,13 +1288,14 @@ DIRECTUS_DB_ROLE="$DIRECTUS_DB_ROLE" \
   2>&1 | while read -r line; do info "  etl: $line"; done
 ok "Schema migration + seeds complete"
 
-# Generate the runbook Excel template so GET /api/runbooks/template works.
+# Generate the runbook Excel template authors fill in, then publish to a static
+# page with `python -m scripts.render_runbook <file.xlsx>` (see docs/CONTENT-AUTHORING.md).
 # Idempotent — safe to re-run; overwrites only if the script succeeds.
 info "Generating runbook Excel template (data/runbook-template.xlsx) …"
 "$QUIZ_DIR/.venv/bin/python" -m scripts.generate_runbook_template \
   "$QUIZ_DIR/data/runbook-template.xlsx" \
   2>&1 | while read -r line; do info "  template: $line"; done || \
-  warn "Runbook template generation failed — GET /api/runbooks/template will 404 until fixed"
+  warn "Runbook template generation failed — authors won't have data/runbook-template.xlsx until fixed"
 
 # ── STEP 7 · systemd service ─────────────────────────────────────────────────
 step "systemd service  ($SERVICE_NAME)"
@@ -1996,14 +1997,6 @@ ${CHAIN_LINE}
         Header always set Cache-Control \"public, max-age=86400, must-revalidate\"
     </Location>
 
-    # Dynamic runbook reader — re-validates each load (content changes on upload).
-    <Location \"/runbook\">
-        Header always set Cache-Control \"no-cache\"
-    </Location>
-    # Runbook API: list + detail re-validate; template download is stable.
-    <LocationMatch \"^/api/runbooks/\">
-        Header always set Cache-Control \"public, max-age=0, must-revalidate\"
-    </LocationMatch>
 
     # Course JSON: app emits a strong ETag; revalidate every load.
     <LocationMatch \"^/api/course/\">
@@ -2269,12 +2262,9 @@ printf '%b┌─ URLs ───────────────────�
 printf '%b│%b  Quiz / cert app  : %s://%s/\n'                  "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  SPA (Feed/Read)  : %s://%s/app/\n'              "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  Course           : %s://%s/anatomy/anatomy-of-code-course.html\n' "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
-printf '%b│%b  Checklist        : %s://%s/anatomy/code-coder-checklist.html\n'   "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
-printf '%b│%b  Runbook (static) : %s://%s/resources/architect-runbook.html\n'   "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
-printf '%b│%b  Runbook index    : %s://%s/runbook\n'                             "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
-printf '%b│%b  Runbook upload   : %s://%s/api/runbooks/upload  (POST .xlsx)\n'  "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
-printf '%b│%b  Runbook template : %s://%s/api/runbooks/template\n'              "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
-printf '%b│%b  FAQs             : %s://%s/anatomy/faqs/index.html\n'             "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Checklists       : %s://%s/resources/checklists/\n'               "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Runbooks         : %s://%s/resources/runbooks/   (also /runbook)\n' "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  FAQs             : %s://%s/resources/faqs/\n'                      "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 $TLS_AVAILABLE && \
 printf '%b│%b  OAuth callback   : https://%s/auth/google/callback\n'             "$C_CYAN" "$C_RESET" "$DOMAIN" || true
 [[ "$DEPLOY_DIRECTUS" == "true" ]] && \

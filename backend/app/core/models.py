@@ -483,80 +483,10 @@ class AuthAudit(Base):
     )
 
 
-class FAQCategory(Base):
-    """FAQ Category / Topic representation."""
-    __tablename__ = "faq_categories"
-
-    id = Column(String(64), primary_key=True)
-    title = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    status = Column(String(32), nullable=False, default="draft")
-    audience = Column(String(255), nullable=True)
-    source = Column(String(255), nullable=True)
-    reviewed_at = Column(String(100), nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    items = relationship("FAQItem", back_populates="category", cascade="all, delete-orphan")
-
-    __table_args__ = (
-        Index("idx_faq_categories_status", "status"),
-    )
-
-
-class FAQItem(Base):
-    """Individual FAQ Item (Question & Answer)."""
-    __tablename__ = "faq_items"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    category_id = Column(String(64), ForeignKey("faq_categories.id", ondelete="CASCADE"), nullable=False)
-    q_num = Column(String(10), nullable=False)
-    question = Column(Text, nullable=False)
-    answer = Column(Text, nullable=False)
-    tags = Column(ARRAY_TYPE(Text), nullable=False, default=[])
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    category = relationship("FAQCategory", back_populates="items")
-
-    __table_args__ = (
-        Index("idx_faq_items_category_id", "category_id"),
-    )
-
-
-class Runbook(Base):
-    """Role- and domain-specific runbooks.
-
-    Each row is a complete runbook — greenfield or brownfield — for a
-    given practitioner role (architect, devops, developer, qa, pm, ba)
-    and optional domain (banking, ecommerce, manufacturing, generic).
-
-    `sections` holds the full phases → sections → tasks tree as JSONB so
-    the reader page can render it without additional queries. The schema
-    mirrors the Excel upload template: see backend/scripts/generate_runbook_template.py.
-
-    Idempotent on `slug` — uploading the same Excel twice overwrites the
-    existing row rather than creating a duplicate.
-    """
-    __tablename__ = "runbooks"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    slug = Column(String(128), unique=True, nullable=False, index=True)
-    title = Column(String(512), nullable=False)
-    role = Column(String(32), nullable=False)    # architect | devops | developer | qa | pm | ba
-    domain = Column(String(64), nullable=False, default="generic")  # banking | ecommerce | manufacturing | generic
-    runbook_type = Column("type", String(32), nullable=False, default="greenfield")  # greenfield | brownfield
-    description = Column(Text, nullable=True)
-    status = Column(String(16), nullable=False, default="draft")    # draft | published
-    phases = Column(JSONB_TYPE, nullable=False, default=[])
-    meta = Column(JSONB_TYPE, nullable=False, default={})
-    created_by = Column(String(255), nullable=True)
-    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-
-    __table_args__ = (
-        Index("idx_runbooks_role_domain", "role", "domain"),
-        Index("idx_runbooks_status", "status"),
-    )
+# NOTE: FAQs and runbooks are now STATIC content under resources/ (see
+# docs/CONTENT-AUTHORING.md). Their DB models (FAQCategory/FAQItem/Runbook) and
+# API modules were removed pre-cutover; the tables are dropped by migration 0016.
+# The runbook Excel parser (modules/runbooks/parser.py) is retained — it powers
+# scripts/render_runbook.py which freezes a filled template to a static page.
 
 
