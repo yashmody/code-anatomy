@@ -96,9 +96,9 @@ function initChrome() {
 
   // Content resource links — Apache aliases /anatomy/ in prod; local dev uses /content/frozen/.
   const resLinks = {
-    resFaqs:      `${CONTENT_BASE}/faqs/aem-banking-faq.html`,
+    resFaqs:      `${CONTENT_BASE}/faqs/`,
     resChecklist: `${CONTENT_BASE}/code-coder-checklist.html`,
-    resRunbook:   `${CONTENT_BASE}/architect-runbook.html`,
+    resRunbook:   `${CONTENT_BASE}/runbooks/`,
   };
   for (const [id, href] of Object.entries(resLinks)) {
     const el = document.getElementById(id);
@@ -135,14 +135,14 @@ function setActiveTab(mode) {
 }
 
 async function route() {
-  let hash = location.hash.replace(/^#\/?/, ‘’) || ‘manual’;
+  let hash = location.hash.replace(/^#\/?/, '') || 'manual';
   // Silent alias: any in-flight #/scroll or #/scroll/... link redirects to manual.
-  if (hash === ‘scroll’ || hash.startsWith(‘scroll/’)) {
-    const tail = hash.slice(‘scroll’.length);
-    location.replace(‘#/manual’ + tail);
+  if (hash === 'scroll' || hash.startsWith('scroll/')) {
+    const tail = hash.slice('scroll'.length);
+    location.replace('#/manual' + tail);
     return;                       // hashchange will re-enter route()
   }
-  const mode = hash.split(‘/’)[0];
+  const mode = hash.split('/')[0];
   setActiveTab(mode);
 
   // Show a mode-specific shimmer skeleton immediately — the viewport is never
@@ -150,41 +150,41 @@ async function route() {
   showSkeleton(mode);
 
   try {
-    if (mode === ‘manual’) {
+    if (mode === 'manual') {
       // Lazy: parse manual.js + its ~10 transitive imports only on first visit.
-      const { renderScroll } = await lazyLoad(‘../modules/course/manual.js’);
+      const { renderScroll } = await lazyLoad('../modules/course/manual.js');
       await renderScroll(view, BASE, SECTION_FILES);
-    } else if (mode === ‘read’) {
-      const addr = hash.split(‘/’)[1] || ‘’;             // no address → the Contents library; else the chapter reader
-      const file = addr ? addr.replace(/\./g, ‘-’) + ‘.json’ : ‘’;
-      const { renderRead } = await lazyLoad(‘../modules/course/read.js’);
+    } else if (mode === 'read') {
+      const addr = hash.split('/')[1] || '';             // no address → the Contents library; else the chapter reader
+      const file = addr ? addr.replace(/\./g, '-') + '.json' : '';
+      const { renderRead } = await lazyLoad('../modules/course/read.js');
       await renderRead(view, BASE, addr, file, SECTION_FILES);
-    } else if (mode === ‘feed’) {
-      const { renderFeed } = await lazyLoad(‘../modules/feed/feed.js’);
+    } else if (mode === 'feed') {
+      const { renderFeed } = await lazyLoad('../modules/feed/feed.js');
       await renderFeed(view, BASE);
-    } else if (mode === ‘techflix’) {
-      const { renderTechflix } = await lazyLoad(‘../modules/techflix/techflix.js’);
+    } else if (mode === 'techflix') {
+      const { renderTechflix } = await lazyLoad('../modules/techflix/techflix.js');
       await renderTechflix(view);
-    } else if (mode === ‘moderate’) {
+    } else if (mode === 'moderate') {
       // Role-gated. The nav entry is hidden for non-moderators, but a direct
       // #/moderate visit still lands here — show a friendly "not authorised"
       // placeholder rather than fetching (the API would 403 anyway). The lazy
       // import keeps the moderator bundle out of the boot path for everyone else.
-      if (!hasPermission(‘moderate.view’)) {
+      if (!hasPermission('moderate.view')) {
         view.innerHTML =
-          ‘<div class="placeholder"><h2>Not authorised</h2>’ +
-          ‘<p>Moderation is restricted to moderators. If you believe you should ‘ +
-          ‘have access, sign in with a moderator account.</p></div>’;
+          '<div class="placeholder"><h2>Not authorised</h2>' +
+          '<p>Moderation is restricted to moderators. If you believe you should ' +
+          'have access, sign in with a moderator account.</p></div>';
       } else {
-        const { renderModerate } = await lazyLoad(‘../modules/moderate/moderate.js’);
+        const { renderModerate } = await lazyLoad('../modules/moderate/moderate.js');
         await renderModerate(view);
       }
     } else {
-      view.innerHTML = ‘<div class="placeholder"><h2>Not found</h2></div>’;
+      view.innerHTML = '<div class="placeholder"><h2>Not found</h2></div>';
     }
   } catch (e) {
     console.error(e);
-    view.innerHTML = `<div class="placeholder"><h2>Couldn’t load</h2><p>${e.message}</p></div>`;
+    view.innerHTML = `<div class="placeholder"><h2>Couldn't load</h2><p>${e.message}</p></div>`;
   }
 }
 

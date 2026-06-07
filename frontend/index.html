@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="styles/read.css">
 <link rel="stylesheet" href="styles/feed.css">
 <link rel="stylesheet" href="styles/moderate.css">
+<link rel="stylesheet" href="styles/techflix.css">
 </head>
 <body>
   <header class="app-bar">
@@ -21,6 +22,7 @@
       <a class="mode-tab" data-mode="manual" href="#/manual">Manual</a>
       <a class="mode-tab" data-mode="read" href="#/read">Read</a>
       <a class="mode-tab" data-mode="feed" href="#/feed">Feed</a>
+      <a class="mode-tab" data-mode="techflix" href="#/techflix">Techflix</a>
       <!-- Moderation: in-SPA route, HIDDEN by default. core/auth-ui.js unhides it
            only when /auth/me permissions include "moderate.view". The API enforces
            the gate server-side regardless of this nav entry. -->
@@ -35,12 +37,12 @@
                served via Apache Alias /anatomy/ → content/frozen/. -->
           <a class="res-item" role="menuitem" id="resQuiz" target="_blank" rel="noopener" href="/">
             <span class="res-name">Quiz</span><span class="res-meta">Certification · CCA-F</span></a>
-          <a class="res-item" role="menuitem" id="resFaqs" href="/anatomy/faqs/aem-banking-faq.html">
-            <span class="res-name">FAQs</span><span class="res-meta">AEM × Banking</span></a>
+          <a class="res-item" role="menuitem" id="resFaqs" href="/anatomy/faqs/">
+            <span class="res-name">FAQs</span><span class="res-meta">Vertical &amp; platform</span></a>
           <a class="res-item" role="menuitem" id="resChecklist" href="/anatomy/code-coder-checklist.html">
             <span class="res-name">Checklist</span><span class="res-meta">Discovery</span></a>
-          <a class="res-item" role="menuitem" id="resRunbook" href="/anatomy/architect-runbook.html">
-            <span class="res-name">Runbooks</span><span class="res-meta">Architect's</span></a>
+          <a class="res-item" role="menuitem" id="resRunbook" href="/anatomy/runbooks/">
+            <span class="res-name">Runbooks</span><span class="res-meta">All roles</span></a>
         </div>
       </div>
     </nav>
