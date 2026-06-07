@@ -1,0 +1,36 @@
+{
+  "episodes": [
+    {
+      "file": "AI_for_Business_Leaders.mp4",
+      "topic": "AI Curriculum for Business Leaders",
+      "title": "AI for Business Leaders",
+      "description": "A 4-part explainer video covering the physical-to-intelligence evolution of AI, model fine-tuning, agentic workflows with tools like RAG and MCP, and using AI as the connective tissue to bridge enterprise departments.",
+      "order": 1,
+      "poster_time": 5
+    },
+    {
+      "file": "Evolution_of_AI___Agents.mp4",
+      "topic": "AI Curriculum for Business Leaders",
+      "title": "Evolution of AI & Agents",
+      "description": "Traces the AI evolution timeline from 2022 to 2026, illustrating the engineering shift from basic chat assistants to reasoning models and interoperable multi-agent systems.",
+      "order": 2,
+      "poster_time": 5
+    },
+    {
+      "file": "DEPT_Branch_Naming.mp4",
+      "topic": "Development Best Practices",
+      "title": "Git Branch Naming Best Practices | DEPT®",
+      "description": "Stop naming your Git branches randomly! A good branch name tells your team exactly what type of work is being done, which ProofHub task it belongs to, and what is changing.",
+      "order": 3,
+      "poster_time": 5
+    },
+    {
+      "file": "Invisible_Shield.mp4",
+      "topic": "Cryptography & Security",
+      "title": "The Evolution of Algorithms",
+      "description": "A look at how cryptography has evolved over time, transitioning from today's mathematical-based encryption to the future frontier of quantum encryption and post-quantum cryptography.",
+      "order": 4,
+      "poster_time": 5
+    }
+  ]
+}
