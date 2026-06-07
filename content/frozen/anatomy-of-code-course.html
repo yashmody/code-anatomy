@@ -184,6 +184,11 @@
   .dept-svg-logo{height:36px;width:auto;display:block;transition:filter .25s}
   html[data-theme="dark"] .dept-svg-logo{filter:invert(1)}
   .brand-sub{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint)}
+  .tenet-logo{display:inline-flex;align-items:center;font-family:var(--mono);font-weight:700;letter-spacing:.01em;text-transform:none;line-height:1}
+  .tl-b{color:var(--ochre);font-weight:400;line-height:1}
+  .tl-n{color:var(--ink)}
+  .tenet-logo--sm .tl-b{font-size:15px}
+  .tenet-logo--sm .tl-n{font-size:10px}
   .theme-toggle{display:flex;align-items:center;gap:9px;border:1.5px solid var(--rule);background:transparent;color:var(--ink-soft);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;cursor:pointer;transition:border-color .2s,color .2s}
   .theme-toggle:hover{border-color:var(--ochre);color:var(--ochre)}
   .theme-toggle svg{width:15px;height:15px;flex-shrink:0;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
@@ -687,7 +692,7 @@
           onerror="this.style.display='none';this.nextElementSibling.style.display='block'"
         >
         <div style="display:none;font-family:'Syne','Arial Black',sans-serif;font-weight:800;font-size:38px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);line-height:1">DEPT<span style="color:var(--ochre);font-size:.5em;vertical-align:super">®</span></div>
-        <div class="brand-sub">Growth Invention · Field Manual</div>
+        <div class="brand-sub"><span class="tenet-logo tenet-logo--sm" role="img" aria-label="Tenet"><span class="tl-b">{</span><span class="tl-n">&thinsp;10,&thinsp;8&thinsp;</span><span class="tl-b">}</span></span> · Field Manual</div>
       </div>
       <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">
         <svg id="themeIcon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>

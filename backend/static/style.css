@@ -65,6 +65,14 @@ html[data-theme="dark"] .dept-svg-logo { filter: invert(1); }
 .brand-right { display: flex; align-items: center; gap: 12px; }
 .nav-link { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-soft); padding: 7px 10px; border: 1px solid transparent; font-weight: 700; transition: .15s; }
 .nav-link:hover { color: var(--ochre); border-color: var(--rule); }
+
+/* Tenet logo mark: { 10, 8 } — shared design token, matches frontend/styles/app.css */
+.tenet-logo { display: inline-flex; align-items: center; font-family: var(--mono); font-weight: 700; font-size: 15px; letter-spacing: .01em; text-transform: none; line-height: 1; }
+.tl-b { color: var(--ochre); font-size: 22px; font-weight: 400; line-height: 1; }
+.tl-n { color: var(--ink); font-size: 13px; }
+.tenet-logo--sm { font-size: 11px; vertical-align: middle; }
+.tenet-logo--sm .tl-b { font-size: 15px; }
+.tenet-logo--sm .tl-n { font-size: 10px; }
 .user-chip { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--rule); font-size: 12px; }
 .user-chip img { width: 22px; height: 22px; border-radius: 50%; }
 .theme-toggle {

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "DEPT Anatomy of Code — Directus hook that mirrors staff-role changes to FastAPI POST /api/cms/roles-sync (loopback). One-way Directus -> app; staff roles only (04 §7.2). Phase 4c.",
+  "description": "DEPT Tenet — Directus hook that mirrors staff-role changes to FastAPI POST /api/cms/roles-sync (loopback). One-way Directus -> app; staff roles only (04 §7.2). Phase 4c.",
   "license": "UNLICENSED",
   "directus:extension": {
     "type": "hook",

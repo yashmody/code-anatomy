@@ -24,6 +24,12 @@ a{color:var(--ink)}
 .brand-bar img{height:30px}html[data-theme="dark"] .brand-bar img{filter:invert(1)}
 .brand-bar .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:700}
 .brand-bar .spacer{flex:1}
+.tenet-logo{display:inline-flex;align-items:center;font-family:var(--mono);font-weight:700;font-size:15px;letter-spacing:.01em;text-transform:none;line-height:1}
+.tl-b{color:var(--ochre);font-size:22px;font-weight:400;line-height:1}
+.tl-n{color:var(--ink);font-size:13px}
+.tenet-logo--sm{font-size:11px;vertical-align:middle}
+.tenet-logo--sm .tl-b{font-size:15px}
+.tenet-logo--sm .tl-n{font-size:10px}
 .tt{background:transparent;border:1px solid var(--rule);padding:7px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);cursor:pointer}
 .tt:hover{border-color:var(--ochre);color:var(--ochre)}
 main{max-width:900px;margin:0 auto;padding:48px 28px 90px}
@@ -64,7 +70,7 @@ h1{font-family:var(--serif);font-weight:800;font-size:40px;line-height:1.04;marg
 <header class="brand-bar">
   <a href="/app/" class="back">← App</a>
   <a href="/app/"><img src="https://www.deptagency.com/wp-content/uploads/2025/10/logo-dept.svg" alt="DEPT®"></a>
-  <span class="tag">Anatomy of Code</span><span class="spacer"></span>
+  <span class="tenet-logo" role="img" aria-label="Tenet"><span class="tl-b">{</span><span class="tl-n">&thinsp;10,&thinsp;8&thinsp;</span><span class="tl-b">}</span></span><span class="spacer"></span>
   <button class="tt" type="button" onclick="window.toggleAppTheme && window.toggleAppTheme()">Theme</button>
 </header>
 <main>
@@ -73,7 +79,7 @@ h1{font-family:var(--serif);font-weight:800;font-size:40px;line-height:1.04;marg
   <div class="card-desc">The end-to-end engagement runbook for an architect leading an Adobe Experience Cloud delivery — greenfield and brownfield, discovery through cutover.</div>
   <div class="card-meta"><span>Runbook</span><span class="arrow">→</span></div>
 </a></div>
-<div class="foot">DEPT® · Anatomy of Code — field runbooks</div>
+<div class="foot">DEPT® · <span class="tenet-logo tenet-logo--sm" role="img" aria-label="Tenet"><span class="tl-b">{</span><span class="tl-n">&thinsp;10,&thinsp;8&thinsp;</span><span class="tl-b">}</span></span> — field runbooks</div>
 </main>
 </body>
 </html>

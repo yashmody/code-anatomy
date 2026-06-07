@@ -30,6 +30,11 @@
   .dept-svg-logo{height:36px;width:auto;display:block;transition:filter .25s}
   html[data-theme="dark"] .dept-svg-logo{filter:invert(1)}
   .brand-sub{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-faint)}
+  .tenet-logo{display:inline-flex;align-items:center;font-family:var(--mono);font-weight:700;letter-spacing:.01em;text-transform:none;line-height:1}
+  .tl-b{color:var(--ochre);font-weight:400;line-height:1}
+  .tl-n{color:var(--ink)}
+  .tenet-logo--sm .tl-b{font-size:15px}
+  .tenet-logo--sm .tl-n{font-size:10px}
   .brand-right{display:flex;gap:12px;align-items:center}
   .back-link{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft);text-decoration:none;padding:8px 14px;border:1.5px solid var(--rule);transition:.2s}
   .back-link:hover{border-color:var(--ochre);color:var(--ochre)}
@@ -131,7 +136,7 @@
     <div class="brand-left">
       <img src="https://www.deptagency.com/wp-content/uploads/2025/10/logo-dept.svg" alt="DEPT®" class="dept-svg-logo" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
       <div style="display:none;font-family:'Syne','Arial Black',sans-serif;font-weight:800;font-size:32px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);line-height:1">DEPT<span style="color:var(--ochre);font-size:.5em;vertical-align:super">®</span></div>
-      <div class="brand-sub">Growth Invention · Discovery Tool</div>
+      <div class="brand-sub"><span class="tenet-logo tenet-logo--sm" role="img" aria-label="Tenet"><span class="tl-b">{</span><span class="tl-n">&thinsp;10,&thinsp;8&thinsp;</span><span class="tl-b">}</span></span> · Discovery Tool</div>
     </div>
     <div class="brand-right">
       <a href="/resources/checklists/" class="back-link" id="backToApp">← Checklists</a>
