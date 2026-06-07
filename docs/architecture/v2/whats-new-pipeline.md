@@ -208,7 +208,7 @@ unless What's New is to be CMS-editable.
 | **2** | Course refresh — marked `auto-adobe-updates` block + snapshot/rollback + validation gate + notify | bounded, reversible |
 | **3** (opt) | If wanted: review-queue path for broader curated-prose updates (c0 + content-quality) | human-gated |
 
-Recommend shipping Phase 1, watching one or two Sunday runs, then Phase 2.
+Recommend shipping Phase 1, watching one or two Monday runs, then Phase 2.
 
 ---
 
@@ -218,8 +218,9 @@ Recommend shipping Phase 1, watching one or two Sunday runs, then Phase 2.
   lack a feed and need an HTML adapter).
 - Which chapters opt into an `auto-adobe-updates` block, and where it renders.
 - Notification recipients for the weekly run report.
-- Cron time/timezone (default Sunday 02:00 server-time; audience is India — IST
-  may be preferred).
+- Enablement flag default (ships **off**; flip `content_refresh_enabled` on after a dry run).
+- Cron time/timezone — default **Monday 09:00 IST**, Quartz `0 0 9 ? * MON *`
+  (Unix-cron equivalent `0 9 * * 1`); confirm IST vs server-time at install.
 
 ---
 

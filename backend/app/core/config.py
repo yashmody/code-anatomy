@@ -199,9 +199,21 @@ class Settings(BaseSettings):
     cache_backend: Literal["memory", "redis"] = "memory"
     redis_url: str = "redis://localhost:6379/0"
 
-    # ── LLM seam (no provider clients in 2d) ────────────────────────────────
+    # ── LLM seam ────────────────────────────────────────────────────────────
     llm_provider: Literal["none", "anthropic", "openai"] = "none"
     llm_api_key: SecretStr = SecretStr("")
+    # Model used by the LLM consumers (e.g. the content-refresh summariser).
+    # Tunable without a redeploy via the LLM_MODEL env var; a Tier-2 app_config
+    # override can supersede it per-feature later.
+    llm_model: str = "claude-haiku-4-5-20251001"
+
+    # ── Content refresh (Adobe What's New sync) ─────────────────────────────
+    # Master switch + schedule for the weekly Adobe-updates pipeline. Ships OFF;
+    # nothing runs until content_refresh_enabled=true. The schedule is a QUARTZ
+    # cron expression (the installer translates it to the VM crontab line).
+    content_refresh_enabled: bool = False
+    content_refresh_cron: str = "0 0 9 ? * MON *"   # Quartz: every Monday 09:00
+    content_refresh_tz: str = "Asia/Kolkata"        # IST
 
     # ── Directus seam (Phase 4a; receivers built in 2d) ─────────────────────
     directus_url: str = "http://localhost:8055"

@@ -16,10 +16,14 @@ others need an HTML release-notes adapter.
 | `target` | Adobe Target / A-B | Experience League Target release notes |
 | `campaign` | Adobe Campaign | Experience League Campaign release notes |
 
-> Build-time TODO: pin the exact RSS/Atom URL (preferred) or release-notes page +
-> parser for each key. Prefer feeds; fall back to an HTML adapter only where no
-> feed exists. Store the resolved URLs in config/DB so ops can re-point them
-> without a code change.
+> Implemented (Phase 1): the exact release-notes URLs are pinned in
+> `backend/app/modules/whatsnew/sources.py` (the runtime source of truth). The
+> Experience League pages are server-rendered but expose no RSS, so the pipeline
+> fetches the page text and uses Claude to extract + summarise the latest entries
+> (no brittle HTML parsing, no extra dependency). Note: the Commerce *overview*
+> page is an index without datable entries — it fetches cleanly but yields 0
+> items; point it at a specific release page if per-item Commerce updates are
+> wanted.
 
 ## Fetch rules
 

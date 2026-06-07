@@ -67,9 +67,16 @@ def get_provider() -> Optional[LLMProvider]:
 
     The seam stays the same — only this function body changes.
     """
-    if config.settings.llm_provider == "none":
+    provider = config.settings.llm_provider
+    if provider == "none":
         return None
-    # No provider client modules exist in Phase 2d. Returning None keeps
-    # the platform fully functional with `LLM_PROVIDER` set non-None but
-    # before the provider work has landed.
+    if provider == "anthropic":
+        key = config.settings.llm_api_key.get_secret_value()
+        if not key:
+            return None  # provider selected but no key — behave as disabled
+        from app.core.llm_anthropic import AnthropicClient
+        return AnthropicClient(api_key=key)
+    if provider == "openai":
+        # Not yet implemented — selecting it behaves as disabled rather than crashing.
+        return None
     return None

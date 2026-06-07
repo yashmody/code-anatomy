@@ -1,0 +1,51 @@
+@charset "UTF-8";
+/* What's New — weekly Adobe updates. Uses monolith.css tokens so brand + dark
+   mode carry over. A clean editorial list, grouped by product. Mobile-first. */
+
+.wn-wrap { max-width: 860px; margin: 0 auto; padding: 24px 16px 120px; }
+@media (min-width: 721px) { .wn-wrap { padding-top: 80px; } }
+
+.wn-head { margin-bottom: 28px; }
+.wn-h1 {
+  font-family: var(--serif); font-weight: 800; font-size: 34px; line-height: 1;
+  color: var(--ochre); margin: 0 0 8px;
+}
+.wn-sub { font-family: var(--body); color: var(--ink-soft); font-size: 15px; margin: 0; }
+
+.wn-group { margin: 0 0 34px; }
+.wn-product {
+  font-family: var(--mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--ink); margin: 0 0 12px; padding-left: 10px;
+  border-left: 3px solid var(--ochre);
+}
+
+.wn-list { display: flex; flex-direction: column; gap: 12px; }
+
+.wn-item {
+  background: var(--card); border: 1px solid var(--rule);
+  border-left: 3px solid var(--rule); padding: 14px 16px;
+  transition: border-color .14s ease;
+}
+.wn-item:hover { border-left-color: var(--ochre); }
+
+.wn-item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.wn-title {
+  font-family: var(--body); font-weight: 600; font-size: 15.5px; line-height: 1.3;
+  color: var(--ink); margin: 0;
+}
+.wn-date {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 11px; color: var(--ink-faint);
+  white-space: nowrap;
+}
+.wn-summary {
+  margin: 7px 0 0; font-family: var(--body); font-size: 14px; line-height: 1.5;
+  color: var(--ink-soft);
+}
+.wn-src {
+  display: inline-block; margin-top: 9px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: .06em;
+  color: var(--ochre-deep); text-decoration: none;
+}
+.wn-src:hover { text-decoration: underline; }
+
+@media (min-width: 721px) { .wn-h1 { font-size: 42px; } }

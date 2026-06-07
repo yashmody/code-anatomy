@@ -165,6 +165,9 @@ async function route() {
     } else if (mode === 'techflix') {
       const { renderTechflix } = await lazyLoad('../modules/techflix/techflix.js');
       await renderTechflix(view);
+    } else if (mode === 'whatsnew') {
+      const { renderWhatsNew } = await lazyLoad('../modules/whatsnew/whatsnew.js');
+      await renderWhatsNew(view);
     } else if (mode === 'moderate') {
       // Role-gated. The nav entry is hidden for non-moderators, but a direct
       // #/moderate visit still lands here — show a friendly "not authorised"

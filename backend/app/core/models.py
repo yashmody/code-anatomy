@@ -214,6 +214,29 @@ class TechflixEpisode(Base):
     poster_asset = relationship("MediaAsset", foreign_keys=[poster_asset_id])
 
 
+class WhatsNewItem(Base):
+    """What's New — a single Adobe update ingested by the content-refresh sync.
+
+    Populated weekly by `scripts/sync_adobe_updates.py` (the Content Refresh
+    Agent's pipeline): fetch Adobe release-notes pages, extract + summarise
+    entries with Claude, store here. Read by `GET /api/whatsnew`. `source_url`
+    is unique and is the dedup key — for page-derived entries with no per-item
+    link it is a synthesised stable key (page URL + title slug).
+    """
+    __tablename__ = "whats_new_items"
+
+    id = Column(String(64), primary_key=True)  # UUID string
+    source = Column(String(32), nullable=False, index=True)  # commerce|aem|ajo|cja|target|campaign
+    source_url = Column(String(1024), nullable=False, unique=True)  # dedup key
+    product = Column(String(128), nullable=False)
+    title = Column(String(512), nullable=False)
+    summary = Column(Text, nullable=True)        # Claude, DEPT voice; null on LLM error
+    related_chapter = Column(String(128), nullable=True)  # e.g. 'adobe-cm.json' | null
+    published_at = Column(DateTime, nullable=True)
+    fetched_at = Column(DateTime, default=datetime.utcnow, index=True)
+    status = Column(String(32), nullable=False, default="new")  # new|published|archived|held
+
+
 class CourseChapter(Base):
     __tablename__ = "course_chapters"
 

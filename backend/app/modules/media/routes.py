@@ -115,9 +115,14 @@ async def stream_video(request: Request, asset_id: str):
 
     range_header = request.headers.get("Range")
     if not range_header:
-        # Request full file
+        # Request full file. `Content-Encoding: identity` opts this response out
+        # of GZipMiddleware — video is already compressed, and gzip on a stream
+        # strips Content-Length and breaks Range/scrubbing. Advertise Range too.
         generator = media_service.stream_video_chunks(oid, 0, size - 1)
-        return StreamingResponse(generator, media_type=mime)
+        return StreamingResponse(
+            generator, media_type=mime,
+            headers={"Content-Encoding": "identity", "Accept-Ranges": "bytes"},
+        )
 
     try:
         range_str = range_header.replace("bytes=", "")
@@ -134,6 +139,10 @@ async def stream_video(request: Request, asset_id: str):
         "Content-Range": f"bytes {start}-{end}/{size}",
         "Accept-Ranges": "bytes",
         "Content-Length": str(end - start + 1),
+        # Opt out of GZipMiddleware: it would drop Content-Length and re-encode
+        # the partial body, breaking Range semantics (and gzipping already-
+        # compressed video wastes CPU). identity = no transformation.
+        "Content-Encoding": "identity",
     }
 
     generator = media_service.stream_video_chunks(oid, start, end)
@@ -150,5 +159,9 @@ async def serve_image(asset_id: str):
     size = asset.size_bytes
     mime = asset.mime_type
 
+    # `Content-Encoding: identity` keeps GZipMiddleware off already-compressed
+    # image bytes (gzip would only waste CPU and drop Content-Length).
     generator = media_service.stream_video_chunks(oid, 0, size - 1)
-    return StreamingResponse(generator, media_type=mime)
+    return StreamingResponse(
+        generator, media_type=mime, headers={"Content-Encoding": "identity"}
+    )
