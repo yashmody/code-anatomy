@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>The Anatomy of Code — Renderer</title>
+<title>Tenet — DEPT®</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;1,9..40,400&family=JetBrains+Mono:wght@400;500;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
@@ -18,7 +18,9 @@
 </head>
 <body>
   <header class="app-bar">
-    <span class="app-brand">DEPT® · Anatomy of Code</span>
+    <a class="app-brand" href="#/manual" aria-label="Tenet — home">
+      <span class="tenet-logo"><span class="tl-b">{</span><span class="tl-n">&thinsp;10,&thinsp;8&thinsp;</span><span class="tl-b">}</span></span>
+    </a>
     <nav class="mode-tabs">
       <a class="mode-tab" data-mode="manual" href="#/manual">Manual</a>
       <a class="mode-tab" data-mode="read" href="#/read">Read</a>
@@ -53,7 +55,7 @@
   </header>
   <main id="view" class="view"></main>
   <footer class="app-footer">
-    <span class="app-foot-text">The Anatomy of Code — a DEPT® field manual</span>
+    <span class="app-foot-text"><span class="tenet-logo tenet-logo--sm"><span class="tl-b">{</span><span class="tl-n">&thinsp;10,&thinsp;8&thinsp;</span><span class="tl-b">}</span></span> · a DEPT® platform</span>
     <span class="app-version">v0.1.0-beta</span>
   </footer>
   <script type="module" src="core/main.js"></script>

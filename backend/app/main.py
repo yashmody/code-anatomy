@@ -152,7 +152,7 @@ async def csp_report(request: Request):
     return Response(status_code=204)
 
 
-app = FastAPI(title="DEPT® Anatomy of Code · Backend", lifespan=lifespan)
+app = FastAPI(title="DEPT® Tenet · Backend", lifespan=lifespan)
 
 # --- middleware (order matters: outermost first) ---
 # Phase 2e/3c harden this with CSP/HSTS + a real CORS allowlist.

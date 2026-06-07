@@ -79,7 +79,7 @@ function openModal(trigger) {
   overlay.innerHTML =
     `<div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">` +
       `<button class="auth-modal-close" type="button" aria-label="Close sign in">×</button>` +
-      `<div class="auth-modal-eyebrow">DEPT® · Anatomy of Code</div>` +
+      `<div class="auth-modal-eyebrow">DEPT® · Tenet</div>` +
       `<h2 class="auth-modal-title" id="authModalTitle">Sign in</h2>` +
       `<p class="auth-modal-sub">Single sign-on is coming soon. For now, enter your ` +
         `<strong>@deptagency.com</strong> email to continue.</p>` +

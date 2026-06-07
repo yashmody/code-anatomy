@@ -12,7 +12,20 @@
 .app-brand {
   font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
   color: var(--ochre-deep); font-weight: 700; margin-right: auto;
+  text-decoration: none;
 }
+/* ---- Tenet logo mark: { 10, 8 } ---- */
+.tenet-logo {
+  display: inline-flex; align-items: center;
+  font-family: var(--mono); font-weight: 700;
+  font-size: 15px; letter-spacing: .01em; text-transform: none;
+  line-height: 1;
+}
+.tl-b { color: var(--ochre); font-size: 22px; font-weight: 400; line-height: 1; }
+.tl-n { color: var(--ink); font-size: 13px; }
+.tenet-logo--sm { font-size: 11px; vertical-align: middle; }
+.tenet-logo--sm .tl-b { font-size: 15px; }
+.tenet-logo--sm .tl-n { font-size: 10px; }
 .mode-tabs { display: flex; gap: 4px; }
 .mode-tab {
   font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase;

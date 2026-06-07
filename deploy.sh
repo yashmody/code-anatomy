@@ -247,7 +247,7 @@ UPDATE_ONLY=false
 # ── Startup banner ───────────────────────────────────────────────────────────
 printf '\n%b' "$C_CYAN"
 printf '╔══════════════════════════════════════════════════════════╗\n'
-printf '║   DEPT®  ·  Anatomy of Code  ·  Deployment Script       ║\n'
+printf '║   DEPT®  ·  Tenet  ·  Deployment Script                 ║\n'
 printf '║   Domain : %-46s║\n' "$DOMAIN"
 printf '║   Target : %-46s║\n' "$APP_HOME"
 printf '║   Env    : %-46s║\n' "$APP_ENV"
