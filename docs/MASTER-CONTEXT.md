@@ -2,9 +2,9 @@
 
 > **Purpose**: Platform-agnostic project context for any AI coding assistant
 > (Claude, Gemini, Codex, Grok, etc.). Share this file to onboard any agent
-> onto the codebase. Generated 2026-06-06 from the v2 branch, cross-checked
-> against the project's knowledge graph (3,832 nodes, 4,484 edges,
-> 456 communities).
+> onto the codebase. Generated 2026-06-07 from the v2 branch (Alembic head
+> `0016`, cutover-ready), cross-checked against the project's knowledge graph
+> (8,492 nodes, 9,172 edges, 987 communities).
 
 ---
 
@@ -14,11 +14,17 @@ A **teaching, certification, and reference system** for DEPT® architects and
 engineers, built around the CODE-CODER framework. It serves the Adobe
 Experience Cloud practice across India and globally.
 
+> **Brand note:** the *project* is "DEPT® Anatomy of Code"; the *learner-facing
+> application* (the quiz/feed/cert SPA, its templates and auth screens) is
+> branded **Tenet** as of the v2 rebrand. Tenet is the product surface, not a
+> separate codebase — it lives in `backend/templates/`, `frontend/`, and the
+> auth UI.
+
 **Three deliverables in one monorepo:**
 
 | Deliverable | Path | Tech | Purpose |
 |---|---|---|---|
-| Course + reference docs | `content/frozen/` (HTML) + `content/source/` (JSON) | Static HTML, no build | Field manual, checklist, runbook, FAQ collection |
+| Course + reference docs | `content/frozen/` (HTML) + `content/source/` (JSON) | Static HTML, no build | Field manual (course). Checklist, runbooks, and FAQs are static HTML under `resources/` (no longer DB-backed — dropped in migration 0016) |
 | Backend + Frontend | `backend/` (FastAPI) + `frontend/` (ES modules) | Python 3.11+, vanilla JS | Quiz/certification app (CCA-F), feed, media, moderation |
 | Prompt library | `prompt-library/` | Markdown + sample apps | Reusable agent-coding sequences (e.g. AEM → React Native) |
 
@@ -27,7 +33,8 @@ Experience Cloud practice across India and globally.
 | Path | Purpose |
 |---|---|
 | `cms/` | Directus CMS (content write plane for staff) |
-| `docs-site/` | Docusaurus documentation site for the v2 platform |
+| `resources/` | Static HTML reference pages — runbooks, checklists, FAQs (served at `/resources/`, not DB-backed) |
+| `docs-site/` | Docusaurus documentation site for the v2 platform (reorganised under `docs/developer/`) |
 | `docs/architecture/v2/` | Architecture decision records — the source of truth for v2 design |
 | `tests/baseline/` | Smoke tests, API fixtures, parity contracts |
 | `infra/` | Certbot, cron jobs (vacuumlo) |
@@ -49,7 +56,8 @@ The system has two independent planes sharing one Postgres database:
 │  media/ content/ cms/   │    │  Media management       │
 │  admin/                 │    │  Collection registration │
 ├─────────────────────────┤    ├─────────────────────────┤
-│  uvicorn (2 workers)    │    │  Node 22 runtime        │
+│  uvicorn (1 worker —    │    │  Node 22 runtime        │
+│  load-bearing)          │    │                         │
 └────────────┬────────────┘    └────────────┬────────────┘
              │                              │
              └──────────┬───────────────────┘
@@ -127,7 +135,14 @@ Four content types, two storage backends:
 | Course (chapters, framework, explainer) | `content/source/course/` JSON | Postgres (via FastAPI content storage) | JSON files → API |
 | Feed | `content/source/feed/feed.json` (seed) | Postgres `feed_items` table | Directus + FastAPI |
 | Media | Uploaded by users | Postgres large objects (lo) | FastAPI media module |
+| Video | Uploaded / ingested | Postgres lo + the unified video model (`video_asset`/`video_variant`/`video_placement` + placement maps) | FastAPI media module |
 | Config | `app_config` table | Postgres | Directus → webhook → cache |
+
+The **unified video model** (migration 0014) replaced the legacy
+`techflix_episodes` table (dropped in 0015): a single `video_asset` with
+per-quality `video_variant` rows, surfaced into course / techflix / social feed
+contexts via `*_video_map` placement tables. See
+`docs/architecture/v2/09-video-model.md`.
 
 Content follows the **LAYER pattern**:
 1. Scan Box (3–5 bullets, 30-second read)
@@ -192,8 +207,15 @@ constant — if someone changes the prefix in the webhook handler without
 updating `moderate_action()`, stale data leaks silently.
 
 `AppCache` (`cache.py:L395`) is thread-safe with a pluggable backend:
-- `MemoryBackend` (default, for ≤2 workers)
-- `RedisBackend` (opt-in via `CACHE_BACKEND=redis`, for 4+ workers)
+- `MemoryBackend` (default, single-worker)
+- `RedisBackend` (opt-in via `CACHE_BACKEND=redis`) — the path to scale beyond
+  one worker or one VM
+
+**Load-bearing constraint:** `QUIZ_WORKERS=1`. The active-quiz session map is
+in-process — with more than one uvicorn worker, `/quiz/submit` 404s for any
+session pinned to another worker. Scaling out (multiple workers or VMs) requires
+moving both the session map and the cache off-process (Redis) first; do not
+raise the worker count on its own.
 
 ### 3.5 Content Read Path (Frontend → Backend)
 
@@ -262,7 +284,8 @@ explicitly denied access via `GRANT`/`REVOKE` matrix.
 ### 5.1 Stack
 
 - **PostgreSQL** (remote, TLS-enforced outside dev via `validate_db_tls`)
-- **SQLAlchemy** ORM with **Alembic** migrations (chain: 0001–0008)
+- **SQLAlchemy** ORM with **Alembic** migrations (chain: 0001–0016, head
+  `0016_drop_faq_runbook_tables`)
 - One DB per environment (dev/staging/prod on same Postgres server)
 - Media stored as **Postgres large objects** (seekable streaming, `lo_unlink`
   trigger, `vacuumlo` cron sweep)
@@ -280,10 +303,18 @@ explicitly denied access via `GRANT`/`REVOKE` matrix.
 | `questions` | quiz | 300-question bank (100 per difficulty tier) |
 | `feed_items` | feed | Community posts with moderation status |
 | `media_assets` | media | Large object references |
+| `video_asset` / `video_variant` / `video_placement` | media | Unified video model (0014) — asset, per-quality variants, placement |
+| `content_video_map` / `techflix_video_map` / `social_feed_video` | media | Placement maps wiring a video into course / techflix / feed surfaces |
 | `course_chapters` | content | Chapter metadata |
-| `framework` | content | CODE-CODER framework spine |
-| `framework_explainer` | content | Explainer content |
+| `frameworks` | content | CODE-CODER framework spine (single table; the old `framework_explainer` table is gone) |
+| `whats_new_items` | content | "What's New" surface (0013) |
+| `roles` / `user_roles` | core | Role catalogue + many-to-many capability grants |
+| `superadmin` | core | Break-glass local admin (password + TOTP, 0009) |
 | `app_config` | config | Runtime tunables (Tier-2 config via Directus) |
+
+**Dropped tables** (no longer present): `techflix_episodes` (0015, superseded by
+the unified video model), and the legacy `faq*` / `runbook*` tables (0016 — FAQs
+and runbooks are static `resources/` HTML now).
 
 ### 5.3 Migration Chain
 
@@ -296,7 +327,19 @@ explicitly denied access via `GRANT`/`REVOKE` matrix.
 0006_lo_cleanup     → large object trigger + cleanup
 0007_seed_nonprod_signing_keys → dev/staging HMAC keys
 0008_directus_app_role → CMS DB role with restricted grants
+0009_superadmin     → break-glass local admin (password + TOTP)
+0010_faq_tables     → FAQ tables (later dropped — see 0016)
+0011_techflix_episodes → legacy techflix table (later dropped — see 0015)
+0012_runbooks       → runbook tables (later dropped — see 0016)
+0013_whats_new      → "What's New" items
+0014_video_model    → unified video model (video_asset/variant/placement + maps)
+0015_drop_techflix_episodes → drop legacy techflix_episodes (superseded by 0014)
+0016_drop_faq_runbook_tables → drop FAQ + runbook tables (now static resources/)
 ```
+
+Net effect: 0010–0012 added FAQ / techflix / runbook tables that were later
+removed once that content moved to the unified video model (0014) and static
+`resources/` pages — 0015 and 0016 are the corresponding drops. Head is `0016`.
 
 ---
 
@@ -347,7 +390,7 @@ CERT_HMAC_DEV=... / CERT_HMAC_STG=... / CERT_HMAC_PROD=...
 │  ├── /          →  proxy to uvicorn :8000            │
 │  └── /cms/      →  proxy to Directus :8055           │
 │                                                     │
-│  systemd: uvicorn (2 workers, FastAPI)               │
+│  systemd: uvicorn (QUIZ_WORKERS=1, FastAPI)          │
 │  systemd: directus (Node 22)                         │
 │                                                     │
 │  Remote PostgreSQL (TLS, per-env DB)                 │
@@ -485,7 +528,7 @@ APP_ENV=dev uvicorn app.main:app --reload --port 8000
 cd backend && pytest tests/
 
 # Smoke tests (requires running server)
-cd tests/baseline && python smoke.py
+QUIZ_BASE_URL=http://localhost:8000 bash tests/baseline/smoke.sh   # the 15/15 gate
 
 # Frontend import check
 python tests/baseline/check-frontend-imports.py
@@ -557,7 +600,7 @@ dept-deploy/
 │   ├── app/core/              #   shared layers (config, db, cache, users, security)
 │   ├── app/modules/           #   feature modules (auth, quiz, feed, media, content, cms, admin)
 │   ├── data/question_bank.json #  300-question CCA-F bank
-│   ├── migrations/            #   Alembic (0001–0008)
+│   ├── migrations/            #   Alembic (0001–0016, head 0016)
 │   ├── scripts/               #   ops scripts (migrate, seed, backfill, upload)
 │   ├── templates/             #   Jinja2 HTML (login, quiz, admin, verify)
 │   └── tests/                 #   pytest suite
@@ -568,8 +611,10 @@ dept-deploy/
 │   └── shared/                #   block renderers, registry, framework
 │
 ├── content/
-│   ├── frozen/                # rendered HTML (course, runbook, checklist, FAQs)
+│   ├── frozen/                # rendered course HTML (checklist/runbooks/FAQs moved to resources/)
 │   └── source/                # JSON source of truth + schemas + validation
+│
+├── resources/                 # static reference HTML (runbooks/, checklists/, faqs/) → /resources/
 │
 ├── cms/                       # Directus CMS config
 │   ├── docker-compose.yml
@@ -580,7 +625,7 @@ dept-deploy/
 ├── docs-site/                 # Docusaurus documentation
 │   └── docs/                  #   system-architecture, database, frontend, deployment, etc.
 │
-├── docs/architecture/v2/      # v2 architecture decision records (00–08 + phase reports)
+├── docs/architecture/v2/      # v2 ADRs (00–09 + cutover-plan, phase reports, video model)
 ├── prompt-library/            # reusable prompts + sample apps
 ├── tests/baseline/            # smoke tests, fixtures, parity contracts
 ├── infra/                     # certbot, cron
@@ -624,4 +669,4 @@ community boundaries).
 ---
 
 *Generated from the dept-deploy v2 branch knowledge graph (graphify) and
-verified against source code. Last updated: 2026-06-06.*
+verified against source code. Last updated: 2026-06-07.*

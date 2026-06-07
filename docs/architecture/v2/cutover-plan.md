@@ -1,7 +1,7 @@
 # v2 — Cutover plan (promote v2 to production)
 
 > Status: **Cutover runbook · Phase 5.** Branch `v2`. The plan to take the
-> sealed v2 state (phases 0–4b, smoke 15/15, Alembic head `0015`) onto the
+> sealed v2 state (phases 0–4b, smoke 15/15, Alembic head `0016`) onto the
 > production VM and open traffic — with concrete gate checks and a fast,
 > rehearsed rollback.
 > Owner: cutover engineer. Audience: the on-call engineer running the promote.
@@ -24,7 +24,7 @@ Either gate failing is a stop.
   FastAPI app (`cca-quiz`) + Directus editorial plane (`cms-directus`) on the
   app VM, connecting out to a **remote shared Postgres** that hosts the `codecoder`
   prod database alongside the `codecoder_dev` dev database — then open traffic.
-- **Why:** v2 changes the database shape (Alembic `0001`→`0008`), adds a second
+- **Why:** v2 changes the database shape (Alembic `0001`→`0016`), adds a second
   writer (Directus over the scoped `directus_app` role), and moves media into
   Postgres large objects. The database now lives on a **separate remote host**
   reached over TLS, not on the app VM. A wrong order at cutover breaks the
@@ -272,7 +272,7 @@ internals.
 
 ```mermaid
 flowchart TD
-    A["1 · Land v2 code on the VM<br/>(merge / checkout v2 · DB_MODE=external)"] --> B["2 · alembic upgrade head<br/>0001 → 0015 · against REMOTE · privileged credential<br/>DIRECTUS_DB_ROLE=directus_app"]
+    A["1 · Land v2 code on the VM<br/>(merge / checkout v2 · DB_MODE=external)"] --> B["2 · alembic upgrade head<br/>0001 → 0016 · against REMOTE · privileged credential<br/>DIRECTUS_DB_ROLE=directus_app"]
     B --> C["3 · Seeds: roles + signing key (via 0005/0007)<br/>app_config + first admin (lifespan)"]
     C --> D["4 · Set directus_app password on the REMOTE<br/>(deploy.sh ALTER ROLE · remote superuser)"]
     D --> E["5 · Directus bootstrap order 7.4<br/>bootstrap → bootstrap.sh → schema apply"]
@@ -301,7 +301,7 @@ to connect *out* to it. The local-Postgres provisioning path (`DB_MODE=local`)
 is retained only for a self-contained box and for the local sqlite smoke; the
 production cutover uses `external`.
 
-### Step 2 — Migrate the schema (`0001` → `0008`) against the remote
+### Step 2 — Migrate the schema (`0001` → `0016`) against the remote
 
 Schema evolution is owned by Alembic, **not** by app startup (`init_db()` only
 creates missing tables as a dev convenience, and on a managed remote it no
@@ -329,9 +329,13 @@ This applies the full shipped chain: `0001` baseline → `0002` reconcile →
 `app_config`, `media_assets`) → `0004` columns → `0005` **seed roles + the
 `legacy-prod` signing-key row** → `0006` large-object cleanup trigger → `0007`
 **seed non-prod signing keys** → `0008` **create the scoped Directus role
-(`DIRECTUS_DB_ROLE`, default `directus_app`) + GRANT/REVOKE**. End state:
-`alembic current` = `0008_directus_app_role (head)`. This must run **before**
-any Directus step (RUNBOOK §7.4 step 1).
+(`DIRECTUS_DB_ROLE`, default `directus_app`) + GRANT/REVOKE** → `0009`–`0013`
+superadmin, FAQ, techflix, runbook, and What's-New tables → `0014` **unified
+video model** → `0015` **drop legacy `techflix_episodes`** → `0016` **drop the
+legacy FAQ + runbook tables** (FAQs and runbooks are static `resources/` content
+now, not DB-backed). End state: `alembic current` = `0016_drop_faq_runbook_tables
+(head)`. The `0008` Directus-role step in this chain must run **before** any
+Directus step (RUNBOOK §7.4 step 1).
 
 ### Step 3 — Seeds
 
@@ -418,7 +422,7 @@ host. Any failure → rollback (§4), not "push through".
 ┌─ TRAFFIC GATE (all must PASS) ──────────────────────────────────┐
 │ [ ] smoke.sh against prod ............ 15/15                    │
 │ [ ] cert canary CCA-F-20260605-E79E74AB verifies (strict)      │
-│ [ ] check-frontend-imports.py ........ 98/98 resolve           │
+│ [ ] check-frontend-imports.py ........ 102/102 resolve         │
 │ [ ] Directus /server/health .......... ok                      │
 │ [ ] directus_app isolation ........... 4 runtime tables denied │
 │ [ ] /healthz + /readyz ............... 200 / db:ok             │
@@ -450,7 +454,7 @@ survived the cutover and **no learner lost a certificate**.
 ### 3.3 Front-end imports
 
 ```bash
-python tests/baseline/check-frontend-imports.py    # expect 98/98 resolve
+python tests/baseline/check-frontend-imports.py    # expect 102/102 resolve
 ```
 
 ### 3.4 Directus health

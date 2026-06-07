@@ -19,9 +19,10 @@ keep verifying, the buildless SPA keeps fetching the same paths):
              /api/moderate/queue, /api/moderate/action
   media/     /api/media/upload, /media/video/{asset_id}, /media/image/{asset_id}
   cms/       (placeholder — Phase 4 fills)
-  runbooks/  /api/runbooks (GET list), /api/runbooks/{slug} (GET detail),
-             /api/runbooks/upload (POST xlsx), /api/runbooks/json (POST),
-             /api/runbooks/{slug} (DELETE)
+
+  (FAQs and runbooks are no longer API modules — they are static content under
+  resources/, dropped from the DB in migration 0016. The runbook Excel parser
+  in modules/runbooks/parser.py is retained for offline rendering only.)
 """
 import shutil
 from contextlib import asynccontextmanager
