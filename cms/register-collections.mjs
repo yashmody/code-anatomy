@@ -276,6 +276,53 @@ const COLLECTIONS = [
       { field: "updated_at", type: "timestamp", interface: "datetime", readonly: true },
     ],
   },
+  {
+    collection: "runbooks",
+    note: "Role- and domain-specific engagement playbooks. Metadata editable here; `phases` (JSONB content tree) is seeded via Excel upload — treat it as read-only in Directus.",
+    pk: "id",
+    icon: "assignment",
+    fields: [
+      { field: "id", type: "integer", interface: "input", pk: true, readonly: true },
+      { field: "slug", type: "string", interface: "input" },
+      { field: "title", type: "string", interface: "input" },
+      { field: "role", type: "string", interface: "select-dropdown",
+        options: { choices: [
+          { text: "Architect", value: "architect" },
+          { text: "DevOps", value: "devops" },
+          { text: "Developer", value: "developer" },
+          { text: "QA", value: "qa" },
+          { text: "PM", value: "pm" },
+          { text: "BA", value: "ba" },
+        ]}},
+      { field: "domain", type: "string", interface: "select-dropdown",
+        options: { choices: [
+          { text: "Banking & BFSI", value: "banking" },
+          { text: "Commerce", value: "ecommerce" },
+          { text: "Manufacturing", value: "manufacturing" },
+          { text: "Healthcare", value: "healthcare" },
+          { text: "Generic", value: "generic" },
+        ]}},
+      // DB column is named `type` — Directus sees the raw column name.
+      { field: "type", type: "string", interface: "select-dropdown",
+        options: { choices: [
+          { text: "Greenfield", value: "greenfield" },
+          { text: "Brownfield", value: "brownfield" },
+        ]}},
+      { field: "description", type: "text", interface: "input-multiline" },
+      { field: "status", type: "string", interface: "select-dropdown",
+        options: { choices: [
+          { text: "Draft", value: "draft" },
+          { text: "Published", value: "published" },
+        ]}},
+      // phases is a deep JSONB tree populated by POST /api/runbooks/upload.
+      // Directus renders it for inspection; editors should not hand-edit it.
+      { field: "phases", type: "json", interface: "input-code", options: { language: "json" }, readonly: true },
+      { field: "meta", type: "json", interface: "input-code", options: { language: "json" } },
+      { field: "created_by", type: "string", interface: "input", readonly: true },
+      { field: "created_at", type: "timestamp", interface: "datetime", readonly: true },
+      { field: "updated_at", type: "timestamp", interface: "datetime", readonly: true },
+    ],
+  },
 ];
 
 async function getCollection(name) {
@@ -494,6 +541,12 @@ function permsFor() {
     { role: "content_author", collection: "faq_items", action: "create", fields: ["*"] },
     { role: "content_author", collection: "faq_items", action: "update", fields: ["*"] },
     { role: "content_author", collection: "faq_items", action: "delete", fields: ["*"] },
+    // runbooks — content_author owns full CRUD; phases is read-only in Directus
+    // but writable via POST /api/runbooks/upload (Excel seed).
+    { role: "content_author", collection: "runbooks", action: "read", fields: ["*"] },
+    { role: "content_author", collection: "runbooks", action: "create", fields: ["*"] },
+    { role: "content_author", collection: "runbooks", action: "update", fields: ["*"] },
+    { role: "content_author", collection: "runbooks", action: "delete", fields: ["*"] },
 
     // quiz_admin — questions CRU; read course/feed/frameworks; read media meta.
     { role: "quiz_admin", collection: "questions", action: "read", fields: ["*"] },
@@ -506,6 +559,7 @@ function permsFor() {
     { role: "quiz_admin", collection: "users", action: "read", fields: ["email", "name", "role"] },
     { role: "quiz_admin", collection: "faq_categories", action: "read", fields: ["*"] },
     { role: "quiz_admin", collection: "faq_items", action: "read", fields: ["*"] },
+    { role: "quiz_admin", collection: "runbooks", action: "read", fields: ["*"] },
 
     // feed_moderator — read feed; update feed_items.status only; read content; read media meta.
     { role: "feed_moderator", collection: "feed_items", action: "read", fields: ["*"] },
@@ -518,6 +572,7 @@ function permsFor() {
     { role: "feed_moderator", collection: "users", action: "read", fields: ["email", "name", "role"] },
     { role: "feed_moderator", collection: "faq_categories", action: "read", fields: ["*"] },
     { role: "feed_moderator", collection: "faq_items", action: "read", fields: ["*"] },
+    { role: "feed_moderator", collection: "runbooks", action: "read", fields: ["*"] },
   ];
 }
 
@@ -572,6 +627,7 @@ const CACHED_COLLECTIONS = [
   "app_config",
   "faq_categories",
   "faq_items",
+  "runbooks",
 ];
 
 // Request-operation options. body is a JSON OBJECT (see note inside) — never

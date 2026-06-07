@@ -22,6 +22,7 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
+from app.core import cache as app_cache
 from app.core.deps import require_permission
 from app.modules.runbooks import parser as rb_parser
 from app.modules.runbooks import storage as rb_storage
@@ -89,8 +90,14 @@ async def list_runbooks(
     role: Optional[str] = Query(None, description="Filter by role (architect, devops, …)"),
     domain: Optional[str] = Query(None, description="Filter by domain (banking, ecommerce, …)"),
 ) -> JSONResponse:
+    cache_key = f"runbooks:list:{role or 'all'}:{domain or 'all'}"
+    cached = app_cache.cache.get(cache_key)
+    if cached is not None:
+        return JSONResponse(cached)
     runbooks = rb_storage.list_runbooks(role=role, domain=domain, status="published")
-    return JSONResponse({"runbooks": [_summary(r) for r in runbooks]})
+    payload = {"runbooks": [_summary(r) for r in runbooks]}
+    app_cache.cache.set(cache_key, payload, ttl=300)
+    return JSONResponse(payload)
 
 
 @router.get("/all", summary="List all runbooks incl. drafts (requires content.write)")
@@ -156,6 +163,7 @@ async def upload_runbook(
 
     actor = request.session.get("user", {}).get("email") if request.session else None
     rb = rb_storage.upsert_runbook(runbook_data, created_by=actor)
+    app_cache.cache.invalidate_prefix("runbooks:list")
 
     logger.info("[runbooks] upload: slug=%s actor=%s status=%s", rb.slug, actor, rb.status)
 

@@ -151,24 +151,16 @@
     </div>
   </div>
 
-  <!-- Published runbooks -->
-  <div class="section-label">Available <span class="count">1 published</span></div>
-  <div class="grid">
-    <a class="card" href="../architect-runbook.html">
-      <div class="card-status">● Published</div>
-      <div class="card-role">Role: Architect</div>
-      <div class="card-title">The Architect's <span class="x">Runbook</span></div>
-      <div class="card-desc">Two playbooks side by side. Greenfield — starting a new engagement and setting it up so it doesn't break in six months. Brownfield — taking over a codebase you didn't build, and shipping without breaking it on Tuesday.</div>
-      <div class="card-meta">
-        <span><b>2</b> Playbooks · Greenfield &amp; Brownfield</span>
-        <span class="card-arrow">→</span>
-      </div>
-    </a>
+  <!-- Published runbooks (loaded from API + static architect entry) -->
+  <div id="publishedSection" style="display:none">
+    <div class="section-label">Available <span class="count" id="publishedCount">…</span></div>
+    <div class="grid" id="publishedGrid"></div>
   </div>
+  <div id="loadingLabel" class="section-label">Loading runbooks…</div>
 
-  <!-- Coming soon -->
-  <div class="section-label" style="margin-top:48px">Coming soon <span class="count">3 in production</span></div>
-  <div class="grid">
+  <!-- Coming soon (hardcoded until Directus publishes these) -->
+  <div class="section-label" id="soonLabel" style="display:none;margin-top:48px">Coming soon <span class="count" id="soonCount"></span></div>
+  <div class="grid" id="soonGrid" style="display:none">
     <div class="card soon" aria-disabled="true">
       <div class="card-status">○ Coming soon</div>
       <div class="card-role">Role: Architect · Domain: Commerce</div>
@@ -215,5 +207,117 @@
   <p><b>Engagement Runbooks</b> Role-specific and domain-specific playbooks built from DEPT® field experience. Content reflects practice norms; project-specific terms always take precedence.</p>
   <p style="margin-top:10px"><b>Maintained by</b> DEPT® · Last reviewed June 2026 · <a href="../anatomy-of-code-course.html">← Anatomy of Code</a> · <a href="../faqs/index.html">Architect's FAQs</a> · <a href="../code-coder-checklist.html">Discovery Checklist</a></p>
 </footer>
+<script>
+  // The static architect runbook is always "published" — it lives as a frozen
+  // HTML file, not in the DB. We inject it as a synthetic card so the index
+  // always has at least one published entry even before any DB upload.
+  const STATIC_RUNBOOKS = [
+    {
+      slug: "__static_architect",
+      title: "The Architect’s Runbook",
+      role: "architect",
+      domain: "generic",
+      type: "greenfield",
+      description: "Two playbooks side by side. Greenfield — starting a new engagement and setting it up so it doesn’t break in six months. Brownfield — taking over a codebase you didn’t build, and shipping without breaking it on Tuesday.",
+      _href: "../architect-runbook.html",
+      _meta: "2 Playbooks · Greenfield & Brownfield",
+    },
+  ];
+
+  const COMING_SOON = [
+    {
+      title: "Commerce Architect",
+      role: "Architect · Domain: Commerce",
+      desc: "Greenfield and brownfield playbooks for Adobe Commerce, Shopify Plus, and hybrid commerce builds. Covers catalogue architecture, checkout customisation, and integration patterns with AEM and CJA.",
+    },
+    {
+      title: "Banking & BFSI Architect",
+      role: "Architect · Domain: Banking & BFSI",
+      desc: "Engagement playbook for core banking integrations, DPDP and RBI compliance posture, AEM-as-CMS for banking portals, and CJA for cross-channel analytics. Covers KYC and Aadhaar integration patterns.",
+    },
+    {
+      title: "Project Manager",
+      role: "Role: Project Manager",
+      desc: "What a PM owns in the first 90 days of a greenfield Adobe Experience Cloud engagement — stakeholder mapping, sprint cadence, risk register, and the handover checklist for when the PM changes mid-project.",
+    },
+  ];
+
+  function esc(s) { return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function renderCard(rb) {
+    const href = rb._href || `/runbook?slug=${encodeURIComponent(rb.slug)}`;
+    return `<a class="card" href="${esc(href)}">
+      <div class="card-status">● Published</div>
+      <div class="card-role">Role: ${esc(rb.role)}${rb.domain && rb.domain !== "generic" ? " · " + esc(rb.domain) : ""}</div>
+      <div class="card-title">${esc(rb.title)}</div>
+      <div class="card-desc">${esc(rb.description || "")}</div>
+      <div class="card-meta">
+        <span>${esc(rb._meta || rb.type)}</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>`;
+  }
+
+  function renderSoonCard(item) {
+    return `<div class="card soon" aria-disabled="true">
+      <div class="card-status">○ Coming soon</div>
+      <div class="card-role">${esc(item.role)}</div>
+      <div class="card-title">${esc(item.title)}</div>
+      <div class="card-desc">${esc(item.desc)}</div>
+      <div class="card-meta"><span><b>Drafting</b></span><span class="card-arrow">→</span></div>
+    </div>`;
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const API_BASE = window.location.port === "8080" ? "http://127.0.0.1:8000" : "";
+
+    let dbRunbooks = [];
+    try {
+      const res = await fetch(`${API_BASE}/api/runbooks`);
+      if (res.ok) {
+        const data = await res.json();
+        dbRunbooks = data.runbooks || [];
+      }
+    } catch (e) {
+      console.warn("Could not load runbooks from API:", e.message);
+    }
+
+    // Merge: static first, then DB runbooks (exclude any that duplicate the
+    // static slug so a future "architect" DB entry replaces the static card).
+    const staticSlugs = new Set(STATIC_RUNBOOKS.map(r => r.slug));
+    const all = [
+      ...STATIC_RUNBOOKS,
+      ...dbRunbooks.filter(r => !staticSlugs.has(r.slug)),
+    ];
+
+    // Filter coming-soon: if a DB runbook covers a coming-soon title, remove it
+    const dbTitles = new Set(dbRunbooks.map(r => r.title.toLowerCase()));
+    const stillSoon = COMING_SOON.filter(c => !dbTitles.has(c.title.toLowerCase()));
+
+    // Render published
+    const publishedGrid = document.getElementById("publishedGrid");
+    const publishedSection = document.getElementById("publishedSection");
+    const publishedCount = document.getElementById("publishedCount");
+    const loadingLabel = document.getElementById("loadingLabel");
+
+    if (all.length) {
+      publishedGrid.innerHTML = all.map(renderCard).join("");
+      publishedCount.textContent = `${all.length} published`;
+      publishedSection.style.display = "";
+    }
+    loadingLabel.style.display = "none";
+
+    // Render coming soon
+    if (stillSoon.length) {
+      const soonLabel = document.getElementById("soonLabel");
+      const soonGrid = document.getElementById("soonGrid");
+      const soonCount = document.getElementById("soonCount");
+      soonGrid.innerHTML = stillSoon.map(renderSoonCard).join("");
+      soonCount.textContent = `${stillSoon.length} in production`;
+      soonLabel.style.display = "";
+      soonGrid.style.display = "";
+    }
+  });
+</script>
 </body>
 </html>
