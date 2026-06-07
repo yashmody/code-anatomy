@@ -15,6 +15,7 @@ backend/.pytest_cache/
 .env.local
 .claude/settings.local.json
 deploy.env
+credentials.txt
 
 
 # --- Graphify (fully generated — run `graphify update .` to rebuild) ---
