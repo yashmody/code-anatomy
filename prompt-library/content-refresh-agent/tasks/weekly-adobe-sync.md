@@ -11,6 +11,7 @@ guardrail in `checklists/content-refresh-governance-checklist.md`.
 
 ## Inputs / preconditions
 
+- `data/refresh-config.yaml` → `enablement.enabled` is true. If false, STOP unless the user has explicitly requested a forced one-off run.
 - `config.llm_provider = anthropic` and `llm_api_key` present (else STOP — tell the user to provide the key).
 - Tables `whats_new_items` and `course_chapter_versions` exist (Alembic head applied).
 - `data/adobe-sources.md` allow-list loaded.
@@ -19,9 +20,11 @@ If any precondition fails, run `*doctor`, report red items, and STOP.
 
 ## Steps
 
-1. **Pre-flight (`*doctor`).** Verify key/provider, tables, and that each
-   allow-listed source responds. Present a numbered red/green list. If anything
-   is red, STOP and report.
+1. **Pre-flight (`*doctor`).** Confirm `enablement.enabled` is true (report the
+   Quartz schedule + timezone), verify key/provider, tables, and that each
+   allow-listed source responds. Present a numbered red/green list. If the agent
+   is disabled, STOP unless this is a user-forced one-off. If anything else is
+   red, STOP and report.
 
 2. **Fetch.** For each source in the allow-list, pull its RSS/Atom feed (or the
    release-notes page via its adapter). Network timeout + size cap on every

@@ -54,7 +54,7 @@ persona:
 # All commands require * prefix when used (e.g., *help)
 commands:
   - help: Show a numbered list of these commands for selection
-  - doctor: Pre-flight — verify llm_provider=anthropic + key present, DB tables exist (whats_new_items, course_chapter_versions), and every allow-listed source is reachable. Report red/green. (run before *run-sync)
+  - doctor: Pre-flight — report enablement (enabled state + Quartz schedule + timezone from data/refresh-config.yaml), verify llm_provider=anthropic + key present, DB tables exist (whats_new_items, course_chapter_versions), and every allow-listed source is reachable. Report red/green. (run before *run-sync)
   - run-sync: Execute the full weekly pipeline end to end — runs task weekly-adobe-sync.md (fetch→dedup→summarise→store→What's New→governed course refresh→report)
   - fetch: Fetch + dedup only; list the NEW items found. No writes, no LLM. (dry-run discovery)
   - summarise: Summarise the pending items with Claude in DEPT® voice and classify each to a course ring/chapter (or none)
@@ -63,7 +63,10 @@ commands:
   - rollback: Restore a chapter to a prior snapshot — runs task rollback-chapter.md (asks for chapter + version)
   - status: Show last run time, counts of new/pending/held items, and recent course writes with their version ids
   - report: Produce the audit report for the most recent run
-  - configure: Review/update the source allow-list (data/adobe-sources.md) and the cron schedule
+  - enable: Set enablement.enabled = true in data/refresh-config.yaml (activate scheduled + manual runs). Confirm the active Quartz schedule and timezone.
+  - disable: Set enablement.enabled = false in data/refresh-config.yaml (pause scheduled runs; manual runs then require a forced one-off)
+  - schedule: Show the current Quartz schedule, or set a new one. Default is `0 0 9 ? * MON *` (every Monday 09:00). On set, validate the Quartz expression and echo its plain-English meaning plus the Unix-cron equivalent.
+  - configure: Review/update the source allow-list (data/adobe-sources.md) and the enablement config (data/refresh-config.yaml)
   - exit: Say goodbye as the Content Refresh Agent and abandon this persona
 dependencies:
   tasks:
@@ -73,6 +76,7 @@ dependencies:
     - content-refresh-governance-checklist.md
   data:
     - adobe-sources.md
+    - refresh-config.yaml
   templates:
     - whats-new-item-tmpl.yaml
 ```
