@@ -1491,6 +1491,23 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
         env_set "$CMS_DIR/.env" PGSSLMODE                  "disable"
         info "Directus DB_SSL=false (local Postgres, no SSL required)."
       fi
+      # ── Safety net: a loopback Postgres never speaks TLS ────────────────────
+      # Force SSL OFF whenever the resolved DB host is loopback, regardless of
+      # how DB_MODE / DB_SSLMODE resolved. A co-resident Postgres on this VM has
+      # no TLS, so a carried-over DB_SSL=true (the cms/.env.example REMOTE
+      # default) would otherwise crash-loop Directus on
+      # "Error: The server does not support SSL connections" and Apache would
+      # then 503 /cms/. Belt-and-braces over the local branch above: it also
+      # covers the misconfiguration where DB_MODE=external is set but DB_HOST
+      # still points at loopback.
+      case "${DB_HOST:-localhost}" in
+        localhost|127.0.0.1|::1|"")
+          env_set "$CMS_DIR/.env" DB_SSL                     "false"
+          env_set "$CMS_DIR/.env" DB_SSL__REJECT_UNAUTHORIZED "false"
+          env_set "$CMS_DIR/.env" PGSSLMODE                  "disable"
+          info "Directus DB_SSL forced false (loopback Postgres — no TLS available)."
+          ;;
+      esac
       env_set "$CMS_DIR/.env" DB_DATABASE "$DB_NAME"
       env_set "$CMS_DIR/.env" DB_USER     "$CMS_DB_USER"
       env_set "$CMS_DIR/.env" DB_PASSWORD "$CMS_DB_PASS"
