@@ -1,7 +1,7 @@
 # Plan — Weekly Adobe-updates sync → "What's New" + course refresh
 
 > Status: **Design plan (pre-build).** A backend utility, run by a weekly cron
-> (Sunday), that pulls the latest Adobe product updates, surfaces them in a new
+> (Monday 09:00, config-gated), that pulls the latest Adobe product updates, surfaces them in a new
 > **What's New** section, and refreshes the course with the latest information.
 > Owner: backend/platform. Audience: whoever builds and operates it.
 
@@ -14,7 +14,7 @@ automatically.
 
 ## 0 · Scan box
 
-- **What:** a Sunday cron job → `scripts/sync_adobe_updates.py` that fetches
+- **What:** a config-gated **Monday 09:00** cron job → `scripts/sync_adobe_updates.py` that fetches
   Adobe release notes/blogs for **Adobe Commerce, AEM/AEMaaCS, AJO & CJA,
   Target/A-B/Campaign**, summarises each new item with **Anthropic (Claude)**,
   stores them, shows them in a **What's New** SPA section, and refreshes a
@@ -48,7 +48,8 @@ the blast radius is bounded by design.
 
 | Decision | Choice |
 |---|---|
-| Schedule | Weekly, **Sunday** (cron; default `0 2 * * 0` server-time, configurable) |
+| Enablement | **Config-gated** — `content_refresh_enabled` (default off); nothing runs until switched on |
+| Schedule | Weekly, **Monday 09:00**, as a **Quartz cron** `0 0 9 ? * MON *` (tz `Asia/Kolkata`); Unix-cron equivalent `0 9 * * 1` |
 | Sources | **Adobe Commerce, AEM / AEMaaCS, AJO & CJA, Target / A-B / Campaign** |
 | Summariser | **Anthropic (Claude)** via the `llm_provider` seam |
 | What's New surface | New `GET /api/whatsnew` + a new SPA tab (Techflix pattern) |
@@ -61,7 +62,7 @@ the blast radius is bounded by design.
 
 ```mermaid
 flowchart TD
-    CRON["Sunday cron<br/>infra/cron/adobe-sync.sh"] --> RUN["scripts.sync_adobe_updates"]
+    CRON["Weekly cron · Mon 09:00 (Quartz 0 0 9 ? * MON *)<br/>infra/cron/adobe-sync.sh · runs only if enabled"] --> RUN["scripts.sync_adobe_updates"]
     RUN --> F["1 · Fetch<br/>RSS/Atom + release-notes pages<br/>(per-source adapters)"]
     F --> D["2 · Dedup<br/>by source GUID/URL"]
     D --> S["3 · Summarise + classify<br/>Anthropic → DEPT-voice blurb + ring/chapter tag"]
