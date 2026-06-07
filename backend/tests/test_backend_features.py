@@ -32,6 +32,21 @@ storage = type("storage", (), {
 client = TestClient(app)
 
 
+@pytest.fixture(autouse=True)
+def _clean_cache():
+    """Reset the process-wide AppCache around every test.
+
+    The content + feed read routes now memoise their DB reads in the shared
+    cache singleton. Clearing before and after each test keeps the
+    monkeypatched-loader assertions (e.g. test_course_endpoints) deterministic
+    regardless of test order. Mirrors the autouse fixture in test_faq.py.
+    """
+    from app.core import cache as _cache
+    _cache.clear()
+    yield
+    _cache.clear()
+
+
 # ---------- Encryption & Decryption Tests ----------
 
 def test_payload_encryption_decryption():

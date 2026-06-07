@@ -12,12 +12,31 @@ from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
 from fastapi.responses import StreamingResponse
 
 from app.core import config
-from app.core.deps import require_permission
+from app.core.deps import require_authenticated, require_permission
 from app.modules.media import service as media_service
 from app.modules.media import storage as media_storage
 
 
 router = APIRouter()
+
+
+@router.get("/api/media/techflix")
+async def list_techflix(user=Depends(require_authenticated)):
+    """Techflix library — video episodes grouped by topic, for any signed-in user.
+
+    Read-only editorial view over `media_assets`: returns topics in author
+    order, each with its episodes (title, description, duration, poster, and the
+    stable `/media/video/{id}` stream URL). The bytes themselves are served —
+    with HTTP Range support — by `stream_video` below. Populated by
+    `scripts/upload_media.py` from a `techflix.json` manifest.
+    """
+    episodes = media_storage.list_techflix_episodes()
+    topics: dict[str, list] = {}
+    for ep in episodes:
+        topics.setdefault(ep["topic"], []).append(ep)
+    # `episodes` is already ordered by (topic, sort_order, title), so dict
+    # insertion order reflects the intended topic order without a second sort.
+    return {"topics": [{"topic": t, "episodes": eps} for t, eps in topics.items()]}
 
 
 @router.post("/api/media/upload")

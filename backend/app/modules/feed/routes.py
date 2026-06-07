@@ -14,6 +14,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
+from app.core import config
 from app.core.cache import cache
 from app.core.db import get_session
 from app.core.models import FeedItem, Question
@@ -32,7 +33,16 @@ router = APIRouter()
 @router.get("/feed")
 async def get_feed(request: Request):
     """Retrieve all published feed items."""
-    return {"feed": feed_storage.get_feed_items()}
+    # The published feed is the single hottest read (every feed mount hits it).
+    # Memoise it for cache_ttl_feed (default 30s) under the `feed_items:` prefix
+    # so the write paths below — and the Directus webhook — drop it on change.
+    # The short TTL keeps the UGC stream fresh even if an invalidation is missed.
+    feed = cache.get_or_compute(
+        "feed_items:published",
+        ttl=config.settings.cache_ttl_feed,
+        loader=feed_storage.get_feed_items,
+    )
+    return {"feed": feed}
 
 
 @router.post("/feed/flag")
@@ -60,6 +70,10 @@ async def flag_feed_item(
 
         item.data = item_data
         s.commit()
+
+    # A flag can flip status to "flagged", changing what the published feed
+    # list returns — drop the cached list so the change is visible at once.
+    cache.invalidate_prefix("feed_items:")
 
     return {"status": "success", "flagCount": flag_count, "itemStatus": item.status}
 
@@ -96,6 +110,9 @@ async def post_feed(
         item["status"] = "pending-review"  # force post state if containing a question
 
     feed_storage.save_feed_item(item)
+    # New post → invalidate the cached published list so the author (and
+    # everyone else) sees it immediately rather than after a TTL window.
+    cache.invalidate_prefix("feed_items:")
     return {"status": "success", "id": item["id"]}
 
 

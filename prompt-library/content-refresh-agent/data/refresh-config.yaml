@@ -1,0 +1,28 @@
+# Content Refresh Agent — enablement & schedule config.
+#
+# The agent (and the backend cron that drives it) act ONLY when enabled is true.
+# `schedule` is a QUARTZ cron expression, not Unix cron. Quartz field order:
+#   seconds  minutes  hours  day-of-month  month  day-of-week  [year]
+# Quartz uses `?` for "no specific value" on day-of-month/day-of-week and
+# supports day names (SUN MON TUE …).
+enablement:
+  enabled: false                  # master switch — flip to true to activate runs
+  schedule: "0 0 9 ? * MON *"     # Quartz cron — every Monday at 09:00 (default)
+  timezone: "Asia/Kolkata"        # IST — audience is India
+
+# Field-by-field reading of the default schedule:
+#   0    seconds        -> at 0 seconds
+#   0    minutes        -> at minute 0
+#   9    hours          -> 09:00
+#   ?    day-of-month   -> no specific value (driven by day-of-week instead)
+#   *    month          -> every month
+#   MON  day-of-week    -> Mondays
+#   *    year           -> every year
+#
+# Unix-cron equivalent (for a VM crontab, if not using a Quartz scheduler):
+#   "0 9 * * 1"   # Mon 09:00  — the installer translates the Quartz value above.
+
+notes:
+  - "enabled=false means scheduled runs are skipped AND a manual *run-sync is refused unless the user explicitly forces a one-off."
+  - "Edit `schedule` here in Quartz format; the installer/scheduler translates it to the runtime (VM crontab line or APScheduler trigger)."
+  - "Validate any new Quartz expression before saving (6 or 7 fields; `?` on exactly one of day-of-month / day-of-week)."

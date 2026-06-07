@@ -696,6 +696,32 @@ fi
 # ── STEP 3 · Sync bundle ─────────────────────────────────────────────────────
 step "Sync bundle → $APP_HOME"
 
+# Guard: refuse to ship frontend JavaScript that does not parse. A single
+# syntax error — e.g. an editor silently swapping a straight ' for a smart
+# quote ‘ ’ — would otherwise break the WHOLE SPA in production (one bad module
+# fails to load and the router dies). We validate the SOURCE tree before rsync,
+# so a broken file never reaches $APP_HOME. This runs in --update mode too
+# (where the pre-flight step is skipped), since that is the common path for
+# shipping new SPA code.
+JS_CHECK_NODE="${NODE_BIN:-$(command -v node || true)}"
+if [[ -n "$JS_CHECK_NODE" ]]; then
+  info "Validating frontend JS (node --check) …"
+  js_bad=0
+  while IFS= read -r -d '' jsf; do
+    if ! "$JS_CHECK_NODE" --check "$jsf" 2>/tmp/cca-jscheck.err; then
+      warn "  syntax error: ${jsf#"$SRC_DIR"/}"
+      sed 's/^/      /' /tmp/cca-jscheck.err >&2 || true
+      js_bad=$((js_bad + 1))
+    fi
+  done < <(find "$SRC_DIR/frontend" -name '*.js' -not -path '*/node_modules/*' -print0)
+  if [[ "$js_bad" -gt 0 ]]; then
+    die "$js_bad frontend JS file(s) failed syntax check — refusing to deploy. Fix the file(s) above and re-run."
+  fi
+  ok "Frontend JS syntax OK"
+else
+  warn "node not found — skipping frontend JS syntax guard (install Node LTS to enable it)."
+fi
+
 mkdir -p "$APP_HOME"
 info "Running rsync from $SRC_DIR …"
 

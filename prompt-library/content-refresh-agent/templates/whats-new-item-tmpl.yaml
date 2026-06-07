@@ -1,0 +1,30 @@
+# What's New item template — the whats_new_items row shape the agent produces.
+# Mirrors docs/architecture/v2/whats-new-pipeline.md §5.
+template:
+  id: whats-new-item
+  name: What's New Item
+  version: 1.0
+
+item:
+  id: "{{uuid}}"                       # generated
+  source: "{{key}}"                    # commerce | aem | ajo | cja | target | campaign
+  source_url: "{{canonical_url}}"      # UNIQUE — dedup key; must be on the allow-list
+  product: "{{product_label}}"         # e.g. "Adobe Experience Manager as a Cloud Service"
+  title: "{{headline}}"                # from the source, lightly normalised
+  summary: "{{dept_voice_summary}}"    # Claude, Indian English, acronyms expanded, no AI-tells; null on LLM error
+  related_chapter: "{{chapter_or_none}}" # e.g. "adobe-cm.json" | null
+  published_at: "{{source_published_at}}" # ISO-8601 | null
+  fetched_at: "{{run_timestamp}}"      # ISO-8601, set by the run
+  status: "new"                        # new | published | archived | held
+
+# auto-adobe-updates block (rendered into a course chapter, Phase 2). The agent
+# writes ONLY this block; curated prose is never touched.
+auto_block:
+  section_id: "auto-adobe-updates"
+  heading: "Latest from Adobe — as of {{run_date}}"
+  intro: "Recent updates relevant to this topic, pulled automatically. Each links to its Adobe source."
+  items:
+    - title: "{{headline}}"
+      summary: "{{dept_voice_summary}}"
+      url: "{{canonical_url}}"
+      date: "{{source_published_at}}"
