@@ -6,6 +6,7 @@ Tables:
   - Question: Quiz question bank with versioning, UGC flags, options.
   - FeedItem: Social stream posts, scenarios, videos, indexing.
   - MediaAsset: Stores binary file metadata referencing PostgreSQL Large Object OIDs.
+  - Runbook: Role- and domain-specific runbooks seeded from Excel uploads or direct API.
 """
 import json
 from datetime import datetime
@@ -175,6 +176,42 @@ class MediaAsset(Base):
     uploader = relationship("User", back_populates="media_assets")
     
     uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+
+class TechflixEpisode(Base):
+    """Techflix — curated video episodes grouped by topic.
+
+    A thin editorial layer over `media_assets`: each row pairs one video asset
+    with display metadata (topic, title, description, ordering) plus an optional
+    poster image (itself a `media_assets` row) and a probed duration. Populated
+    by `scripts/upload_media.py` from a `techflix.json` manifest; read by
+    `GET /api/media/techflix`. The bytes still stream from `/media/video/{id}`.
+
+    Two FKs point at `media_assets` (video + poster), so the relationships must
+    name their `foreign_keys` explicitly. The bare-asset rows stay generic;
+    only the editorial metadata lives here.
+    """
+    __tablename__ = "techflix_episodes"
+
+    id = Column(String(64), primary_key=True)  # UUID string
+    video_asset_id = Column(
+        String(64), ForeignKey("media_assets.id", ondelete="CASCADE"),
+        nullable=False, unique=True,
+    )
+    poster_asset_id = Column(
+        String(64), ForeignKey("media_assets.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    topic = Column(String(128), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    sort_order = Column(Integer, nullable=False, default=0)
+    duration_sec = Column(Integer, nullable=True)  # None when FFprobe unavailable
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    video_asset = relationship("MediaAsset", foreign_keys=[video_asset_id])
+    poster_asset = relationship("MediaAsset", foreign_keys=[poster_asset_id])
 
 
 class CourseChapter(Base):
@@ -386,6 +423,42 @@ class FAQItem(Base):
 
     __table_args__ = (
         Index("idx_faq_items_category_id", "category_id"),
+    )
+
+
+class Runbook(Base):
+    """Role- and domain-specific runbooks.
+
+    Each row is a complete runbook — greenfield or brownfield — for a
+    given practitioner role (architect, devops, developer, qa, pm, ba)
+    and optional domain (banking, ecommerce, manufacturing, generic).
+
+    `sections` holds the full phases → sections → tasks tree as JSONB so
+    the reader page can render it without additional queries. The schema
+    mirrors the Excel upload template: see backend/scripts/generate_runbook_template.py.
+
+    Idempotent on `slug` — uploading the same Excel twice overwrites the
+    existing row rather than creating a duplicate.
+    """
+    __tablename__ = "runbooks"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    slug = Column(String(128), unique=True, nullable=False, index=True)
+    title = Column(String(512), nullable=False)
+    role = Column(String(32), nullable=False)    # architect | devops | developer | qa | pm | ba
+    domain = Column(String(64), nullable=False, default="generic")  # banking | ecommerce | manufacturing | generic
+    runbook_type = Column("type", String(32), nullable=False, default="greenfield")  # greenfield | brownfield
+    description = Column(Text, nullable=True)
+    status = Column(String(16), nullable=False, default="draft")    # draft | published
+    phases = Column(JSONB_TYPE, nullable=False, default=[])
+    meta = Column(JSONB_TYPE, nullable=False, default={})
+    created_by = Column(String(255), nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        Index("idx_runbooks_role_domain", "role", "domain"),
+        Index("idx_runbooks_status", "status"),
     )
 
 

@@ -23,6 +23,7 @@ from app.core import config, encryption, users
 __all__ = [
     "PERMISSION_GRANTS",
     "require_permission",
+    "require_authenticated",
     "require_role",
     "require_user",
     "require_user_with_persona",
@@ -47,6 +48,9 @@ PERMISSION_GRANTS: Dict[str, Set[str]] = {
     "question.write":  {"quiz_admin"},
     "media.upload":    {"feed_contributor", "content_author"},
     "attempts.view_all": {"quiz_admin"},
+    # content.write — guards runbook upload/upsert/delete and FAQ seeding.
+    # Held by content_author; platform_admin is the implicit bypass.
+    "content.write":   {"content_author"},
     "config.read":     set(),
     "config.write":    set(),
     "role.assign":     set(),
@@ -165,6 +169,21 @@ def require_role(allowed_roles: List[str]):
         )
 
     return dependency
+
+
+# ── Authenticated-only (no specific permission) ─────────────────────────────
+
+def require_authenticated(request: Request) -> Dict:
+    """Dependency: require ANY signed-in user (the `learner` floor).
+
+    Use for endpoints that every authenticated user may reach but that are not
+    public — e.g. the Techflix library listing. Returns the DB user record.
+    Raises 401 (JSON) on `/api/` paths and an `Accept: application/json`
+    request, or a 302→/login redirect for an HTML navigation — exactly the
+    behaviour of `require_permission` minus the role check, by reusing the same
+    `_session_user_or_401` helper.
+    """
+    return _session_user_or_401(request)
 
 
 # ── Plain session helpers (no permission check) ─────────────────────────────

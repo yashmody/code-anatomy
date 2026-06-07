@@ -1105,6 +1105,14 @@ DIRECTUS_DB_ROLE="$DIRECTUS_DB_ROLE" \
   2>&1 | while read -r line; do info "  etl: $line"; done
 ok "Schema migration + seeds complete"
 
+# Generate the runbook Excel template so GET /api/runbooks/template works.
+# Idempotent — safe to re-run; overwrites only if the script succeeds.
+info "Generating runbook Excel template (data/runbook-template.xlsx) …"
+"$QUIZ_DIR/.venv/bin/python" -m scripts.generate_runbook_template \
+  "$QUIZ_DIR/data/runbook-template.xlsx" \
+  2>&1 | while read -r line; do info "  template: $line"; done || \
+  warn "Runbook template generation failed — GET /api/runbooks/template will 404 until fixed"
+
 # ── STEP 7 · systemd service ─────────────────────────────────────────────────
 step "systemd service  ($SERVICE_NAME)"
 
@@ -1575,10 +1583,15 @@ if ! $UPDATE_ONLY; then
     # Q-13: NO 'Alias /static/' — FastAPI mounts /static/ itself; let it fall
     # through to ProxyPass so the app's CSS/JS bundles ship from uvicorn.
 
+    # /runbook → content/frozen/runbook.html (dynamic reader SPA, static file)
+    RewriteEngine On
+    RewriteRule ^/runbook$ /anatomy/runbook.html [L]
+
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"http\"
     ProxyPass        /anatomy !
     ProxyPass        /app     !
+    ProxyPass        /runbook !
     ProxyPass        /  http://127.0.0.1:${QUIZ_PORT}/
     ProxyPassReverse /  http://127.0.0.1:${QUIZ_PORT}/
 
@@ -1746,6 +1759,15 @@ ${CHAIN_LINE}
         Header always set ${CSP_HEADER} \"${CSP_COURSE}\"
     </Location>
 
+    # Dynamic runbook reader — re-validates each load (content changes on upload).
+    <Location \"/runbook\">
+        Header always set Cache-Control \"no-cache\"
+    </Location>
+    # Runbook API: list + detail re-validate; template download is stable.
+    <LocationMatch \"^/api/runbooks/\">
+        Header always set Cache-Control \"public, max-age=0, must-revalidate\"
+    </LocationMatch>
+
     # Course JSON: app emits a strong ETag; revalidate every load.
     <LocationMatch \"^/api/course/\">
         Header always set Cache-Control \"public, max-age=0, must-revalidate\"
@@ -1790,10 +1812,14 @@ ${CHAIN_LINE}
     </Location>
 
 ${CMS_LOCATION_BLOCK}
+    # /runbook → content/frozen/runbook.html (dynamic reader, served as static file)
+    RewriteRule ^/runbook$ /anatomy/runbook.html [L]
+
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"https\"
     ProxyPass        /anatomy !
     ProxyPass        /app     !
+    ProxyPass        /runbook !
 ${CMS_PROXY_BLOCK}    ProxyPass        /  http://127.0.0.1:${QUIZ_PORT}/
     ProxyPassReverse /  http://127.0.0.1:${QUIZ_PORT}/
 
@@ -1985,7 +2011,10 @@ printf '%b│%b  Quiz / cert app  : %s://%s/\n'                  "$C_CYAN" "$C_R
 printf '%b│%b  SPA (Feed/Read)  : %s://%s/app/\n'              "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  Course           : %s://%s/anatomy/anatomy-of-code-course.html\n' "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  Checklist        : %s://%s/anatomy/code-coder-checklist.html\n'   "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
-printf '%b│%b  Runbooks         : %s://%s/anatomy/architect-runbook.html\n'      "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Runbook (static) : %s://%s/anatomy/architect-runbook.html\n'      "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Runbook index    : %s://%s/runbook\n'                             "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Runbook upload   : %s://%s/api/runbooks/upload  (POST .xlsx)\n'  "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Runbook template : %s://%s/api/runbooks/template\n'              "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  FAQs             : %s://%s/anatomy/faqs/index.html\n'             "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 $TLS_AVAILABLE && \
 printf '%b│%b  OAuth callback   : https://%s/auth/google/callback\n'             "$C_CYAN" "$C_RESET" "$DOMAIN" || true

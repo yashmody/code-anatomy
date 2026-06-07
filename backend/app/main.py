@@ -19,6 +19,9 @@ keep verifying, the buildless SPA keeps fetching the same paths):
              /api/moderate/queue, /api/moderate/action
   media/     /api/media/upload, /media/video/{asset_id}, /media/image/{asset_id}
   cms/       (placeholder — Phase 4 fills)
+  runbooks/  /api/runbooks (GET list), /api/runbooks/{slug} (GET detail),
+             /api/runbooks/upload (POST xlsx), /api/runbooks/json (POST),
+             /api/runbooks/{slug} (DELETE)
 """
 from contextlib import asynccontextmanager
 
@@ -38,6 +41,7 @@ from app.modules.feed import routes as feed_routes
 from app.modules.faq import routes as faq_routes
 from app.modules.media import routes as media_routes
 from app.modules.quiz import routes as quiz_routes
+from app.modules.runbooks import routes as runbook_routes
 from app.modules.superadmin import routes as superadmin_routes
 
 
@@ -180,6 +184,7 @@ app.include_router(media_routes.router, tags=["media"])
 app.include_router(cms_routes.router, prefix="/api/cms", tags=["cms"])
 app.include_router(superadmin_routes.router, tags=["superadmin"])
 app.include_router(faq_routes.router, prefix="/api/faqs", tags=["faq"])
+app.include_router(runbook_routes.router, prefix="/api/runbooks", tags=["runbooks"])
 # Admin role-assignment REST (04 §7.2). Decorators are "/roles"; the prefix
 # carries "/api/admin" → /api/admin/roles. All endpoints require role.assign.
 app.include_router(admin_routes.router, prefix="/api/admin", tags=["admin"])
