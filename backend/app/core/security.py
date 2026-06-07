@@ -29,6 +29,7 @@ from typing import Iterable, List
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -125,6 +126,13 @@ def install_middleware(app: FastAPI) -> None:
     """
     app_env = _resolve_app_env()
     is_prod = app_env == "production"
+
+    # 0. GZip — innermost layer (wraps the handler directly). Compresses any
+    #    response body ≥1 KB where the client sends Accept-Encoding: gzip.
+    #    Course chapter JSONs are 20–80 KB raw; gzip typically shrinks them
+    #    60–75%. minimum_size=1000 skips tiny API responses (health probes,
+    #    short auth replies) where compression overhead isn't worth it.
+    app.add_middleware(GZipMiddleware, minimum_size=1000)
 
     # 1. SessionMiddleware — F-SES-01, F-COO-01, Q-1 (8h max_age)
     app.add_middleware(

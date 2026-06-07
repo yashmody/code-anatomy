@@ -11,7 +11,7 @@ this slice doesn't depend on Slice C landing.
 """
 import json
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 
 from app.core import config
 from app.modules.content import storage as content_storage
@@ -21,18 +21,22 @@ router = APIRouter()
 
 
 @router.get("/framework")
-async def get_course_framework():
+async def get_course_framework(response: Response):
     """Retrieve the overall framework hierarchy from PostgreSQL."""
     fw = content_storage.get_framework()
     if not fw:
         raise HTTPException(status_code=404, detail="Framework not found")
+    # Framework changes only on ETL re-seed — safe to cache for 5 min in
+    # the browser and serve stale for a further minute while revalidating.
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
     return fw
 
 
 @router.get("/chapters")
-async def get_course_chapters():
+async def get_course_chapters(response: Response):
     """Retrieve list of all course chapters from PostgreSQL."""
     chapters = content_storage.get_all_chapters()
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
     return {
         "chapters": [
             {"filename": c["filename"], "ring": c["ring"], "title": c["title"]}
@@ -42,16 +46,17 @@ async def get_course_chapters():
 
 
 @router.get("/chapters/{filename}")
-async def get_course_chapter(filename: str):
+async def get_course_chapter(filename: str, response: Response):
     """Retrieve content of a specific course chapter by filename from PostgreSQL."""
     chapter = content_storage.get_chapter(filename)
     if not chapter:
         raise HTTPException(status_code=404, detail="Chapter not found")
+    response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
     return chapter["content"]
 
 
 @router.get("/framework-explainer")
-async def get_framework_explainer():
+async def get_framework_explainer(response: Response):
     """Serve the static framing JSON (masthead, Part banners, CODE/CODER
     outer/inner wrappers, node-blocks, #nest, Review, Watch).
 
@@ -63,6 +68,7 @@ async def get_framework_explainer():
     # 1. Try the DB
     expl = content_storage.get_framework_explainer()
     if expl:
+        response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
         return expl
 
     # 2. Fallback to the on-disk JSON. BASE_DIR is the backend root, so
@@ -75,6 +81,7 @@ async def get_framework_explainer():
     if explainer_path.exists():
         try:
             with open(explainer_path, "r", encoding="utf-8") as f:
+                response.headers["Cache-Control"] = "public, max-age=300, stale-while-revalidate=60"
                 return json.load(f)
         except Exception as e:
             raise HTTPException(
