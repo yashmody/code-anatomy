@@ -1,11 +1,11 @@
 # Graph Report - dept-deploy  (2026-06-07)
 
 ## Corpus Check
-- 413 files · ~509,780 words
+- 413 files · ~509,868 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5925 nodes · 6664 edges · 683 communities (510 shown, 173 thin omitted)
+- 5926 nodes · 6665 edges · 685 communities (513 shown, 172 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 193 edges (avg confidence: 0.71)
 - Token cost: 0 input · 0 output
 
@@ -676,6 +676,8 @@
 - [[_COMMUNITY_Community 679|Community 679]]
 - [[_COMMUNITY_Community 681|Community 681]]
 - [[_COMMUNITY_Community 682|Community 682]]
+- [[_COMMUNITY_Community 683|Community 683]]
+- [[_COMMUNITY_Community 684|Community 684]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `origins` - 108 edges
@@ -717,7 +719,7 @@
 - **h2** — quiz_certificates_hmac, quiz_certificates_env, quiz_verification_tree [EXTRACTED 1.00]
 - **h3** — cache_three_layers, modular_monolith_core_modules, frontend_read_path_api [EXTRACTED 0.95]
 
-## Communities (683 total, 173 thin omitted)
+## Communities (685 total, 172 thin omitted)
 
 ### Community 0 - "Docusaurus Client Manifest"
 Cohesion: 0.02
@@ -772,8 +774,8 @@ Cohesion: 0.06
 Nodes (35): name, type, version, name, type, version, name, type (+27 more)
 
 ### Community 13 - "Quiz Storage Layer"
-Cohesion: 0.09
-Nodes (28): all_attempts(), attempt_by_cert_id(), attempt_by_cert_id_public(), _attempt_to_dict(), attempts_for(), cooldown_remaining_days(), generate_test_code(), _generate_unique_code() (+20 more)
+Cohesion: 0.07
+Nodes (45): Session, get_all_chapters(), get_chapter(), get_framework(), get_framework_explainer(), Content storage — course chapters + framework + framework-explainer.  The framew, save_chapter(), save_framework() (+37 more)
 
 ### Community 14 - "Feed Routes and Models"
 Cohesion: 0.11
@@ -784,8 +786,8 @@ Cohesion: 0.14
 Nodes (27): accessLinkExists(), api(), CACHED_COLLECTIONS, collectionMeta(), COLLECTIONS, DEFAULT_MODULE_BAR, __dirname, ensureFlow() (+19 more)
 
 ### Community 16 - "Core Data Models"
-Cohesion: 0.10
-Nodes (32): Attempt, datetime, Session, BASE, Attempt, CourseChapter, Framework, MediaAsset (+24 more)
+Cohesion: 0.09
+Nodes (38): Attempt, datetime, Session, BASE, Attempt, CourseChapter, Framework, MediaAsset (+30 more)
 
 ### Community 17 - "Docs: Config and Media"
 Cohesion: 0.08
@@ -1048,8 +1050,8 @@ Cohesion: 0.14
 Nodes (15): datetime, HTMLParser, _extract_items(), _fetch_text(), _html_to_text(), _parse_date(), _parse_json_array(), What's New service — the weekly Adobe content-refresh pipeline (Phase 1).  Flow (+7 more)
 
 ### Community 82 - "App Cache Backend"
-Cohesion: 0.14
-Nodes (6): _build_backend(), clear(), MemoryBackend, In-process dict + RLock. The Phase-2d behaviour, now a backend.      Expiry is e, Construct the backend, with graceful fallback to memory.      `backend` is "memo, Drop every entry. Test helper; do not call in request handlers.
+Cohesion: 0.18
+Nodes (4): clear(), MemoryBackend, In-process dict + RLock. The Phase-2d behaviour, now a backend.      Expiry is e, Drop every entry. Test helper; do not call in request handlers.
 
 ### Community 83 - "Quiz Anti-Cheat Model"
 Cohesion: 0.15
@@ -1072,8 +1074,8 @@ Cohesion: 0.05
 Nodes (46): _actor_email(), grant_role(), list_roles(), Admin role-assignment routes (04 §7.2 — the deferred Q-3 admin-roles REST).  Mou, List the capability roles a user holds.      404 if the email matches no user ro, Body for grant (POST) and revoke (DELETE).      `email` is a plain string (not p, Pull the acting admin's email for the audit trail., Grant a capability role to a user. Idempotent.      Returns `{email, role_key, g (+38 more)
 
 ### Community 88 - "App Main and Lifespan"
-Cohesion: 0.10
-Nodes (21): 0 · Scan box, 10 · Cross-references, 2.1 Tier definitions, 2.2 How the app reads each tier (post-v2), 2 · The three-tier separation, 4.1 Google OAuth — where keys live today and post-v2, 4.2 LLM keys — the seam, no calls yet, 4 · Google + LLM key integration plan (item 11) (+13 more)
+Cohesion: 0.12
+Nodes (16): 0 · Scan box, 10 · Cross-references, 2.1 Tier definitions, 2.2 How the app reads each tier (post-v2), 2 · The three-tier separation, 4.1 Google OAuth — where keys live today and post-v2, 4.2 LLM keys — the seam, no calls yet, 4 · Google + LLM key integration plan (item 11) (+8 more)
 
 ### Community 89 - "CODE-CODER Framework Nodes"
 Cohesion: 0.17
@@ -1108,24 +1110,24 @@ Cohesion: 0.19
 Nodes (15): _iso(), list_audit(), Auth-module storage — auth_audit writes + (admin-only) audit reads.  The role-me, Append an `auth_audit` row.      `actor` is the email of whoever caused the even, Read the most recent audit rows. Admin-only — gate at the route.      Filters ar, _row_to_dict(), write_audit(), AuthAudit (+7 more)
 
 ### Community 97 - "Backend App Core"
-Cohesion: 0.24
-Nodes (7): Any, get_or_compute(), _make_etag(), Application cache seam (Phase 2d backbone, Phase 3 pluggable backend).  A small, Insert or replace `key` with `value`. Returns the new entry., Deterministic short ETag for a value.      Uses repr() — good enough for the JSO, set_()
+Cohesion: 0.18
+Nodes (10): Any, CacheEntry, get(), get_or_compute(), _make_etag(), Application cache seam (Phase 2d backbone, Phase 3 pluggable backend).  A small, Insert or replace `key` with `value`. Returns the new entry., One cached value, with its ETag and a monotonic expiry. (+2 more)
 
 ### Community 98 - "Backend Scripts Upload"
-Cohesion: 0.13
-Nodes (23): Session, get_all_chapters(), get_chapter(), get_framework(), get_framework_explainer(), Content storage — course chapters + framework + framework-explainer.  The framew, save_chapter(), save_framework() (+15 more)
+Cohesion: 0.33
+Nodes (6): 7.1 Lazy-load non-current mode modules, 7.2 Preload framework + first chapter, 7.3 Conditional GET via `core/api-client.js`, 7.4 Media hints, 7.5 Bundle the framework + explainer into one round-trip (optional), 7 · Front-end performance
 
 ### Community 99 - "Core Cache Appcache"
-Cohesion: 0.18
-Nodes (6): AppCache, Thread-safe TTL cache with a pluggable backing store.      Usage (unchanged from, memory' or 'redis' — the *active* backend after fallback., Return the cached value, or run `loader` and cache the result.          `ttl` is, Drop `key` from the cache. Returns True iff a value was removed.          Called, Drop every key starting with `prefix`. Returns the count.          Useful for co
+Cohesion: 0.15
+Nodes (7): AppCache, Thread-safe TTL cache with a pluggable backing store.      Usage (unchanged from, memory' or 'redis' — the *active* backend after fallback., Return the entry if present and not expired; else None.          Does not refres, Return the cached value, or run `loader` and cache the result.          `ttl` is, Drop `key` from the cache. Returns True iff a value was removed.          Called, Drop every key starting with `prefix`. Returns the count.          Useful for co
 
 ### Community 100 - "Admin Storage"
 Cohesion: 0.20
 Nodes (9): grant(), list_roles(), Admin storage — a thin pass-through to `core.users`.  The role-assignment writer, Grant `role_key` to `email`. Returns True if a new grant was written.      Raise, Revoke `role_key` from `email`. Returns True if a grant was removed.      Raises, Return the sorted role-key set the user holds (always includes learner).      Re, True iff a user row exists for `email`., revoke() (+1 more)
 
 ### Community 101 - "Backend App Modules"
-Cohesion: 0.13
-Nodes (15): Request, UploadFile, list_techflix(), Media routes — upload (permission: media.upload), range-streaming for video, ima, Stream videos from PostgreSQL large objects supporting HTTP Range requests (scru, Serve images stored inside PostgreSQL Large Objects., Serve images stored inside PostgreSQL Large Objects., Techflix library — video episodes grouped by topic, for any signed-in user. (+7 more)
+Cohesion: 0.12
+Nodes (16): Request, UploadFile, list_techflix(), Media routes — upload (permission: media.upload), range-streaming for video, ima, Stream videos from PostgreSQL large objects supporting HTTP Range requests (scru, Serve images stored inside PostgreSQL Large Objects., Serve images stored inside PostgreSQL Large Objects., Serve images stored inside PostgreSQL Large Objects. (+8 more)
 
 ### Community 102 - "Content Architecture Category"
 Cohesion: 0.20
@@ -1183,6 +1185,10 @@ Nodes (13): Any, Any, AnthropicClient, Anthropic (Claude) provider client — im
 Cohesion: 0.18
 Nodes (10): How it fits together, Re-runs are safe (idempotent), Replace a video's bytes, Step 1 · Put the videos + a manifest in a folder, Step 2 · Write `techflix.json`, Step 3 · Run the upload script, Techflix · Video episodes from a folder, Troubleshooting (+2 more)
 
+### Community 116 - "Core Cache Cachebackend"
+Cohesion: 0.17
+Nodes (4): _build_backend(), CacheBackend, Construct the backend, with graceful fallback to memory.      `backend` is "memo, The storage primitives every backend implements.      Implementations must be th
+
 ### Community 117 - "Core Db"
 Cohesion: 0.06
 Nodes (35): 1.1 Start / stop, 1.2 Database / migrations, 1.3 Superadmin (break-glass), 1.4 Infrastructure, 1 · Scripts, 2.1 `backend/.env` — FastAPI, 2.2 `cms/.env` — Directus, 2 · Environment variables (+27 more)
@@ -1216,8 +1222,8 @@ Cohesion: 0.07
 Nodes (28): 0 · Scan box, 10 · Open gate decisions, 11 · Cross-references, 1 · Goals + audience, 2.1 Front-end — `docs/frontend/`, 2.2 Content architecture — `docs/content-architecture/`, 2.3 Database — `docs/database/`, 2.4 Deployment — `docs/deployment/` (+20 more)
 
 ### Community 125 - "Core Cache Appcache"
-Cohesion: 0.43
-Nodes (4): CacheEntry, get(), Return the entry if present and not expired; else None.          Does not refres, One cached value, with its ETag and a monotonic expiry.
+Cohesion: 0.40
+Nodes (5): 7.1 `backend/app/core/config.py` — Pydantic Settings singleton, 7.2 `backend/app/core/cms_client.py` — Tier 2 read-path, 7.3 `backend/app/modules/cms/routes.py` — webhook receiver (loopback-only), 7.4 Read-paths per tier — call-site summary, 7 · Where the values are read in code (post-v2)
 
 ### Community 126 - "Core Encryption"
 Cohesion: 0.32
@@ -1904,8 +1910,8 @@ Cohesion: 0.11
 Nodes (17): 1.1 Public route table (what a browser can reach), 1.2 Internal / loopback targets (not browser-reachable), 1.3 OAuth redirect URIs, 1.4 Front-end constants (`frontend/core/config.js`), 1.5 ASCII topology, 1.6 URL ordering / shadowing check, 1 · URL / topology map, 2.1 Phase 5b verdict (recap) (+9 more)
 
 ### Community 464 - "Community 464"
-Cohesion: 0.09
-Nodes (23): 0 · Scan box, 11 · Cross-references summary, 3.1 Recommended: mod_rewrite hashed-prefix pattern, 3.2 Alternative — small in-deploy build step (no Apache rewrite), 3 · Cache-busting for the buildless FE (§1.5 → fix), 4.1 Where: `backend/app/core/cache.py` (01-blueprint §1), 4.2 Backend choice — in-process LRU, not Redis (default), 4.3 What gets cached, with TTL and invalidation triggers (+15 more)
+Cohesion: 0.25
+Nodes (8): 0 · Scan box, 11 · Cross-references summary, 3.1 Recommended: mod_rewrite hashed-prefix pattern, 3.2 Alternative — small in-deploy build step (no Apache rewrite), 3 · Cache-busting for the buildless FE (§1.5 → fix), 5 · Quiz session persistence (§1.3 → fix, coordinates with 03 §2.3), 9 · What Phase 3b implements — ordered checklist, v2/06 — Caching & Performance
 
 ### Community 465 - "Community 465"
 Cohesion: 0.12
@@ -2619,6 +2625,10 @@ Nodes (4): 3.1 Always-on headers (HTTPS vhost), 3.2 Content Security Policy, 3.3
 Cohesion: 0.25
 Nodes (7): Commands, Content Refresh Agent (BMAD bundle), Enablement & schedule, Guardrails (non-negotiable), How it maps to the code, Layout, Use it
 
+### Community 660 - "Community 660"
+Cohesion: 0.40
+Nodes (5): 4.1 Where: `backend/app/core/cache.py` (01-blueprint §1), 4.2 Backend choice — in-process LRU, not Redis (default), 4.3 What gets cached, with TTL and invalidation triggers, 4.4 Conditional GET — ETag + `If-None-Match`, 4 · Application-layer cache — where it lives, what it does
+
 ### Community 665 - "Community 665"
 Cohesion: 0.29
 Nodes (6): Brand & voice (DEPT®), Content Refresh Governance Checklist, Publish gate, Scope & safety, Source integrity, Structure & accessibility
@@ -2671,24 +2681,28 @@ Nodes (3): list_whats_new(), What's New routes — read-only library of Adobe up
 Cohesion: 0.50
 Nodes (3): host_allowed(), Adobe source registry + egress allow-list for the content-refresh sync.  The fet, True iff `url`'s host is in the allow-list (egress / SSRF guard).
 
+### Community 683 - "Community 683"
+Cohesion: 0.50
+Nodes (4): 8.1 Performance smoke — `tests/baseline/perf/curl-smoke.sh`, 8.2 Apache mod_status + `Server-Timing`, 8.3 APM later — defer, 8 · Measuring & observability
+
 ## Knowledge Gaps
 - **3429 isolated node(s):** `version`, `configurations`, `PreToolUse`, `URLSafeTimedSerializer`, `Any` (+3424 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **173 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **172 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `get_session()` connect `Backend Scripts Upload` to `Quiz Service`, `Quiz Storage Layer`, `Feed Routes and Models`, `Community 533`, `Scripts Backfill User`, `Community 667`, `Docusaurus Routeschunknames Docs`, `Community 550`, `Community 563`, `Community 564`, `Core Users`, `Quiz Verification`, `Media Storage`, `Docusaurus Client Manifest`, `Media Service`, `Community 592`, `Community 600`, `Auth Storage`, `Scripts Seed Roles`?**
+- **Why does `get_session()` connect `Quiz Storage Layer` to `Quiz Service`, `Feed Routes and Models`, `Core Data Models`, `Community 533`, `Scripts Backfill User`, `Community 667`, `Docusaurus Routeschunknames Docs`, `Community 550`, `Community 563`, `Community 564`, `Core Users`, `Quiz Verification`, `Media Storage`, `Docusaurus Client Manifest`, `Media Service`, `Community 592`, `Community 600`, `Auth Storage`, `Scripts Seed Roles`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **Why does `assets` connect `Docusaurus Client Manifest` to `Community 585`, `Community 596`, `Community 660`, `Community 662`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`?**
+- **Why does `assets` connect `Docusaurus Client Manifest` to `Community 585`, `Community 596`, `Community 662`, `Community 684`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`, `Docusaurus Client Manifest`?**
   _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **Why does `readyz()` connect `Community 671` to `Media Storage`, `Community 579`, `Community 599`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **Are the 63 inferred relationships involving `get_session()` (e.g. with `list_audit()` and `write_audit()`) actually correct?**
   _`get_session()` has 63 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `version`, `configurations`, `PreToolUse` to the rest of the system?**
-  _3863 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3864 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Docusaurus Client Manifest` be split into smaller, more focused modules?**
   _Cohesion score 0.018518518518518517 - nodes in this community are weakly interconnected._
 - **Should `React Native Sample App` be split into smaller, more focused modules?**

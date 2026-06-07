@@ -150,6 +150,20 @@ SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_START=$SECONDS
 STEP_NUM=0
 
+# ── Capture the whole deploy run to a timestamped log ───────────────────────
+# So a failed deploy is recoverable after the fact (and shareable via
+# scripts/collect-logs.sh, which picks up deploy-*.log). Prefer /var/log/cca
+# (root); fall back to <repo>/logs. Tee keeps console output unchanged.
+if [[ -z "${DEPLOY_LOG:-}" ]]; then
+  _dlog_dir="/var/log/cca"
+  if ! mkdir -p "$_dlog_dir" 2>/dev/null; then
+    _dlog_dir="$SRC_DIR/logs"; mkdir -p "$_dlog_dir" 2>/dev/null || _dlog_dir="/tmp"
+  fi
+  DEPLOY_LOG="$_dlog_dir/deploy-$(date +%Y%m%d-%H%M%S).log"
+  exec > >(tee -a "$DEPLOY_LOG") 2>&1
+  echo "[deploy] logging this run to: $DEPLOY_LOG"
+fi
+
 # ── Auto-load deploy.env if present ─────────────────────────────────────────
 # Optional file next to this script. Any of the tunables above can be set
 # here so you don't have to pass them on the command line every run.
@@ -572,6 +586,24 @@ if ! $UPDATE_ONLY; then
         ok "$pkg          : already present"
       fi
     done
+  fi
+
+  # build tools (RHEL/CentOS) — node-gyp needs a C/C++ compiler + make to build
+  # Directus's native npm deps. Without these, `npm ci` dies with
+  # "gyp ERR! not ok" and the whole CMS step (8/12) fails. Only needed when we
+  # actually stand up Directus. (Ubuntu gets build-essential above.)
+  if [[ "$OS_FAMILY" != "debian" && "$DEPLOY_DIRECTUS" == "true" ]]; then
+    if command -v gcc &>/dev/null && command -v g++ &>/dev/null && command -v make &>/dev/null; then
+      ok "Build tools  : gcc/g++/make present (node-gyp ready)"
+    else
+      info "Installing C/C++ build toolchain (gcc gcc-c++ make) for node-gyp…"
+      if dnf install -y gcc gcc-c++ make 2>&1 | tail -3; then
+        ok "Build toolchain installed"
+      else
+        warn "Could not auto-install build tools. Directus npm build WILL fail until you run:"
+        warn "    sudo dnf install -y gcc gcc-c++ make"
+      fi
+    fi
   fi
 
   # Apache
@@ -1592,10 +1624,9 @@ if ! $UPDATE_ONLY; then
 
     # v2 paths — see docs/architecture/v2/01-blueprint.md §7
     Alias /anatomy \"${APP_HOME}/content/frozen\"
-    Alias /resources \"${APP_HOME}/content/frozen\"
-    <Directory \"${APP_HOME}/content/frozen\">
+    Alias /resources \"${APP_HOME}/resources\"
+    <Directory \"${APP_HOME}/resources\">
         Require all granted
-        DirectoryIndex anatomy-of-code-course.html
         Options -Indexes +FollowSymLinks
     </Directory>
 
@@ -1610,9 +1641,9 @@ if ! $UPDATE_ONLY; then
     # Q-13: NO 'Alias /static/' — FastAPI mounts /static/ itself; let it fall
     # through to ProxyPass so the app's CSS/JS bundles ship from uvicorn.
 
-    # /runbook → content/frozen/runbook.html (dynamic reader SPA, static file)
+    # /runbook → resources/runbook.html (dynamic reader SPA, static file)
     RewriteEngine On
-    RewriteRule ^/runbook$ /anatomy/runbook.html [L]
+    RewriteRule ^/runbook$ /resources/runbook.html [L]
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"http\"
@@ -1745,10 +1776,9 @@ ${CHAIN_LINE}
 
     # v2 paths — see docs/architecture/v2/01-blueprint.md §7
     Alias /anatomy \"${APP_HOME}/content/frozen\"
-    Alias /resources \"${APP_HOME}/content/frozen\"
-    <Directory \"${APP_HOME}/content/frozen\">
+    Alias /resources \"${APP_HOME}/resources\"
+    <Directory \"${APP_HOME}/resources\">
         Require all granted
-        DirectoryIndex anatomy-of-code-course.html
         Options -Indexes +FollowSymLinks
     </Directory>
 
@@ -1846,7 +1876,7 @@ ${CHAIN_LINE}
 
 ${CMS_LOCATION_BLOCK}
     # /runbook → content/frozen/runbook.html (dynamic reader, served as static file)
-    RewriteRule ^/runbook$ /anatomy/runbook.html [L]
+    RewriteRule ^/runbook$ /resources/runbook.html [L]
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"https\"
@@ -2045,7 +2075,7 @@ printf '%b│%b  Quiz / cert app  : %s://%s/\n'                  "$C_CYAN" "$C_R
 printf '%b│%b  SPA (Feed/Read)  : %s://%s/app/\n'              "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  Course           : %s://%s/anatomy/anatomy-of-code-course.html\n' "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  Checklist        : %s://%s/anatomy/code-coder-checklist.html\n'   "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
-printf '%b│%b  Runbook (static) : %s://%s/anatomy/architect-runbook.html\n'      "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
+printf '%b│%b  Runbook (static) : %s://%s/resources/architect-runbook.html\n'   "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  Runbook index    : %s://%s/runbook\n'                             "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  Runbook upload   : %s://%s/api/runbooks/upload  (POST .xlsx)\n'  "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 printf '%b│%b  Runbook template : %s://%s/api/runbooks/template\n'              "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"

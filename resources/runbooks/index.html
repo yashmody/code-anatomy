@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Engagement Runbooks · DEPT®</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#ffffff;--paper-2:#f6f5f1;--ink:#0a0a0a;--ink-soft:#3f3f3f;--ink-faint:#6f6f6f;
+    --rule:#e6e3dc;--card:#ffffff;--ochre:#FF4900;--ochre-deep:#cc3a00;--ochre-soft:#FFA279;
+    --serif:'Syne',serif;--sans:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  }
+  html[data-theme="dark"]{
+    --paper:#080808;--paper-2:#131211;--ink:#ffffff;--ink-soft:#cfcdc8;--ink-faint:#8a8780;
+    --rule:#2a2825;--card:#0e0d0c;--ochre:#FF4900;--ochre-deep:#FFA279;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth;scroll-padding-top:88px}
+  body{font-family:var(--sans);background:var(--paper);color:var(--ink);line-height:1.55;font-size:15px;min-height:100vh;transition:background .3s,color .3s}
+  .grain{position:fixed;inset:0;pointer-events:none;z-index:1;opacity:.5;mix-blend-mode:multiply;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.06 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+  html[data-theme="dark"] .grain{mix-blend-mode:screen;opacity:.4}
+  a{color:var(--ink);text-decoration:none}
+
+  /* Brand bar */
+  .brand-bar{position:sticky;top:0;z-index:50;background:var(--paper);border-bottom:1px solid var(--rule);display:flex;align-items:center;gap:14px;padding:14px 32px;backdrop-filter:saturate(180%) blur(8px)}
+  .brand-bar .back{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);border:1px solid var(--rule);padding:7px 12px;transition:.15s;white-space:nowrap}
+  .brand-bar .back:hover{border-color:var(--ochre);color:var(--ochre)}
+  .brand-bar img.dept-svg-logo{height:36px;width:auto;display:block;transition:filter .3s}
+  html[data-theme="dark"] .brand-bar img.dept-svg-logo{filter:invert(1)}
+  .brand-bar .tagline{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-soft);font-weight:700}
+  .brand-bar .spacer{flex:1}
+  .theme-toggle{background:transparent;border:1px solid var(--rule);padding:7px 12px;font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);cursor:pointer;display:flex;align-items:center;gap:6px;transition:.15s}
+  .theme-toggle:hover{border-color:var(--ochre);color:var(--ochre)}
+
+  main{max-width:1100px;margin:0 auto;padding:56px 32px 80px;position:relative;z-index:2}
+
+  /* Hero */
+  .hero{margin-bottom:48px;max-width:820px}
+  .breadcrumb{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px;font-weight:700}
+  .breadcrumb a{color:var(--ink-faint);transition:.15s}
+  .breadcrumb a:hover{color:var(--ochre)}
+  .breadcrumb .sep{margin:0 8px;color:var(--rule)}
+  .breadcrumb b{color:var(--ochre)}
+  h1{font-family:var(--serif);font-weight:800;font-size:64px;line-height:1;letter-spacing:-.02em;margin-bottom:20px}
+  h1 .x{color:var(--ochre)}
+  .lede{font-size:17px;color:var(--ink-soft);max-width:680px;line-height:1.55;margin-bottom:24px}
+  .meta-row{display:flex;flex-wrap:wrap;gap:24px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);padding-top:18px;border-top:1px solid var(--rule)}
+  .meta-row b{color:var(--ochre);font-weight:700;margin-right:6px}
+
+  /* Download CTA */
+  .download-bar{background:var(--paper-2);border:1px solid var(--rule);border-left:4px solid var(--ochre);padding:22px 26px;margin-bottom:48px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  .download-bar-text h3{font-family:var(--serif);font-weight:800;font-size:20px;margin-bottom:4px}
+  .download-bar-text p{font-size:13.5px;color:var(--ink-soft);line-height:1.5;max-width:560px}
+  .download-actions{display:flex;gap:10px;flex-wrap:wrap;flex-shrink:0}
+  .btn-primary{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:var(--ochre);color:#fff;border:1px solid var(--ochre);padding:10px 18px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .btn-primary:hover{background:var(--ochre-deep);border-color:var(--ochre-deep)}
+  .btn-secondary{font-family:var(--mono);font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;background:transparent;color:var(--ochre);border:1px solid var(--ochre);padding:10px 18px;transition:.15s;white-space:nowrap}
+  .btn-secondary:hover{background:var(--ochre);color:#fff}
+
+  /* Section label */
+  .section-label{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin:0 0 18px;padding-bottom:8px;border-bottom:1px solid var(--rule);display:flex;align-items:baseline;gap:12px}
+  .section-label .count{color:var(--ink-faint);font-weight:500;font-size:10px}
+  .section-label + .section-label{margin-top:48px}
+
+  /* Card grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-bottom:0}
+  .card{position:relative;background:var(--card);border:1px solid var(--rule);padding:24px 22px 22px;display:flex;flex-direction:column;gap:12px;min-height:210px;transition:border-color .15s,transform .15s}
+  a.card:hover{border-color:var(--ochre);transform:translateY(-2px)}
+  a.card:hover .card-arrow{color:var(--ochre);transform:translateX(4px)}
+  .card-status{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ochre)}
+  .card.soon .card-status{color:var(--ink-faint)}
+  .card-role{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-top:-4px}
+  .card-title{font-family:var(--serif);font-weight:800;font-size:22px;line-height:1.1;letter-spacing:-.01em;color:var(--ink)}
+  .card-title .x{color:var(--ochre)}
+  .card.soon .card-title{color:var(--ink-soft)}
+  .card-desc{font-size:13.5px;line-height:1.5;color:var(--ink-soft);flex:1}
+  .card-meta{display:flex;align-items:center;justify-content:space-between;padding-top:12px;border-top:1px solid var(--rule);font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-faint);font-weight:700}
+  .card-meta b{color:var(--ink);margin-right:4px}
+  .card-arrow{font-family:var(--mono);font-size:14px;color:var(--ink-faint);transition:.15s}
+  .card.soon{cursor:not-allowed;opacity:.62}
+  .card.soon::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(135deg,transparent 0,transparent 14px,var(--rule) 14px,var(--rule) 15px);opacity:.18;pointer-events:none}
+  .card.soon:hover{border-color:var(--rule);transform:none}
+
+  /* Dynamic runbooks callout */
+  .dynamic-callout{background:var(--card);border:1px solid var(--rule);border-top:3px solid var(--ochre);padding:22px 26px;margin-top:48px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+  .dynamic-callout h3{font-family:var(--serif);font-weight:800;font-size:20px;margin-bottom:4px}
+  .dynamic-callout p{font-size:13.5px;color:var(--ink-soft);line-height:1.5;max-width:560px}
+
+  /* Footer */
+  footer{max-width:1100px;margin:48px auto 0;padding:32px;border-top:1px solid var(--rule);font-size:12.5px;color:var(--ink-faint);line-height:1.6;position:relative;z-index:2}
+  footer b{color:var(--ink);font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;display:inline-block;margin-right:6px}
+  footer a{color:var(--ochre);font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+
+  @media (max-width:680px){
+    main{padding:36px 18px 60px}
+    h1{font-size:42px}
+    .grid{grid-template-columns:1fr}
+    .brand-bar{padding:12px 16px;gap:8px;flex-wrap:wrap}
+    .brand-bar img.dept-svg-logo{height:28px}
+    .download-bar{flex-direction:column;align-items:flex-start}
+    .dynamic-callout{flex-direction:column;align-items:flex-start}
+  }
+</style>
+</head>
+<body>
+<script src="../theme-boot.js"></script>
+<div class="grain"></div>
+
+<header class="brand-bar">
+  <a href="/app/" class="back" id="backToApp">← App</a>
+  <a href="../anatomy-of-code-course.html" class="back">← Course</a>
+  <img src="https://www.deptagency.com/wp-content/uploads/2025/10/logo-dept.svg" class="dept-svg-logo" alt="DEPT®" onerror="this.style.display='none'" />
+  <div class="tagline">Runbooks</div>
+  <div class="spacer"></div>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleAppTheme()">
+    <svg id="themeIcon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+    <span id="themeLabel">Dark Mode</span>
+  </button>
+</header>
+<script>(function(){var a=document.getElementById('backToApp');if(a&&location.port==='8080')a.href='/frontend/index.html';})();</script>
+
+<main>
+  <!-- Hero -->
+  <div class="hero">
+    <div class="breadcrumb">
+      <a href="/app/">App</a><span class="sep">›</span>
+      <a href="../anatomy-of-code-course.html">Anatomy of Code</a><span class="sep">›</span>
+      <b>Runbooks</b>
+    </div>
+    <h1>Engagement <span class="x">Runbooks</span></h1>
+    <p class="lede">Role-specific and domain-specific playbooks for greenfield and brownfield engagements. Written for the practitioner who needs to know exactly what to do in the first 90 days — and how to hand it over cleanly.</p>
+    <div class="meta-row">
+      <span><b>Audience</b> Architects · DevOps · PMs · QA · Developers</span>
+      <span><b>Format</b> Phase-by-phase · Downloadable · Uploadable</span>
+      <span><b>Source</b> DEPT® field experience</span>
+    </div>
+  </div>
+
+  <!-- Download CTA -->
+  <div class="download-bar">
+    <div class="download-bar-text">
+      <h3>Add a runbook for your team</h3>
+      <p>Download the Excel template, fill in the phases, sections and tasks, and upload it. The runbook appears here immediately after publish. Each role and domain gets its own URL.</p>
+    </div>
+    <div class="download-actions">
+      <a class="btn-primary" href="/api/runbooks/template" download="dept-runbook-template.xlsx">↓ Download template</a>
+      <a class="btn-secondary" href="/runbook">Browse all →</a>
+    </div>
+  </div>
+
+  <!-- Published runbooks (loaded from API + static architect entry) -->
+  <div id="publishedSection" style="display:none">
+    <div class="section-label">Available <span class="count" id="publishedCount">…</span></div>
+    <div class="grid" id="publishedGrid"></div>
+  </div>
+  <div id="loadingLabel" class="section-label">Loading runbooks…</div>
+
+  <!-- Coming soon (hardcoded until Directus publishes these) -->
+  <div class="section-label" id="soonLabel" style="display:none;margin-top:48px">Coming soon <span class="count" id="soonCount"></span></div>
+  <div class="grid" id="soonGrid" style="display:none">
+    <div class="card soon" aria-disabled="true">
+      <div class="card-status">○ Coming soon</div>
+      <div class="card-role">Role: Architect · Domain: Commerce</div>
+      <div class="card-title">Commerce Architect</div>
+      <div class="card-desc">Greenfield and brownfield playbooks for Adobe Commerce, Shopify Plus, and hybrid commerce builds. Covers catalogue architecture, checkout customisation, and integration patterns with AEM and CJA.</div>
+      <div class="card-meta">
+        <span><b>Drafting</b></span>
+        <span class="card-arrow">→</span>
+      </div>
+    </div>
+    <div class="card soon" aria-disabled="true">
+      <div class="card-status">○ Coming soon</div>
+      <div class="card-role">Role: Architect · Domain: Banking &amp; BFSI</div>
+      <div class="card-title">Banking &amp; BFSI Architect</div>
+      <div class="card-desc">Engagement playbook for core banking integrations, DPDP and RBI compliance posture, AEM-as-CMS for banking portals, and CJA for cross-channel analytics. Covers KYC and Aadhaar integration patterns.</div>
+      <div class="card-meta">
+        <span><b>Drafting</b></span>
+        <span class="card-arrow">→</span>
+      </div>
+    </div>
+    <div class="card soon" aria-disabled="true">
+      <div class="card-status">○ Coming soon</div>
+      <div class="card-role">Role: Project Manager</div>
+      <div class="card-title">Project Manager</div>
+      <div class="card-desc">What a PM owns in the first 90 days of a greenfield Adobe Experience Cloud engagement — stakeholder mapping, sprint cadence, risk register, and the handover checklist for when the PM changes mid-project.</div>
+      <div class="card-meta">
+        <span><b>Drafting</b></span>
+        <span class="card-arrow">→</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dynamic runbooks callout -->
+  <div class="dynamic-callout">
+    <div>
+      <h3>Dynamic runbooks</h3>
+      <p>Teams with the <code>content_author</code> role can publish runbooks instantly by uploading a filled template. Dynamic runbooks are live at <code>/runbook?slug=your-slug</code> and indexed at <a href="/runbook" style="color:var(--ochre)">/runbook</a>.</p>
+    </div>
+    <a class="btn-secondary" href="/runbook">View dynamic runbook index →</a>
+  </div>
+</main>
+
+<footer>
+  <p><b>Engagement Runbooks</b> Role-specific and domain-specific playbooks built from DEPT® field experience. Content reflects practice norms; project-specific terms always take precedence.</p>
+  <p style="margin-top:10px"><b>Maintained by</b> DEPT® · Last reviewed June 2026 · <a href="../anatomy-of-code-course.html">← Anatomy of Code</a> · <a href="../faqs/index.html">Architect's FAQs</a> · <a href="../code-coder-checklist.html">Discovery Checklist</a></p>
+</footer>
+<script>
+  // The static architect runbook is always "published" — it lives as a frozen
+  // HTML file, not in the DB. We inject it as a synthetic card so the index
+  // always has at least one published entry even before any DB upload.
+  const STATIC_RUNBOOKS = [
+    {
+      slug: "__static_architect",
+      title: "The Architect’s Runbook",
+      role: "architect",
+      domain: "generic",
+      type: "greenfield",
+      description: "Two playbooks side by side. Greenfield — starting a new engagement and setting it up so it doesn’t break in six months. Brownfield — taking over a codebase you didn’t build, and shipping without breaking it on Tuesday.",
+      _href: "../architect-runbook.html",
+      _meta: "2 Playbooks · Greenfield & Brownfield",
+    },
+  ];
+
+  const COMING_SOON = [
+    {
+      title: "Commerce Architect",
+      role: "Architect · Domain: Commerce",
+      desc: "Greenfield and brownfield playbooks for Adobe Commerce, Shopify Plus, and hybrid commerce builds. Covers catalogue architecture, checkout customisation, and integration patterns with AEM and CJA.",
+    },
+    {
+      title: "Banking & BFSI Architect",
+      role: "Architect · Domain: Banking & BFSI",
+      desc: "Engagement playbook for core banking integrations, DPDP and RBI compliance posture, AEM-as-CMS for banking portals, and CJA for cross-channel analytics. Covers KYC and Aadhaar integration patterns.",
+    },
+    {
+      title: "Project Manager",
+      role: "Role: Project Manager",
+      desc: "What a PM owns in the first 90 days of a greenfield Adobe Experience Cloud engagement — stakeholder mapping, sprint cadence, risk register, and the handover checklist for when the PM changes mid-project.",
+    },
+  ];
+
+  function esc(s) { return (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+  function renderCard(rb) {
+    const href = rb._href || `/runbook?slug=${encodeURIComponent(rb.slug)}`;
+    return `<a class="card" href="${esc(href)}">
+      <div class="card-status">● Published</div>
+      <div class="card-role">Role: ${esc(rb.role)}${rb.domain && rb.domain !== "generic" ? " · " + esc(rb.domain) : ""}</div>
+      <div class="card-title">${esc(rb.title)}</div>
+      <div class="card-desc">${esc(rb.description || "")}</div>
+      <div class="card-meta">
+        <span>${esc(rb._meta || rb.type)}</span>
+        <span class="card-arrow">→</span>
+      </div>
+    </a>`;
+  }
+
+  function renderSoonCard(item) {
+    return `<div class="card soon" aria-disabled="true">
+      <div class="card-status">○ Coming soon</div>
+      <div class="card-role">${esc(item.role)}</div>
+      <div class="card-title">${esc(item.title)}</div>
+      <div class="card-desc">${esc(item.desc)}</div>
+      <div class="card-meta"><span><b>Drafting</b></span><span class="card-arrow">→</span></div>
+    </div>`;
+  }
+
+  document.addEventListener("DOMContentLoaded", async () => {
+    const API_BASE = window.location.port === "8080" ? "http://127.0.0.1:8000" : "";
+
+    let dbRunbooks = [];
+    try {
+      const res = await fetch(`${API_BASE}/api/runbooks`);
+      if (res.ok) {
+        const data = await res.json();
+        dbRunbooks = data.runbooks || [];
+      }
+    } catch (e) {
+      console.warn("Could not load runbooks from API:", e.message);
+    }
+
+    // Merge: static first, then DB runbooks (exclude any that duplicate the
+    // static slug so a future "architect" DB entry replaces the static card).
+    const staticSlugs = new Set(STATIC_RUNBOOKS.map(r => r.slug));
+    const all = [
+      ...STATIC_RUNBOOKS,
+      ...dbRunbooks.filter(r => !staticSlugs.has(r.slug)),
+    ];
+
+    // Filter coming-soon: if a DB runbook covers a coming-soon title, remove it
+    const dbTitles = new Set(dbRunbooks.map(r => r.title.toLowerCase()));
+    const stillSoon = COMING_SOON.filter(c => !dbTitles.has(c.title.toLowerCase()));
+
+    // Render published
+    const publishedGrid = document.getElementById("publishedGrid");
+    const publishedSection = document.getElementById("publishedSection");
+    const publishedCount = document.getElementById("publishedCount");
+    const loadingLabel = document.getElementById("loadingLabel");
+
+    if (all.length) {
+      publishedGrid.innerHTML = all.map(renderCard).join("");
+      publishedCount.textContent = `${all.length} published`;
+      publishedSection.style.display = "";
+    }
+    loadingLabel.style.display = "none";
+
+    // Render coming soon
+    if (stillSoon.length) {
+      const soonLabel = document.getElementById("soonLabel");
+      const soonGrid = document.getElementById("soonGrid");
+      const soonCount = document.getElementById("soonCount");
+      soonGrid.innerHTML = stillSoon.map(renderSoonCard).join("");
+      soonCount.textContent = `${stillSoon.length} in production`;
+      soonLabel.style.display = "";
+      soonGrid.style.display = "";
+    }
+  });
+</script>
+</body>
+</html>

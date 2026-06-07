@@ -35,8 +35,8 @@
     "semantic_hash": "68aeca493e4fd8c1b7f475e19bb9b3d5"
   },
   "backend/app/core/config.py": {
-    "mtime": 1780816931.1292925,
-    "ast_hash": "314c967342c6329d16841021eebd6244",
+    "mtime": 1780822659.2869124,
+    "ast_hash": "665958ee53c4e8c1293f4eca7400cd93",
     "semantic_hash": ""
   },
   "backend/app/core/db.py": {
@@ -65,9 +65,9 @@
     "semantic_hash": ""
   },
   "backend/app/core/observability.py": {
-    "mtime": 1780736581.3099716,
-    "ast_hash": "0d3e45b62afe8f1a524241b42862009d",
-    "semantic_hash": "0d3e45b62afe8f1a524241b42862009d"
+    "mtime": 1780822689.1088834,
+    "ast_hash": "4303c30b18d74dcd1a5e1750fd0ed9b7",
+    "semantic_hash": ""
   },
   "backend/app/core/roles.py": {
     "mtime": 1780736581.3103309,
@@ -555,8 +555,8 @@
     "semantic_hash": "0d6779f7eea60f39c4d7b9b945cb26a8"
   },
   "deploy.sh": {
-    "mtime": 1780813930.0782938,
-    "ast_hash": "906ed987e67290b18881bbffb28a1620",
+    "mtime": 1780823043.09302,
+    "ast_hash": "1fd5637627a14c3ade09e54b0bf24fd5",
     "semantic_hash": ""
   },
   "docs-site/.docusaurus/@easyops-cn/docusaurus-search-local/default/__plugin.json": {
@@ -1195,8 +1195,8 @@
     "semantic_hash": "322221d89f0ac66689baa25b623e8f5a"
   },
   "start_local.sh": {
-    "mtime": 1780752401.7210102,
-    "ast_hash": "80b1f9da9ffd55674ed15587ef22e40e",
+    "mtime": 1780822763.3964016,
+    "ast_hash": "6d2d7ea450055a9b9c199c6f6049e52b",
     "semantic_hash": ""
   },
   "tests/baseline/check-frontend-imports.py": {
@@ -2090,8 +2090,8 @@
     "semantic_hash": ""
   },
   "backend/migrations/versions/0011_techflix_episodes.py": {
-    "mtime": 1780811744.3060029,
-    "ast_hash": "64eb4303c15d26cae7d3e9721c12298a",
+    "mtime": 1780821095.8519585,
+    "ast_hash": "2aaecd93f26162c6f6d923eda0fb5f62",
     "semantic_hash": ""
   },
   "backend/tests/test_techflix.py": {
@@ -2262,6 +2262,16 @@
   "prompt-library/content-refresh-agent/templates/whats-new-item-tmpl.yaml": {
     "mtime": 1780814942.771523,
     "ast_hash": "e3cb15c847eea1329b67a5d7d4f6c557",
+    "semantic_hash": ""
+  },
+  "scripts/collect-logs.sh": {
+    "mtime": 1780822990.7581396,
+    "ast_hash": "0a6e1af299904634593cf3941a56e9f5",
+    "semantic_hash": ""
+  },
+  "LOGGING.md": {
+    "mtime": 1780823090.3863611,
+    "ast_hash": "ff4ed17f4a80128dfb039b40f2041283",
     "semantic_hash": ""
   }
 }

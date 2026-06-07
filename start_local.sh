@@ -103,6 +103,11 @@ BACKEND_DIR="$ROOT_DIR/backend"
 VENV_PYTHON="$BACKEND_DIR/.venv/bin/python"
 VENV_UVICORN="$BACKEND_DIR/.venv/bin/uvicorn"
 
+# All service output goes to logs/ (not /dev/null) so failures are visible and
+# shareable. See LOGGING.md / scripts/collect-logs.sh.
+LOG_DIR="$ROOT_DIR/logs"
+mkdir -p "$LOG_DIR"
+
 # First-run DB bootstrap: prompt for the connection and write DATABASE_URL into a
 # freshly-seeded backend/.env. The maintainer emails the creds; the dev pastes
 # them here once instead of hand-editing the template. Interactive TTY only —
@@ -251,16 +256,16 @@ fi
 
 # 1. Start the Quiz Backend Server (FastAPI)
 #    Runs from backend/ so 'app.main:app' resolves against backend/app/.
-echo "🚀 [1/2] Starting Quiz Backend on port 8000..."
-"$VENV_PYTHON" -m uvicorn app.main:app --app-dir "$BACKEND_DIR" --reload --host 0.0.0.0 --port 8000 > /dev/null 2>&1 &
+echo "🚀 [1/2] Starting Quiz Backend on port 8000...   (logs → logs/backend.log)"
+"$VENV_PYTHON" -m uvicorn app.main:app --app-dir "$BACKEND_DIR" --reload --host 0.0.0.0 --port 8000 > "$LOG_DIR/backend.log" 2>&1 &
 QUIZ_PID=$!
 
 # 2. Start the Static Web App Server
 #    Serves the whole repo so you can hit /frontend/index.html for the SPA
 #    and /content/frozen/... for the monolith. /anatomy/* will 404 — see
 #    the note at the top of this file.
-echo "🚀 [2/2] Starting Static Web Server on port 8080..."
-python3 -m http.server 8080 --directory "$ROOT_DIR" > /dev/null 2>&1 &
+echo "🚀 [2/2] Starting Static Web Server on port 8080...   (logs → logs/frontend.log)"
+python3 -m http.server 8080 --directory "$ROOT_DIR" > "$LOG_DIR/frontend.log" 2>&1 &
 APP_PID=$!
 
 # 3. (Optional) Start Directus CMS  (--with-cms · Phase 4a · 05 §5.5)
@@ -277,19 +282,33 @@ if [ "$WITH_CMS" = true ]; then
     elif [ ! -d "$CMS_DIR/node_modules" ]; then
         echo "⚠️  --with-cms: cms/node_modules missing. Run 'cd cms && npm install' first. Skipping CMS."
     else
-        echo "🚀 [3/3] Starting Directus CMS on port 8055..."
-        ( cd "$CMS_DIR" && npx directus start ) > /dev/null 2>&1 &
+        echo "🚀 [3/3] Starting Directus CMS on port 8055...   (logs → logs/directus.log)"
+        ( cd "$CMS_DIR" && npx directus start ) > "$LOG_DIR/directus.log" 2>&1 &
         CMS_PID=$!
     fi
 fi
 
-# Wait briefly for process validation
-sleep 1.5
+# Readiness wait. The backend lifespan runs create_all + seeding against the
+# REMOTE dev Postgres, so startup takes ~10-20s — a bare `ps` check at 1.5s would
+# (wrongly) declare success before the app can serve. Poll /healthz until it
+# answers 200, or the process dies, up to BACKEND_READY_TIMEOUT seconds.
+BACKEND_READY_TIMEOUT="${BACKEND_READY_TIMEOUT:-45}"
+echo "   - Waiting for backend to finish startup (up to ${BACKEND_READY_TIMEOUT}s; remote DB init is slow)..."
+backend_ready=false
+for i in $(seq 1 "$BACKEND_READY_TIMEOUT"); do
+    if ! ps -p $QUIZ_PID > /dev/null; then
+        break   # process died — fall through to the failure branch
+    fi
+    if curl -fsS -m 2 -o /dev/null "http://127.0.0.1:8000/healthz" 2>/dev/null; then
+        backend_ready=true
+        break
+    fi
+    sleep 1
+done
 
-# Check if both background tasks are still alive
-if ps -p $QUIZ_PID > /dev/null && ps -p $APP_PID > /dev/null; then
+if [ "$backend_ready" = true ] && ps -p $APP_PID > /dev/null; then
     echo "====================================================="
-    echo "🟢 BOTH SERVERS RUNNING SUCCESSFULLY!  (APP_ENV=$APP_ENV)"
+    echo "🟢 SERVERS RUNNING  (APP_ENV=$APP_ENV)  ·  healthz OK"
     echo "====================================================="
     echo "👉 Main App:   http://127.0.0.1:8080/frontend/index.html"
     echo "👉 Course:     http://127.0.0.1:8080/content/frozen/anatomy-of-code-course.html"
@@ -297,22 +316,36 @@ if ps -p $QUIZ_PID > /dev/null && ps -p $APP_PID > /dev/null; then
     if [ "$WITH_CMS" = true ] && [ -n "$CMS_PID" ] && ps -p "$CMS_PID" > /dev/null; then
         echo "👉 CMS Admin:  http://localhost:8055"
     elif [ "$WITH_CMS" = true ]; then
-        echo "⚠️  CMS:        not running (see warnings above; check 'cd cms && npx directus start')"
+        echo "⚠️  CMS:        not running — see logs/directus.log"
     fi
+    echo "-----------------------------------------------------"
+    echo "📜 Logs:       logs/backend.log · logs/frontend.log$( [ "$WITH_CMS" = true ] && echo ' · logs/directus.log')"
+    echo "   Live tail:  tail -f logs/backend.log"
+    echo "   Share logs: ./scripts/collect-logs.sh   (bundles a redacted report)"
     echo "====================================================="
     echo "Press [Ctrl+C] to terminate all servers."
-
-    # Keep script alive and wait on background processes
     wait
 else
     echo "====================================================="
-    echo "🔴 FAILED TO START DEV SERVERS!"
+    echo "🔴 FAILED TO START DEV SERVERS"
     echo "====================================================="
     if ! ps -p $QUIZ_PID > /dev/null; then
-        echo "❌ Quiz Backend (Port 8000) failed to start. Check if port is in use."
+        echo "❌ Backend (8000) exited during startup. Last 30 log lines:"
+        echo "-----------------------------------------------------"
+        tail -n 30 "$LOG_DIR/backend.log" 2>/dev/null | sed 's/^/   /'
+        echo "-----------------------------------------------------"
+    elif [ "$backend_ready" != true ]; then
+        echo "❌ Backend (8000) still not healthy after ${BACKEND_READY_TIMEOUT}s. Last 30 log lines:"
+        echo "-----------------------------------------------------"
+        tail -n 30 "$LOG_DIR/backend.log" 2>/dev/null | sed 's/^/   /'
+        echo "-----------------------------------------------------"
+        echo "   (Raise the wait with: BACKEND_READY_TIMEOUT=90 ./start_local.sh)"
     fi
     if ! ps -p $APP_PID > /dev/null; then
-        echo "❌ Static Web Server (Port 8080) failed to start. Check if port is in use."
+        echo "❌ Static Web Server (8080) failed. See logs/frontend.log"
     fi
+    echo "   Full logs in:  $LOG_DIR/   ·   bundle to share: ./scripts/collect-logs.sh"
+    # Clean up whatever did start so ports are free for the next try.
+    kill $QUIZ_PID $APP_PID ${CMS_PID:-} 2>/dev/null
     exit 1
 fi

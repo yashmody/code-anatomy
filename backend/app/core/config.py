@@ -222,6 +222,12 @@ class Settings(BaseSettings):
     # ── Ops ─────────────────────────────────────────────────────────────────
     log_level: str = "INFO"
     csp_report_only: bool = True
+    # File logging: the app writes a rotating log file in addition to stdout, so
+    # there is always a file to read/share even when the launcher discards
+    # stdout. log_dir defaults to <repo>/logs; set LOG_TO_FILE=false to disable.
+    log_to_file: bool = True
+    log_dir: Path = BASE_DIR / "logs"
+    log_file: str = "backend-app.log"
 
     # ── Dev escape hatch (07 baseline) — never set outside development. ──
     keep_dev_secret: bool = False

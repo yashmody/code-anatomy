@@ -209,6 +209,42 @@ def configure_logging(level: Optional[str] = None) -> None:
     handler.addFilter(rid_filter)
     root.addHandler(handler)
 
+    # Rotating file handler — so there is ALWAYS a log file to read/share, even
+    # when the launcher sends stdout to /dev/null. Best-effort: a filesystem
+    # problem must never break boot.
+    _attach_file_handler(root, level_value, formatter, rid_filter)
+
+
+_FILE_HANDLER_TAG = "_cca_file_handler"
+
+
+def _attach_file_handler(root, level_value, formatter, rid_filter) -> None:
+    """Attach a RotatingFileHandler at settings.log_dir/log_file. Idempotent."""
+    try:
+        from app.core.config import settings
+        if not settings.log_to_file:
+            return
+        for h in root.handlers:  # idempotency across lifespan/test re-calls
+            if getattr(h, _FILE_HANDLER_TAG, False):
+                h.setLevel(level_value)
+                h.setFormatter(formatter)
+                return
+        import os
+        from logging.handlers import RotatingFileHandler
+        log_dir = str(settings.log_dir)
+        os.makedirs(log_dir, exist_ok=True)
+        fh = RotatingFileHandler(
+            os.path.join(log_dir, settings.log_file),
+            maxBytes=5 * 1024 * 1024, backupCount=5, encoding="utf-8",
+        )
+        setattr(fh, _FILE_HANDLER_TAG, True)
+        fh.setLevel(level_value)
+        fh.setFormatter(formatter)
+        fh.addFilter(rid_filter)
+        root.addHandler(fh)
+    except Exception as exc:  # noqa: BLE001 — logging setup must never break boot
+        logging.getLogger("app.observability").warning("file logging disabled: %s", exc)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Wiring

@@ -55,9 +55,9 @@ export const SECTION_FILES = [
 
 // CONTENT_BASE — base path for resource pages (FAQs, Checklist, Runbooks).
 // /resources/ is the canonical URL in both local dev and production.
-// Local dev: Python static server on :8080 serves /resources/ via a symlink
-//   at the repo root: resources -> content/frozen
-// Production: Apache alias  Alias /resources/ → content/frozen/
+// Served from the top-level resources/ directory (real directory, not a symlink).
+// Local dev:  http://127.0.0.1:8080/resources/...
+// Production: Apache  Alias /resources → ${APP_HOME}/resources
 export const CONTENT_BASE = '/resources';
 
 // localStorage keys. One file owns these so renames don't drop a user's

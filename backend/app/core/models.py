@@ -12,7 +12,7 @@ import json
 from datetime import datetime
 from sqlalchemy import (
     Boolean, CheckConstraint, Column, DateTime, Float, ForeignKey, Index, Integer,
-    PrimaryKeyConstraint, String, Text, BigInteger, TypeDecorator, TEXT
+    PrimaryKeyConstraint, String, Text, BigInteger, TypeDecorator, TEXT, UniqueConstraint
 )
 from sqlalchemy.orm import relationship
 
