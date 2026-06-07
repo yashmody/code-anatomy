@@ -1592,6 +1592,7 @@ if ! $UPDATE_ONLY; then
 
     # v2 paths — see docs/architecture/v2/01-blueprint.md §7
     Alias /anatomy \"${APP_HOME}/content/frozen\"
+    Alias /resources \"${APP_HOME}/content/frozen\"
     <Directory \"${APP_HOME}/content/frozen\">
         Require all granted
         DirectoryIndex anatomy-of-code-course.html
@@ -1615,8 +1616,9 @@ if ! $UPDATE_ONLY; then
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"http\"
-    ProxyPass        /anatomy !
-    ProxyPass        /app     !
+    ProxyPass        /anatomy   !
+    ProxyPass        /resources !
+    ProxyPass        /app       !
     ProxyPass        /runbook !
     ProxyPass        /  http://127.0.0.1:${QUIZ_PORT}/
     ProxyPassReverse /  http://127.0.0.1:${QUIZ_PORT}/
@@ -1743,6 +1745,7 @@ ${CHAIN_LINE}
 
     # v2 paths — see docs/architecture/v2/01-blueprint.md §7
     Alias /anatomy \"${APP_HOME}/content/frozen\"
+    Alias /resources \"${APP_HOME}/content/frozen\"
     <Directory \"${APP_HOME}/content/frozen\">
         Require all granted
         DirectoryIndex anatomy-of-code-course.html
@@ -1777,12 +1780,16 @@ ${CHAIN_LINE}
     #</LocationMatch>
 
     # Frozen monolith + runbooks/FAQs: changes rarely, 1-day window + ETag.
+    # /resources/ is an alias for content/frozen — same policy as /anatomy/.
     <Location \"/anatomy/\">
         Header always set Cache-Control \"public, max-age=86400, must-revalidate\"
         # COURSE CSP profile — adds media-src 'self' for the monolith's <video>
         # tags (C-67). Overrides the vhost-level DEFAULT profile above for this
         # path; 'always set' replaces, so no duplicate header ships.
         Header always set ${CSP_HEADER} \"${CSP_COURSE}\"
+    </Location>
+    <Location \"/resources/\">
+        Header always set Cache-Control \"public, max-age=86400, must-revalidate\"
     </Location>
 
     # Dynamic runbook reader — re-validates each load (content changes on upload).
@@ -1843,9 +1850,10 @@ ${CMS_LOCATION_BLOCK}
 
     ProxyPreserveHost On
     RequestHeader set X-Forwarded-Proto \"https\"
-    ProxyPass        /anatomy !
-    ProxyPass        /app     !
-    ProxyPass        /runbook !
+    ProxyPass        /anatomy   !
+    ProxyPass        /resources !
+    ProxyPass        /app       !
+    ProxyPass        /runbook   !
 ${CMS_PROXY_BLOCK}    ProxyPass        /  http://127.0.0.1:${QUIZ_PORT}/
     ProxyPassReverse /  http://127.0.0.1:${QUIZ_PORT}/
 
