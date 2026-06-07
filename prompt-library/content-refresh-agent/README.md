@@ -17,7 +17,9 @@ content-refresh-agent/
 │   ├── weekly-adobe-sync.md                           # *run-sync workflow
 │   └── rollback-chapter.md                            # *rollback workflow
 ├── checklists/content-refresh-governance-checklist.md # the publish gate
-├── data/adobe-sources.md                              # source allow-list + KB
+├── data/
+│   ├── adobe-sources.md                               # source allow-list + KB
+│   └── refresh-config.yaml                            # enablement + Quartz schedule
 └── templates/whats-new-item-tmpl.yaml                 # row + auto-block shape
 ```
 
@@ -35,7 +37,28 @@ persona, commands, and guardrails inline.
 ### Commands
 
 `*help` · `*doctor` · `*run-sync` · `*fetch` · `*summarise` · `*whats-new` ·
-`*refresh-course` · `*rollback` · `*status` · `*report` · `*configure` · `*exit`
+`*refresh-course` · `*rollback` · `*status` · `*report` · `*enable` · `*disable` ·
+`*schedule` · `*configure` · `*exit`
+
+## Enablement & schedule
+
+The agent runs only when switched on. Both the on/off state and the cadence live
+in `data/refresh-config.yaml`:
+
+```yaml
+enablement:
+  enabled: false                # master switch — flip to true to activate
+  schedule: "0 0 9 ? * MON *"   # Quartz cron — every Monday at 09:00 (default)
+  timezone: "Asia/Kolkata"      # IST
+```
+
+- **Quartz cron** (not Unix): `sec min hour day-of-month month day-of-week [year]`.
+  The default `0 0 9 ? * MON *` = every Monday 09:00. Unix-cron equivalent for a
+  VM crontab is `0 9 * * 1`.
+- `*enable` / `*disable` flip the switch; `*schedule` shows or sets the Quartz
+  expression (validated, with plain-English + Unix-cron echo).
+- When `enabled: false`, scheduled runs are skipped and a manual `*run-sync` is
+  refused unless explicitly forced.
 
 ## Guardrails (non-negotiable)
 
@@ -51,6 +74,7 @@ persona, commands, and guardrails inline.
 
 | Agent concept | Backend |
 |---|---|
+| Enablement + Quartz schedule | `content_refresh_enabled` / `content_refresh_cron` / `content_refresh_tz` in `config.py`; installer translates Quartz → the VM crontab line |
 | `*run-sync` task | `backend/scripts/sync_adobe_updates.py` (cron: `infra/cron/adobe-sync.sh`) |
 | Summaries | `config.llm_provider=anthropic` + `llm_api_key` |
 | What's New | `whats_new_items` table + `GET /api/whatsnew` + SPA tab |
