@@ -7,6 +7,7 @@ import { renderBlock } from '../../shared/registry.js';
 import { renderScanBox } from '../../shared/render/chapter.js';
 import { runMermaid } from '../../shared/render/diagram.js';
 import { esc } from '../../shared/dom.js';
+import { MEDIA } from '../../core/config.js';
 import {
   renderMasthead, renderPartBanner, renderCodeOuter, renderNodeBlock,
   renderCoderInner, renderCoderWrapper, renderNest, renderReview, renderWatch
@@ -15,10 +16,9 @@ import {
 // Block types that render their own heading — don't repeat the sub-section title above them.
 const SELF_HEADED = new Set(['chapter-open', 'heading', 'architects-review']);
 
-// CODE-CODER explainer — a hero player at the very top of the Manual. The MP4 ships in
-// the repo's /media folder, served from the repo root, so it is one level up from /app.
-// The space in the filename is percent-encoded so the URL is valid.
-const MANUAL_VIDEO_SRC = '../media/Anatomy%20of%20Code.mp4';
+// CODE-CODER explainer — streamed from the DB via the /media/video/explainer slug.
+// The slug resolves to the active media_assets row server-side; no UUID in the FE.
+const MANUAL_VIDEO_SRC = MEDIA.explainer;
 const MANUAL_HERO_DISMISS_KEY = 'anatomy-manual-hero-dismissed';
 const MANUAL_HERO =
   `<section class="manual-hero" aria-label="Explainer video">` +

@@ -274,7 +274,7 @@ else
   APACHE_CONF_DIR="/etc/httpd"
   APACHE_SITE_FILE="/etc/httpd/conf.d/${SERVICE_NAME}.conf"
   APACHE_LOG_DIR="/var/log/httpd"
-  APACHE_TEST="httpd -t"
+  APACHE_TEST="/usr/sbin/httpd -t"
   CERT_FILE="${CERT_FILE:-/etc/pki/tls/certs/${DOMAIN}.crt}"
   KEY_FILE="${KEY_FILE:-/etc/pki/tls/private/${DOMAIN}.key}"
   info "OS family : RHEL / CentOS"
@@ -1044,14 +1044,19 @@ if [[ "$DB_MODE" == "local" ]]; then
   # Apply as the postgres superuser via pg_exec (auth path we already verified).
   # This is more robust than connecting as codecoder over TCP — no password
   # mismatch is possible, and pgcrypto/hstore extensions require superuser.
-  info "Applying deploy_schema.sql …"
-  SCHEMA_TMP="/tmp/deploy_schema_$$.sql"
-  # Copy schema to a path the postgres user can read (runuser drops privs)
-  cp "$QUIZ_DIR/deploy_schema.sql" "$SCHEMA_TMP"
-  chmod 644 "$SCHEMA_TMP"
-  pg_exec "psql -d ${DB_NAME} -f ${SCHEMA_TMP}" \
-    2>&1 | grep -v '^$' | while read -r line; do info "  pg: $line"; done
-  rm -f "$SCHEMA_TMP"
+  # deploy_schema.sql is the legacy v1 DDL path. v2 uses Alembic migrations
+  # (run separately via `alembic upgrade head`). Skip gracefully if absent.
+  if [[ -f "$QUIZ_DIR/deploy_schema.sql" ]]; then
+    info "Applying deploy_schema.sql …"
+    SCHEMA_TMP="/tmp/deploy_schema_$$.sql"
+    cp "$QUIZ_DIR/deploy_schema.sql" "$SCHEMA_TMP"
+    chmod 644 "$SCHEMA_TMP"
+    pg_exec "psql -d ${DB_NAME} -f ${SCHEMA_TMP}" \
+      2>&1 | grep -v '^$' | while read -r line; do info "  pg: $line"; done
+    rm -f "$SCHEMA_TMP"
+  else
+    info "deploy_schema.sql not found — skipping legacy DDL (v2 uses Alembic migrations)."
+  fi
 
   # Grant table privileges to the application role so the app can read/write
   # everything created by the postgres superuser.
@@ -1224,8 +1229,9 @@ LockPersonality=true
 # Allow the broad service syscall set. Deliberately NOT MemoryDenyWriteExecute
 # (Pillow/ffprobe need W^X off) and NOT the aggressive ~@resources deny-list —
 # both are deferred to a Phase 3c 24h soak to avoid media-pipeline regressions
-# (C-64).
-SystemCallFilter=@system-service
+# (C-64). SystemCallFilter disabled: native Python extensions (Pillow/ffprobe)
+# require syscalls outside @system-service and cause SIGSYS crashes.
+#SystemCallFilter=@system-service
 
 [Install]
 WantedBy=multi-user.target
@@ -1360,20 +1366,29 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
       if [[ "$DB_MODE" == "external" ]]; then
         env_set "$CMS_DIR/.env" DB_HOST   "$DB_HOST"
         env_set "$CMS_DIR/.env" DB_PORT   "$DB_PORT"
-        # TLS to the remote instance (matches the app's sslmode). For
-        # sslmode=require WITHOUT a provisioned CA, node-postgres cannot verify
-        # the chain, so reject-unauthorized must be false (documented in
-        # cms/.env.example). For verify-full, set DB_SSL__CA + reject=true by hand.
-        env_set "$CMS_DIR/.env" DB_SSL    "true"
-        if [[ "$DB_SSLMODE" == "verify-full" || "$DB_SSLMODE" == "verify-ca" ]]; then
+        # TLS: match the app's sslmode. disable → SSL off entirely; require/verify
+        # → SSL on (node-postgres). For verify-full/ca set DB_SSL__CA by hand.
+        if [[ "$DB_SSLMODE" == "disable" ]]; then
+          env_set "$CMS_DIR/.env" DB_SSL                     "false"
+          env_set "$CMS_DIR/.env" DB_SSL__REJECT_UNAUTHORIZED "false"
+          env_set "$CMS_DIR/.env" PGSSLMODE                  "disable"
+          info "Directus DB_SSL=false (sslmode=disable — Postgres has no SSL)."
+        elif [[ "$DB_SSLMODE" == "verify-full" || "$DB_SSLMODE" == "verify-ca" ]]; then
+          env_set "$CMS_DIR/.env" DB_SSL    "true"
           info "Directus DB_SSL=true (sslmode=${DB_SSLMODE}) — set DB_SSL__CA + DB_SSL__REJECT_UNAUTHORIZED=true in cms/.env to validate the server cert."
         else
+          env_set "$CMS_DIR/.env" DB_SSL                     "true"
           env_set "$CMS_DIR/.env" DB_SSL__REJECT_UNAUTHORIZED "false"
           info "Directus DB_SSL=true with DB_SSL__REJECT_UNAUTHORIZED=false (sslmode=${DB_SSLMODE}: encrypt without CA verification)."
         fi
       else
-        env_set "$CMS_DIR/.env" DB_HOST   "127.0.0.1"
-        env_set "$CMS_DIR/.env" DB_PORT   "5432"
+        # Local Postgres (loopback) — no SSL needed.
+        env_set "$CMS_DIR/.env" DB_HOST                    "127.0.0.1"
+        env_set "$CMS_DIR/.env" DB_PORT                    "5432"
+        env_set "$CMS_DIR/.env" DB_SSL                     "false"
+        env_set "$CMS_DIR/.env" DB_SSL__REJECT_UNAUTHORIZED "false"
+        env_set "$CMS_DIR/.env" PGSSLMODE                  "disable"
+        info "Directus DB_SSL=false (local Postgres, no SSL required)."
       fi
       env_set "$CMS_DIR/.env" DB_DATABASE "$DB_NAME"
       env_set "$CMS_DIR/.env" DB_USER     "$CMS_DB_USER"
@@ -1431,7 +1446,7 @@ if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
       fi
 
       mkdir -p "$CMS_DIR/uploads" "$CMS_DIR/.directus"
-      chown -R "$CMS_USER:$CMS_USER" "$CMS_DIR/uploads" "$CMS_DIR/.directus" "$CMS_DIR/.env"
+      chown -R "$CMS_USER:$CMS_USER" "$CMS_DIR"
       chmod 600 "$CMS_DIR/.env"
 
       # ── (e) npm install + Directus bootstrap (first deploy only) ────────────
@@ -1513,8 +1528,10 @@ RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
 RestrictNamespaces=true
 LockPersonality=true
 # Deliberately NOT MemoryDenyWriteExecute (the Node/V8 JIT needs W^X off),
-# matching the cca-quiz unit's rationale (C-64).
-SystemCallFilter=@system-service
+# matching the cca-quiz unit's rationale (C-64). SystemCallFilter disabled:
+# isolated-vm and other native Node modules require syscalls outside
+# @system-service and cause SIGSYS (signal 31) crashes.
+#SystemCallFilter=@system-service
 
 [Install]
 WantedBy=multi-user.target
@@ -1908,10 +1925,10 @@ ${CMS_PROXY_BLOCK}    ProxyPass        /  http://127.0.0.1:${QUIZ_PORT}/
   fi
 
   info "Validating Apache config ($APACHE_TEST) …"
-  if "$APACHE_TEST" 2>&1 | grep -q "Syntax OK"; then
+  if $APACHE_TEST 2>&1 | grep -q "Syntax OK"; then
     ok "Apache config syntax OK"
   else
-    "$APACHE_TEST" 2>&1 | while read -r line; do warn "  $line"; done
+    $APACHE_TEST 2>&1 | while read -r line; do warn "  $line"; done
     die "Apache config has errors — see above."
   fi
 
