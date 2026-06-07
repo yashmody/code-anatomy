@@ -1,0 +1,27 @@
+# ============================================================================
+# DEPT(R) Anatomy of Code - logrotate policy for deploy / ops logs
+# ----------------------------------------------------------------------------
+# deploy.sh installs this to /etc/logrotate.d/cca (see deploy.sh, "Log
+# rotation" block). It rotates the timestamped per-run logs and JSON
+# checkpoint markers that deploy.sh writes under /var/log/cca. Without this,
+# that directory grows without bound on every deploy.
+#
+# SCOPE: only /var/log/cca. The FastAPI app's own log
+# (backend/logs/backend-app.log) is rotated IN-PROCESS by Python's
+# RotatingFileHandler (see backend/app/core/observability.py). Do NOT add it
+# here - two rotators on one file fight and lose lines.
+#
+# Each deploy run writes a uniquely-named file (deploy-<ts>.log), so retention
+# is age-based: compress yesterday's runs, delete anything older than 30 days.
+# ============================================================================
+/var/log/cca/*.log {
+    daily
+    missingok
+    notifempty
+    rotate 30
+    maxage 30
+    compress
+    delaycompress
+    nocreate
+    su root root
+}
