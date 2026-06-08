@@ -38,6 +38,21 @@ elif "postgresql" in config.DATABASE_URL:
     _engine_kwargs["max_overflow"] = config.settings.db_max_overflow
     _engine_kwargs["pool_pre_ping"] = True
     _engine_kwargs["pool_recycle"] = 1800
+    # Fail fast on a dead/idle-killed connection instead of hanging on it.
+    # pool_pre_ping alone isn't enough: if a pooled connection's TCP socket dies
+    # silently (laptop sleep, NAT/proxy idle-kill, network blip), the validation
+    # query itself stalls on the dead socket for the OS TCP timeout (tens of
+    # seconds → the "everything hangs then recovers" symptom). TCP keepalives let
+    # the kernel probe idle connections and mark a dropped peer dead *before* the
+    # next request arrives, so pre_ping detects it instantly and the pool
+    # reconnects; connect_timeout bounds that reconnect. (libpq params via psycopg2.)
+    _engine_kwargs["connect_args"] = {
+        "connect_timeout": 10,
+        "keepalives": 1,
+        "keepalives_idle": 30,
+        "keepalives_interval": 10,
+        "keepalives_count": 3,
+    }
 
 engine = create_engine(config.DATABASE_URL, **_engine_kwargs)
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
