@@ -19,8 +19,9 @@
 
 import { esc } from '../../shared/dom.js';
 import { API_BASE } from '../../core/config.js';
+import { apiFetch } from '../../core/api.js';
 
-const TECHFLIX_URL = `${API_BASE}/api/media/techflix`;
+const TECHFLIX_URL = '/api/media/techflix';
 
 // Whole-second duration -> "M:SS" (e.g. 425 -> "7:05"). Empty when unknown
 // (FFprobe was unavailable at upload time).
@@ -108,9 +109,8 @@ export async function renderTechflix(mount) {
 
   let data;
   try {
-    const res = await fetch(TECHFLIX_URL, {
+    const res = await apiFetch(TECHFLIX_URL, {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
     });
     if (res.status === 401) {
       mount.innerHTML =

@@ -2,6 +2,7 @@
 // Upgraded to connect directly to the FastAPI PostgreSQL backend.
 
 import { API_BASE } from '../../core/config.js';
+import { apiFetch } from '../../core/api.js';
 
 export const GOOGLE_CLIENT_ID = '';
 export const ALLOWED_DOMAIN = 'deptagency.com';
@@ -32,7 +33,7 @@ export function loadGis() {
 // Global initialization function to fetch current session on startup
 export async function initializeAuth() {
   try {
-    const res = await fetch(`${API_BASE}/auth/me`);
+    const res = await apiFetch('/auth/me');
     if (res.ok) {
       activeSession = await res.json();
     } else {
@@ -60,7 +61,7 @@ export async function signInWithEmail(email) {
   const formData = new URLSearchParams();
   formData.append('email', value);
 
-  const res = await fetch(`${API_BASE}/login/dev`, {
+  const res = await apiFetch('/login/dev', {
     method: 'POST',
     body: formData,
     headers: {
@@ -84,7 +85,7 @@ export async function signInDevMock() {
 export async function signOut() {
   activeSession = null;
   try {
-    await fetch(`${API_BASE}/logout`);
+    await apiFetch('/logout');
   } catch (e) {
     console.warn('Signout request failed', e);
   }

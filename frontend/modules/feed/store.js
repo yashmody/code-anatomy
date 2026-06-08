@@ -2,7 +2,7 @@
 // Upgraded to connect directly to the FastAPI PostgreSQL backend.
 
 import { validateFeedItem } from './validate.js';
-import { API_BASE } from '../../core/config.js';
+import { apiFetch } from '../../core/api.js';
 
 export const FLAG_THRESHOLD = 1;
 
@@ -30,7 +30,7 @@ const CATEGORY_RINGS = ['code', 'coder'];
 async function buildCategories() {
   if (!_categoriesPromise) {
     _categoriesPromise = (async () => {
-      const res = await fetch(`${API_BASE}/api/course/framework`);
+      const res = await apiFetch('/api/course/framework');
       if (!res.ok) throw new Error('Failed to fetch framework from server');
       const fw = await res.json();
       const cats = [];
@@ -61,7 +61,7 @@ function engagementScore(post) {
 export async function listPosts(filter = {}) {
   const { categories, tags, since, includeFlagged = true } = filter || {};
   
-  const res = await fetch(`${API_BASE}/api/feed`);
+  const res = await apiFetch('/api/feed');
   if (!res.ok) throw new Error('Failed to fetch feed from server');
   const data = await res.json();
   const allPosts = data.feed || [];
@@ -110,7 +110,7 @@ export async function listPosts(filter = {}) {
 }
 
 export async function getPost(id) {
-  const res = await fetch(`${API_BASE}/api/feed`);
+  const res = await apiFetch('/api/feed');
   if (!res.ok) return null;
   const data = await res.json();
   const allPosts = data.feed || [];
@@ -121,7 +121,7 @@ export async function createPost(item) {
   const v = await validateFeedItem(item);
   if (!v.ok) throw new Error('Invalid feed item: ' + v.errors.map((e) => e.message).join('; '));
 
-  const res = await fetch(`${API_BASE}/api/feed`, {
+  const res = await apiFetch('/api/feed', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -138,7 +138,7 @@ export async function createPost(item) {
 }
 
 export async function flagPost(id) {
-  const res = await fetch(`${API_BASE}/api/feed/flag`, {
+  const res = await apiFetch('/api/feed/flag', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -173,8 +173,8 @@ export async function uploadFeedVideo(file) {
   const fd = new FormData();
   fd.append('file', file);
   fd.append('surface', 'feed');
-  const res = await fetch(`${API_BASE}/api/media/upload`, {
-    method: 'POST', body: fd, credentials: 'include',
+  const res = await apiFetch('/api/media/upload', {
+    method: 'POST', body: fd,
   });
   if (!res.ok) {
     let msg = `Upload failed (${res.status})`;

@@ -9,9 +9,9 @@
 // DB values, never authored HTML.
 
 import { esc } from '../../shared/dom.js';
-import { API_BASE } from '../../core/config.js';
+import { apiFetch } from '../../core/api.js';
 
-const WHATSNEW_URL = `${API_BASE}/api/whatsnew`;
+const WHATSNEW_URL = '/api/whatsnew';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -56,9 +56,8 @@ export async function renderWhatsNew(mount) {
 
   let data;
   try {
-    const res = await fetch(WHATSNEW_URL, {
+    const res = await apiFetch(WHATSNEW_URL, {
       headers: { Accept: 'application/json' },
-      credentials: 'include',
     });
     if (res.status === 401) {
       mount.innerHTML =
