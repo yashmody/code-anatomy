@@ -207,6 +207,23 @@ class Settings(BaseSettings):
     # override can supersede it per-feature later.
     llm_model: str = "claude-haiku-4-5-20251001"
 
+    # ── Content source (ARCH-2 flip) ─────────────────────────────────────────
+    # Controls where the four course read endpoints resolve their data from.
+    #
+    # "files"  (default) — serve straight from the versioned JSON tree at
+    #           content/source/course/. This is the ARCH-2 target state.
+    # "db"     — retain the legacy Postgres path via storage.py. Keep this
+    #           path alive for instant rollback until ARCH-4 drops the tables.
+    #
+    # The DB path is NOT removed in this phase; both are maintained. When
+    # rolling back, set COURSE_SOURCE=db and restart — no migration required.
+    #
+    # NOTE: the Apache static-file alias that makes content/source/course/
+    # directly reachable as a static URL has NOT been hardened against world-
+    # read in this phase (ARCH-2 scope). That is a devops follow-on ticket
+    # (harden Apache alias so only /api/* can read those files, not direct HTTP).
+    course_source: Literal["files", "db"] = "files"
+
     # ── Content refresh (Adobe What's New sync) ─────────────────────────────
     # Master switch + schedule for the weekly Adobe-updates pipeline. Ships OFF;
     # nothing runs until content_refresh_enabled=true. The schedule is a QUARTZ

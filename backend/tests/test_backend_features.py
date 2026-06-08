@@ -215,7 +215,16 @@ def test_quiz_repeat_exclusion_and_fallback(monkeypatch):
 # ---------- Course Content & Session Status Endpoint Tests ----------
 
 def test_course_endpoints(monkeypatch):
-    """Test that course endpoints and user profile endpoints return expected data."""
+    """Test course endpoints via the DB path (COURSE_SOURCE=db) with mocked storage.
+
+    Forces COURSE_SOURCE=db so the route delegates to content_storage, which this
+    test patches with deterministic mocks. This keeps the DB-rollback path fully
+    exercised by the test suite regardless of the ARCH-2 default.
+    """
+    # Force COURSE_SOURCE=db so content_storage mocks are used (not file_loaders).
+    from app.core import config as app_config
+    monkeypatch.setattr(app_config.settings, "course_source", "db")
+
     mock_framework_data = {"rings": [{"id": "code", "name": "code letters", "letters": [{"id": "code.c", "letter": "C"}]}]}
     mock_chapter_data = {"filename": "code-c.json", "ring": "code", "title": "C · Content", "content": {"title": "C · Content", "sections": []}}
 
@@ -276,3 +285,145 @@ def test_course_endpoints(monkeypatch):
     assert me_data["roles"] == ["learner"]             # capability roles from roles_for
     assert "permissions" in me_data                     # derived from roles via PERMISSION_GRANTS
     assert me_data["initials"] == "TU"
+
+
+# ---------- ARCH-2: file-served course content tests ----------
+
+def test_course_endpoints_files_path(monkeypatch):
+    """Test course endpoints via the file path (COURSE_SOURCE=files, the ARCH-2 default).
+
+    Reads from the real on-disk content/source/course/ tree (no mocks for
+    file_loaders) to prove the routes work end-to-end with actual files.
+    Verifies:
+      - /api/course/framework returns a dict with a "rings" list
+      - /api/course/chapters returns all 31 published chapters with the
+        correct response shape expected by fetchSectionFiles (ARCH-1)
+      - /api/course/chapters/{filename} returns the full chapter dict for a
+        real chapter, with the content key unwrapped (same shape as before ARCH-2)
+      - /api/course/framework-explainer returns a non-empty dict
+      - A non-existent chapter filename returns 404
+    """
+    # Ensure COURSE_SOURCE=files (the default, but be explicit for clarity).
+    from app.core import config as app_config
+    monkeypatch.setattr(app_config.settings, "course_source", "files")
+
+    # 1. Framework
+    res_fw = client.get("/api/course/framework")
+    assert res_fw.status_code == 200
+    fw_data = res_fw.json()
+    assert "rings" in fw_data
+    assert isinstance(fw_data["rings"], list)
+    assert len(fw_data["rings"]) > 0
+
+    # 2. Chapter list — the load-bearing fetchSectionFiles contract
+    res_chaps = client.get("/api/course/chapters")
+    assert res_chaps.status_code == 200
+    chaps_data = res_chaps.json()
+    # Top-level key must be "chapters"
+    assert "chapters" in chaps_data
+    chapters = chaps_data["chapters"]
+    # All 31 currently-published chapters must be returned
+    assert len(chapters) == 31, f"expected 31 chapters, got {len(chapters)}"
+    # Every chapter entry must carry the three fields the SPA reads
+    for ch in chapters:
+        assert "filename" in ch, f"missing 'filename' key in {ch}"
+        assert "ring" in ch,     f"missing 'ring' key in {ch}"
+        assert "title" in ch,    f"missing 'title' key in {ch}"
+    # filenames must be bare .json names (no path component)
+    filenames = {ch["filename"] for ch in chapters}
+    assert "anatomy-m00.json" in filenames
+    assert "code-c.json" in filenames
+    assert "adobe-aa.json" in filenames
+
+    # 3. Single chapter — response is the raw chapter dict (content unwrapped)
+    res_ch = client.get("/api/course/chapters/anatomy-m00.json")
+    assert res_ch.status_code == 200
+    ch_data = res_ch.json()
+    # The chapter JSON itself is returned directly (not wrapped in an envelope)
+    assert ch_data.get("frameworkAddress") == "anatomy.m00"
+    assert ch_data.get("title") == "The Mental Model"
+    assert "sections" in ch_data
+
+    # 4. Framework-explainer
+    res_expl = client.get("/api/course/framework-explainer")
+    assert res_expl.status_code == 200
+    expl_data = res_expl.json()
+    assert isinstance(expl_data, (dict, list))  # it is a large dict; just check non-empty
+    assert expl_data  # truthy — not null/empty
+
+    # 5. Missing chapter → 404
+    res_missing = client.get("/api/course/chapters/does-not-exist.json")
+    assert res_missing.status_code == 404
+
+    # 6. Ring derivation is correct for a sample of chapters
+    ring_map = {ch["filename"]: ch["ring"] for ch in chapters}
+    assert ring_map["anatomy-m00.json"] == "anatomy"
+    assert ring_map["code-c.json"] == "code"
+    assert ring_map["coder-r.json"] == "coder"
+    assert ring_map["adobe-aa.json"] == "adobe"
+    assert ring_map["ai-bmad.json"] == "ai"
+
+
+def test_status_filter_excludes_draft_and_archived(monkeypatch, tmp_path):
+    """Draft and archived chapters are invisible to the API (COURSE_SOURCE=files).
+
+    Writes two synthetic chapter files — one draft, one archived — into a
+    temporary sections directory, then patches the file_loaders._SECTIONS_DIR
+    constant so the loaders read from that tmp dir.  Asserts that neither
+    chapter appears in the list or is fetchable by name.
+    """
+    import json as _json
+    from app.core import config as app_config
+    from app.modules.content import file_loaders
+
+    monkeypatch.setattr(app_config.settings, "course_source", "files")
+
+    # Build a minimal tmp sections directory with three chapters:
+    #   published_ch.json   — should be visible
+    #   draft_ch.json       — must be hidden
+    #   archived_ch.json    — must be hidden
+    published = {
+        "frameworkAddress": "code.c",
+        "title": "Published Chapter",
+        "status": "published",
+        "sections": [{"id": "code.c.test", "blocks": [{"type": "prose", "html": "hi"}]}],
+    }
+    draft = {
+        "frameworkAddress": "code.o",
+        "title": "Draft Chapter",
+        "status": "draft",
+        "sections": [{"id": "code.o.test", "blocks": [{"type": "prose", "html": "hi"}]}],
+    }
+    archived = {
+        "frameworkAddress": "code.d",
+        "title": "Archived Chapter",
+        "status": "archived",
+        "sections": [{"id": "code.d.test", "blocks": [{"type": "prose", "html": "hi"}]}],
+    }
+    (tmp_path / "published_ch.json").write_text(_json.dumps(published), encoding="utf-8")
+    (tmp_path / "draft_ch.json").write_text(_json.dumps(draft), encoding="utf-8")
+    (tmp_path / "archived_ch.json").write_text(_json.dumps(archived), encoding="utf-8")
+
+    # Redirect the file_loaders to the tmp directory.
+    monkeypatch.setattr(file_loaders, "_SECTIONS_DIR", tmp_path)
+
+    # Chapter list: only the published chapter appears.
+    res_list = client.get("/api/course/chapters")
+    assert res_list.status_code == 200
+    filenames = [ch["filename"] for ch in res_list.json()["chapters"]]
+    assert "published_ch.json" in filenames
+    assert "draft_ch.json" not in filenames,    "draft chapter must not be in the public list"
+    assert "archived_ch.json" not in filenames, "archived chapter must not be in the public list"
+    assert len(filenames) == 1
+
+    # Per-chapter fetch: published chapter is accessible.
+    res_pub = client.get("/api/course/chapters/published_ch.json")
+    assert res_pub.status_code == 200
+    assert res_pub.json()["title"] == "Published Chapter"
+
+    # Per-chapter fetch: draft and archived chapters return 404.
+    res_draft = client.get("/api/course/chapters/draft_ch.json")
+    assert res_draft.status_code == 404, "draft chapter must return 404"
+
+    res_archived = client.get("/api/course/chapters/archived_ch.json")
+    assert res_archived.status_code == 404, "archived chapter must return 404"
