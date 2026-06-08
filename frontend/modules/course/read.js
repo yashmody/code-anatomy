@@ -62,7 +62,7 @@ function breadcrumb(idx, node) {
 
 // ════════════════════════════════════════════════════════════════════════════
 // Dispatcher: no address → the Contents library; an address → the chapter reader.
-// SECTION_FILES (from main.js) tells Contents which chapters actually have a file,
+// The section list (from the API) tells Contents which chapters actually have a file,
 // so we never link a row to a 404 (e.g. anatomy.m12 — Stalwart lives in coder.c).
 // ════════════════════════════════════════════════════════════════════════════
 export async function renderRead(mount, base, address, sectionFile, sectionFiles) {
@@ -74,7 +74,7 @@ export async function renderRead(mount, base, address, sectionFile, sectionFiles
 // ── CONTENTS LIBRARY ──────────────────────────────────────────────────────────
 // A scannable table of contents: the 5 framework rings (in framework order), each
 // a collapsible category, listing only its chapters that have a section file. Pure
-// framework.json + SECTION_FILES — we do NOT fetch every chapter JSON for a count.
+// framework.json + the section list (from the API) — we do NOT fetch every chapter JSON for a count.
 async function renderContents(mount, base, sectionFiles) {
   const fw = await loadFramework(base);
   const idx = indexFramework(fw);
@@ -119,7 +119,7 @@ async function renderContents(mount, base, sectionFiles) {
   }).join('');
 
   // "The Framework" — a static top entry above the 5 ring categories. Routes to the
-  // paginated framework explainer (#/read/framework). Not part of SECTION_FILES; not
+  // paginated framework explainer (#/read/framework). Not part of the section list (from the API); not
   // counted against any ring; its own thing.
   const frameworkEntry =
     `<section class="read-cat read-cat-framework" data-ring="framework">` +

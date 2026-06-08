@@ -34,24 +34,11 @@ export const QUIZ_URL =
 // to the active media_assets row and Range-streams it. See 01-blueprint
 // §7.1 MP4-delivery contract.
 export const MEDIA = {
-  explainer: '/media/video/explainer'
+  // Prefix with API_BASE so the <video> points at the backend in dev — the
+  // static FE server (:8080) doesn't serve /media. In prod API_BASE is ''
+  // (same origin), so this stays relative and Apache routes it to FastAPI.
+  explainer: API_BASE + '/media/video/explainer'
 };
-
-// The ordered list of chapter JSONs the Manual reads. Order is not
-// authoritative — framework.json controls display order — but every file
-// the Manual will ever load is enumerated here so Contents and the
-// Manual can agree on what exists without a directory listing.
-export const SECTION_FILES = [
-  'code-c.json', 'code-o.json', 'code-d.json', 'code-e.json',
-  'coder-c.json', 'coder-o.json', 'coder-d.json', 'coder-e.json', 'coder-r.json',
-  'anatomy-m00.json', 'anatomy-m01.json', 'anatomy-m01b.json',
-  'anatomy-m02.json', 'anatomy-m02b.json', 'anatomy-m03.json',
-  'anatomy-m04.json', 'anatomy-m05.json', 'anatomy-m06.json',
-  'anatomy-m07.json', 'anatomy-m08.json', 'anatomy-m09.json', 'anatomy-m10.json',
-  'adobe-cm.json', 'adobe-aa.json', 'adobe-cja.json', 'adobe-ajo.json', 'adobe-camp.json',
-  'adobe-csc.json', 'adobe-ab.json',
-  'ai-bmad.json', 'ai-gov.json'
-];
 
 // CONTENT_BASE — base path for resource pages (FAQs, Checklist, Runbooks).
 // /resources/ is the canonical URL in both local dev and production.

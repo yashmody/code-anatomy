@@ -187,7 +187,7 @@ export async function renderScroll(mount, base, sectionFiles) {
   }
 
   // Trailing flush — emit any explainer piece whose boundary chapter never appeared
-  // (e.g. SECTION_FILES was curtailed). Nest+Review+Watch close Part One, then any
+  // (e.g. the section list (from the API) was curtailed). Nest+Review+Watch close Part One, then any
   // Part banner that didn't fire still gets emitted so the framework explainer is
   // structurally complete even when later Parts are absent.
   if (expl) {

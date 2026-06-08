@@ -290,18 +290,10 @@ def migrate_course_content(pg_session: Session):
                 with open(filepath, "r") as f:
                     chapter_data = json.load(f)
                 
-                # Determine ring from filename prefix or metadata
-                ring = "other"
-                if filename.startswith("code-"):
-                    ring = "code"
-                elif filename.startswith("coder-"):
-                    ring = "coder"
-                elif filename.startswith("anatomy-"):
-                    ring = "anatomy"
-                elif filename.startswith("adobe-"):
-                    ring = "adobe"
-                elif filename.startswith("ai-"):
-                    ring = "ai"
+                # Derive ring from frameworkAddress (first dot-segment), matching
+                # the ring_from_address helper in content/source/validate.py.
+                # Falling back to "other" keeps the ETL non-fatal for edge cases.
+                ring = (chapter_data.get("frameworkAddress") or "").split(".")[0] or "other"
                 
                 title = chapter_data.get("title", filename)
                 save_chapter(filename=filename, ring=ring, title=title, content=chapter_data)

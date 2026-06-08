@@ -1,0 +1,166 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "framework-explainer.schema.json",
+  "title": "CODE-CODER Framework Explainer",
+  "description": "Static framing copy for Manual + Read modes. Validated structurally; prose strings are NOT pattern-constrained.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "_note":   { "type": "string" },
+
+    "masthead": {
+      "type": "object",
+      "required": ["title", "kicker", "subtitle"],
+      "additionalProperties": true,
+      "properties": {
+        "kicker":   { "type": "string" },
+        "title":    { "type": "string" },
+        "subtitle": { "type": "string" },
+        "meta": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["html"],
+            "additionalProperties": false,
+            "properties": { "html": { "type": "string" } }
+          }
+        }
+      }
+    },
+
+    "parts": {
+      "type": "object",
+      "required": ["one", "two", "three"],
+      "additionalProperties": false,
+      "properties": {
+        "one":   { "$ref": "#/$defs/part" },
+        "two":   { "$ref": "#/$defs/part" },
+        "three": { "$ref": "#/$defs/part" }
+      }
+    },
+
+    "code": {
+      "type": "object",
+      "required": ["id", "heading", "intro"],
+      "additionalProperties": true,
+      "properties": {
+        "id":      { "type": "string" },
+        "heading": { "type": "string" },
+        "intro":   { "type": "string" },
+        "modTag":  { "type": "string" },
+        "telescope": { "type": "object", "additionalProperties": true },
+        "nodes":     { "type": "object", "additionalProperties": true }
+      }
+    },
+
+    "coder": {
+      "type": "object",
+      "required": ["id", "heading", "intro"],
+      "additionalProperties": true,
+      "properties": {
+        "id":          { "type": "string" },
+        "heading":     { "type": "string" },
+        "intro":       { "type": "string" },
+        "modTag":      { "type": "string" },
+        "telescope":   { "type": "object", "additionalProperties": true },
+        "asksLabel":   { "type": "string" },
+        "asks":        { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+        "blockquote":  { "type": "string" }
+      }
+    },
+
+    "review": {
+      "type": "object",
+      "required": ["cards"],
+      "additionalProperties": true,
+      "properties": {
+        "id":      { "type": "string" },
+        "modTag":  { "type": "string" },
+        "heading": { "type": "string" },
+        "intro":   { "type": "string" },
+        "blockquote": { "type": "string" },
+        "cards": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "questions"],
+            "additionalProperties": false,
+            "properties": {
+              "name":      { "type": "string" },
+              "questions": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    },
+
+    "watch": {
+      "type": "object",
+      "required": ["rows"],
+      "additionalProperties": true,
+      "properties": {
+        "id":      { "type": "string" },
+        "modTag":  { "type": "string" },
+        "heading": { "type": "string" },
+        "intro":   { "type": "string" },
+        "headers": { "type": "array", "items": { "type": "string" } },
+        "blockquote": { "type": "string" },
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["node", "architect", "pm"],
+            "additionalProperties": false,
+            "properties": {
+              "node":      { "type": "string" },
+              "architect": { "type": "string" },
+              "pm":        { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+
+    "coderWrappers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "id":      { "type": "string" },
+          "modTag":  { "type": "string" },
+          "heading": { "type": "string" },
+          "body":    { "type": "string" }
+        }
+      }
+    },
+
+    "nest": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "id":         { "type": "string" },
+        "modTag":     { "type": "string" },
+        "heading":    { "type": "string" },
+        "intro":      { "type": "string" },
+        "blockquote": { "type": "string" },
+        "arrows":     { "type": "array", "items": { "type": "string" } },
+        "scopes":     { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+      }
+    }
+  },
+
+  "$defs": {
+    "part": {
+      "type": "object",
+      "required": ["no", "title", "body"],
+      "additionalProperties": false,
+      "properties": {
+        "no":    { "type": "string" },
+        "title": { "type": "string" },
+        "body":  { "type": "string" }
+      }
+    }
+  }
+}

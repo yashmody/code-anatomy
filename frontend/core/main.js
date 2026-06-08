@@ -9,7 +9,7 @@
 
 import { initAuthUI, hasPermission } from './auth-ui.js';
 import { initializeAuth } from '../modules/feed/auth.js';
-import { QUIZ_URL, SECTION_FILES, CONTENT_BASE } from './config.js';
+import { API_BASE, QUIZ_URL, CONTENT_BASE } from './config.js';
 import { initTheme, toggleTheme } from './theme.js';
 
 // Module-promise cache. Each path is import()-ed exactly once per session.
@@ -17,6 +17,21 @@ const _modCache = new Map();
 function lazyLoad(path) {
   if (!_modCache.has(path)) _modCache.set(path, import(path));
   return _modCache.get(path);
+}
+
+// fetchSectionFiles — retrieves the ordered list of chapter filenames from the
+// backend. Replaces the static SECTION_FILES constant (AC5: manifest via API).
+// Response shape: { chapters: [{ filename, ring, title }, ...] }
+// The array order from the API is preserved here; manual.js re-sorts by
+// framework.json order, and read.js builds a Set so ordering is irrelevant there.
+let _sectionFilesCache = null;
+async function fetchSectionFiles() {
+  if (_sectionFilesCache) return _sectionFilesCache;
+  const res = await fetch(`${API_BASE}/api/course/chapters`);
+  if (!res.ok) throw new Error(`/api/course/chapters returned ${res.status}`);
+  const data = await res.json();
+  _sectionFilesCache = (data.chapters || []).map((c) => c.filename);
+  return _sectionFilesCache;
 }
 
 // BASE was the on-disk relative root the old api-client used to derive
@@ -153,13 +168,19 @@ async function route() {
   try {
     if (mode === 'manual') {
       // Lazy: parse manual.js + its ~10 transitive imports only on first visit.
-      const { renderScroll } = await lazyLoad('../modules/course/manual.js');
-      await renderScroll(view, BASE, SECTION_FILES);
+      const [{ renderScroll }, sectionFiles] = await Promise.all([
+        lazyLoad('../modules/course/manual.js'),
+        fetchSectionFiles(),
+      ]);
+      await renderScroll(view, BASE, sectionFiles);
     } else if (mode === 'read') {
       const addr = hash.split('/')[1] || '';             // no address → the Contents library; else the chapter reader
       const file = addr ? addr.replace(/\./g, '-') + '.json' : '';
-      const { renderRead } = await lazyLoad('../modules/course/read.js');
-      await renderRead(view, BASE, addr, file, SECTION_FILES);
+      const [{ renderRead }, sectionFiles] = await Promise.all([
+        lazyLoad('../modules/course/read.js'),
+        fetchSectionFiles(),
+      ]);
+      await renderRead(view, BASE, addr, file, sectionFiles);
     } else if (mode === 'feed') {
       const { renderFeed } = await lazyLoad('../modules/feed/feed.js');
       await renderFeed(view, BASE);
