@@ -18,7 +18,9 @@ keep verifying, the buildless SPA keeps fetching the same paths):
   feed/      /api/feed (GET+POST), /api/feed/flag,
              /api/moderate/queue, /api/moderate/action
   media/     /api/media/upload, /media/video/{asset_id}, /media/image/{asset_id}
-  cms/       (placeholder — Phase 4 fills)
+
+  (cms/ module removed in ARCH-3 — Directus retired. Cache invalidation is now
+   the deploy restart; role grants are /api/admin/roles. See ADR 0002.)
 
   (FAQs and runbooks are no longer API modules — they are static content under
   resources/, dropped from the DB in migration 0016. The runbook Excel parser
@@ -37,7 +39,6 @@ from app.core import config, db, observability, security, users as core_users
 from app.core.cache import cache as app_cache
 from app.modules.admin import routes as admin_routes
 from app.modules.auth import routes as auth_routes
-from app.modules.cms import routes as cms_routes
 from app.modules.content import routes as content_routes
 from app.modules.feed import routes as feed_routes
 from app.modules.media import routes as media_routes
@@ -217,7 +218,6 @@ app.include_router(quiz_routes.router, tags=["quiz"])
 app.include_router(content_routes.router, prefix="/api/course", tags=["content"])
 app.include_router(feed_routes.router, prefix="/api", tags=["feed"])
 app.include_router(media_routes.router, tags=["media"])
-app.include_router(cms_routes.router, prefix="/api/cms", tags=["cms"])
 app.include_router(superadmin_routes.router, tags=["superadmin"])
 app.include_router(whatsnew_routes.router, tags=["whatsnew"])  # GET /api/whatsnew
 # Admin role-assignment REST (04 §7.2). Decorators are "/roles"; the prefix

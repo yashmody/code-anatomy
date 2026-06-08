@@ -1,24 +1,20 @@
-"""Tests for the Directus -> FastAPI staff-role mirror (04 §7.2).
+"""Tests for the staff-role reconcile helper (04 §7.2).
 
-Covers both halves of the seam:
-  - `core.users.sync_staff_roles` — the authoritative, staff-only reconcile.
-  - `POST /api/cms/roles-sync` — the loopback-guarded receiver.
+Covers `core.users.sync_staff_roles` — the authoritative, staff-only
+reconcile function. The loopback-guarded HTTP endpoint (/api/cms/roles-sync)
+was removed in ARCH-3 (Directus retired); the business-logic helper it called
+(`sync_staff_roles`) is retained and tested here.
 
 The reconcile writes to the real configured database (Postgres in dev — the
 `user_roles` join + `auth_audit` don't exist on sqlite), so every test cleans
 up the rows it creates for the test email, pass or fail.
 """
 import pytest
-from fastapi.testclient import TestClient
 from sqlalchemy import delete, select
 
-from app.main import app
 from app.core import users
 from app.core.db import get_session
 from app.core.models import AuthAudit, Role, User, UserRole
-from app.modules.cms import routes as cms_routes
-
-client = TestClient(app)
 
 TEST_EMAIL = "rolesync.test@deptagency.com"
 
@@ -72,7 +68,7 @@ def test_none_revokes_all_staff_roles_but_keeps_learner(clean_email):
 
 
 def test_never_touches_feed_contributor_or_learner(clean_email):
-    """feed_contributor is learner-plane (app-owned) — the mirror must preserve
+    """feed_contributor is learner-plane (app-owned) — the helper must preserve
     it across staff-role grants and revokes."""
     users.upsert_user(clean_email)
     users.grant_role(clean_email, "feed_contributor", granted_by="test")
@@ -98,34 +94,3 @@ def test_idempotent_no_op(clean_email):
     second = users.sync_staff_roles(clean_email, "platform_admin")
     assert first == second
     assert _staff_roles(clean_email) == {"platform_admin"}
-
-
-# ── endpoint ─────────────────────────────────────────────────────────────────
-
-
-def test_endpoint_rejects_non_loopback():
-    """Default TestClient host is non-loopback -> 403 (policy, not credentials)."""
-    res = client.post("/api/cms/roles-sync", json={"email": TEST_EMAIL, "role": "content_author"})
-    assert res.status_code == 403
-
-
-def test_endpoint_reconciles_on_loopback(clean_email, monkeypatch):
-    monkeypatch.setattr(cms_routes, "_is_loopback", lambda host: True)
-
-    res = client.post("/api/cms/roles-sync", json={"email": clean_email, "role": "quiz_admin"})
-    assert res.status_code == 200
-    body = res.json()
-    assert body["ok"] is True and body["email"] == clean_email
-    assert "quiz_admin" in body["roles"]
-    assert _staff_roles(clean_email) == {"quiz_admin"}
-
-    # role: null clears the staff role.
-    res2 = client.post("/api/cms/roles-sync", json={"email": clean_email, "role": None})
-    assert res2.status_code == 200
-    assert _staff_roles(clean_email) == set()
-
-
-def test_endpoint_validation(monkeypatch):
-    monkeypatch.setattr(cms_routes, "_is_loopback", lambda host: True)
-    assert client.post("/api/cms/roles-sync", json={"role": "quiz_admin"}).status_code == 400  # missing email
-    assert client.post("/api/cms/roles-sync", json={"email": TEST_EMAIL, "role": 5}).status_code == 400  # bad role type

@@ -232,10 +232,6 @@ class Settings(BaseSettings):
     content_refresh_cron: str = "0 0 9 ? * MON *"   # Quartz: every Monday 09:00
     content_refresh_tz: str = "Asia/Kolkata"        # IST
 
-    # ── Directus seam (Phase 4a; receivers built in 2d) ─────────────────────
-    directus_url: str = "http://localhost:8055"
-    directus_admin_token: SecretStr = SecretStr("")
-
     # ── Ops ─────────────────────────────────────────────────────────────────
     log_level: str = "INFO"
     csp_report_only: bool = True

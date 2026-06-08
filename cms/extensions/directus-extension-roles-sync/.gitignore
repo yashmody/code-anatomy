@@ -1,9 +1,0 @@
-# Build-time only — installed under node@22 to run `directus-extension build`.
-node_modules/
-.DS_Store
-
-# dist/ is intentionally committed so both deploy shapes load the built hook
-# with no deploy-time build. The repo-root .gitignore has a blanket `dist/`
-# rule, so re-include ours here (a deeper .gitignore overrides the root).
-!dist/
-!dist/**

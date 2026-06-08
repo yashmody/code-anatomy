@@ -1,12 +1,14 @@
 """Migration script to transfer data from SQLite/JSON to PostgreSQL.
 
-Ingests (v2 paths, post Phase 1):
+Ingests (v2 paths, post ARCH-2):
   1. data/question_bank.json -> questions table
   2. q0.db (SQLite) -> users and attempts tables
   3. ../content/source/feed/feed.json -> feed_items table
-  4. ../content/source/course/framework{,-explainer}.json -> frameworks table
-  5. ../content/source/course/sections/*.json -> course_chapters table
-  6. ../media/Anatomy of Code.mp4 -> pg_largeobject + media_assets
+  4. ../media/Anatomy of Code.mp4 -> pg_largeobject + media_assets
+
+NOTE (ARCH-3): Course content (course_chapters, frameworks) is no longer
+seeded by this ETL. The course is now served from files via COURSE_SOURCE=files
+(ARCH-2). The DB tables remain intact until ARCH-4's drop-tables migration.
 """
 import os
 import sys
@@ -21,21 +23,15 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.core import config
 from app.core.db import init_db, get_session
-from app.core.models import Question, User, Attempt, FeedItem, MediaAsset, CourseChapter, Framework
+from app.core.models import Question, User, Attempt, FeedItem, MediaAsset
 
 # Constants
 BASE_DIR = config.BASE_DIR
 QUESTION_BANK_PATH = config.QUESTION_BANK
 SQLITE_DB_PATH = BASE_DIR / "q0.db"
-# v2 content layout — content/source/ is the git-tracked seed; Postgres
-# becomes the editable runtime source after the first ETL run (Phase 0
-# gate decision B). See docs/architecture/v2/00-gate-report.md §9.1.
 CONTENT_SOURCE = BASE_DIR.parent / "content" / "source"
 FEED_JSON_PATH = CONTENT_SOURCE / "feed" / "feed.json"
 VIDEO_PATH = BASE_DIR.parent / "media" / "Anatomy of Code.mp4"
-FRAMEWORK_PATH = CONTENT_SOURCE / "course" / "framework.json"
-FRAMEWORK_EXPLAINER_PATH = CONTENT_SOURCE / "course" / "framework-explainer.json"
-SECTIONS_DIR = CONTENT_SOURCE / "course" / "sections"
 
 
 def migrate_questions(pg_session: Session):
@@ -258,51 +254,6 @@ def migrate_media(pg_session: Session):
     finally:
         raw_conn.close()
 
-def migrate_course_content(pg_session: Session):
-    print("[ETL] Migrating course content and framework...")
-    
-    if FRAMEWORK_PATH.exists():
-        with open(FRAMEWORK_PATH, "r") as f:
-            fw_data = json.load(f)
-        from app.modules.content.storage import save_framework
-        save_framework(fw_data)
-        print("[ETL] Ingested framework hierarchy.")
-    else:
-        print(f"[Warn] Framework JSON not found at {FRAMEWORK_PATH}")
-
-    # Framework-explainer — the static framing JSON (masthead, Part banners,
-    # CODE/CODER outer/inner wrappers, node-blocks, #nest, Review, Watch).
-    if FRAMEWORK_EXPLAINER_PATH.exists():
-        with open(FRAMEWORK_EXPLAINER_PATH, "r", encoding="utf-8") as f:
-            expl_data = json.load(f)
-        from app.modules.content.storage import save_framework_explainer
-        save_framework_explainer(expl_data)
-        print(f"[ETL] Ingested framework-explainer ({len(json.dumps(expl_data))} bytes).")
-    else:
-        print(f"[Warn] Framework-explainer JSON not found at {FRAMEWORK_EXPLAINER_PATH}")
-        
-    if SECTIONS_DIR.exists():
-        from app.modules.content.storage import save_chapter
-        count = 0
-        for filename in os.listdir(SECTIONS_DIR):
-            if filename.endswith(".json"):
-                filepath = SECTIONS_DIR / filename
-                with open(filepath, "r") as f:
-                    chapter_data = json.load(f)
-                
-                # Derive ring from frameworkAddress (first dot-segment), matching
-                # the ring_from_address helper in content/source/validate.py.
-                # Falling back to "other" keeps the ETL non-fatal for edge cases.
-                ring = (chapter_data.get("frameworkAddress") or "").split(".")[0] or "other"
-                
-                title = chapter_data.get("title", filename)
-                save_chapter(filename=filename, ring=ring, title=title, content=chapter_data)
-                count += 1
-        print(f"[ETL] Ingested {count} course chapters.")
-    else:
-        print(f"[Warn] Sections directory not found at {SECTIONS_DIR}")
-
-
 def main():
     # Verify we can connect to the target database and initialize schema
     print(f"[ETL] Connecting to database: {config.DATABASE_URL}")
@@ -318,8 +269,7 @@ def main():
         migrate_sqlite_data(pg_session)
         migrate_feed(pg_session)
         migrate_media(pg_session)
-        migrate_course_content(pg_session)
-        
+
     print("[ETL] Migration completed successfully.")
 
 if __name__ == "__main__":

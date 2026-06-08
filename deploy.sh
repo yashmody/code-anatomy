@@ -98,33 +98,13 @@ case "$DB_HOST" in
   *) DB_MODE="external" ;;
 esac
 
-# ── Directus CMS (Phase 4a · 05-config-cms.md §5.5, §8.2) ───────────────────
-# Directus is the editorial write plane: a separate Node service over the SAME
-# Postgres, reverse-proxied under /cms/. It is ADDITIVE and gated — set
-# DEPLOY_DIRECTUS=false to skip the whole block and deploy only the FastAPI
-# application plane (an operator who hasn't stood the CMS up yet, or a box that
-# only serves traffic).
-DEPLOY_DIRECTUS="${DEPLOY_DIRECTUS:-true}"
-CMS_PORT="${CMS_PORT:-8055}"
-CMS_SERVICE_NAME="cms-directus"
-# Directus runs as its own OS user so its file/socket surface is isolated from
-# the FastAPI app user. Falls back to the app user if you'd rather not add one.
-CMS_USER="${CMS_USER:-directus}"
-# Scoped DB role Directus connects as (07 baseline / 03 §5). The matching role
-# is created/granted by Alembic migration 0008 (slice 4a-1); deploy.sh only sets
-# its password. This role is PER-ENVIRONMENT so a dev Directus credential can
-# never reach prod (the role is GRANTed only on its own database). Canonical
-# name is DIRECTUS_DB_ROLE; CMS_DB_USER is kept as a back-compat alias.
-#   prod=directus_app · staging=directus_app_stg · dev=directus_app_dev
-DIRECTUS_DB_ROLE="${DIRECTUS_DB_ROLE:-${CMS_DB_USER:-directus_app}}"
-CMS_DB_USER="$DIRECTUS_DB_ROLE"
-# Leave CMS_DB_PASS empty to auto-generate on first run.
-CMS_DB_PASS="${CMS_DB_PASS:-}"
-# Directus admin bootstrap account (the break-glass local admin from §8.2 step
-# 4). The first SSO Platform Admin from ADMIN_EMAILS is mirrored in later, but
-# this account always exists so a misconfigured SSO can't lock everyone out.
-CMS_ADMIN_EMAIL="${CMS_ADMIN_EMAIL:-${ADMIN_EMAIL:-admin@${DOMAIN}}}"
-CMS_ADMIN_PASSWORD="${CMS_ADMIN_PASSWORD:-}"
+# ── ARCH-3: Directus retired ─────────────────────────────────────────────────
+# Directus and the course-content ETL seed are removed. The course is served
+# from files (COURSE_SOURCE=files). DEPLOY_DIRECTUS is kept as a no-op false
+# constant so any deploy.env that still sets it to "true" is silently ignored
+# rather than failing. See ADR 0002.
+DEPLOY_DIRECTUS="false"
+CMS_SERVICE_NAME="cms-directus"   # referenced in teardown only
 
 # PostgreSQL superuser password (the password for the 'postgres' PG role).
 # When set, all admin psql calls run as root with PGPASSWORD and -U postgres,
@@ -144,8 +124,7 @@ GOOGLE_CLIENT_SECRET="${GOOGLE_CLIENT_SECRET:-}"
 
 SERVICE_NAME="cca-quiz"
 TOTAL_STEPS=11
-# Directus (Phase 4a) adds one step when DEPLOY_DIRECTUS=true. Resolved after
-# the deploy.env auto-load below so an operator override counts.
+# ARCH-3: Directus step removed; TOTAL_STEPS stays at 11 (no +1 for CMS).
 SRC_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEPLOY_START=$SECONDS
 STEP_NUM=0
@@ -184,11 +163,6 @@ if [[ -f "$SRC_DIR/deploy.env" ]]; then
   SERVER_NAME="${SERVER_NAME:-$DOMAIN}"
   APP_ENV="${APP_ENV:-production}"
   CSP_ENFORCE="${CSP_ENFORCE:-0}"
-  # Directus (Phase 4a) — re-resolve in case deploy.env set them.
-  DEPLOY_DIRECTUS="${DEPLOY_DIRECTUS:-true}"
-  CMS_PORT="${CMS_PORT:-8055}"
-  CMS_USER="${CMS_USER:-directus}"
-  CMS_ADMIN_EMAIL="${CMS_ADMIN_EMAIL:-${ADMIN_EMAIL:-admin@${DOMAIN}}}"
   # Database mode (2026-06 cutover) — re-resolve in case deploy.env set them.
   DB_MODE="${DB_MODE:-local}"
   DB_HOST="${DB_HOST:-localhost}"
@@ -199,13 +173,8 @@ if [[ -f "$SRC_DIR/deploy.env" ]]; then
     localhost|127.0.0.1|::1|/*|"") : ;;
     *) DB_MODE="external" ;;
   esac
-  # Per-env Directus role (canonical DIRECTUS_DB_ROLE; CMS_DB_USER is the alias).
-  DIRECTUS_DB_ROLE="${DIRECTUS_DB_ROLE:-${CMS_DB_USER:-directus_app}}"
-  CMS_DB_USER="$DIRECTUS_DB_ROLE"
+  # ARCH-3: DEPLOY_DIRECTUS / DIRECTUS_DB_ROLE re-resolve removed (Directus retired).
 fi
-
-# Directus adds one numbered step to the run when enabled.
-[[ "$DEPLOY_DIRECTUS" == "true" ]] && TOTAL_STEPS=$((TOTAL_STEPS + 1))
 
 # ── Console helpers ──────────────────────────────────────────────────────────
 # Colours
@@ -613,7 +582,7 @@ DB_PROVISION="$(db_provision_enabled)"
 if [[ "$DB_MODE" == "external" ]]; then
   printf '\n  %b▣ Database mode : EXTERNAL (remote shared Postgres)%b\n' "$C_BOLD" "$C_RESET"
   info "Remote host : ${DB_HOST}:${DB_PORT}  (TLS sslmode=${DB_SSLMODE})"
-  info "Database    : ${DB_NAME}   App role: ${DB_USER}   Directus role: ${DIRECTUS_DB_ROLE}"
+  info "Database    : ${DB_NAME}   App role: ${DB_USER}"
   if [[ "$DB_PROVISION" == "yes" ]]; then
     info "Provisioning: ON — will create db/roles/extensions on the remote (superuser password supplied)"
   else
@@ -621,7 +590,6 @@ if [[ "$DB_MODE" == "external" ]]; then
     warn "  • database '${DB_NAME}'"
     warn "  • extensions pgcrypto + hstore inside '${DB_NAME}'"
     warn "  • login role '${DB_USER}' (app, DML-only) with a password + GRANTs on '${DB_NAME}'"
-    warn "  • login role '${DIRECTUS_DB_ROLE}' (Directus) with a password + GRANTs on '${DB_NAME}'"
     warn "  • TLS enabled on the server (connections use sslmode=${DB_SSLMODE})"
     warn "  Set PROVISION_DB=true + POSTGRES_SUPERUSER_PASSWORD to have deploy.sh do this instead."
   fi
@@ -694,24 +662,6 @@ if ! $UPDATE_ONLY; then
         ok "$pkg          : already present"
       fi
     done
-  fi
-
-  # build tools (RHEL/CentOS) — node-gyp needs a C/C++ compiler + make to build
-  # Directus's native npm deps. Without these, `npm ci` dies with
-  # "gyp ERR! not ok" and the whole CMS step (8/12) fails. Only needed when we
-  # actually stand up Directus. (Ubuntu gets build-essential above.)
-  if [[ "$OS_FAMILY" != "debian" && "$DEPLOY_DIRECTUS" == "true" ]]; then
-    if command -v gcc &>/dev/null && command -v g++ &>/dev/null && command -v make &>/dev/null; then
-      ok "Build tools  : gcc/g++/make present (node-gyp ready)"
-    else
-      info "Installing C/C++ build toolchain (gcc gcc-c++ make) for node-gyp…"
-      if dnf install -y gcc gcc-c++ make 2>&1 | tail -3; then
-        ok "Build toolchain installed"
-      else
-        warn "Could not auto-install build tools. Directus npm build WILL fail until you run:"
-        warn "    sudo dnf install -y gcc gcc-c++ make"
-      fi
-    fi
   fi
 
   # Apache
@@ -999,6 +949,11 @@ if [[ ! -f "$QUIZ_DIR/.env" ]]; then
   env_set "$QUIZ_DIR/.env" DATABASE_URL "$DB_URL"
   ok "DATABASE_URL         → $(db_url_display)"
 
+  # ARCH-2/ARCH-3: course is served from versioned JSON files; the DB path is
+  # kept for rollback only. Always stamp COURSE_SOURCE=files on every deploy.
+  env_set "$QUIZ_DIR/.env" COURSE_SOURCE "files"
+  ok "COURSE_SOURCE         → files (ARCH-2 default; course ETL seed removed)"
+
   if [[ -n "$GOOGLE_CLIENT_ID" && -n "$GOOGLE_CLIENT_SECRET" ]]; then
     env_set "$QUIZ_DIR/.env" QUIZ_DEV_MODE        "false"
     env_set "$QUIZ_DIR/.env" GOOGLE_CLIENT_ID     "$GOOGLE_CLIENT_ID"
@@ -1257,36 +1212,94 @@ else
     # rely on the DATABASE_URL written above. Alembic (run below) needs a
     # privileged migration credential — see the note printed in the banner.
     warn "PROVISION_DB=off — not creating remote db/roles/extensions (DBA owns them)."
-    warn "Alembic below needs a privileged migration credential for DDL + the 0008"
-    warn "directus-role GRANTs. If DATABASE_URL's role is DML-only, run migrations"
-    warn "separately with a migration role, or set PROVISION_DB=true + a superuser pw."
+    warn "If DATABASE_URL's role is DML-only, run migrations separately with a"
+    warn "migration role, or set PROVISION_DB=true + a superuser pw."
   fi
 fi
 
-# Schema + seeds
-# Note: we do NOT `source .env` here. app/config.py uses python-dotenv to
-# load it directly, which correctly handles values with spaces or special
-# characters like "FROM_NAME=DEPT® Academy" that break bash source. The schema
-# migration reads DATABASE_URL from .env (local loopback or remote+TLS), so it
-# targets whichever instance STEP 6 pointed .env at — no change needed here.
+# ── ARCH-3: Directus teardown (clean / fresh start) ─────────────────────────
+# Stop and remove the Directus systemd service + its state directory.
+# This is the "clear old entries / start afresh" step requested in ARCH-3.
 #
-# DIRECTUS_DB_ROLE is exported into the migration environment so the 0008
-# migration creates/grants the PER-ENV Directus role (prod=directus_app,
-# staging=directus_app_stg, dev=directus_app_dev) — one credential cannot reach
-# two databases, preserving dev/prod isolation on the shared instance.
-if [[ "$DB_MODE" == "external" ]]; then
-  info "Running schema migration + seeds against remote ${DB_HOST}:${DB_PORT}/${DB_NAME} …"
+# DATA PRESERVATION GUARANTEE (read before adding anything here):
+#   This block ONLY removes Directus-owned artefacts:
+#     • cms-directus.service unit file
+#     • /opt/dept-anatomy/cms/ directory (Directus app + its config + its uploads)
+#   It does NOT drop, truncate, or touch ANY of:
+#     • The Postgres data volume or the codecoder database itself
+#     • users / user_roles / auth_audit / attempts / certificates tables
+#     • questions / feed_items / media_assets tables
+#     • course_chapters / frameworks tables (orphaned but intact until ARCH-4)
+#     • Any quiz result files or certificate PDFs on disk
+#   If in doubt: do NOT add docker volume rm or pg_dump here.
+#
+# Idempotent — safe to re-run on a box where Directus never ran.
+# ─────────────────────────────────────────────────────────────────────────────
+info "ARCH-3: Directus teardown (stop service, remove unit + cms dir) …"
+
+# Stop + disable the Directus systemd unit if it exists.
+if systemctl is-active --quiet "${CMS_SERVICE_NAME}" 2>/dev/null; then
+  info "  Stopping ${CMS_SERVICE_NAME} …"
+  systemctl stop "${CMS_SERVICE_NAME}" 2>/dev/null || true
+  ok "  ${CMS_SERVICE_NAME} stopped"
 else
-  info "Running ETL migration: question bank + feed + course chapters + framework …"
+  info "  ${CMS_SERVICE_NAME} not running — skipping stop"
 fi
-# Capture the pre-upgrade Alembic revision so the rollback hint can name the
-# exact downgrade target if the migration below fails.
+if systemctl is-enabled --quiet "${CMS_SERVICE_NAME}" 2>/dev/null; then
+  systemctl disable "${CMS_SERVICE_NAME}" 2>/dev/null || true
+  ok "  ${CMS_SERVICE_NAME} disabled"
+fi
+if [[ -f "/etc/systemd/system/${CMS_SERVICE_NAME}.service" ]]; then
+  rm -f "/etc/systemd/system/${CMS_SERVICE_NAME}.service"
+  systemctl daemon-reload 2>/dev/null || true
+  ok "  Removed /etc/systemd/system/${CMS_SERVICE_NAME}.service"
+else
+  info "  /etc/systemd/system/${CMS_SERVICE_NAME}.service absent — nothing to remove"
+fi
+
+# Remove the cms/ directory (Directus app tree, uploads, config). The Postgres
+# data is UNTOUCHED — only the Node app files on disk are removed.
+CMS_DIR_LIVE="$APP_HOME/cms"
+if [[ -d "$CMS_DIR_LIVE" ]]; then
+  rm -rf "$CMS_DIR_LIVE"
+  ok "  Removed $CMS_DIR_LIVE (Directus app tree only — DB data preserved)"
+else
+  info "  $CMS_DIR_LIVE absent — nothing to remove"
+fi
+
+# Clear the in-process app cache so stale Directus-sourced config keys (if any
+# were in the memory cache) do not survive a hot restart. We restart the FastAPI
+# service unconditionally in STEP 7; this note is here for documentation only.
+info "  Cache flush: handled by the cca-quiz service restart in STEP 7."
+
+ok "ARCH-3: Directus teardown complete"
+
+# ── Schema migration (Alembic) ───────────────────────────────────────────────
+# Alembic upgrade head applies any pending migrations. This is safe to run on
+# every deploy — it is a no-op when the DB is already at head. When ARCH-4's
+# drop-tables migration lands, this call will pick it up automatically.
+#
+# NOTE: The course-content ETL seed (migrate_to_postgres.py) no longer seeds
+# course_chapters or frameworks. COURSE_SOURCE=files is the new default (ARCH-2).
+# The ETL still migrates: question bank, SQLite users/attempts, feed, media.
+if [[ "$DB_MODE" == "external" ]]; then
+  info "Running Alembic migrations against remote ${DB_HOST}:${DB_PORT}/${DB_NAME} …"
+else
+  info "Running Alembic migrations …"
+fi
+# Capture the pre-upgrade revision so the rollback hint names the exact target.
 record_pre_migration_rev
 cd "$QUIZ_DIR"
-DIRECTUS_DB_ROLE="$DIRECTUS_DB_ROLE" \
+"$QUIZ_DIR/.venv/bin/alembic" upgrade head \
+  2>&1 | while read -r line; do info "  alembic: $line"; done
+ok "Alembic migrations applied (head)"
+
+# Run the remaining ETL seeds (questions, sqlite users/attempts, feed, media).
+# Course content is files-sourced; migrate_to_postgres no longer touches it.
+info "Running ETL seed: question bank + SQLite users/attempts + feed + media …"
 "$QUIZ_DIR/.venv/bin/python" -m scripts.migrate_to_postgres \
   2>&1 | while read -r line; do info "  etl: $line"; done
-ok "Schema migration + seeds complete"
+ok "ETL seed complete (questions / users / attempts / feed / media)"
 
 # Generate the runbook Excel template authors fill in, then publish to a static
 # page with `python -m scripts.render_runbook <file.xlsx>` (see docs/CONTENT-AUTHORING.md).
@@ -1375,328 +1388,15 @@ else
   warn "Check logs: journalctl -u ${SERVICE_NAME} -n 30 --no-pager"
 fi
 
-# ── STEP 7b · Directus CMS (Phase 4a · 05 §5.5, §8.2) ────────────────────────
-# ADDITIVE + REVERSIBLE. Stands Directus up over the EXISTING Postgres by
-# introspection — no content is moved, no table is decomposed, media stays in
-# Postgres large objects. Gated behind DEPLOY_DIRECTUS so an operator can skip
-# the whole CMS (set DEPLOY_DIRECTUS=false). Runs in BOTH full-install and
-# --update modes: a fresh install bootstraps (npm ci + directus bootstrap +
-# bootstrap.sh + snapshot apply); --update restarts the service and re-applies
-# the schema snapshot. The cms/ as-code layout (package.json, docker-compose.yml,
-# .env.example, bootstrap.sh, snapshot.yaml) is delivered by slice 4a-2; the
-# scoped DB role directus_app is created by Alembic migration 0008 (slice 4a-1).
-if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
-  step "Directus CMS  (${CMS_SERVICE_NAME})"
-
-  CMS_DIR="$APP_HOME/cms"
-
-  if [[ ! -d "$CMS_DIR" ]]; then
-    warn "No cms/ directory at $CMS_DIR (slice 4a-2 not in bundle)."
-    warn "Skipping Directus stand-up. Re-run after cms/ lands, or set DEPLOY_DIRECTUS=false."
-  else
-    # ── (a) Directus service user ─────────────────────────────────────────────
-    # Its own system user so the CMS file/socket surface is isolated from the
-    # FastAPI app user. Falls back silently if CMS_USER == APP_USER.
-    if [[ "$CMS_USER" != "$APP_USER" ]] && ! id "$CMS_USER" &>/dev/null; then
-      useradd --system --create-home --home-dir "/home/$CMS_USER" \
-        --shell /sbin/nologin "$CMS_USER"
-      ok "Created user '$CMS_USER'  (system, nologin)"
-    else
-      ok "User '$CMS_USER' present (or shared with app user)"
-    fi
-
-    # ── (b) Node runtime check ────────────────────────────────────────────────
-    # Directus officially supports Node 18/20/22 LTS. We warn (not die) on an
-    # unsupported major so the as-code path still installs; the operator can
-    # point ExecStart at an LTS node via the override documented in RUNBOOK §7.2.
-    NODE_BIN="${NODE_BIN:-$(command -v node || true)}"
-    if [[ -z "$NODE_BIN" ]]; then
-      warn "node not found on PATH — install Node 20 LTS (RUNBOOK §7.2) then re-run."
-      warn "Skipping Directus stand-up for this run."
-    else
-      NODE_MAJOR="$("$NODE_BIN" -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
-      info "Node        : $("$NODE_BIN" --version)  (major $NODE_MAJOR)"
-      case "$NODE_MAJOR" in
-        18|20|22) ok "Node major $NODE_MAJOR is a Directus-supported LTS" ;;
-        *) warn "Node major $NODE_MAJOR is OUTSIDE Directus's supported set (18/20/22 LTS)."
-           warn "Directus may refuse to boot. Pin an LTS (nvm / nodesource) per RUNBOOK §7.2." ;;
-      esac
-
-      # ── (c) Directus DB role password ───────────────────────────────────────
-      # CMS_DB_USER is the PER-ENV Directus role (DIRECTUS_DB_ROLE): prod
-      # directus_app, staging directus_app_stg, dev directus_app_dev. The role +
-      # its per-database GRANTs are created by Alembic 0008 (slice 4a-1). Here we
-      # only set its password (idempotent ALTER ROLE) and persist it into
-      # cms/.env. If 0008 has not run, the role is absent — warn and continue.
-      if [[ -z "$CMS_DB_PASS" ]]; then
-        if [[ -f "$CMS_DIR/.env" ]] && grep -q '^DB_PASSWORD=' "$CMS_DIR/.env"; then
-          CMS_DB_PASS="$(grep '^DB_PASSWORD=' "$CMS_DIR/.env" | head -1 | cut -d= -f2-)"
-          info "Reusing DB_PASSWORD from existing cms/.env"
-        else
-          CMS_DB_PASS="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(24))')"
-          ok "Generated Directus DB password"
-        fi
-      fi
-      # Setting the role password needs superuser/role-admin. In local mode (or
-      # external mode WITH provisioning) we have it; in external+no-provision the
-      # DBA owns the role's password, so we skip the ALTER and just write cms/.env.
-      if [[ "$DB_MODE" == "local" || "$DB_PROVISION" == "yes" ]]; then
-        if pg_exec "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='${CMS_DB_USER}'\"" \
-            2>/dev/null | grep -q 1; then
-          pg_exec "psql -c \"ALTER ROLE ${CMS_DB_USER} WITH LOGIN PASSWORD '${CMS_DB_PASS}'\"" >/dev/null
-          ok "Role '${CMS_DB_USER}' password synced"
-        else
-          warn "Role '${CMS_DB_USER}' not found — run Alembic 0008 (slice 4a-1) first."
-          warn "  cd $QUIZ_DIR && .venv/bin/alembic upgrade head"
-        fi
-      else
-        warn "External + PROVISION_DB=off: not altering '${CMS_DB_USER}' (DBA owns its password)."
-        warn "  Ensure cms/.env DB_PASSWORD matches the password the DBA set for '${CMS_DB_USER}'."
-      fi
-
-      # ── (d) cms/.env ─────────────────────────────────────────────────────────
-      # Seeded from cms/.env.example (slice 4a-2) on first deploy; an existing
-      # cms/.env is never clobbered. KEY/SECRET generated once. PUBLIC_URL is the
-      # /cms/ subpath on the HTTPS vhost so the Google SSO redirect resolves.
-      if [[ ! -f "$CMS_DIR/.env" ]]; then
-        if [[ -f "$CMS_DIR/.env.example" ]]; then
-          cp "$CMS_DIR/.env.example" "$CMS_DIR/.env"
-          ok "cms/.env created from cms/.env.example"
-        else
-          : > "$CMS_DIR/.env"
-          warn "cms/.env.example missing — wrote an empty cms/.env (fill from RUNBOOK §7.1)"
-        fi
-        env_set "$CMS_DIR/.env" KEY    "$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(32))')"
-        env_set "$CMS_DIR/.env" SECRET "$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(32))')"
-        ok "Generated Directus KEY + SECRET"
-        if [[ -z "$CMS_ADMIN_PASSWORD" ]]; then
-          CMS_ADMIN_PASSWORD="$("$QUIZ_DIR/.venv/bin/python" -c 'import secrets; print(secrets.token_urlsafe(18))')"
-          ok "Generated Directus admin password (printed in the summary)"
-        fi
-        env_set "$CMS_DIR/.env" ADMIN_EMAIL    "$CMS_ADMIN_EMAIL"
-        env_set "$CMS_DIR/.env" ADMIN_PASSWORD "$CMS_ADMIN_PASSWORD"
-      else
-        ok "cms/.env already exists — leaving secrets untouched"
-      fi
-
-      # Always (re)write the connection + URL keys so a DB password rotation, a
-      # DOMAIN change, or a DB-mode change is picked up. Directus connects to the
-      # SAME Postgres as the app and at the SAME host/port — loopback in local
-      # mode, the remote host over TLS in external mode (matches DATABASE_URL).
-      env_set "$CMS_DIR/.env" DB_CLIENT   "pg"
-      if [[ "$DB_MODE" == "external" ]]; then
-        env_set "$CMS_DIR/.env" DB_HOST   "$DB_HOST"
-        env_set "$CMS_DIR/.env" DB_PORT   "$DB_PORT"
-        # TLS: match the app's sslmode. disable → SSL off entirely; require/verify
-        # → SSL on (node-postgres). For verify-full/ca set DB_SSL__CA by hand.
-        if [[ "$DB_SSLMODE" == "disable" ]]; then
-          env_set "$CMS_DIR/.env" DB_SSL                     "false"
-          env_set "$CMS_DIR/.env" DB_SSL__REJECT_UNAUTHORIZED "false"
-          env_set "$CMS_DIR/.env" PGSSLMODE                  "disable"
-          info "Directus DB_SSL=false (sslmode=disable — Postgres has no SSL)."
-        elif [[ "$DB_SSLMODE" == "verify-full" || "$DB_SSLMODE" == "verify-ca" ]]; then
-          env_set "$CMS_DIR/.env" DB_SSL    "true"
-          info "Directus DB_SSL=true (sslmode=${DB_SSLMODE}) — set DB_SSL__CA + DB_SSL__REJECT_UNAUTHORIZED=true in cms/.env to validate the server cert."
-        else
-          env_set "$CMS_DIR/.env" DB_SSL                     "true"
-          env_set "$CMS_DIR/.env" DB_SSL__REJECT_UNAUTHORIZED "false"
-          info "Directus DB_SSL=true with DB_SSL__REJECT_UNAUTHORIZED=false (sslmode=${DB_SSLMODE}: encrypt without CA verification)."
-        fi
-      else
-        # Local Postgres (loopback) — no SSL. CRUCIAL: DB_SSL=false is NOT
-        # enough — Directus turns ANY nested DB_SSL__* key into an `ssl` object,
-        # which node-postgres reads as SSL ENABLED. The nested keys must be
-        # ABSENT, so we env_del the whole DB_SSL__ prefix (the cms/.env.example
-        # ships DB_SSL__REJECT_UNAUTHORIZED for the remote default).
-        env_set "$CMS_DIR/.env" DB_HOST    "127.0.0.1"
-        env_set "$CMS_DIR/.env" DB_PORT    "5432"
-        env_set "$CMS_DIR/.env" DB_SSL     "false"
-        env_del "$CMS_DIR/.env" "DB_SSL__"
-        env_set "$CMS_DIR/.env" PGSSLMODE  "disable"
-        info "Directus DB_SSL=false + DB_SSL__* removed (local Postgres, no TLS)."
-      fi
-      # ── Safety net: a loopback Postgres never speaks TLS ────────────────────
-      # Force SSL OFF whenever the resolved DB host is loopback, regardless of
-      # how DB_MODE / DB_SSLMODE resolved. A co-resident Postgres has no TLS, so
-      # a carried-over DB_SSL=true OR a stale DB_SSL__* nested key (the
-      # cms/.env.example REMOTE default) would otherwise crash-loop Directus on
-      # "Error: The server does not support SSL connections" → Apache 503 /cms/.
-      # We MUST env_del the DB_SSL__ prefix: a nested key makes Directus build an
-      # `ssl` object that enables TLS even with DB_SSL=false. Belt-and-braces
-      # over the local branch; also covers DB_MODE=external mis-set with a
-      # loopback DB_HOST. Remote hosts never enter this branch, so their TLS
-      # (DB_SSL=true + DB_SSL__REJECT_UNAUTHORIZED) is left intact.
-      case "${DB_HOST:-localhost}" in
-        localhost|127.0.0.1|::1|"")
-          env_set "$CMS_DIR/.env" DB_SSL     "false"
-          env_del "$CMS_DIR/.env" "DB_SSL__"
-          env_set "$CMS_DIR/.env" PGSSLMODE  "disable"
-          info "Directus DB_SSL forced false + DB_SSL__* removed (loopback Postgres — no TLS)."
-          ;;
-      esac
-      env_set "$CMS_DIR/.env" DB_DATABASE "$DB_NAME"
-      env_set "$CMS_DIR/.env" DB_USER     "$CMS_DB_USER"
-      env_set "$CMS_DIR/.env" DB_PASSWORD "$CMS_DB_PASS"
-      env_set "$CMS_DIR/.env" HOST        "127.0.0.1"
-      env_set "$CMS_DIR/.env" PORT        "$CMS_PORT"
-      env_set "$CMS_DIR/.env" PUBLIC_URL  "https://${DOMAIN}/cms"
-      # Directus-INTERNAL files only (e.g. avatars) under cms/uploads. App media
-      # is NEVER stored here: all media bytes live in Postgres large objects and
-      # are streamed by FastAPI /media/* (no S3, no object store, no filesystem
-      # media store — Postgres is the only database). App-media uploads into
-      # Directus Files are disabled by permission. Do not configure S3.
-      env_set "$CMS_DIR/.env" STORAGE_LOCATIONS "local"
-      env_set "$CMS_DIR/.env" STORAGE_LOCAL_DRIVER "local"
-      env_set "$CMS_DIR/.env" STORAGE_LOCAL_ROOT   "${CMS_DIR}/uploads"
-      # Google SSO for staff (04 §4.2 / §8.2 step 4) — a SEPARATE OAuth client
-      # from the FastAPI one; redirect URI <PUBLIC_URL>/auth/login/google/callback.
-      # Reuse the FastAPI Google creds only if no dedicated CMS creds were given.
-      CMS_GOOGLE_ID="${AUTH_GOOGLE_CLIENT_ID:-$GOOGLE_CLIENT_ID}"
-      CMS_GOOGLE_SECRET="${AUTH_GOOGLE_CLIENT_SECRET:-$GOOGLE_CLIENT_SECRET}"
-      # SSO posture (4a F2 reconcile — must match cms/.env.example):
-      #   - PUBLIC_REGISTRATION=false: admins PRE-CREATE each staff Directus
-      #     user, matched to their @deptagency.com Google email. SSO then only
-      #     LOGS IN an existing user; it never self-provisions one. This is the
-      #     secure default.
-      #   - ALLOW_LIST=deptagency.com: defence-in-depth — Directus rejects any
-      #     Google account whose verified email host is not on this list, even
-      #     if public registration were ever turned on.
-      #   - DEFAULT_ROLE_ID: the role a newly self-registered user would land in.
-      #     It is USED ONLY IF public registration is enabled; with it false the
-      #     value is inert, but we still set it (least-privilege content_author)
-      #     so the contract is explicit and a future flip is safe. The role id is
-      #     minted at runtime by cms/bootstrap.sh — set CMS_DEFAULT_ROLE_ID in the
-      #     deploy environment to that id, or leave the placeholder and paste the
-      #     id printed by bootstrap.sh into cms/.env afterwards (RUNBOOK §7.3).
-      CMS_DEFAULT_ROLE_ID="${CMS_DEFAULT_ROLE_ID:-replace-with-content_author-role-id}"
-      if [[ -n "$CMS_GOOGLE_ID" && -n "$CMS_GOOGLE_SECRET" ]]; then
-        env_set "$CMS_DIR/.env" AUTH_PROVIDERS              "google"
-        env_set "$CMS_DIR/.env" AUTH_GOOGLE_DRIVER          "openid"
-        env_set "$CMS_DIR/.env" AUTH_GOOGLE_CLIENT_ID       "$CMS_GOOGLE_ID"
-        env_set "$CMS_DIR/.env" AUTH_GOOGLE_CLIENT_SECRET   "$CMS_GOOGLE_SECRET"
-        env_set "$CMS_DIR/.env" AUTH_GOOGLE_ISSUER_URL      "https://accounts.google.com"
-        env_set "$CMS_DIR/.env" AUTH_GOOGLE_IDENTIFIER_KEY  "email"
-        env_set "$CMS_DIR/.env" AUTH_GOOGLE_ALLOW_PUBLIC_REGISTRATION "false"
-        # Domain restriction (defence-in-depth) + least-privilege default role.
-        env_set "$CMS_DIR/.env" AUTH_GOOGLE_ALLOW_LIST       "deptagency.com"
-        env_set "$CMS_DIR/.env" AUTH_GOOGLE_DEFAULT_ROLE_ID  "$CMS_DEFAULT_ROLE_ID"
-        ok "Directus Google SSO configured (redirect: https://${DOMAIN}/cms/auth/login/google/callback)"
-        warn "Register that redirect URI in the Directus OAuth client (Google Console)."
-        if [[ "$CMS_DEFAULT_ROLE_ID" == replace-with-* ]]; then
-          warn "AUTH_GOOGLE_DEFAULT_ROLE_ID is a placeholder — paste the content_author role id from bootstrap.sh into cms/.env (RUNBOOK §7.3)."
-        fi
-      else
-        info "No Google creds for Directus — staff use the break-glass admin until SSO is set (RUNBOOK §7.3)"
-      fi
-
-      mkdir -p "$CMS_DIR/uploads" "$CMS_DIR/.directus"
-      chown -R "$CMS_USER:$CMS_USER" "$CMS_DIR"
-      chmod 600 "$CMS_DIR/.env"
-
-      # ── (e) npm install + Directus bootstrap (first deploy only) ────────────
-      NPM_BIN="${NPM_BIN:-$(command -v npm || true)}"
-      NPX_BIN="${NPX_BIN:-$(command -v npx || true)}"
-      if [[ ! -d "$CMS_DIR/node_modules" ]]; then
-        if [[ -n "$NPM_BIN" ]]; then
-          info "Installing CMS Node dependencies (npm ci) …"
-          ( cd "$CMS_DIR" && sudo -u "$CMS_USER" "$NPM_BIN" ci --omit=dev 2>&1 ) \
-            | tail -3 | while read -r l; do info "  npm: $l"; done \
-            || warn "npm ci failed — install Node deps by hand (RUNBOOK §7.1)"
-        else
-          warn "npm not found — install CMS deps by hand (RUNBOOK §7.1)"
-        fi
-      else
-        ok "cms/node_modules present — skipping npm install"
-      fi
-
-      # directus bootstrap creates the directus_* tables + the admin account.
-      # Idempotent: re-running is a no-op once the core tables exist.
-      if [[ -x "$CMS_DIR/node_modules/.bin/directus" || -n "$NPX_BIN" ]]; then
-        info "Running directus bootstrap (creates directus_* tables + admin) …"
-        ( cd "$CMS_DIR" && sudo -u "$CMS_USER" env $(grep -v '^#' .env | xargs) \
-            "$NPX_BIN" directus bootstrap 2>&1 ) \
-          | tail -4 | while read -r l; do info "  directus: $l"; done \
-          || warn "directus bootstrap reported an error — see journal / RUNBOOK §7.1"
-      fi
-
-      # ── (f) bootstrap.sh (roles/permissions/webhooks) + snapshot apply ──────
-      # bootstrap.sh (slice 4a-2) wires the 6 roles, collection permissions, and
-      # the loopback webhooks. snapshot.yaml is the introspected collection
-      # schema. Both are idempotent and re-applied on every run (incl. --update).
-      if [[ -f "$CMS_DIR/bootstrap.sh" ]]; then
-        info "Applying cms/bootstrap.sh (roles · permissions · webhooks) …"
-        ( cd "$CMS_DIR" && sudo -u "$CMS_USER" bash bootstrap.sh 2>&1 ) \
-          | tail -4 | while read -r l; do info "  bootstrap: $l"; done \
-          || warn "bootstrap.sh reported an error — re-run by hand (RUNBOOK §7.4)"
-      else
-        info "cms/bootstrap.sh absent — skipping role/permission/webhook wiring"
-      fi
-      if [[ -f "$CMS_DIR/snapshot.yaml" && -n "$NPX_BIN" ]]; then
-        info "Applying Directus schema snapshot (cms/snapshot.yaml) …"
-        ( cd "$CMS_DIR" && sudo -u "$CMS_USER" env $(grep -v '^#' .env | xargs) \
-            "$NPX_BIN" directus schema apply --yes ./snapshot.yaml 2>&1 ) \
-          | tail -4 | while read -r l; do info "  schema: $l"; done \
-          || warn "schema apply reported an error — re-apply by hand (RUNBOOK §7.4)"
-      else
-        info "cms/snapshot.yaml absent — skipping schema apply"
-      fi
-
-      # ── (g) systemd unit (mirrors the cca-quiz hardening; no MemoryDenyWriteExecute) ──
-      info "Writing /etc/systemd/system/${CMS_SERVICE_NAME}.service …"
-      cat > "/etc/systemd/system/${CMS_SERVICE_NAME}.service" <<EOF
-[Unit]
-Description=DEPT CCA Directus CMS (editorial write plane over Postgres)
-After=network.target ${PG_AFTER} ${SERVICE_NAME}.service
-Wants=${PG_WANTS}
-
-[Service]
-Type=exec
-User=${CMS_USER}
-Group=${CMS_USER}
-WorkingDirectory=${CMS_DIR}
-EnvironmentFile=${CMS_DIR}/.env
-# Boot via the project-local Directus binary; npx is the documented fallback.
-ExecStart=${CMS_DIR}/node_modules/.bin/directus start
-Restart=on-failure
-RestartSec=5
-# ── Security hardening — mirrors cca-quiz (07 §9, softened per C-64) ─────────
-NoNewPrivileges=true
-PrivateTmp=true
-ProtectSystem=full
-# Directus writes uploads (local storage) + its own cache/transient dir.
-ReadWritePaths=${CMS_DIR}/uploads ${CMS_DIR}/.directus
-ProtectKernelTunables=true
-ProtectControlGroups=true
-ProtectKernelModules=true
-RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
-RestrictNamespaces=true
-LockPersonality=true
-# Deliberately NOT MemoryDenyWriteExecute (the Node/V8 JIT needs W^X off),
-# matching the cca-quiz unit's rationale (C-64). SystemCallFilter disabled:
-# isolated-vm and other native Node modules require syscalls outside
-# @system-service and cause SIGSYS (signal 31) crashes.
-#SystemCallFilter=@system-service
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-      systemctl daemon-reload
-      info "Enabling and (re)starting ${CMS_SERVICE_NAME} …"
-      systemctl enable "${CMS_SERVICE_NAME}" >/dev/null 2>&1
-      systemctl restart "${CMS_SERVICE_NAME}"
-      sleep 2
-      CMS_STATUS="$(systemctl is-active "${CMS_SERVICE_NAME}" 2>/dev/null || echo 'unknown')"
-      if [[ "$CMS_STATUS" == "active" ]]; then
-        ok "${CMS_SERVICE_NAME} is running  (active, 127.0.0.1:${CMS_PORT})"
-      else
-        warn "${CMS_SERVICE_NAME} status: $CMS_STATUS"
-        warn "Check logs: journalctl -u ${CMS_SERVICE_NAME} -n 40 --no-pager"
-        warn "Common cause: unsupported Node major (need 18/20/22 LTS) — see RUNBOOK §7.2"
-      fi
-    fi
-  fi
-fi
+# ARCH-3: STEP 7b (Directus CMS stand-up) has been removed. The Directus
+# teardown already ran above in STEP 6. No Directus service is started here.
+# See ADR 0002.
+#
+# The following block is a placeholder so STEP numbering and the surrounding
+# grep anchors remain stable. It is intentionally empty.
+#
+# ── STEP 7b · (removed in ARCH-3) ────────────────────────────────────────────
+# (ARCH-3: Directus stand-up removed — see teardown block in STEP 6.)
 
 # ── STEP 8 · SELinux (RHEL only) ─────────────────────────────────────────────
 if $SELINUX_ON && ! $UPDATE_ONLY; then
@@ -1728,14 +1428,9 @@ if ! $UPDATE_ONLY; then
   #   expires   — Cache-Control / Expires per location.
   #   http2     — HTTP/2 over TLS (ALPN 'h2').
   #   ratelimit — mod_ratelimit, outbound throttle on /api/media/upload (C-29).
-  #   proxy_wstunnel — WebSocket upgrade for the Directus admin (only when
-  #                    DEPLOY_DIRECTUS=true · Phase 4a · 05 §8.2 step 8).
+  # (ARCH-3: proxy_wstunnel removed — Directus WebSocket is no longer needed.)
   DEB_MODS="proxy proxy_http ssl rewrite headers deflate expires http2 ratelimit"
   RHEL_MODS="proxy_module proxy_http_module ssl_module rewrite_module headers_module deflate_module expires_module http2_module ratelimit_module"
-  if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
-    DEB_MODS="$DEB_MODS proxy_wstunnel"
-    RHEL_MODS="$RHEL_MODS proxy_wstunnel_module"
-  fi
   if [[ "$OS_FAMILY" == "debian" ]]; then
     info "Enabling Apache modules …"
     for mod in $DEB_MODS; do
@@ -1836,20 +1531,7 @@ if ! $UPDATE_ONLY; then
   CSP_DEFAULT="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net https://esm.sh; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://www.deptagency.com; connect-src 'self' https://esm.sh; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; report-to csp-endpoint"
   CSP_COURSE="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://www.deptagency.com; media-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; report-to csp-endpoint"
 
-  # CMS (Directus admin) profile (/cms/ · Phase 4a · 05 §8.2 step 8). Directus's
-  # admin app is a Vue SPA served same-origin under /cms/; the main-vhost DEFAULT
-  # CSP above (which has no 'unsafe-inline' / 'unsafe-eval' in script-src and
-  # would block the admin shell) must NOT apply here. We scope a Directus-
-  # appropriate policy via a <Location "/cms/"> so it never widens the policy on
-  # the application paths. The widening over DEFAULT is minimal and confined:
-  #   • script-src adds 'unsafe-eval' — the Directus app bundle uses it.
-  #   • style-src keeps 'unsafe-inline' (already in DEFAULT) for runtime styles.
-  #   • img-src / media-src add blob: + data: for upload previews of cms/uploads.
-  #   • connect-src 'self' — the admin app talks to its own /cms/ API origin.
-  #   • worker-src adds blob: for the Directus web-worker bundle.
-  # If you instead front Directus on a SUBDOMAIN (cms.<domain>), Directus serves
-  # its own CSP and this <Location> is unnecessary — see RUNBOOK §7.6.
-  CSP_CMS="default-src 'self'; script-src 'self' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; media-src 'self' blob:; worker-src 'self' blob:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'; report-to csp-endpoint"
+  # (ARCH-3: CSP_CMS profile for Directus /cms/ removed — no CMS to serve.)
 
   # Safe-rollout gate (C-31): default ships Report-Only so a too-tight policy
   # logs violations instead of breaking the page. Flip CSP_ENFORCE=1 to enforce
@@ -1866,56 +1548,10 @@ if ! $UPDATE_ONLY; then
   # endpoint is same-origin so no extra CSP allowance is needed.
   REPORT_TO_JSON='{\"group\":\"csp-endpoint\",\"max_age\":10886400,\"endpoints\":[{\"url\":\"/csp/report\"}]}'
 
-  # ── Directus reverse-proxy block (Phase 4a · 05 §8.2 step 8) ────────────────
-  # Built as two variables interpolated into the HTTPS vhost below:
-  #   CMS_LOCATION_BLOCK — the <Location "/cms/"> that scopes the Directus CSP
-  #                        (CSP_CMS) and sets WebSocket upgrade for live preview.
-  #   CMS_PROXY_BLOCK    — the ProxyPass /cms/ pair, which MUST sit BEFORE the
-  #                        catch-all ProxyPass / so it is not shadowed.
-  # Both are empty when DEPLOY_DIRECTUS=false, so a CMS-less box never proxies to
-  # a dead 8055. /cms/ does NOT collide with any reserved path (/, /app,
-  # /anatomy, /media, /certificate, /api) — it's a fresh top-level subpath.
-  # The Google SSO callback (PUBLIC_URL/auth/login/google/callback →
-  # /cms/auth/login/google/callback) rides this same proxy.
-  if [[ "$DEPLOY_DIRECTUS" == "true" ]]; then
-    CMS_LOCATION_BLOCK="    # ── Directus admin (Phase 4a) — scoped CSP for the Vue admin SPA ─────────
-    # 'always set' REPLACES the vhost DEFAULT CSP for this subpath only, so the
-    # application paths keep the tighter DEFAULT profile. Directus serves its
-    # API + admin shell + the Google SSO callback under /cms/.
-    <Location \"/cms/\">
-        Header always set ${CSP_HEADER} \"${CSP_CMS}\"
-        # Directus admin uses no shared cache; revalidate the shell every load.
-        Header always set Cache-Control \"no-cache\"
-    </Location>
-    # WebSocket upgrade for Directus live-preview / realtime (06: not cached).
-    # mod_proxy_wstunnel rewrites ws:// upgrades onto the same backend port.
-    RewriteEngine On
-    RewriteCond %{HTTP:Upgrade} =websocket [NC]
-    RewriteRule ^/cms/(.*)$ ws://127.0.0.1:${CMS_PORT}/\$1 [P,L]
-"
-    CMS_PROXY_BLOCK="    # Directus — MUST precede the catch-all ProxyPass / below (05 §8.2 step 8).
-    ProxyPass        /cms/  http://127.0.0.1:${CMS_PORT}/
-    ProxyPassReverse /cms/  http://127.0.0.1:${CMS_PORT}/
-"
-  else
-    CMS_LOCATION_BLOCK=""
-    CMS_PROXY_BLOCK=""
-    info "Directus    : DEPLOY_DIRECTUS=false — /cms/ proxy omitted from vhost"
-  fi
-
-  # HTTP-only (no TLS) + Directus: splice the SAME /cms proxy + CSP <Location>
-  # into the :80 vhost. The CMS_* blocks are defined just above — AFTER
-  # HTTP_BLOCK was built — so we inject them by string substitution here. The
-  # HTTPS vhost interpolates them inline; the HTTP fallback historically did
-  # NOT, so on an HTTP-only box /cms/ fell through the catch-all to the quiz app
-  # (404) instead of reaching Directus. Anchors are unique lines in HTTP_BLOCK.
-  if ! $TLS_AVAILABLE && [[ -n "$CMS_PROXY_BLOCK" ]]; then
-    _pph_anchor="    ProxyPreserveHost On"
-    _catchall_anchor="    ProxyPass        /  http://127.0.0.1:${QUIZ_PORT}/"
-    HTTP_BLOCK="${HTTP_BLOCK/$_pph_anchor/${CMS_LOCATION_BLOCK}$_pph_anchor}"
-    HTTP_BLOCK="${HTTP_BLOCK/$_catchall_anchor/${CMS_PROXY_BLOCK}$_catchall_anchor}"
-    info "Directus    : /cms/ proxy + CSP spliced into the HTTP-only vhost."
-  fi
+  # (ARCH-3: CMS_LOCATION_BLOCK / CMS_PROXY_BLOCK removed — no /cms/ proxy.)
+  # These variables are set empty so the heredoc interpolation below is a no-op.
+  CMS_LOCATION_BLOCK=""
+  CMS_PROXY_BLOCK=""
 
   if $TLS_AVAILABLE; then
     CHAIN_LINE=""
@@ -2025,23 +1661,9 @@ ${CHAIN_LINE}
         SetEnv rate-limit 4096
     </Location>
 
-    # ── CMS webhook loopback-only (Q-15 / C-52) ─────────────────────────────
-    # Defense in depth — the app already rejects non-loopback callers. This
-    # <Location> sits AFTER ProxyPass / below so the Require is evaluated for
-    # the proxied request (mod_authz_core Require applies alongside ProxyPass).
-    <Location \"/api/cms/webhook\">
-        Require ip 127.0.0.1 ::1
-    </Location>
+    # (ARCH-3: /api/cms/webhook and /api/cms/roles-sync Location blocks removed
+    # — Directus is retired; those endpoints no longer exist in the app.)
 
-    # ── CMS role-mirror loopback-only (04 §7.2) ─────────────────────────────
-    # Same model as the webhook above: the Directus roles-sync hook POSTs staff
-    # role changes to FastAPI over loopback only; the app also rejects
-    # non-loopback callers. Co-resident by design.
-    <Location \"/api/cms/roles-sync\">
-        Require ip 127.0.0.1 ::1
-    </Location>
-
-${CMS_LOCATION_BLOCK}
     # /runbook → /resources/runbooks/ (short URL → the static Runbooks landing)
     RewriteRule ^/runbook$ /resources/runbooks/ [R=302,L]
 
@@ -2267,8 +1889,6 @@ printf '%b│%b  Runbooks         : %s://%s/resources/runbooks/   (also /runbook
 printf '%b│%b  FAQs             : %s://%s/resources/faqs/\n'                      "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN"
 $TLS_AVAILABLE && \
 printf '%b│%b  OAuth callback   : https://%s/auth/google/callback\n'             "$C_CYAN" "$C_RESET" "$DOMAIN" || true
-[[ "$DEPLOY_DIRECTUS" == "true" ]] && \
-printf '%b│%b  CMS (Directus)   : %s://%s/cms/\n'                "$C_CYAN" "$C_RESET" "$PROTO" "$DOMAIN" || true
 printf '%b└─────────────────────────────────────────────────────────────────────────┘%b\n\n' "$C_CYAN" "$C_RESET"
 
 printf '%b┌─ Operations ────────────────────────────────────────────────────────────┐%b\n' "$C_CYAN" "$C_RESET"
@@ -2283,19 +1903,7 @@ printf '%b│%b  DB connect   : PGSSLMODE=%s psql -U %s -d %s -h %s -p %s\n' "$C
 else
 printf '%b│%b  DB connect   : psql -U %s -d %s -h 127.0.0.1\n'   "$C_CYAN" "$C_RESET" "$DB_USER" "$DB_NAME"
 fi
-[[ "$DEPLOY_DIRECTUS" == "true" ]] && {
-printf '%b│%b  CMS status   : systemctl status %s\n'              "$C_CYAN" "$C_RESET" "$CMS_SERVICE_NAME"
-printf '%b│%b  CMS logs     : journalctl -u %s -f\n'              "$C_CYAN" "$C_RESET" "$CMS_SERVICE_NAME"
-printf '%b│%b  Restart CMS  : systemctl restart %s\n'             "$C_CYAN" "$C_RESET" "$CMS_SERVICE_NAME"
-} || true
 printf '%b└─────────────────────────────────────────────────────────────────────────┘%b\n\n' "$C_CYAN" "$C_RESET"
-
-# Surface the generated Directus admin password once (first install only). It is
-# in cms/.env; we print it here so the operator can capture it before rotating.
-if [[ "$DEPLOY_DIRECTUS" == "true" && -n "${CMS_ADMIN_PASSWORD:-}" ]]; then
-  warn "Directus break-glass admin: ${CMS_ADMIN_EMAIL}"
-  warn "  initial password: ${CMS_ADMIN_PASSWORD}   (stored in ${APP_HOME}/cms/.env — rotate after first login)"
-fi
 
 if grep -q '^QUIZ_DEV_MODE=true' "$QUIZ_DIR/.env" 2>/dev/null; then
   warn "DEV mode active — email login only, no real OAuth or SMTP."
