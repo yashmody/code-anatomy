@@ -108,8 +108,18 @@ def _drop_role_sql(role: str) -> str:
 DO $$
 BEGIN
     IF EXISTS (SELECT FROM pg_roles WHERE rolname = '{role}') THEN
-        DROP OWNED BY {role};
-        DROP ROLE {role};
+        BEGIN
+            DROP OWNED BY {role};
+            DROP ROLE {role};
+        EXCEPTION WHEN OTHERS THEN
+            -- Best-effort role cleanup. A non-superuser/CREATEROLE credential
+            -- (e.g. the dev app role, which OWNS the course tables and can drop
+            -- them but cannot drop roles) skips this with a NOTICE rather than
+            -- aborting the migration — the course-table DROPs above have already
+            -- succeeded. Re-run as a DBA/privileged credential (prod deploy) to
+            -- finish the role cleanup. Mirrors db.py's best-effort-DDL idiom.
+            RAISE NOTICE 'ARCH-4: skipped dropping role {role} (SQLSTATE %, %); run as a privileged credential to finish.', SQLSTATE, SQLERRM;
+        END;
     END IF;
 END
 $$;
