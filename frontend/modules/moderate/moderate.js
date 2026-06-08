@@ -24,6 +24,7 @@ import { renderFeedBody } from '../../shared/registry.js';
 import { flaggedBadge, topicChips } from '../feed/envelope.js';
 import { renderDiagram, runMermaid } from '../../shared/render/diagram.js';
 import { esc } from '../../shared/dom.js';
+import { apiFetch } from '../../core/api.js';
 
 // Media renderer — inlined (NOT imported from ../feed/media.js).
 // media.js currently has a broken relative import ('../render/diagram.js' →
@@ -73,7 +74,7 @@ export async function renderModerate(mount) {
   mount.innerHTML = '<div class="loading">Loading moderation queue…</div>';
 
   try {
-    const res = await fetch(QUEUE_URL, { headers: { Accept: 'application/json' } });
+    const res = await apiFetch(QUEUE_URL, { headers: { Accept: 'application/json' } });
     if (res.status === 403 || res.status === 401) {
       renderForbidden(mount);
       return;
@@ -224,7 +225,7 @@ export async function renderModerate(mount) {
   // ── the action call ───────────────────────────────────────────────────────
   async function doAction(id, type, action) {
     try {
-      const res = await fetch(ACTION_URL, {
+      const res = await apiFetch(ACTION_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
         body: JSON.stringify({ item_id: id, item_type: type, action })
