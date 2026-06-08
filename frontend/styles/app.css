@@ -10,10 +10,13 @@
   padding: 10px 16px; background: var(--paper); border-bottom: 1px solid var(--rule);
 }
 .app-brand {
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px; line-height: 1;
   font-family: var(--mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase;
   color: var(--ochre-deep); font-weight: 700; margin-right: auto;
   text-decoration: none;
 }
+/* Wordmark under the { 10, 8 } mark */
+.tenet-wordmark { font-size: 9px; letter-spacing: .3em; padding-left: .3em; }
 /* ---- Tenet logo mark: { 10, 8 } ---- */
 .tenet-logo {
   display: inline-flex; align-items: center;
