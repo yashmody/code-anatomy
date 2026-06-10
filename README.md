@@ -1,3 +1,5 @@
+> **ARCHIVED (2026-06-10).** This repository is retired and read-only. Development moved to **[tenet-knowledge-repo](https://github.com/yashmody/tenet-knowledge-repo)** (the v2 line, migrated in full). This repo is kept for v1 provenance — do not use it for new work.
+
 # DEPT® · Anatomy of Code — Deploy Bundle
 
 Three things to ship, each independent. Pick the ones you need, deploy in any order.
